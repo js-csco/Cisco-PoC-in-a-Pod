@@ -1,0 +1,105 @@
+pageInfo:
+  title: Cisco Secure Access - PoC in a Pod
+  description: Disclaimer - Run at your own risk - Disclaimer
+  logo: https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png
+  navLinks:
+  - title: Help - Mail to joschwei@cisco.com
+
+appConfig:
+  theme: glass-2
+  hideComponents: 
+    hideSettings: true
+    hideSearch: true
+  statusCheck: true
+  statusCheckInterval: 20
+  iconSize: small
+
+sections:
+  - name: Docs
+    items:
+      - title: Secure Access Docs
+        description: Cisco Docs General
+        icon: fas fa-file
+        url: https://securitydocs.cisco.com/docs/csa/olh/119038.dita
+        statusCheck: false
+      - title: Resource Connector Docs Connector
+        description: Cisco Docs
+        icon: fas fa-clipboard
+        url: https://securitydocs.cisco.com/docs/csa/olh/120695.dita
+        statusCheck: false
+  - name: Containers
+    items:
+      - title: Automation Server
+        description: Automate your Cisco Secure Access Configuration
+        icon: fas fa-server
+        url: http://localhost:8200
+        statusCheck: true
+      - title: Web Server
+        description: nginx on port 80
+        icon: fas fa-server
+        url: http://nginx:8080
+        statusCheck: true
+      - title: SSH Server
+        description: SSH on port 2222, user remote_user & password ssh_access
+        icon: fas fa-server
+        statusCheck: false
+      - title: RDP Server
+        description: (Empty) RDP on port 3389, user remote_user & password rdp_access
+        icon: fas fa-server
+        statusCheck: false
+      - title: Automagic Server
+        description: Automate your Cisco Configuration
+        icon: fas fa-server
+        url: http://automagic:9100
+  - name: Test Guide
+    items:
+      - title: Kanboard Guide
+        description: Pre-defined test cases & guides
+        url: http://kanboard:8090
+        icon: fas fa-book
+        statusCheck: false
+  - name: Links
+    items:
+      - title: QUIC Checker
+        description: Website that checks if your browser is using QUIC (HTTP/3) protocol
+        url: https://http3.is/
+        icon: fas fa-globe
+        statusCheck: true
+      - title: SSE Policy Checker
+        description: Website that checks your SSE policy
+        url: https://policy.test.sse.cisco.com/
+        statusCheck: true
+        icon: fas fa-globe
+      - title: IP Checker
+        description: Website that checks your egress IP
+        url: https://ifconfig.co/
+        icon: fas fa-globe
+        statusCheck: true
+      - title: Speed Test
+        description: Website that checks your internet speed
+        url: https://mediatest.ciscospark.com/
+        icon: fas fa-globe
+        statusCheck: true
+      - title: Packet Loss Test
+        description: Website that checks your packet loss
+        url: https://packetlosstest.com/
+        icon: fas fa-globe
+        statusCheck: true
+  - name: Downloads
+    items:
+      - title: Secure Client
+        description: Download
+        icon: fas fa-download
+        url: https://dashboard.sse.cisco.com/org/8219751/connect/user-connectivity/zero-trust 
+        statusCheck: false
+      - title: Decryption Cert
+        description: Download
+        icon: fas fa-download
+        url: https://dashboard.sse.cisco.com/org/8219751/secure/certificates/internet-decryption
+        statusCheck: false
+      - title: Ubuntu ISO
+        description: Ubuntu Download ISO
+        icon: fas fa-cloud
+        url: https://ubuntu.com/download/desktop
+        statusCheck: true
+

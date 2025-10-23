@@ -1,0 +1,68 @@
+.mds-heat-chart text {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 12px !important;
+  fill: rgba(136,144,153,1) !important;
+}
+
+.mds-marker {
+  position: relative;
+}
+.mds-marker .mds-marker-block {
+  display: block;
+  width: 24px;
+  height: 0;
+}
+.mds-marker .mds-marker-block-solid {
+  border-bottom: 2px solid;
+}
+.mds-marker .mds-marker-block-dashed {
+  border-bottom: 2px dashed;
+}
+.mds-marker .mds-marker-block-square {
+  width: 10px;
+  border-bottom: 10px solid;
+}
+.mds-marker-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  margin: auto;
+  border-radius: 50%;
+}
+
+.mds-xaxis-interval {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  fill: rgba(89,96,105,1);
+}
+
+@media screen and (prefers-reduced-motion: reduce) {
+  .mds-custom-measure {
+    fill: var(--color-chart-data-empty-weak);
+    transition: none
+  }
+
+    .mds-custom-measure:hover,
+    .mds-custom-measure:focus {
+      fill: var(--color-chart-data-empty-medium);
+    }
+}
+
+.mds-custom-measure {
+  fill: var(--color-chart-data-empty-weak);
+  transition: all 100ms ease-in-out;
+}
+
+.mds-bullet-is-interactive .mds-custom-measure:hover,
+  .mds-bullet-is-interactive .mds-custom-measure:focus {
+    fill: var(--color-chart-data-empty-medium);
+  }
+
+.mds-bullet-hover {
+  width: 100%;
+  height: 100%;
+}

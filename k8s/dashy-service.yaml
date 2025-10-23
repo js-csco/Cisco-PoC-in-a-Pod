@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
+    kompose.version: 1.31.2 (a92241f79)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: dashy
+  name: dashy
+spec:
+  ports:
+    - name: "9000"
+      port: 9000
+      targetPort: 8080
+  selector:
+    io.kompose.service: dashy
+status:
+  loadBalancer: {}

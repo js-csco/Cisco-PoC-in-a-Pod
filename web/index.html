@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cisco Secure Access – Automation</title>
+  <style>
+    :root {
+      --cisco-blue: #049fd9;
+      --cisco-dark-blue: #005073;
+      --cisco-light-gray: #f5f7fa;
+      --cisco-gray: #dce1e5;
+      --base-font: 15px;          /* slightly smaller base */
+    }
+
+    body {
+      font-family: "CiscoSans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--cisco-light-gray);
+      color: #222;
+      margin: 0;
+      padding: 0;
+      font-size: var(--base-font);
+    }
+
+    header {
+      background: linear-gradient(90deg, var(--cisco-dark-blue), var(--cisco-blue));
+      color: white;
+      padding: 16px 30px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    header img {
+      height: 42px;
+      width: auto;
+    }
+
+    header div.text-block {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.4em;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    header h2 {
+      margin: 2px 0 0 0;
+      font-weight: 400;
+      font-size: 0.95em;
+      opacity: 0.9;
+    }
+
+    main {
+      max-width: 750px;
+      margin: 35px auto;
+      background: white;
+      padding: 35px 45px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      font-size: 0.95em;
+    }
+
+    section {
+      margin-bottom: 35px;
+    }
+
+    section h3 {
+      border-left: 5px solid var(--cisco-blue);
+      padding-left: 10px;
+      color: var(--cisco-dark-blue);
+      margin-bottom: 15px;
+      font-weight: 600;
+      font-size: 1.05em;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: 500;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid var(--cisco-gray);
+      border-radius: 6px;
+      font-size: 0.95em;
+      background-color: #fff;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--cisco-blue);
+      box-shadow: 0 0 0 2px rgba(4,159,217,0.2);
+    }
+
+    button {
+      background-color: var(--cisco-blue);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 0.95em;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background-color 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      background-color: #08b8f0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-secondary {
+      background-color: var(--cisco-blue);
+    }
+
+    .btn-secondary:hover {
+      background-color: #08b8f0;
+    }
+
+    ul.messages {
+      background-color: #e7f5ff;
+      border-left: 4px solid var(--cisco-blue);
+      padding: 10px 15px;
+      border-radius: 6px;
+      list-style: none;
+      color: #003d4d;
+      margin-bottom: 25px;
+      font-size: 0.9em;
+    }
+
+    footer {
+      text-align: center;
+      color: #777;
+      font-size: 0.85em;
+      padding: 18px 0 25px;
+    }
+
+    /* Section styling */
+    section {
+      margin-bottom: 45px;           /* more breathing room */
+      padding-bottom: 30px;
+      border-bottom: 1px solid #e3e7eb; /* subtle divider line */
+    }
+
+    /* Remove the last section divider */
+    section:last-of-type {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    /* Ensure proper positioning */
+    main {
+      position: relative;
+    }
+
+    /* Optional spacing between subheadings (h4) */
+    h4 {
+      margin-top: 25px;
+      font-size: 1em;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png"
+         alt="Cisco Logo">
+    <div class="text-block">
+      <h1>Cisco Secure Access</h1>
+      <h2>Web Server</h2>
+    </div>
+  </header>
+
+  <main>
+
+    <form method="POST">
+
+      <!-- Secure Private Access Policies -->
+      <section>
+        <h3>Web Server</h3>
+        <p style="margin-top:-5px; margin-bottom:20px; color:#555;">
+          Try out the remote access to this web server (port 8080) from your roaming user.
+        </p>
+      </section>
+
+
+      <!-- IPS Check -->
+      <section>
+        <h3>IPS Test (Empty)</h3>
+        <p style="margin-top:-5px; margin-bottom:15px; color:#555;">
+          Insert the EICAR file here to validate that Cisco Secure Access inserts IPS capabilities when your remote users access your apps.
+        </p>
+        <input type="text" id="ipnut_ips" name="ipnut_ips" placeholder="Insert text or file: e.g. EICAR">
+        <button type="submit" class="btn-secondary"
+                style="margin-top:15px;margin-bottom:20px;">
+          Check IPS
+        </button>
+
+      </section>
+
+      <section>
+      <!-- Task Done -->
+      <h4 style="color:#005073; margin-bottom:5px;">Tasks Done?</h4>
+      <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
+        Jump back to Kanboard and move all those tasks to “Done” — congrats! <br>
+        If it asks you for creds - classic: admin/admin.
+      </p>
+      <a href="http://localhost:8090/board/1" target="_blank"
+        style="display:inline-block; text-decoration:none; background-color:#e0e0e0; color:#333;
+                padding:8px 16px; border-radius:6px; font-size:0.9em; transition:background-color 0.2s;">
+        Kanboard Test Guide
+      </a>
+      </section>
+
+    </form>
+  </main>
+
+  <footer>
+    © Cisco Secure Access Automation — Powered by joschwei
+  </footer>
+</body>
+</html>

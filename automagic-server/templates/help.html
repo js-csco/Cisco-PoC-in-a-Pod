@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% set active_page = 'help' %}
+{% block title %}Help — PoC in a Pod{% endblock %}
+
+{% block content %}
+  <h1>Help & Documentation</h1>
+  <p style="color:#555;">
+    PoC in a Pod Help & Docs.
+  </p>
+
+
+    <!-- Help -->
+    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+            <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">HELP</h3>
+        </div>
+        <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
+            For assistance with using the PoC in a Pod environment, please reach out to Jonas Schweigert. <br>
+            Mail: joschwei@cisco.com. <br>
+            Webex: https://cisco.webex.com/meet/joschwei
+        </p>
+    </section>
+
+    <!-- Help -->
+    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+            <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DOCUMENTATION</h3>
+        </div>
+        <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
+            The Documentation can be found in the following Github Repo: <br>
+            Github Repo: https://github.com/js-csco/piap-dev 
+        </p>
+    </section>
+
+{% endblock %}

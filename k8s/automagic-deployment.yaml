@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
+    kompose.version: 1.31.2 (a92241f79)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: automagic
+  name: automagic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: automagic
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
+        kompose.version: 1.31.2 (a92241f79)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/piap-kind-komp-cisco-pod-network: "true"
+        io.kompose.service: automagic
+    spec:
+      containers:
+        - args:
+            - bash
+            - -c
+            - pip install --no-cache-dir flask requests && python /app/app.py
+          env:
+            - name: TZ
+              value: Europe/Berlin
+          image: python:3.11-slim
+          name: automagic
+          ports:
+            - containerPort: 8080
+              hostPort: 9100
+              protocol: TCP
+          resources: {}
+          volumeMounts:
+            - mountPath: /app
+              name: automagic-claim0
+      restartPolicy: Always
+      volumes:
+        - name: automagic-claim0
+          persistentVolumeClaim:
+            claimName: automagic-claim0
+status: {}

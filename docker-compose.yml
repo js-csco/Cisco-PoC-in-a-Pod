@@ -1,0 +1,93 @@
+version: '3'
+
+services:
+
+  dashy:
+    image: ghcr.io/lissy93/dashy:latest
+    container_name: dashy
+    ports:
+      - "9000:8080"
+    volumes:
+      - ./dashy/dashy-conf.yml:/app/user-data/conf.yml
+    restart: unless-stopped
+    networks:
+      - cisco-pod-network
+
+  kanboard:
+    image: docker.io/kanboard/kanboard:latest
+    container_name: kanboard
+    ports:
+      - "8090:80"
+    environment:
+      - TZ=Europe/Berlin
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=admin
+    volumes:
+      - ./kanboard/data:/var/www/app/data
+      - ./kanboard/plugins:/var/www/app/plugins
+      - ./kanboard/config.php:/var/www/app/config.php
+    restart: unless-stopped
+    networks:
+      - cisco-pod-network
+
+  automagic:
+    image: python:3.11-slim
+    container_name: automagic
+    command: bash -c "pip install --no-cache-dir flask requests && python /app/app.py"
+    ports:
+      - "9100:8080"
+    environment:
+      - TZ=Europe/Berlin
+    volumes:
+      - ./automagic-server:/app
+    restart: unless-stopped
+    networks:
+      - cisco-pod-network
+
+  rdp-server:
+    image: lscr.io/linuxserver/rdesktop:ubuntu-xfce
+    container_name: rdp-server
+    ports:
+      - "3389:3389"
+    environment:
+      - TZ=Europe/Berlin
+      - USER=remote_user
+      - PASSWORD=rdp_access
+    restart: unless-stopped
+    networks:
+      - cisco-pod-network
+
+  ssh-server:
+    image: lscr.io/linuxserver/openssh-server:latest
+    container_name: openssh-server
+    hostname: openssh-server
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Berlin
+      - PASSWORD_ACCESS=true
+      - USER_PASSWORD=ssh_access
+      - USER_NAME=remote_user
+    ports:
+      - "2222:2222"
+    restart: unless-stopped
+    networks:
+      - cisco-pod-network
+
+  nginx:
+    image: lscr.io/linuxserver/nginx:latest
+    container_name: nginx-web
+    ports:
+      - "9180:80"
+    environment:
+      - TZ=Europe/Berlin
+    volumes:
+      - ./web/nginx.conf:/config/nginx/nginx.conf
+      - ./web/index.html:/config/www/index.html
+    restart: unless-stopped
+    networks:
+      - cisco-pod-network
+
+networks:
+  cisco-pod-network:
+    driver: bridge

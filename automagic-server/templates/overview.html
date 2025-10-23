@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% set active_page = 'overview' %}
+
+{% block title %}Overview - Cisco PoC in a Pod{% endblock %}
+
+{% block content %}
+<h1>Overview: PoC in a Pod</h1>
+<p style="color:#555;">
+  Welcome to your Cisco PoC environment. This dashboard gives you a quick snapshot of your integrated modules,
+  system status, and next steps to begin your demo journey.
+</p>
+
+<section style="margin-top:2rem;">
+  <h2 style="color:#005073;">Environment Summary</h2>
+  <ul style="color:#444; line-height:1.6;">
+    <li><strong>Goal:</strong> Demonstrate unified Cisco security and observability in a modular lab.</li>
+    <li><strong>Modules:</strong> Secure Access, Duo, Cilium, Tetragon, Splunk.</li>
+    <li><strong>Status:</strong> Active environment ready for configuration.</li>
+  </ul>
+</section>
+
+<section style="margin-top:2rem;">
+  <h2 style="color:#005073;">Current Metrics</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-top:1rem;">
+    <div style="background:#f8f9fc;border:1px solid #e0e0e0;border-radius:8px;padding:1rem;text-align:center;">
+      <h3 style="color:#0066ff;margin:0.25rem 0;">99.9%</h3>
+      <p style="margin:0;color:#555;font-size:0.9rem;">Uptime</p>
+    </div>
+    <div style="background:#f8f9fc;border:1px solid #e0e0e0;border-radius:8px;padding:1rem;text-align:center;">
+      <h3 style="color:#0066ff;margin:0.25rem 0;">5</h3>
+      <p style="margin:0;color:#555;font-size:0.9rem;">Active Modules</p>
+    </div>
+    <div style="background:#f8f9fc;border:1px solid #e0e0e0;border-radius:8px;padding:1rem;text-align:center;">
+      <h3 style="color:#0066ff;margin:0.25rem 0;">12</h3>
+      <p style="margin:0;color:#555;font-size:0.9rem;">Configured Policies</p>
+    </div>
+  </div>
+</section>
+
+<section style="margin-top:2.5rem;">
+  <h2 style="color:#005073;">Next Steps</h2>
+  <p style="color:#555;">
+    Get started by visiting the <strong>Cisco Secure Access</strong> module to authenticate,
+    create private access resources, and deploy initial configurations.
+  </p>
+  <a href="{{ url_for('secure_access') }}"
+     style="display:inline-block;margin-top:1rem;background-color:#0066ff;color:#fff;
+            padding:10px 16px;border-radius:6px;text-decoration:none;font-weight:500;">
+    🚀 Go to Cisco Secure Access
+  </a>
+</section>
+{% endblock %}

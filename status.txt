@@ -1,0 +1,6 @@
+Works on WSL
+
+podman-compose up -d
+
+
+dashy config: localhost and stuff not working correctly

@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% set active_page = 'secure_access' %}
+{% block title %}Cisco Secure Access - Cisco PoC in a Pod{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class="messages" style="list-style:none; padding:0; margin-bottom:1.5rem;">
+      {% for message in messages %}
+        <li style="background:#e8f0fe; color:#333; padding:8px 12px; border-radius:6px; margin-bottom:6px;">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+<form method="POST" style="display:flex; flex-direction:column; gap:3rem;">
+    <h1>Secure Access</h1>
+
+  <!-- Paste all your AUTHENTICATION / PRIVATE ACCESS / INTERNET ACCESS sections here exactly as they were -->
+
+    
+        <!-- AUTHENTICATION -->
+        <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+            <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">AUTHENTICATION</h3>
+          </div>
+
+          <p style="color:#666; font-size:0.95em; margin-top:0; margin-bottom:20px;">
+            Connect to Cisco Secure Access APIs with your API Key & Secret.
+          </p>
+
+          {% if not session.get('authenticated') %}
+            <input type="password" id="api_key" name="api_key" placeholder="API Key" required
+                   style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+
+            <input type="password" id="api_secret" name="api_secret" placeholder="API Secret" required
+                   style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+
+            <button type="submit" name="action" value="auth"
+                    style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                           border-radius:6px; font-weight:500; cursor:pointer;">
+              🔐 Authenticate
+            </button>
+          {% else %}
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+              <span style="color:green;font-weight:500;">✅ Authenticated</span>
+            </div>
+          {% endif %}
+        </section>
+
+        <!-- SECURE PRIVATE ACCESS -->
+        <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+            <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SECURE PRIVATE ACCESS</h3>
+          </div>
+
+          <p style="margin-top:0; margin-bottom:25px; color:#555; font-size:0.95em;">
+            Automate the configuration of your first private access resources and policies
+            to get started with Cisco Secure Access.
+          </p>
+
+          <h4 style="color:#005073; margin-bottom:5px;">Private Resources</h4>
+          <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
+            Transform your pod into private resources (e.g., SSH server, web server, and more).<br>
+            <strong>Important:</strong> After the creation of the resources, please edit each resource
+            and add your Resource Connector to each private resource!
+          </p>
+
+          <input type="text" id="vm_ip" name="vm_ip" placeholder="IP Address of Ubuntu VM e.g. 192.168.56.101"
+                 style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+
+          <button type="submit" name="action" value="create_pod"
+                  style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                         border-radius:6px; font-weight:500; cursor:pointer;">
+            Create Pod Resources
+          </button>
+
+          <h4 style="color:#005073; margin-top:30px; margin-bottom:5px;">Private Access Policy</h4>
+          <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
+            This policy enables remote test users to access private resources within your PoC environment.
+          </p>
+
+          <button type="submit" name="action" value="create_private"
+                  style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                         border-radius:6px; font-weight:500; cursor:pointer;">
+            Create Private Access Policy
+          </button>
+
+          <h4 style="color:#005073; margin-bottom:5px;">Test Private Access</h4>
+          <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
+            Go to Kanboard Board Cisco Secure Access and follow the Private Access Use Cases at your own pace.
+          </p>
+          <button type="submit" name="action" value="gotokanboard"
+                  style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                         border-radius:6px; font-weight:500; cursor:pointer;">
+            Kanboard
+          </button>
+        </section>
+
+        <!-- SECURE INTERNET ACCESS -->
+        <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+            <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SECURE INTERNET ACCESS</h3>
+          </div>
+
+          <p style="margin-top:0; margin-bottom:25px; color:#555; font-size:0.95em;">
+            Automate Access Policies for Secure Internet Access to validate web filtering and isolation scenarios.
+          </p>
+
+          <h4 style="color:#005073; margin-bottom:5px;">Cisco Recommendations</h4>
+          <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
+            Follow Cisco recommendations for Internet Access rules & decryption of web traffic.
+          </p>
+
+          <button type="submit" name="action" value="follow_recom"
+                  style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                         border-radius:6px; font-weight:500; cursor:pointer; margin-bottom:20px;">
+            Follow Recommendations
+          </button>
+
+          <h4 style="color:#005073; margin-top:20px; margin-bottom:5px;">Internet Access Policies</h4>
+          <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em; line-height:1.5;">
+            Generate Internet Access policies for basic use cases: browsing, warning, isolation, blocking and more.
+          </p>
+
+          <button type="submit" name="action" value="create_internet"
+                  style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                         border-radius:6px; font-weight:500; cursor:pointer;">
+            Create Internet Access Policies
+          </button>
+
+          <h4 style="color:#005073; margin-top:20px; margin-bottom:5px;">Security Profile</h4>
+          <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em; line-height:1.5;">
+            Go to Cisco Secure Access Dashboard, create a Security Profile for Internet Access with Decryption enabled.
+          </p>
+
+          <button type="submit" name="action" value="create_profile"
+                  style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                         border-radius:6px; font-weight:500; cursor:pointer;">
+            Create Security Profile
+          </button>
+
+          <h4 style="color:#005073; margin-top:20px; margin-bottom:5px;">Test Internet Access</h4>
+          <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em; line-height:1.5;">
+            Go to Kanboard Board Cisco Secure Access and follow the Internet Access Use Cases at your own pace.
+          </p>
+
+          <button type="submit" name="action" value="gotokanboard"
+                  style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                         border-radius:6px; font-weight:500; cursor:pointer;">
+            Kanboard
+          </button>
+        </section>
+
+
+
+  {{ super() }}
+</form>
+{% endblock %}
+

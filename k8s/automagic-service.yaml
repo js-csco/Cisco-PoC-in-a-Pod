@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
+    kompose.version: 1.31.2 (a92241f79)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: automagic
+  name: automagic
+spec:
+  ports:
+    - name: "9100"
+      port: 9100
+      targetPort: 8080
+  selector:
+    io.kompose.service: automagic
+status:
+  loadBalancer: {}

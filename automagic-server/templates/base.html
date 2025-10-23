@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" data-cds-theme="magnetic-light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Cisco PoC in a Pod{% endblock %}</title>
+
+  <!-- Base CSS (from your static files) -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/magnetic.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/core.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/globals.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cds-theme-variables.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cds-theme-blue-variables.css') }}">
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: #f6f7f9;
+      color: #2a2a2a;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* === NAVBAR === */
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #000;
+      padding: 0 1.5rem;
+      height: 52px;
+      color: #fff;
+    }
+
+    .navbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .navbar-logo img {
+      height: 24px;
+    }
+
+    .navbar-title {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    /* === LAYOUT === */
+    .main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* === SIDEBAR === */
+    .sidebar {
+      width: 290px;
+      background-color: #fff;
+      border-right: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      padding-top: 0.5rem;
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      color: #333;
+      text-decoration: none;
+      font-weight: 500;
+      border-left: 3px solid transparent;
+      transition: all 0.15s ease-in-out;
+    }
+
+    .menu-item:hover {
+      background-color: #f0f2f4;
+    }
+
+    .menu-item.active {
+      background-color: #e7eef9;
+      color: #0066ff;
+      border-left: 3px solid #0066ff;
+    }
+
+    .menu-icon {
+      width: 18px;
+      height: 18px;
+      background-color: #bbb;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* === CONTENT AREA === */
+    .content {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+      background-color: #f6f7f9;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .panel {
+      width: 100%;
+      max-width: 900px;
+      background-color: #fff;
+      border: 1px solid #e2e4e8;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      padding: 2.5rem 3rem;
+      overflow-y: auto;
+      max-height: calc(100vh - 100px);
+    }
+
+    footer {
+      text-align: center;
+      color: #7b7b7b;
+      font-size: 0.85em;
+      padding: 7px 0;
+      background-color: #e0e0e0;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="navbar">
+    <div class="navbar-logo">
+      <img src="https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png" alt="Cisco Logo">
+      <span class="navbar-title">Cisco PoC in a Pod</span>
+    </div>
+  </header>
+
+  <!-- Sidebar + Main -->
+  <div class="main">
+    <nav class="sidebar">
+        <a href="{{ url_for('overview') }}" class="menu-item {% if active_page == 'overview' %}active{% endif %}">
+        <span class="menu-icon"></span> Overview
+        </a>
+        <a href="{{ url_for('secure_access') }}" class="menu-item {% if active_page == 'secure_access' %}active{% endif %}">
+        <span class="menu-icon"></span> Cisco Secure Access
+        </a>
+        <a href="{{ url_for('duo') }}" class="menu-item {% if active_page == 'duo' %}active{% endif %}">
+        <span class="menu-icon"></span> Duo & Identity Intelligence
+        </a>
+        <a href="{{ url_for('cilium') }}" class="menu-item {% if active_page == 'cilium' %}active{% endif %}">
+        <span class="menu-icon"></span> Cilium
+        </a>
+        <a href="{{ url_for('tetragon') }}" class="menu-item {% if active_page == 'tetragon' %}active{% endif %}">
+        <span class="menu-icon"></span> Tetragon
+        </a>
+        <a href="{{ url_for('splunk') }}" class="menu-item {% if active_page == 'splunk' %}active{% endif %}">
+        <span class="menu-icon"></span> Splunk
+        </a>
+        <a href="{{ url_for('help_page') }}" class="menu-item {% if active_page == 'help' %}active{% endif %}">
+        <span class="menu-icon"></span> Help
+        </a>
+    </nav>
+
+    <main class="content">
+      <div class="panel">
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+
+  <footer>
+    PoC in a Pod — Powered by JS - joschwei@cisco.com
+  </footer>
+</body>
+</html>

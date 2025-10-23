@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
+    kompose.version: 1.31.2 (a92241f79)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: ssh-server
+  name: ssh-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: ssh-server
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
+        kompose.version: 1.31.2 (a92241f79)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/piap-kind-komp-cisco-pod-network: "true"
+        io.kompose.service: ssh-server
+    spec:
+      containers:
+        - env:
+            - name: PASSWORD_ACCESS
+              value: "true"
+            - name: PGID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+            - name: TZ
+              value: Europe/Berlin
+            - name: USER_NAME
+              value: remote_user
+            - name: USER_PASSWORD
+              value: ssh_access
+          image: lscr.io/linuxserver/openssh-server:latest
+          name: openssh-server
+          ports:
+            - containerPort: 2222
+              hostPort: 2222
+              protocol: TCP
+          resources: {}
+      hostname: openssh-server
+      restartPolicy: Always
+status: {}
