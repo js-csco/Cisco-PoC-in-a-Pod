@@ -29,5 +29,5 @@ nodes:
     containerPath: /kanboard
   - hostPath: ./dashy
     containerPath: /dashy
-  - hostPath: ./nginx
-    containerPath: /nginx
+  - hostPath: ./web
+    containerPath: /web

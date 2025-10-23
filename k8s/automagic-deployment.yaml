@@ -42,10 +42,10 @@ spec:
           resources: {}
           volumeMounts:
             - mountPath: /app
-              name: automagic-claim0
+              name: code
       restartPolicy: Always
       volumes:
-        - name: automagic-claim0
-          persistentVolumeClaim:
-            claimName: automagic-claim0
+        - name: code
+          hostPath:
+            path: /automagic-server
 status: {}

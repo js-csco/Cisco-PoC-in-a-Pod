@@ -47,10 +47,10 @@ spec:
       volumes:
         - name: nginx-conf
           hostPath:
-            path: /nginx/nginx.conf
+            path: /web/nginx.conf
             type: File
         - name: nginx-html
           hostPath:
-            path: /nginx/index.html
+            path: /web/index.html
             type: File
 status: {}
