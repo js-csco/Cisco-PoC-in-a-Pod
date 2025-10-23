@@ -49,7 +49,7 @@ fi
 
 
 echo "[3/7] Creating KIND cluster..."
-kind create cluster --config ../k8s/kind-config.yaml --name pod
+kind create cluster --config ./kind-config.yaml --name pod
 
 echo "[4/7] Installing Cilium CLI..."
 CILIUM_VER=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt)

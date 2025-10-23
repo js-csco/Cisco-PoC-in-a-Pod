@@ -20,7 +20,7 @@ nodes:
     hostPort: 7010
   - containerPort: 3389
     hostPort: 3389
-  - containerPath: 9100
+  - containerPort: 9100
     hostPort: 9100
   extraMounts:
   - hostPath: ./automagic-server

@@ -39,6 +39,6 @@ spec:
       restartPolicy: Always
       volumes:
         - name: dashy-config
-          host-Path: ./dashy/dashy-conf.yml
-          type: File
+          host-Path: 
+            path: ./dashy/dashy-conf.yml
 status: {}
