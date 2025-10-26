@@ -47,9 +47,9 @@ spec:
         - name: nginx-conf
           hostPath:
             path: /web/nginx.conf
-            type: File
+            type: FileOrCreate
         - name: nginx-html
           hostPath:
             path: /web/index.html
-            type: File
+            type: FileOrCreate
 status: {}

@@ -38,13 +38,18 @@ spec:
           ports:
             - containerPort: 80
               protocol: TCP
-          resources: {}
           volumeMounts:
             - mountPath: /var/www/app/data
               name: kanboard-data
-      restartPolicy: Always
+            - mountPath: /var/www/app/config.php 
+              name: kanboard-config
+              subPath: config.php
       volumes:
         - name: kanboard-data
+          hostPath:
+            path: /kanboard/data
+            type: Directory
+        - name: kanboard-config
           hostPath:
             path: /kanboard
             type: Directory

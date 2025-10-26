@@ -33,11 +33,12 @@ spec:
               protocol: TCP
           resources: {}
           volumeMounts:
-            - mountPath: /user-data/conf.yml
+            - mountPath: /user-data
               name: dashy-config
       restartPolicy: Always
       volumes:
         - name: dashy-config
           hostPath: 
-            path: ./dashy/dashy-conf.yml
+            path: /dashy
+            type: Directory
 status: {}

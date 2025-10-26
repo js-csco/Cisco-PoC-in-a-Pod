@@ -11,7 +11,7 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app: rdp-server
+    io.kompose.service: rdp-server
   ports:
     - name: "rdp"
       port: 3389

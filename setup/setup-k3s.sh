@@ -103,8 +103,11 @@ echo ""
 echo "Step 8: Enabling Hubble..."
 cilium hubble enable --ui
 echo "  Waiting for Hubble to be ready..."
-kubectl wait --for=condition=Ready pod -l k8s-app=hubble-relay -n kube-system --timeout=120s || true
-echo "  ✓ Hubble enabled"
+kubectl wait --for=condition=Ready pod -l k8s-app=hubble-relay -n kube-system --timeout=150s || true
+kubectl wait --for=condition=Ready pod -l k8s-app=hubble-ui -n kube-system --timeout=150s || true
+echo "  Exposing Hubble UI on NodePort 30800..."
+kubectl patch svc hubble-ui -n kube-system -p '{"spec":{"type":"NodePort","ports":[{"port":80,"targetPort":8081,"nodePort":30800}]}}'
+echo "  ✓ Hubble enabled and accessible on port 30800"
 echo ""
 
 # Step 9: Install Tetragon
