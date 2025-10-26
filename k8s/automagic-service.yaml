@@ -4,17 +4,16 @@ metadata:
   annotations:
     kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
     kompose.version: 1.31.2 (a92241f79)
-  creationTimestamp: null
   labels:
     io.kompose.service: automagic
   name: automagic
 spec:
   type: NodePort
   selector:
-    app: automgaic-server
+    app: automagic
   ports:
-    - name: "9100"
-      port: 9100
+    - name: "automagic"
+      port: 9200
       targetPort: 8080
       nodePort: 30200
 status:

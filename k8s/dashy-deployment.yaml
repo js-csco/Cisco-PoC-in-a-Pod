@@ -34,10 +34,10 @@ spec:
           resources: {}
           volumeMounts:
             - mountPath: /user-data/conf.yml
-              name: dashy-config.yml
+              name: dashy-config
       restartPolicy: Always
       volumes:
         - name: dashy-config
-          host-Path: 
+          hostPath: 
             path: ./dashy/dashy-conf.yml
 status: {}

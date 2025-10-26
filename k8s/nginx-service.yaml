@@ -13,8 +13,8 @@ spec:
   selector:
     app: nginx
   ports:
-    - name: "9180"
-      port: 9180
+    - name: "nginx"
+      port: 9400
       targetPort: 80
       nodePort: 30400
 status:

@@ -13,7 +13,7 @@ spec:
   selector:
     app: rdp-server
   ports:
-    - name: "3389"
+    - name: "rdp"
       port: 3389
       targetPort: 3389
       nodePort: 30389

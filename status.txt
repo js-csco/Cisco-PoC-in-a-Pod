@@ -4,3 +4,16 @@ podman-compose up -d
 
 
 dashy config: localhost and stuff not working correctly
+
+
+
+---------- k3s ----------------------------
+## Installation
+
+1. Clone this repository
+2. Run the setup script:
+```bash
+   chmod +x setup.sh
+   sudo ./setup.sh
+```
+3. Access your services at `http://<server-ip>:<nodeport>`

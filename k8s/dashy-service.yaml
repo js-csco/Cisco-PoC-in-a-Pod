@@ -13,8 +13,8 @@ spec:
   selector:
     app: dashy
   ports:
-    - name: "9000"
-      port: 9000
+    - name: "dashy"
+      port: 9100
       targetPort: 8080
       nodePort: 30100
 status:

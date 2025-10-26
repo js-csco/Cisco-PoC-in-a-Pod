@@ -13,7 +13,7 @@ spec:
   selector:
     app: ssh-server
   ports:
-    - name: "2222"
+    - name: "ssh"
       port: 2222
       targetPort: 2222
       nodePort: 30022

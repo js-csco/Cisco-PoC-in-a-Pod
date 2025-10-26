@@ -13,8 +13,8 @@ spec:
   selector:
     app: kanboard
   ports:
-    - name: "8090"
-      port: 8090
+    - name: "kanboard"
+      port: 9300
       targetPort: 80
       nodePort: 30300
 status:
