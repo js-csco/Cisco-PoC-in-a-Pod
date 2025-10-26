@@ -29,15 +29,10 @@ sections:
         statusCheck: false
   - name: Containers
     items:
-      - title: Automation Server
-        description: Automate your Cisco Secure Access Configuration
-        icon: fas fa-server
-        url: http://localhost:8200
-        statusCheck: true
       - title: Web Server
         description: nginx on port 80
         icon: fas fa-server
-        url: http://nginx:8080
+        url: http://SERVER_IP:30400
         statusCheck: true
       - title: SSH Server
         description: SSH on port 2222, user remote_user & password ssh_access
@@ -50,12 +45,17 @@ sections:
       - title: Automagic Server
         description: Automate your Cisco Configuration
         icon: fas fa-server
-        url: http://automagic:9100
+        url: http://SERVER_IP:30200
+      - title: Hubble UI 
+        description: Cilium Hubble UI to observe flows
+        icon: fas fa-server
+        url: http://SERVER_IP:30800
+        statusCheck: true
   - name: Test Guide
     items:
       - title: Kanboard Guide
         description: Pre-defined test cases & guides
-        url: http://kanboard:8090
+        url: http://SERVER_IP:30300
         icon: fas fa-book
         statusCheck: false
   - name: Links
