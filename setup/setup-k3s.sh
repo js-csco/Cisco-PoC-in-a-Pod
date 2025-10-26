@@ -120,8 +120,21 @@ kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=tetragon -n kub
 echo "  ✓ Tetragon installed"
 echo ""
 
+
+
 # Step 10: Create namespace and deploy applications
 echo "Step 10: Deploying applications..."
+
+# Get the server's primary IP address
+SERVER_IP=$(hostname -I | awk '{print $1}')
+echo "  Server IP detected: $SERVER_IP"
+
+# Update Dashy config with actual server IP
+if [ -f "$REPO_ROOT/dashy/conf.yml" ]; then
+    echo "  Updating Dashy config with server IP..."
+    sed -i "s/SERVER_IP/$SERVER_IP/g" "$REPO_ROOT/dashy/conf.yml"
+fi
+
 kubectl create namespace piap --dry-run=client -o yaml | kubectl apply -f -
 kubectl apply -f "$REPO_ROOT/k8s/" -n piap
 echo "  ✓ Applications deployed to namespace 'piap'"
@@ -141,6 +154,8 @@ echo ""
 echo "Your services are now accessible at:"
 echo ""
 kubectl get svc -n piap -o wide
+echo ""
+echo "Hubble UI: http://$(hostname -I | awk '{print $1}'):30800"
 echo ""
 echo "Access your services using the NodePort shown above."
 echo "Example: http://$(hostname -I | awk '{print $1}'):30200"
