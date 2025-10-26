@@ -16,6 +16,6 @@ spec:
     - name: "3389"
       port: 3389
       targetPort: 3389
-      nodePort: 3389
+      nodePort: 30389
 status:
   loadBalancer: {}

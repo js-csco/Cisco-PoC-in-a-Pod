@@ -16,7 +16,7 @@ spec:
     - name: "2222"
       port: 2222
       targetPort: 2222
-      nodePort: 2222
+      nodePort: 30022
   selector:
     io.kompose.service: ssh-server
 status:

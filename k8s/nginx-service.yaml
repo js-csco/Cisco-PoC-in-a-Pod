@@ -16,6 +16,6 @@ spec:
     - name: "9180"
       port: 9180
       targetPort: 80
-      nodePort: 9180
+      nodePort: 30400
 status:
   loadBalancer: {}

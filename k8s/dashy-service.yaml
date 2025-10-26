@@ -16,6 +16,6 @@ spec:
     - name: "9000"
       port: 9000
       targetPort: 8080
-      nodePort: 9000
+      nodePort: 30100
 status:
   loadBalancer: {}

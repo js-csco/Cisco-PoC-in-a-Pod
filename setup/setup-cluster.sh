@@ -27,7 +27,7 @@ echo "[3A] Installing Docker engine (required for KIND)..."
 sudo apt update
 sudo apt install -y ca-certificates curl gnupg lsb-release
 sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o -y /etc/apt/keyrings/docker.gpg
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
   https://download.docker.com/linux/ubuntu \
@@ -41,12 +41,25 @@ sudo systemctl enable docker
 sudo systemctl start docker
 
 # ensure current user can access Docker without sudo
-if ! groups $USER | grep -q '\bdocker\b'; then
-  echo "⚙️  Adding $USER to the docker group..."
-  sudo usermod -aG docker $USER
-  echo "✅ Added $USER to the docker group. Please log out and back in (or run 'newgrp docker') to apply."
-fi
+#### Docker permission check
+echo "[3B] Checking Docker permissions..."
 
+# Test if the current user can talk to the Docker daemon
+if ! docker ps >/dev/null 2>&1; then
+  echo "⚠️  Current user '$USER' cannot access Docker without sudo."
+  echo "Adding '$USER' to the 'docker' group..."
+
+  sudo usermod -aG docker "$USER"
+
+  echo "✅ Added successfully."
+  echo "You must now log out and log back in (or run 'newgrp docker') for the changes to take effect."
+  echo "After re-logging, rerun this script starting from Docker/KIND setup."
+  
+  # Optional: exit here to prevent confusing errors later
+  exit 0
+else
+  echo "✅ Docker access confirmed for user '$USER'."
+fi
 
 echo "[3/7] Creating KIND cluster..."
 kind create cluster --config ./kind-config.yaml --name pod

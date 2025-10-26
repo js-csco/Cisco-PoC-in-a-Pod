@@ -6,8 +6,6 @@ networking:
 nodes:
 - role: control-plane
   extraPortMappings:
-  - containerPort: 8080
-    hostPort: 8080
   - containerPort: 9000
     hostPort: 9000
   - containerPort: 8090
