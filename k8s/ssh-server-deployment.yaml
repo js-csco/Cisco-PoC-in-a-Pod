@@ -42,7 +42,6 @@ spec:
           name: openssh-server
           ports:
             - containerPort: 2222
-              hostPort: 2222
               protocol: TCP
           resources: {}
       hostname: openssh-server

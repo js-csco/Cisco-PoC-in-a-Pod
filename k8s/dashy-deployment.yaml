@@ -30,7 +30,6 @@ spec:
           name: dashy
           ports:
             - containerPort: 8080
-              hostPort: 9000
               protocol: TCP
           resources: {}
           volumeMounts:

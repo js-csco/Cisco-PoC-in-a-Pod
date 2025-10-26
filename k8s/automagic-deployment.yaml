@@ -37,7 +37,6 @@ spec:
           name: automagic
           ports:
             - containerPort: 8080
-              hostPort: 9100
               protocol: TCP
           resources: {}
           volumeMounts:

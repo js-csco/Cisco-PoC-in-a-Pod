@@ -9,10 +9,14 @@ metadata:
     io.kompose.service: ssh-server
   name: ssh-server
 spec:
+  type: NodePort
+  selector:
+    app: ssh-server
   ports:
     - name: "2222"
       port: 2222
       targetPort: 2222
+      nodePort: 2222
   selector:
     io.kompose.service: ssh-server
 status:

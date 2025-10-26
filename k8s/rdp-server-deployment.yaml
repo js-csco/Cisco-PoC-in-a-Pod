@@ -36,7 +36,6 @@ spec:
           name: rdp-server
           ports:
             - containerPort: 3389
-              hostPort: 3389
               protocol: TCP
           resources: {}
       restartPolicy: Always

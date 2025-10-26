@@ -9,11 +9,13 @@ metadata:
     io.kompose.service: kanboard
   name: kanboard
 spec:
+  type: NodePort
+  selector:
+    app: kanboard
   ports:
     - name: "8090"
       port: 8090
       targetPort: 80
-  selector:
-    io.kompose.service: kanboard
+      nodePort: 8090
 status:
   loadBalancer: {}

@@ -37,7 +37,6 @@ spec:
           name: kanboard
           ports:
             - containerPort: 80
-              hostPort: 8090
               protocol: TCP
           resources: {}
           volumeMounts:
