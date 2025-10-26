@@ -31,10 +31,10 @@ spec:
           ports:
             - containerPort: 8080
               protocol: TCP
-          resources: {}
           volumeMounts:
-            - mountPath: /user-data
+            - mountPath: /app/user-data/conf.yml
               name: dashy-config
+              subPath: conf.yml
       restartPolicy: Always
       volumes:
         - name: dashy-config
