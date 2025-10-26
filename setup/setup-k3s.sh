@@ -8,7 +8,9 @@ echo ""
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 echo "Script directory: $SCRIPT_DIR"
+echo "Repository root: $REPO_ROOT"
 echo ""
 
 # Check if running as root or with sudo
@@ -24,10 +26,10 @@ echo ""
 
 # Step 1: Create symlinks for volume mounts
 echo "Step 1: Creating symlinks for application directories..."
-ln -sf "$SCRIPT_DIR/automagic-server" /automagic-server && echo "  ✓ /automagic-server"
-ln -sf "$SCRIPT_DIR/kanboard" /kanboard && echo "  ✓ /kanboard"
-ln -sf "$SCRIPT_DIR/dashy" /dashy && echo "  ✓ /dashy"
-ln -sf "$SCRIPT_DIR/web" /web && echo "  ✓ /web"
+ln -sf "$REPO_ROOT/automagic-server" /automagic-server && echo "  ✓ /automagic-server"
+ln -sf "$REPO_ROOT/kanboard" /kanboard && echo "  ✓ /kanboard"
+ln -sf "$REPO_ROOT/dashy" /dashy && echo "  ✓ /dashy"
+ln -sf "$REPO_ROOT/web" /web && echo "  ✓ /web"
 echo ""
 
 # Step 2: Install k3s
@@ -59,8 +61,18 @@ kubectl wait --for=condition=Ready node --all --timeout=60s
 echo "  ✓ k3s is ready"
 echo ""
 
-# Step 5: Install Cilium CLI if not present
-echo "Step 5: Installing Cilium CLI..."
+# Step 5: Install Helm if not present
+echo "Step 5: Installing Helm..."
+if command -v helm &> /dev/null; then
+    echo "  Helm already installed"
+else
+    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    echo "  ✓ Helm installed"
+fi
+echo ""
+
+# Step 6: Install Cilium CLI if not present
+echo "Step 6: Installing Cilium CLI..."
 if command -v cilium &> /dev/null; then
     echo "  Cilium CLI already installed"
 else
@@ -108,7 +120,7 @@ echo ""
 # Step 10: Create namespace and deploy applications
 echo "Step 10: Deploying applications..."
 kubectl create namespace piap --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply -f "$SCRIPT_DIR/k8s/" -n piap
+kubectl apply -f "$REPO_ROOT/k8s/" -n piap
 echo "  ✓ Applications deployed to namespace 'piap'"
 echo ""
 
