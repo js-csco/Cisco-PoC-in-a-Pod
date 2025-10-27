@@ -33,11 +33,11 @@ ln -sf "$REPO_ROOT/web" /web && echo "  ✓ /web"
 echo ""
 
 # Step 2: Install k3s
-echo "Step 2: Installing k3s (without default CNI)..."
+echo "Step 2: Installing k3s (without default CNI and kube-proxy)..."
 if command -v k3s &> /dev/null; then
     echo "  k3s already installed, skipping..."
 else
-    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--flannel-backend=none --disable-network-policy" sh -
+    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--flannel-backend=none --disable-network-policy --disable-kube-proxy" sh -
     echo "  ✓ k3s installed"
 fi
 echo ""
@@ -74,6 +74,17 @@ else
 fi
 echo ""
 
+# Step 5.5: Clean up any old Cilium iptables rules
+echo "Step 5.5: Cleaning up any old Cilium iptables rules..."
+iptables -t nat -F OLD_CILIUM_POST_nat 2>/dev/null || true
+iptables -t nat -F OLD_CILIUM_PRE_nat 2>/dev/null || true
+iptables -t nat -F OLD_CILIUM_OUTPUT_nat 2>/dev/null || true
+iptables -t nat -X OLD_CILIUM_POST_nat 2>/dev/null || true
+iptables -t nat -X OLD_CILIUM_PRE_nat 2>/dev/null || true
+iptables -t nat -X OLD_CILIUM_OUTPUT_nat 2>/dev/null || true
+echo "  ✓ Cleanup complete"
+echo ""
+
 # Step 6: Install Cilium CLI if not present
 echo "Step 6: Installing Cilium CLI..."
 if command -v cilium &> /dev/null; then
@@ -90,20 +101,33 @@ else
 fi
 echo ""
 
-# Step 6: Install Cilium
-echo "Step 6: Installing Cilium CNI..."
-cilium install --version 1.16.5
+# Step 7: Install Cilium with proper configuration
+echo "Step 7: Installing Cilium CNI with native routing and masquerade..."
+# Get the server's primary IP address for API server configuration
+SERVER_IP=$(hostname -I | awk '{print $1}')
+echo "  Using API server IP: $SERVER_IP"
+
+cilium install --version 1.16.5 \
+  --set routingMode=native \
+  --set autoDirectNodeRoutes=true \
+  --set ipv4NativeRoutingCIDR=10.0.0.0/8 \
+  --set bpf.masquerade=false \
+  --set enableIPv4Masquerade=true \
+  --set kubeProxyReplacement=true \
+  --set k8sServiceHost=$SERVER_IP \
+  --set k8sServicePort=6443
+
 echo "  ✓ Cilium installation started"
 echo ""
 
-# Step 7: Wait for Cilium to be ready
-echo "Step 7: Waiting for Cilium to be ready..."
+# Step 8: Wait for Cilium to be ready
+echo "Step 8: Waiting for Cilium to be ready..."
 cilium status --wait
 echo "  ✓ Cilium is ready"
 echo ""
 
-# Step 8: Enable Hubble
-echo "Step 8: Enabling Hubble..."
+# Step 9: Enable Hubble
+echo "Step 9: Enabling Hubble..."
 cilium hubble enable --ui
 echo "  Waiting for Hubble to be ready..."
 kubectl wait --for=condition=Ready pod -l k8s-app=hubble-relay -n kube-system --timeout=120s || true
@@ -113,8 +137,8 @@ kubectl patch svc hubble-ui -n kube-system -p '{"spec":{"type":"NodePort","ports
 echo "  ✓ Hubble enabled and accessible on port 30800"
 echo ""
 
-# Step 9: Install Tetragon
-echo "Step 9: Installing Tetragon..."
+# Step 10: Install Tetragon
+echo "Step 10: Installing Tetragon..."
 helm repo add cilium https://helm.cilium.io 2>/dev/null || true
 helm repo update
 helm install tetragon cilium/tetragon -n kube-system --create-namespace || echo "  Tetragon already installed"
@@ -123,12 +147,14 @@ kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=tetragon -n kub
 echo "  ✓ Tetragon installed"
 echo ""
 
-# Step 10: Create namespace and deploy applications
-echo "Step 10: Deploying applications..."
+# Step 11: Verify DNS and connectivity
+echo "Step 11: Verifying DNS and internet connectivity..."
+echo "  Testing DNS resolution..."
+kubectl run test-dns --image=busybox --rm -i --restart=Never --timeout=30s -- nslookup google.com > /dev/null 2>&1 && echo "  ✓ DNS is working" || echo "  ⚠ DNS test failed (you may need to check your network)"
+echo ""
 
-# Get the server's primary IP address
-SERVER_IP=$(hostname -I | awk '{print $1}')
-echo "  Server IP detected: $SERVER_IP"
+# Step 12: Create namespace and deploy applications
+echo "Step 12: Deploying applications..."
 
 # Prompt for Cisco Connector credentials
 echo ""
@@ -172,13 +198,13 @@ kubectl apply -f "$REPO_ROOT/k8s/" -n piap
 echo "  ✓ Applications deployed to namespace 'piap'"
 echo ""
 
-# Step 11: Wait for pods to be ready
-echo "Step 11: Waiting for pods to start..."
+# Step 13: Wait for pods to be ready
+echo "Step 13: Waiting for pods to start..."
 sleep 10
 kubectl get pods -n piap
 echo ""
 
-# Step 12: Show access information
+# Step 14: Show access information
 echo "================================================"
 echo "  Setup Complete!"
 echo "================================================"
