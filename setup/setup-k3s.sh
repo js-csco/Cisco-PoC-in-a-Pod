@@ -55,10 +55,13 @@ echo "  ✓ kubectl configured for user $ACTUAL_USER"
 echo ""
 
 # Wait for k3s to be ready
-echo "Step 4: Waiting for k3s to be ready..."
+echo "Step 4: Waiting for k3s API server..."
 sleep 15
-kubectl wait --for=condition=Ready node --all --timeout=60s
-echo "  ✓ k3s is ready"
+until kubectl get nodes &> /dev/null; do
+    echo "  Waiting for k3s API server to respond..."
+    sleep 5
+done
+echo "  ✓ k3s API server is ready (node will become Ready after Cilium is installed)"
 echo ""
 
 # Step 5: Install Helm if not present
@@ -103,8 +106,8 @@ echo ""
 echo "Step 8: Enabling Hubble..."
 cilium hubble enable --ui
 echo "  Waiting for Hubble to be ready..."
-kubectl wait --for=condition=Ready pod -l k8s-app=hubble-relay -n kube-system --timeout=150s || true
-kubectl wait --for=condition=Ready pod -l k8s-app=hubble-ui -n kube-system --timeout=150s || true
+kubectl wait --for=condition=Ready pod -l k8s-app=hubble-relay -n kube-system --timeout=120s || true
+kubectl wait --for=condition=Ready pod -l k8s-app=hubble-ui -n kube-system --timeout=120s || true
 echo "  Exposing Hubble UI on NodePort 30800..."
 kubectl patch svc hubble-ui -n kube-system -p '{"spec":{"type":"NodePort","ports":[{"port":80,"targetPort":8081,"nodePort":30800}]}}'
 echo "  ✓ Hubble enabled and accessible on port 30800"
@@ -120,8 +123,6 @@ kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=tetragon -n kub
 echo "  ✓ Tetragon installed"
 echo ""
 
-
-
 # Step 10: Create namespace and deploy applications
 echo "Step 10: Deploying applications..."
 
@@ -129,13 +130,44 @@ echo "Step 10: Deploying applications..."
 SERVER_IP=$(hostname -I | awk '{print $1}')
 echo "  Server IP detected: $SERVER_IP"
 
+# Prompt for Cisco Connector credentials
+echo ""
+echo "=== Connector Configuration ==="
+echo "Please enter your connector credentials from Secure Access dashboard:"
+echo "(Connect > Network Connection > Connector Groups > *Table*)"
+read -p "Enter Connector Name: " CONNECTOR_NAME
+read -p "Enter Connector Key: " CONNECTOR_KEY
+echo ""
+
 # Update Dashy config with actual server IP
 if [ -f "$REPO_ROOT/dashy/conf.yml" ]; then
     echo "  Updating Dashy config with server IP..."
     sed -i "s/SERVER_IP/$SERVER_IP/g" "$REPO_ROOT/dashy/conf.yml"
 fi
 
+# Update HTML files with server IP
+if [ -f "$REPO_ROOT/web/index.html" ]; then
+    echo "  Updating web files with server IP..."
+    sed -i "s/SERVER_IP/$SERVER_IP/g" "$REPO_ROOT/web/index.html"
+fi
+
+# Update automagic templates if they exist
+if [ -d "$REPO_ROOT/automagic-server/templates" ]; then
+    echo "  Updating automagic templates with server IP..."
+    find "$REPO_ROOT/automagic-server/templates" -name "*.html" -exec sed -i "s/SERVER_IP/$SERVER_IP/g" {} \;
+fi
+
+# Create namespace
 kubectl create namespace piap --dry-run=client -o yaml | kubectl apply -f -
+
+# Create Connector Secret with user-provided credentials
+echo "  Creating Connector credentials..."
+kubectl create secret generic connector-creds -n piap \
+  --from-literal=connector-name="$CONNECTOR_NAME" \
+  --from-literal=connector-key="$CONNECTOR_KEY" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+# Apply all manifests
 kubectl apply -f "$REPO_ROOT/k8s/" -n piap
 echo "  ✓ Applications deployed to namespace 'piap'"
 echo ""
@@ -155,10 +187,10 @@ echo "Your services are now accessible at:"
 echo ""
 kubectl get svc -n piap -o wide
 echo ""
-echo "Hubble UI: http://$(hostname -I | awk '{print $1}'):30800"
+echo "Hubble UI: http://$SERVER_IP:30800"
 echo ""
 echo "Access your services using the NodePort shown above."
-echo "Example: http://$(hostname -I | awk '{print $1}'):30200"
+echo "Example: http://$SERVER_IP:30200"
 echo ""
 echo "Useful commands:"
 echo "  kubectl get pods -n piap           # Check pod status"
