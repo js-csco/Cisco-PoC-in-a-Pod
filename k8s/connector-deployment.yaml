@@ -31,6 +31,14 @@ spec:
               key: connector-key
         - name: TZ
           value: Europe/Berlin
+        - name: ACAD_VM_LOCAL_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: ACAD_VM_PUBLIC_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
         volumeMounts:
         - name: connector-data
           mountPath: /data
