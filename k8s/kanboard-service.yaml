@@ -11,7 +11,7 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app: kanboard
+    io.kompose.service: kanboard
   ports:
     - name: "kanboard"
       port: 9300

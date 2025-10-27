@@ -11,7 +11,7 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app: dashy
+    io.kompose.service: dashy
   ports:
     - name: "dashy"
       port: 9100
