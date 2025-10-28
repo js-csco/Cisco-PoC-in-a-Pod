@@ -165,6 +165,28 @@ read -p "Enter Connector Name: " CONNECTOR_NAME
 read -p "Enter Connector Key: " CONNECTOR_KEY
 echo ""
 
+# Prompt for Splunk admin password
+echo "=== Splunk Configuration ==="
+echo "Set a password for the Splunk admin user (default username: admin)"
+echo "Password requirements: minimum 8 characters"
+read -s -p "Splunk Admin Password: " SPLUNK_PASSWORD
+echo ""
+read -s -p "Confirm Splunk Admin Password: " SPLUNK_PASSWORD_CONFIRM
+echo ""
+
+if [ "$SPLUNK_PASSWORD" != "$SPLUNK_PASSWORD_CONFIRM" ]; then
+    echo "❌ Passwords do not match!"
+    exit 1
+fi
+
+if [ ${#SPLUNK_PASSWORD} -lt 8 ]; then
+    echo "❌ Password must be at least 8 characters long!"
+    exit 1
+fi
+
+echo "✓ Splunk password set"
+echo ""
+
 # Update Dashy config with actual server IP
 if [ -f "$REPO_ROOT/dashy/conf.yml" ]; then
     echo "  Updating Dashy config with server IP..."
@@ -193,6 +215,12 @@ kubectl create secret generic connector-creds -n piap \
   --from-literal=connector-key="$CONNECTOR_KEY" \
   --dry-run=client -o yaml | kubectl apply -f -
 
+# Create Splunk Secret with user-provided password
+echo "  Creating Splunk credentials..."
+kubectl create secret generic splunk-creds -n piap \
+  --from-literal=password="$SPLUNK_PASSWORD" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
 # Apply all manifests
 kubectl apply -f "$REPO_ROOT/k8s/" -n piap
 echo "  ✓ Applications deployed to namespace 'piap'"
@@ -217,6 +245,35 @@ echo "Hubble UI: http://$SERVER_IP:30800"
 echo ""
 echo "Access your services using the NodePort shown above."
 echo "Get Started with Dashy: http://$SERVER_IP:30100"
+echo ""
+echo "================================================"
+echo "  IMPORTANT: Splunk Setup Required"
+echo "================================================"
+echo ""
+echo "To complete your Splunk setup, follow these steps:"
+echo ""
+echo "1. Access Splunk Web UI at: http://$SERVER_IP:30200"
+echo "   Username: admin"
+echo "   Password: (the password you just set)"
+echo ""
+echo "2. Accept the Splunk Free License:"
+echo "   - Go to Settings > Licensing"
+echo "   - Click 'Add license' or accept the Free license"
+echo ""
+echo "3. Install required apps from Splunkbase:"
+echo "   a) Cisco Security Cloud App:"
+echo "      - Go to Apps > Find More Apps"
+echo "      - Search for 'Cisco Security Cloud'"
+echo "      - Click 'Install' (requires Splunk.com login)"
+echo ""
+echo "   b) Splunk MCP Server:"
+echo "      - Go to Apps > Find More Apps"
+echo "      - Search for 'Splunk MCP Server'"
+echo "      - Click 'Install'"
+echo ""
+echo "4. Configure the apps according to their documentation"
+echo ""
+echo "================================================"
 echo ""
 echo "Useful commands:"
 echo "  kubectl get pods -n piap           # Check pod status"

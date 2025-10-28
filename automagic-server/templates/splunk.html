@@ -1,10 +1,92 @@
 {% extends "base.html" %}
 {% set active_page = 'splunk' %}
-{% block title %}Splunk — PoC in a Pod{% endblock %}
+{% block title %}Splunk - Cisco PoC in a Pod{% endblock %}
 
 {% block content %}
-  <h1>Splunk</h1>
-  <p style="color:#555;">
-    🚧 Work in progress. Splunk integration is coming soon to PoC in a Pod.
-  </p>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class="messages" style="list-style:none; padding:0; margin-bottom:1.5rem;">
+      {% for message in messages %}
+        <li style="background:#e8f0fe; color:#333; padding:8px 12px; border-radius:6px; margin-bottom:6px;">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+<form method="POST" style="display:flex; flex-direction:column; gap:2.5rem;">
+    <h1>Splunk</h1>
+
+    <!-- ABOUT -->
+    <section style="background:#f8f9fa; padding:20px; border-radius:8px; border-left:4px solid #0066ff;">
+      <p style="color:#555; font-size:0.95em; margin:0 0 12px 0; line-height:1.6;">
+        Splunk collects and analyzes logs from your infrastructure, providing real-time insights into security events, network flows, and system behavior.
+      </p>
+      <p style="color:#555; font-size:0.95em; margin:0; line-height:1.6;">
+        <strong>Access:</strong> <a href="http://{{ server_ip }}:30500" target="_blank" style="color:#0066ff;">http://{{ server_ip }}:30500</a> 
+        (username: <code style="background:#e9ecef; padding:2px 6px; border-radius:3px;">admin</code>)
+      </p>
+    </section>
+
+    <!-- REQUIRED APPS -->
+    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:15px;">
+        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+        <h3 style="color:#111; margin:0; font-size:1.1rem;">Install Required Apps</h3>
+      </div>
+
+      <p style="color:#666; font-size:0.9em; margin-bottom:20px;">
+        Install these apps from Splunkbase (via Splunk UI → Apps → Find More Apps):
+      </p>
+
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:15px; margin-bottom:15px;">
+        <div style="border:1px solid #e0e0e0; border-radius:6px; padding:15px;">
+          <div style="font-weight:500; color:#111; margin-bottom:5px;">Cisco Security Cloud</div>
+          <a href="https://splunkbase.splunk.com/app/7404" target="_blank" 
+             style="color:#0066ff; font-size:0.85em;">splunkbase.splunk.com/app/7404 →</a>
+        </div>
+
+        <div style="border:1px solid #e0e0e0; border-radius:6px; padding:15px;">
+          <div style="font-weight:500; color:#111; margin-bottom:5px;">Splunk MCP Server</div>
+          <a href="https://splunkbase.splunk.com/app/7931" target="_blank" 
+             style="color:#0066ff; font-size:0.85em;">splunkbase.splunk.com/app/7931 →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOG FORWARDING -->
+    <section>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:15px;">
+        <div style="width:6px; height:20px; background-color:#28a745; border-radius:2px;"></div>
+        <h3 style="color:#111; margin:0; font-size:1.1rem;">Forward Logs to Splunk</h3>
+      </div>
+
+      <p style="color:#666; font-size:0.9em; margin-bottom:15px;">
+        Configure log forwarding from your infrastructure components:
+      </p>
+
+      <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+        <label style="display:flex; align-items:center; gap:8px; padding:10px 15px; border:1px solid #e0e0e0; border-radius:6px; cursor:pointer; background:#fff;">
+          <input type="checkbox" name="log_cilium" checked style="cursor:pointer;">
+          <span style="color:#333; font-size:0.9em;">Cilium</span>
+        </label>
+        
+        <label style="display:flex; align-items:center; gap:8px; padding:10px 15px; border:1px solid #e0e0e0; border-radius:6px; cursor:pointer; background:#fff;">
+          <input type="checkbox" name="log_hubble" checked style="cursor:pointer;">
+          <span style="color:#333; font-size:0.9em;">Hubble</span>
+        </label>
+        
+        <label style="display:flex; align-items:center; gap:8px; padding:10px 15px; border:1px solid #e0e0e0; border-radius:6px; cursor:pointer; background:#fff;">
+          <input type="checkbox" name="log_tetragon" checked style="cursor:pointer;">
+          <span style="color:#333; font-size:0.9em;">Tetragon</span>
+        </label>
+      </div>
+
+      <button type="submit" name="action" value="configure_logs"
+              style="background-color:#28a745; color:#fff; border:none; padding:10px 20px;
+                     border-radius:6px; font-weight:500; cursor:pointer;">
+        Apply Configuration
+      </button>
+    </section>
+
+</form>
 {% endblock %}

@@ -25,6 +25,17 @@ spec:
         io.kompose.network/piap-kind-komp-cisco-pod-network: "true"
         io.kompose.service: nginx
     spec:
+      initContainers:
+        - name: copy-files
+          image: busybox
+          command: ['sh', '-c', 'cp /source/nginx.conf /config/nginx/ && cp /source/index.html /config/www/']
+          volumeMounts:
+            - name: source-files
+              mountPath: /source
+            - name: nginx-config
+              mountPath: /config/nginx
+            - name: nginx-www
+              mountPath: /config/www
       containers:
         - env:
             - name: TZ
@@ -36,20 +47,18 @@ spec:
               protocol: TCP
           resources: {}
           volumeMounts:
-            - name: nginx-conf
-              mountPath: /config/nginx/nginx.conf
-              subPath: nginx.conf
-            - name: nginx-html
-              mountPath: /config/www/index.html
-              subPath: index.html
+            - name: nginx-config
+              mountPath: /config/nginx
+            - name: nginx-www
+              mountPath: /config/www
       restartPolicy: Always
       volumes:
-        - name: nginx-conf
+        - name: source-files
           hostPath:
-            path: /web/nginx.conf
-            type: FileOrCreate
-        - name: nginx-html
-          hostPath:
-            path: /web/index.html
-            type: FileOrCreate
+            path: /web
+            type: Directory
+        - name: nginx-config
+          emptyDir: {}
+        - name: nginx-www
+          emptyDir: {}
 status: {}

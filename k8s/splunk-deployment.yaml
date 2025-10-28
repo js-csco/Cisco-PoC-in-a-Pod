@@ -1,0 +1,131 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: splunk-apps-installer
+  namespace: piap
+data:
+  install-apps.sh: |
+    #!/bin/sh
+    set -e
+    
+    echo "=========================================="
+    echo "Splunk Apps Installation Guide"
+    echo "=========================================="
+    echo ""
+    echo "Apps must be installed manually from Splunkbase after Splunk is running."
+    echo ""
+    echo "Required Apps:"
+    echo "  1. Cisco Security Cloud"
+    echo "     https://splunkbase.splunk.com/app/7404"
+    echo ""
+    echo "  2. Splunk MCP Server"  
+    echo "     https://splunkbase.splunk.com/app/7931"
+    echo ""
+    echo "Installation Steps:"
+    echo "  1. Access Splunk Web UI (see service NodePort)"
+    echo "  2. Login with username: admin"
+    echo "  3. Go to Apps > Find More Apps"
+    echo "  4. Search and install each app (requires Splunk.com login)"
+    echo "  5. Restart Splunk if prompted"
+    echo ""
+    echo "Creating apps directory structure..."
+    mkdir -p /opt/splunk/etc/apps
+    echo "✓ Apps directory ready"
+    echo ""
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: splunk
+  namespace: piap
+  labels:
+    app: splunk
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: splunk
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: splunk
+    spec:
+      initContainers:
+      - name: prepare-apps
+        image: busybox:latest
+        command: ["/bin/sh", "/scripts/install-apps.sh"]
+        volumeMounts:
+        - name: splunk-apps
+          mountPath: /opt/splunk/etc/apps
+        - name: app-installer
+          mountPath: /scripts
+      containers:
+      - name: splunk
+        image: splunk/splunk:latest
+        env:
+        - name: SPLUNK_START_ARGS
+          value: "--accept-license"
+        - name: SPLUNK_GENERAL_TERMS
+          value: "--accept-sgt-current-at-splunk-com"
+        - name: SPLUNK_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: splunk-creds
+              key: password
+        - name: SPLUNK_USER
+          value: "admin"
+        - name: TZ
+          value: Europe/Berlin
+        ports:
+        - name: web
+          containerPort: 8000
+          protocol: TCP
+        - name: hec
+          containerPort: 8088
+          protocol: TCP
+        - name: splunkd
+          containerPort: 8089
+          protocol: TCP
+        volumeMounts:
+        - name: splunk-data
+          mountPath: /opt/splunk/var
+        - name: splunk-apps
+          mountPath: /opt/splunk/etc/apps
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /en-US/account/login
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /en-US/account/login
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+      volumes:
+      - name: splunk-data
+        hostPath:
+          path: /opt/splunk-data
+          type: DirectoryOrCreate
+      - name: splunk-apps
+        hostPath:
+          path: /opt/splunk-apps
+          type: DirectoryOrCreate
+      - name: app-installer
+        configMap:
+          name: splunk-apps-installer
+          defaultMode: 0755
