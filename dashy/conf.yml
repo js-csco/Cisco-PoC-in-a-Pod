@@ -1,12 +1,12 @@
 pageInfo:
-  title: Cisco Secure Access - PoC in a Pod
+  title: Cisco PoC in a Pod
   description: Disclaimer - Run at your own risk - Disclaimer
   logo: https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png
   navLinks:
   - title: Help - Mail to joschwei@cisco.com
 
 appConfig:
-  theme: glass-2
+  theme: lissy
   hideComponents: 
     hideSettings: true
     hideSearch: true
@@ -15,7 +15,17 @@ appConfig:
   iconSize: small
 
 sections:
-  - name: Docs
+  - name: Important Information
+    items:
+      - title: Disclaimer
+        description: Please read before using this PoC. Run at your own risk.
+        icon: fas fa-exclamation-triangle
+        url: https://github.com/js-csco/piap-kind/blob/main/readme.md
+      - title: PIAP GitHub Repository
+        description: Official PIAP Repository
+        icon: fas fa-code-branch
+        url: https://github.com/js-csco/piap-kind.git
+  - name: Secure Access Docs
     items:
       - title: Secure Access Docs
         description: Cisco Docs General
@@ -50,6 +60,11 @@ sections:
         description: Cilium Hubble UI to observe flows
         icon: fas fa-server
         url: http://SERVER_IP:30800
+        statusCheck: true
+      - title: Splunk 
+        description: Aggregate Telemetry and Logs
+        icon: fas fa-server
+        url: http://SERVER_IP:30500
         statusCheck: true
   - name: Test Guide
     items:

@@ -4,34 +4,82 @@
 
 {% block content %}
   <h1>Help & Documentation</h1>
-  <p style="color:#555;">
-    PoC in a Pod Help & Docs.
+  <p style="color:#555; margin-bottom: 2.5rem;">
+    Resources and support for PoC in a Pod.
   </p>
 
-
-    <!-- Help -->
-    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-            <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-            <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">HELP</h3>
+  <!-- Support Section -->
+  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0; margin-bottom: 2.5rem;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SUPPORT</h3>
+    </div>
+    <p style="margin-top:0; margin-bottom:20px; color:#666; font-size:0.9em; line-height: 1.6;">
+      For assistance with using the PoC in a Pod environment, please reach out to Jonas Schweigert.
+    </p>
+    
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 3px solid #0066ff;">
+      <div style="margin-bottom: 12px;">
+        <strong style="color: #333; font-size: 0.85em;">Email</strong>
+        <div style="color: #0066ff; margin-top: 4px;">
+          <a href="mailto:joschwei@cisco.com" style="color: #0066ff; text-decoration: none;">joschwei@cisco.com</a>
         </div>
-        <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
-            For assistance with using the PoC in a Pod environment, please reach out to Jonas Schweigert. <br>
-            Mail: joschwei@cisco.com. <br>
-            Webex: https://cisco.webex.com/meet/joschwei
-        </p>
-    </section>
-
-    <!-- Help -->
-    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-            <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-            <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DOCUMENTATION</h3>
+      </div>
+      <div>
+        <strong style="color: #333; font-size: 0.85em;">Webex</strong>
+        <div style="color: #0066ff; margin-top: 4px;">
+          <a href="https://cisco.webex.com/meet/joschwei" target="_blank" style="color: #0066ff; text-decoration: none;">cisco.webex.com/meet/joschwei</a>
         </div>
-        <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
-            The Documentation can be found in the following Github Repo: <br>
-            Github Repo: https://github.com/js-csco/piap-dev 
-        </p>
-    </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- Documentation Section -->
+  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0; margin-bottom: 2.5rem;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DOCUMENTATION</h3>
+    </div>
+    <p style="margin-top:0; margin-bottom:20px; color:#666; font-size:0.9em; line-height: 1.6;">
+      Complete documentation, setup guides, and technical details are available in the GitHub repository.
+    </p>
+    
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 3px solid #0066ff;">
+      <div>
+        <strong style="color: #333; font-size: 0.85em;">GitHub Repository</strong>
+        <div style="color: #0066ff; margin-top: 4px;">
+          <a href="https://github.com/js-csco/piap-dev" target="_blank" style="color: #0066ff; text-decoration: none;">github.com/js-csco/piap-dev</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Links Section -->
+  <section style="padding-bottom:2.5rem;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">QUICK LINKS</h3>
+    </div>
+    <p style="margin-top:0; margin-bottom:20px; color:#666; font-size:0.9em;">
+      Useful external resources and documentation.
+    </p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 3px solid #0066ff;">
+        <div style="color: #333; font-weight: 600; margin-bottom: 4px; font-size: 0.9em;">Cisco Secure Access API</div>
+        <a href="https://developer.cisco.com/docs/secure-access/" target="_blank" style="color: #0066ff; text-decoration: none; font-size: 0.85em;">developer.cisco.com/docs/secure-access</a>
+      </div>
+      
+      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 3px solid #0066ff;">
+        <div style="color: #333; font-weight: 600; margin-bottom: 4px; font-size: 0.9em;">Secure Access Dashboard</div>
+        <a href="https://dashboard.sse.cisco.com" target="_blank" style="color: #0066ff; text-decoration: none; font-size: 0.85em;">dashboard.sse.cisco.com</a>
+      </div>
+      
+      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 3px solid #0066ff;">
+        <div style="color: #333; font-weight: 600; margin-bottom: 4px; font-size: 0.9em;">Cilium Documentation</div>
+        <a href="https://docs.cilium.io" target="_blank" style="color: #0066ff; text-decoration: none; font-size: 0.85em;">docs.cilium.io</a>
+      </div>
+    </div>
+  </section>
 
 {% endblock %}

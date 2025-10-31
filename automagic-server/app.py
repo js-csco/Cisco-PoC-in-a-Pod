@@ -177,11 +177,10 @@ def secure_access():
                 flash(f"✅ Internet Access polcies successfully created.")
 
 
-
         except Exception as e:
             flash(f"⚠️ Error in app.py: {e}")
 
-        return redirect(url_for("secure-access"))
+        return redirect(url_for("secure_access"))
 
     return render_template('secure-access.html')
 

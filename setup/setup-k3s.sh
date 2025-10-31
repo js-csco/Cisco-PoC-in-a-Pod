@@ -153,20 +153,179 @@ echo "  Testing DNS resolution..."
 kubectl run test-dns --image=busybox --rm -i --restart=Never --timeout=30s -- nslookup google.com > /dev/null 2>&1 && echo "  ✓ DNS is working" || echo "  ⚠ DNS test failed (you may need to check your network)"
 echo ""
 
-# Step 12: Create namespace and deploy applications
-echo "Step 12: Deploying applications..."
+# Step 12: Deploy Cisco Secure Access Resource Connector
+echo "================================================"
+echo "  Cisco Secure Access Resource Connector Setup"
+echo "================================================"
+echo ""
 
 # Prompt for Cisco Connector credentials
-echo ""
-echo "=== Connector Configuration ==="
 echo "Please enter your connector credentials from Secure Access dashboard:"
 echo "(Connect > Network Connection > Connector Groups > *Table*)"
 read -p "Enter Connector Name: " CONNECTOR_NAME
 read -p "Enter Connector Key: " CONNECTOR_KEY
 echo ""
 
-# Prompt for Splunk admin password
-echo "=== Splunk Configuration ==="
+# Validate inputs
+if [ -z "$CONNECTOR_NAME" ] || [ -z "$CONNECTOR_KEY" ]; then
+    echo "❌ Connector name and key are required!"
+    exit 1
+fi
+
+echo "Step 12.1: Downloading Cisco Resource Connector setup script..."
+CONNECTOR_SETUP_SCRIPT="/tmp/setup_connector.sh"
+curl -o "$CONNECTOR_SETUP_SCRIPT" https://us.repo.acgw.sse.cisco.com/scripts/latest/setup_connector.sh
+
+if [ ! -f "$CONNECTOR_SETUP_SCRIPT" ]; then
+    echo "❌ Failed to download setup_connector.sh"
+    exit 1
+fi
+
+chmod +x "$CONNECTOR_SETUP_SCRIPT"
+echo "  ✓ Setup script downloaded"
+echo ""
+
+echo "Step 12.2: Running Cisco Resource Connector installation..."
+echo "  This will install Docker, download the connector image, and configure security policies..."
+echo ""
+
+# Run the Cisco setup script
+"$CONNECTOR_SETUP_SCRIPT"
+
+if [ $? -ne 0 ]; then
+    echo "❌ Connector installation failed!"
+    exit 1
+fi
+
+echo "  ✓ Connector installed successfully"
+echo ""
+
+echo "Step 12.3: Launching Resource Connector..."
+# Launch the connector with provided credentials
+sudo /opt/connector/install/connector.sh launch --name "$CONNECTOR_NAME" --key "$CONNECTOR_KEY"
+
+if [ $? -ne 0 ]; then
+    echo "❌ Connector launch failed!"
+    exit 1
+fi
+
+echo "  ✓ Resource Connector launched"
+echo ""
+
+# Wait for connector to be fully running
+echo "Step 12.4: Verifying connector status..."
+sleep 10
+
+CONNECTOR_CONTAINER=$(docker ps --filter "name=resource-connector" --format "{{.Names}}" | head -n 1)
+if [ -z "$CONNECTOR_CONTAINER" ]; then
+    echo "⚠ Warning: Could not find running connector container"
+    CONNECTOR_IP=$SERVER_IP
+else
+    echo "  ✓ Connector container running: $CONNECTOR_CONTAINER"
+    
+    # Get connector IP
+    CONNECTOR_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$CONNECTOR_CONTAINER")
+    if [ -z "$CONNECTOR_IP" ]; then
+        # If no bridge IP, it might be using host network
+        CONNECTOR_IP=$SERVER_IP
+        echo "  Connector using host network"
+    fi
+    echo "  Connector IP: $CONNECTOR_IP"
+fi
+echo ""
+
+# Step 13: Register Connector with Cilium (Simple approach)
+echo "Step 13: Creating Kubernetes Service for Resource Connector..."
+
+# Detect connector ports
+CONNECTOR_PORTS=$(docker port "$CONNECTOR_CONTAINER" 2>/dev/null || echo "")
+if [ -n "$CONNECTOR_PORTS" ]; then
+    echo "  Detected connector ports: $CONNECTOR_PORTS"
+else
+    echo "  Could not detect ports (connector may use host network or custom config)"
+fi
+
+# Create Service and Endpoints
+cat > /tmp/connector-service.yaml <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: connector
+  namespace: default
+  labels:
+    app: connector
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - port: 443
+    protocol: TCP
+    name: https
+  - port: 80
+    protocol: TCP
+    name: http
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: connector
+  namespace: default
+subsets:
+- addresses:
+  - ip: ${CONNECTOR_IP}
+  ports:
+  - port: 443
+    name: https
+  - port: 80
+    name: http
+EOF
+
+kubectl apply -f /tmp/connector-service.yaml
+echo "  ✓ Service created: connector.default.svc.cluster.local"
+echo ""
+
+# Step 13.1: Create permissive Network Policy
+echo "Step 13.1: Creating Network Policy (permissive - allows all traffic)..."
+cat > /tmp/connector-netpol.yaml <<EOF
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-to-connector
+  namespace: default
+spec:
+  description: "Allow all pods to reach connector"
+  endpointSelector: {}
+  egress:
+  - toCIDR:
+    - ${CONNECTOR_IP}/32
+  - toFQDNs:
+    - matchName: "connector.default.svc.cluster.local"
+  - toFQDNs:
+    - matchName: "connector"
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-from-connector
+  namespace: default
+spec:
+  description: "Allow traffic from connector to cluster"
+  endpointSelector: {}
+  ingress:
+  - fromCIDR:
+    - ${CONNECTOR_IP}/32
+EOF
+
+kubectl apply -f /tmp/connector-netpol.yaml
+echo "  ✓ Network policies created (CIDR-based, permissive mode)"
+echo "  Note: All traffic to/from connector is allowed"
+echo ""
+
+# Step 14: Prompt for Splunk admin password
+echo "================================================"
+echo "  Splunk Configuration"
+echo "================================================"
+echo ""
 echo "Set a password for the Splunk admin user (default username: admin)"
 echo "Password requirements: minimum 8 characters"
 read -s -p "Splunk Admin Password: " SPLUNK_PASSWORD
@@ -187,6 +346,9 @@ fi
 echo "✓ Splunk password set"
 echo ""
 
+# Step 15: Update configuration files with server IP
+echo "Step 15: Updating configuration files..."
+
 # Update Dashy config with actual server IP
 if [ -f "$REPO_ROOT/dashy/conf.yml" ]; then
     echo "  Updating Dashy config with server IP..."
@@ -204,15 +366,20 @@ if [ -d "$REPO_ROOT/automagic-server/templates" ]; then
     echo "  Updating automagic templates with server IP..."
     find "$REPO_ROOT/automagic-server/templates" -name "*.html" -exec sed -i "s/SERVER_IP/$SERVER_IP/g" {} \;
 fi
+echo ""
+
+# Step 16: Deploy Kubernetes applications
+echo "Step 16: Deploying applications to Kubernetes..."
 
 # Create namespace
 kubectl create namespace piap --dry-run=client -o yaml | kubectl apply -f -
 
-# Create Connector Secret with user-provided credentials
-echo "  Creating Connector credentials..."
+# Create Connector Secret (for reference in K8s, even though connector runs externally)
+echo "  Creating Connector credentials reference..."
 kubectl create secret generic connector-creds -n piap \
   --from-literal=connector-name="$CONNECTOR_NAME" \
   --from-literal=connector-key="$CONNECTOR_KEY" \
+  --from-literal=connector-ip="$CONNECTOR_IP" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 # Create Splunk Secret with user-provided password
@@ -226,25 +393,44 @@ kubectl apply -f "$REPO_ROOT/k8s/" -n piap
 echo "  ✓ Applications deployed to namespace 'piap'"
 echo ""
 
-# Step 13: Wait for pods to be ready
-echo "Step 13: Waiting for pods to start..."
+# Step 17: Wait for pods to be ready
+echo "Step 17: Waiting for pods to start..."
 sleep 10
 kubectl get pods -n piap
 echo ""
 
-# Step 14: Show access information
+# Step 18: Show access information
 echo "================================================"
 echo "  Setup Complete!"
 echo "================================================"
 echo ""
-echo "Your services are now accessible at:"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  🎯 Cisco Resource Connector Status"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "  Status: Running as external service"
+echo "  Container: ${CONNECTOR_CONTAINER:-Not found}"
+echo "  IP Address: $CONNECTOR_IP"
+echo "  Service DNS: connector.default.svc.cluster.local"
+echo ""
+echo "  ✓ Service and Endpoints created"
+echo "  ✓ Network policies: PERMISSIVE (all traffic allowed)"
+echo "  ✓ Pods can reach connector via: connector.default.svc.cluster.local"
+echo ""
+echo "  Check connector logs:"
+echo "    docker logs ${CONNECTOR_CONTAINER:-<container-name>}"
+echo ""
+echo "  Check connector status:"
+echo "    /opt/connector/install/connector.sh status"
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  🌐 Your Services"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 kubectl get svc -n piap -o wide
 echo ""
 echo "Hubble UI: http://$SERVER_IP:30800"
-echo ""
-echo "Access your services using the NodePort shown above."
-echo "Get Started with Dashy: http://$SERVER_IP:30100"
+echo "Dashy: http://$SERVER_IP:30100"
 echo ""
 echo "================================================"
 echo "  IMPORTANT: Splunk Setup Required"
@@ -274,13 +460,32 @@ echo ""
 echo "4. Configure the apps according to their documentation"
 echo ""
 echo "================================================"
+echo "  Useful Commands"
+echo "================================================"
 echo ""
-echo "Useful commands:"
-echo "  kubectl get pods -n piap           # Check pod status"
-echo "  kubectl get svc -n piap            # Check services"
-echo "  kubectl logs <pod-name> -n piap    # View logs"
-echo "  cilium status                      # Check Cilium status"
-echo "  cilium hubble ui                   # Open Hubble UI"
+echo "Kubernetes:"
+echo "  kubectl get pods -n piap              # Check pod status"
+echo "  kubectl get svc -n piap               # Check services"
+echo "  kubectl get svc connector             # Check connector service"
+echo "  kubectl logs <pod-name> -n piap       # View logs"
 echo ""
-echo "Note: If you need to uninstall, run: sudo /usr/local/bin/k3s-uninstall.sh"
+echo "Cilium:"
+echo "  cilium status                         # Check Cilium status"
+echo "  cilium hubble ui                      # Open Hubble UI"
+echo "  kubectl get ciliumnetworkpolicy       # Check network policies"
+echo ""
+echo "Connector:"
+echo "  docker ps | grep connector            # Check connector container"
+echo "  docker logs ${CONNECTOR_CONTAINER:-<container>}     # View connector logs"
+echo "  /opt/connector/install/connector.sh status         # Connector status"
+echo ""
+echo "Test connectivity from a pod:"
+echo "  kubectl run test --image=nicolaka/netshoot -it --rm -- bash"
+echo "  # Inside pod:"
+echo "  curl http://connector.default.svc.cluster.local"
+echo "  nslookup connector.default.svc.cluster.local"
+echo ""
+echo "Cleanup:"
+echo "  sudo /usr/local/bin/k3s-uninstall.sh  # Uninstall K3s"
+echo "  docker rm -f ${CONNECTOR_CONTAINER:-<container>}    # Stop connector"
 echo ""

@@ -5,48 +5,172 @@
 
 {% block content %}
 <h1>Overview: PoC in a Pod</h1>
-<p style="color:#555;">
-  Welcome to your Cisco PoC environment. This dashboard gives you a quick snapshot of your integrated modules,
-  system status, and next steps to begin your demo journey.
+<p style="color:#555; line-height: 1.6; margin-bottom: 2.5rem;">
+  Welcome to your Cisco PoC environment. This platform demonstrates <strong>Cisco Universal Zero Trust Application Access</strong>,
+  providing security across two critical dimensions: securing the network connection and controlling application access.
 </p>
 
-<section style="margin-top:2rem;">
-  <h2 style="color:#005073;">Environment Summary</h2>
-  <ul style="color:#444; line-height:1.6;">
-    <li><strong>Goal:</strong> Demonstrate unified Cisco security and observability in a modular lab.</li>
-    <li><strong>Modules:</strong> Secure Access, Duo, Cilium, Tetragon, Splunk.</li>
-    <li><strong>Status:</strong> Active environment ready for configuration.</li>
-  </ul>
+<!-- Zero Trust Dimensions -->
+<section style="margin-bottom: 3rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h2 style="color:#111; margin:0; font-size:1.3rem; letter-spacing:0.3px;">ZERO TRUST ACCESS DIMENSIONS</h2>
+  </div>
+  
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-top: 20px;">
+    
+    <!-- Dimension 1: Network Connection -->
+    <div style="background: #fff; border: 2px solid #0066ff; border-radius: 12px; padding: 24px;">
+      <div style="background: #0066ff; color: white; padding: 8px 12px; border-radius: 6px; display: inline-block; margin-bottom: 16px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px;">
+        DIMENSION 1
+      </div>
+      <h3 style="color: #0066ff; margin: 0 0 12px 0; font-size: 1.2rem;">Network Connection</h3>
+      <p style="color: #666; font-size: 0.9rem; margin-bottom: 16px; line-height: 1.5;">
+        Client to Server Connection - Establishing secure connectivity
+      </p>
+      
+      <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+        <div style="flex: 1;">
+          <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 0.85rem;">User & Device</div>
+          <ul style="margin: 0; padding-left: 18px; color: #666; font-size: 0.85rem; line-height: 1.6;">
+            <li>Approved Device Posture</li>
+            <li>Approved User Identity</li>
+            <li>Approved Device Process</li>
+            <li>User Experience</li>
+          </ul>
+        </div>
+        
+        <div style="flex-shrink: 0;">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <path d="M10 20 L30 20 M30 20 L24 14 M30 20 L24 26" stroke="#0066ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        
+        <div style="flex: 1;">
+          <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 0.85rem;">Application</div>
+          <ul style="margin: 0; padding-left: 18px; color: #666; font-size: 0.85rem; line-height: 1.6;">
+            <li>Approved Port</li>
+            <li>Approved Process</li>
+            <li>Microsegmented Surface</li>
+            <li>Observable Access</li>
+            <li>Runtime Security</li>
+            <li>L7: IPS, DLP & File Inspection</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Dimension 2: Application Access -->
+    <div style="background: #fff; border: 2px solid #10b981; border-radius: 12px; padding: 24px;">
+      <div style="background: #10b981; color: white; padding: 8px 12px; border-radius: 6px; display: inline-block; margin-bottom: 16px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px;">
+        DIMENSION 2
+      </div>
+      <h3 style="color: #10b981; margin: 0 0 12px 0; font-size: 1.2rem;">Application Access</h3>
+      <p style="color: #666; font-size: 0.9rem; margin-bottom: 16px; line-height: 1.5;">
+        User to Application Authentication & Authorization
+      </p>
+      
+      <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+        <div style="flex: 1;">
+          <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 0.85rem;">User & Device</div>
+          <ul style="margin: 0; padding-left: 18px; color: #666; font-size: 0.85rem; line-height: 1.6;">
+            <li>Approved User Trust Level</li>
+            <li style="text-decoration: underline;">Passwordless UX</li>
+          </ul>
+        </div>
+        
+        <div style="flex-shrink: 0;">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <path d="M10 20 L30 20 M30 20 L24 14 M30 20 L24 26" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        
+        <div style="flex: 1;">
+          <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 0.85rem;">Application</div>
+          <ul style="margin: 0; padding-left: 18px; color: #666; font-size: 0.85rem; line-height: 1.6;">
+            <li>RBAC</li>
+            <li style="text-decoration: underline;">Visibility</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+  </div>
 </section>
 
-<section style="margin-top:2rem;">
-  <h2 style="color:#005073;">Current Metrics</h2>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-top:1rem;">
-    <div style="background:#f8f9fc;border:1px solid #e0e0e0;border-radius:8px;padding:1rem;text-align:center;">
-      <h3 style="color:#0066ff;margin:0.25rem 0;">99.9%</h3>
-      <p style="margin:0;color:#555;font-size:0.9rem;">Uptime</p>
-    </div>
-    <div style="background:#f8f9fc;border:1px solid #e0e0e0;border-radius:8px;padding:1rem;text-align:center;">
-      <h3 style="color:#0066ff;margin:0.25rem 0;">5</h3>
-      <p style="margin:0;color:#555;font-size:0.9rem;">Active Modules</p>
-    </div>
-    <div style="background:#f8f9fc;border:1px solid #e0e0e0;border-radius:8px;padding:1rem;text-align:center;">
-      <h3 style="color:#0066ff;margin:0.25rem 0;">12</h3>
-      <p style="margin:0;color:#555;font-size:0.9rem;">Configured Policies</p>
+<!-- Environment Summary -->
+<section style="margin-bottom: 3rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h2 style="color:#111; margin:0; font-size:1.3rem; letter-spacing:0.3px;">ENVIRONMENT SUMMARY</h2>
+  </div>
+  
+  <div style="background: #f8f9fa; border-left: 3px solid #0066ff; padding: 20px; border-radius: 8px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+      <div>
+        <div style="color: #333; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;">GOAL</div>
+        <div style="color: #666; font-size: 0.9rem;">Showcase Cisco Universal Zero Trust Application Access</div>
+      </div>
+      <div>
+        <div style="color: #333; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;">INTEGRATED MODULES</div>
+        <div style="color: #666; font-size: 0.9rem;">Secure Access, Duo, Cilium, Tetragon, Splunk</div>
+      </div>
+      <div>
+        <div style="color: #333; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;">STATUS</div>
+        <div style="color: #10b981; font-size: 0.9rem; font-weight: 600;">Active & Ready for Configuration</div>
+      </div>
     </div>
   </div>
 </section>
 
-<section style="margin-top:2.5rem;">
-  <h2 style="color:#005073;">Next Steps</h2>
-  <p style="color:#555;">
+<!-- Current Metrics -->
+<section style="margin-bottom: 3rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h2 style="color:#111; margin:0; font-size:1.3rem; letter-spacing:0.3px;">CURRENT METRICS</h2>
+  </div>
+  
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-top:1rem;">
+    <div style="background:#fff; border:2px solid #e0e0e0; border-radius:10px; padding:1.5rem; text-align:center;">
+      <h3 style="color:#0066ff; margin:0.25rem 0; font-size: 2rem;">99.9%</h3>
+      <p style="margin:0; color:#666; font-size:0.85rem; font-weight: 600; letter-spacing: 0.3px;">UPTIME</p>
+    </div>
+    <div style="background:#fff; border:2px solid #e0e0e0; border-radius:10px; padding:1.5rem; text-align:center;">
+      <h3 style="color:#0066ff; margin:0.25rem 0; font-size: 2rem;">5</h3>
+      <p style="margin:0; color:#666; font-size:0.85rem; font-weight: 600; letter-spacing: 0.3px;">ACTIVE MODULES</p>
+    </div>
+    <div style="background:#fff; border:2px solid #e0e0e0; border-radius:10px; padding:1.5rem; text-align:center;">
+      <h3 style="color:#0066ff; margin:0.25rem 0; font-size: 2rem;">12</h3>
+      <p style="margin:0; color:#666; font-size:0.85rem; font-weight: 600; letter-spacing: 0.3px;">CONFIGURED POLICIES</p>
+    </div>
+  </div>
+</section>
+
+<!-- Next Steps -->
+<section style="margin-bottom: 3rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h2 style="color:#111; margin:0; font-size:1.3rem; letter-spacing:0.3px;">NEXT STEPS</h2>
+  </div>
+  
+  <p style="color:#666; line-height: 1.6; margin-bottom: 20px; font-size: 0.95rem;">
     Get started by visiting the <strong>Cisco Secure Access</strong> module to authenticate,
-    create private access resources, and deploy initial configurations.
+    create private access resources, and deploy initial configurations. Use the Dashy dashboard
+    to access all integrated services.
   </p>
-  <a href="{{ url_for('secure_access') }}"
-     style="display:inline-block;margin-top:1rem;background-color:#0066ff;color:#fff;
-            padding:10px 16px;border-radius:6px;text-decoration:none;font-weight:500;">
-    🚀 Go to Cisco Secure Access
+  
+  <a href="http://SERVER_IP:30100"
+     style="display:inline-block; background-color:#0066ff; color:#fff;
+            padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600;
+            font-size: 0.95rem; letter-spacing: 0.3px; transition: background-color 0.2s;">
+    OPEN DASHY DASHBOARD
   </a>
 </section>
+
+<style>
+  a[href*="30100"]:hover {
+    background-color: #0052cc;
+  }
+</style>
+
 {% endblock %}
