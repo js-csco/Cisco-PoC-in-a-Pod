@@ -21,10 +21,12 @@ sections:
         description: Please read before using this PoC. Run at your own risk.
         icon: fas fa-exclamation-triangle
         url: https://github.com/js-csco/piap-kind/blob/main/readme.md
+        statusCheck: false
       - title: PIAP GitHub Repository
         description: Official PIAP Repository
         icon: fas fa-code-branch
         url: https://github.com/js-csco/piap-kind.git
+        statusCheck: false
   - name: Secure Access Docs
     items:
       - title: Secure Access Docs
@@ -100,6 +102,24 @@ sections:
         url: https://packetlosstest.com/
         icon: fas fa-globe
         statusCheck: true
+  - name: Licenses
+    items:
+      - title: Cisco Secure Access
+        description: Approach your Cisco Account Team.
+        icon: fas fa-file-contract
+        url: https://www.cisco.com/c/en/us/products/collateral/security/secure-access/free-trial-users-guide.html
+      - title: Duo & Identity Intelligence
+        description: Get your own tenant here
+        icon: fas fa-file-contract
+        url: https://signup.duo.com/
+      - title: Splunk
+        description: Free Splunk License included
+        icon: fas fa-file-contract
+        url: https://www.splunk.com/en_us/download/splunk-enterprise.html
+      - title: Isovalent
+        description: Free Isovalent Enterprise License
+        icon: fas fa-file-contract
+        url: https://www.nginx.com/resources/wiki/start/topics/licensing/
   - name: Downloads
     items:
       - title: Secure Client

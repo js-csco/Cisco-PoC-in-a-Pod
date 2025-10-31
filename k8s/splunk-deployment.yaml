@@ -66,18 +66,30 @@ spec:
         image: splunk/splunk:latest
         env:
         - name: SPLUNK_START_ARGS
-          value: "--accept-license"
-        - name: SPLUNK_GENERAL_TERMS
-          value: "--accept-sgt-current-at-splunk-com"
+          value: "--accept-license --no-prompt"
         - name: SPLUNK_PASSWORD
           valueFrom:
             secretKeyRef:
               name: splunk-creds
               key: password
-        - name: SPLUNK_USER
-          value: "admin"
+        # Disable Ansible deployment which causes the sudo error
+        - name: SPLUNK_ANSIBLE_ENV
+          value: "local"
+        - name: SPLUNK_ANSIBLE_PRE_TASKS
+          value: "null"
+        - name: SPLUNK_ANSIBLE_POST_TASKS
+          value: "null"
         - name: TZ
           value: Europe/Berlin
+        # Add this to ensure proper startup
+        - name: SPLUNK_HOME_OWNERSHIP_ENFORCEMENT
+          value: "false"
+        # CRITICAL: Enable KVStore
+        - name: SPLUNK_ENABLE_KVSTORE
+          value: "true"
+        # Ensure proper role
+        - name: SPLUNK_ROLE
+          value: "splunk_standalone"
         ports:
         - name: web
           containerPort: 8000
@@ -87,6 +99,9 @@ spec:
           protocol: TCP
         - name: splunkd
           containerPort: 8089
+          protocol: TCP
+        - name: kvstore
+          containerPort: 8191
           protocol: TCP
         volumeMounts:
         - name: splunk-data
@@ -105,10 +120,20 @@ spec:
             path: /en-US/account/login
             port: 8000
             scheme: HTTP
-          initialDelaySeconds: 120
+          initialDelaySeconds: 300
           periodSeconds: 30
           timeoutSeconds: 10
+          failureThreshold: 5
         readinessProbe:
+          httpGet:
+            path: /en-US/account/login
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 240
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
+        startupProbe:
           httpGet:
             path: /en-US/account/login
             port: 8000
@@ -116,6 +141,7 @@ spec:
           initialDelaySeconds: 60
           periodSeconds: 10
           timeoutSeconds: 5
+          failureThreshold: 30
       volumes:
       - name: splunk-data
         hostPath:

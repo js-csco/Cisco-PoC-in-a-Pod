@@ -8,8 +8,8 @@ Cisco PoC in a Pod:
 
 1. Clone this repository
 ```bash
-   git clone https://github.com/yourusername/piap-kind.git
-   cd piap-kind/setup
+   git clone https://github.com/yourusername/piap-k3s.git
+   cd piap-k3s/setup
 ```
 
 2. Make the setup script executable and run it
@@ -19,8 +19,9 @@ Cisco PoC in a Pod:
 ```
 
 3. Enter your Connector credentials when prompted
+4. Enter your Splunk Password when prompted
 
-4. Access your services at `http://<server-ip>:<nodeport>`
+5. Access your services at `http://<server-ip>:<nodeport>`
 
 
 

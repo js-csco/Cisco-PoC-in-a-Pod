@@ -11,7 +11,7 @@ BASE_URL = "https://api.sse.cisco.com"
 
 def follow_recom(token):
     """
-    Returns the first connector group ID.
+        Update Microsoft 365 compatibility setting to True
     """
     url = f"{BASE_URL}/policies/v2/settings"
     headers = {
@@ -28,7 +28,7 @@ def follow_recom(token):
         }
     ]
 
-    r = requests.post(url, headers=headers, json=payload, timeout=15)
+    r = requests.put(url, headers=headers, json=payload, timeout=15)
     print("Response:", r.status_code, r.text)
 
     if r.status_code not in (200, 201):

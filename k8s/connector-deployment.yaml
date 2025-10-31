@@ -14,6 +14,7 @@ spec:
     metadata:
       labels:
         io.kompose.service: connector
+        app: connector
     spec:
       containers:
       - name: connector

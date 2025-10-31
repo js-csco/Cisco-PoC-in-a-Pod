@@ -24,6 +24,7 @@ spec:
       labels:
         io.kompose.network/piap-kind-komp-cisco-pod-network: "true"
         io.kompose.service: dashy
+        app: dashy
     spec:
       containers:
         - image: ghcr.io/lissy93/dashy:latest

@@ -24,6 +24,7 @@ spec:
       labels:
         io.kompose.network/piap-kind-komp-cisco-pod-network: "true"
         io.kompose.service: nginx
+        app: nginx
     spec:
       initContainers:
         - name: copy-files

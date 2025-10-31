@@ -23,3 +23,8 @@ spec:
     targetPort: 8089
     nodePort: 30502
     protocol: TCP
+  - name: kvstore
+    port: 8191
+    targetPort: 8191
+    # No nodePort - only accessible within cluster
+    protocol: TCP

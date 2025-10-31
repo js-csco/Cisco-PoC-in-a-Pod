@@ -23,6 +23,7 @@ spec:
       labels:
         io.kompose.network/piap-kind-komp-cisco-pod-network: "true"
         io.kompose.service: rdp-server
+        app: rdp-server
     spec:
       containers:
         - env:

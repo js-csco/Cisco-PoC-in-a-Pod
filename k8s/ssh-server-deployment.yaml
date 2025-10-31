@@ -23,6 +23,7 @@ spec:
       labels:
         io.kompose.network/piap-kind-komp-cisco-pod-network: "true"
         io.kompose.service: ssh-server
+        app: ssh-server
     spec:
       containers:
         - env:
