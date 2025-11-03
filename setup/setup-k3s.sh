@@ -2,7 +2,7 @@
 set -e
 
 echo "================================================"
-echo "  K3s + Cilium + Hubble + Tetragon Setup"
+echo "  K3s + Cilium + Hubble + Tetragon + Cisco Resource Connector Setup"
 echo "================================================"
 echo ""
 
@@ -172,7 +172,13 @@ if [ -z "$CONNECTOR_NAME" ] || [ -z "$CONNECTOR_KEY" ]; then
     exit 1
 fi
 
-echo "Step 12.1: Downloading Cisco Resource Connector setup script..."
+echo "Step 12.1: Preparing system for Cisco Resource Connector..."
+echo "  Removing conflicting containerd package (Docker will install its own)..."
+apt-get remove -y containerd 2>/dev/null || true
+echo "  ✓ System prepared"
+echo ""
+
+echo "Step 12.2: Downloading Cisco Resource Connector setup script..."
 CONNECTOR_SETUP_SCRIPT="/tmp/setup_connector.sh"
 curl -o "$CONNECTOR_SETUP_SCRIPT" https://us.repo.acgw.sse.cisco.com/scripts/latest/setup_connector.sh
 
@@ -185,7 +191,7 @@ chmod +x "$CONNECTOR_SETUP_SCRIPT"
 echo "  ✓ Setup script downloaded"
 echo ""
 
-echo "Step 12.2: Running Cisco Resource Connector installation..."
+echo "Step 12.3: Running Cisco Resource Connector installation..."
 echo "  This will install Docker, download the connector image, and configure security policies..."
 echo ""
 
@@ -200,7 +206,16 @@ fi
 echo "  ✓ Connector installed successfully"
 echo ""
 
-echo "Step 12.3: Launching Resource Connector..."
+echo "Step 12.4: Verifying daemontools installation..."
+if ! command -v svc &> /dev/null; then
+    echo "  ⚠ Warning: daemontools 'svc' command not found"
+    echo "  This may cause issues with connector service management"
+else
+    echo "  ✓ daemontools installed correctly"
+fi
+echo ""
+
+echo "Step 12.5: Launching Resource Connector..."
 # Launch the connector with provided credentials
 sudo /opt/connector/install/connector.sh launch --name "$CONNECTOR_NAME" --key "$CONNECTOR_KEY"
 
@@ -213,15 +228,22 @@ echo "  ✓ Resource Connector launched"
 echo ""
 
 # Wait for connector to be fully running
-echo "Step 12.4: Verifying connector status..."
+echo "Step 12.6: Verifying connector status..."
 sleep 10
 
-CONNECTOR_CONTAINER=$(docker ps --filter "name=resource-connector" --format "{{.Names}}" | head -n 1)
+# Fix: Use the actual connector name, not "resource-connector"
+CONNECTOR_CONTAINER=$(docker ps --format "{{.Names}}" | grep -i connector | head -n 1)
 if [ -z "$CONNECTOR_CONTAINER" ]; then
     echo "⚠ Warning: Could not find running connector container"
+    echo "  Checking all containers..."
+    docker ps -a
     CONNECTOR_IP=$SERVER_IP
 else
     echo "  ✓ Connector container running: $CONNECTOR_CONTAINER"
+    
+    # Check connector logs for errors
+    echo "  Checking connector logs..."
+    docker logs "$CONNECTOR_CONTAINER" 2>&1 | tail -n 20
     
     # Get connector IP
     CONNECTOR_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$CONNECTOR_CONTAINER")
@@ -420,8 +442,8 @@ echo ""
 echo "  Check connector logs:"
 echo "    docker logs ${CONNECTOR_CONTAINER:-<container-name>}"
 echo ""
-echo "  Check connector status:"
-echo "    /opt/connector/install/connector.sh status"
+echo "  Verify connector is reaching cloud:"
+echo "    docker logs ${CONNECTOR_CONTAINER:-<container-name>} | grep -i 'connect\|auth\|error'"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  🌐 Your Services"
@@ -477,7 +499,7 @@ echo ""
 echo "Connector:"
 echo "  docker ps | grep connector            # Check connector container"
 echo "  docker logs ${CONNECTOR_CONTAINER:-<container>}     # View connector logs"
-echo "  /opt/connector/install/connector.sh status         # Connector status"
+echo "  docker logs -f ${CONNECTOR_CONTAINER:-<container>}  # Follow connector logs"
 echo ""
 echo "Test connectivity from a pod:"
 echo "  kubectl run test --image=nicolaka/netshoot -it --rm -- bash"
