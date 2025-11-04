@@ -1,12 +1,132 @@
 {% extends "base.html" %}
 {% set active_page = 'duo' %}
-{% block title %}Duo & Identity Intelligence — PoC in a Pod{% endblock %}
+{% block title %}Cisco Duo - Cisco PoC in a Pod{% endblock %}
 
 {% block content %}
-  <h1>Duo & Identity Intelligence</h1>
-  <p style="color:#555;">
-    Get your own Cisco Duo & Identity Intelligence tenant here: https://signup.duo.com/
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class="messages" style="list-style:none; padding:0; margin-bottom:1.5rem;">
+      {% for message in messages %}
+        <li style="background:#e8f0fe; color:#333; padding:8px 12px; border-radius:6px; margin-bottom:6px;">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
 
-    🚧 Work in progress. Duo is coming soon to PoC in a Pod.
-  </p>
+<form method="POST" style="display:flex; flex-direction:column; gap:3rem;">
+    <h1>Cisco Duo</h1>
+
+    <!-- AUTHENTICATION -->
+    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">AUTHENTICATION</h3>
+      </div>
+
+      <p style="color:#666; font-size:0.95em; margin-top:0; margin-bottom:20px;">
+        Connect to Cisco Duo Admin API with your API hostname, integration key, and secret key.
+      </p>
+
+      <input type="text" id="api_hostname" name="api_hostname" placeholder="API Hostname (e.g., api-xxxxx.duosecurity.com)" required
+             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+
+      <input type="password" id="integration_key" name="integration_key" placeholder="Integration Key" required
+             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+
+      <input type="password" id="secret_key" name="secret_key" placeholder="Secret Key" required
+             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+    </section>
+
+    <!-- USER & GROUP CREATION -->
+    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">USER & GROUP CREATION</h3>
+      </div>
+
+      <p style="margin-top:0; margin-bottom:25px; color:#555; font-size:0.95em;">
+        Automate user and group provisioning for your Duo PoC environment. This action will create test users, 
+        create the "PoC Users" group, and automatically assign all users to the group for simplified management.
+      </p>
+
+      <h4 style="color:#005073; margin-bottom:5px;">Setup PoC Users & Group</h4>
+      <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
+        This will perform the following actions:<br>
+        • Create test user with email and username<br>
+        • Create "PoC Users" group<br>
+        • Add user to "PoC Users" group
+      </p>
+
+      <input type="email" id="user_email" name="user_email" placeholder="User Email" 
+             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+
+      <input type="text" id="user_username" name="user_username" placeholder="Username" 
+             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+
+      <button type="submit" name="action" value="setup_users_group"
+              style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                     border-radius:6px; font-weight:500; cursor:pointer;">
+        Setup Users & Group
+      </button>
+    </section>
+
+    <!-- ACCESS & ENROLLMENT POLICY -->
+    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">ACCESS & ENROLLMENT POLICY</h3>
+      </div>
+
+      <p style="margin-top:0; margin-bottom:25px; color:#555; font-size:0.95em;">
+        Configure passwordless enrollment and authentication policies for seamless user experience.
+      </p>
+
+      <h4 style="color:#005073; margin-bottom:5px;">Passwordless Enrollment</h4>
+      <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
+        Enable passwordless enrollment to simplify the onboarding process for test users.
+      </p>
+
+      <button type="submit" name="action" value="create_passwordless_enrollment"
+              style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                     border-radius:6px; font-weight:500; cursor:pointer; margin-bottom:30px;">
+        Create Passwordless Enrollment
+      </button>
+
+      <h4 style="color:#005073; margin-bottom:5px;">Authentication Policy</h4>
+      <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
+        Create an authentication policy for your PoC users with appropriate security settings.
+      </p>
+
+      <button type="submit" name="action" value="create_auth_policy"
+              style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                     border-radius:6px; font-weight:500; cursor:pointer;">
+        Create Authentication Policy
+      </button>
+    </section>
+
+    <!-- INTEGRATION -->
+    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">INTEGRATION</h3>
+      </div>
+
+      <p style="margin-top:0; margin-bottom:25px; color:#555; font-size:0.95em;">
+        Integrate Cisco Duo with Cisco Secure Access using SSO and SAML configuration.
+      </p>
+
+      <h4 style="color:#005073; margin-bottom:5px;">Cisco Secure Access Integration</h4>
+      <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
+        Create a "Cisco Secure Access" integration with SSO and SAML support for unified authentication.
+      </p>
+
+      <button type="submit" name="action" value="create_saml_integration"
+              style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                     border-radius:6px; font-weight:500; cursor:pointer;">
+        Create "Cisco Secure Access" Integration
+      </button>
+    </section>
+
+  {{ super() }}
+</form>
 {% endblock %}

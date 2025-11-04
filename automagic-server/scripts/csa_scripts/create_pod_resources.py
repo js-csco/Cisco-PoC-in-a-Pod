@@ -91,13 +91,14 @@ def create_private_resources(token, vm_ip, resource_group_id):
 
     # add more resources here:
     resources = [
-        {"name": "Dashy Overview", "port": 9000, "protocol": "Any"},
-        {"name": "Automagic Server", "port": 9100, "protocol": "Any"},
-        {"name": "Kanboard Test Guide", "port": 8090, "protocol": "Any"},
-        {"name": "OpenSSH Server", "port": 2222, "protocol": "Any"},
-        {"name": "Web Server", "port": 8080, "protocol": "Any"},
-        {"name": "Automation Server", "port": 8200, "protocol": "Any"},
-        {"name": "RDP Server", "port": 3390, "protocol": "Any"},
+        {"name": "Dashy Overview", "port": 30100, "protocol": "Any"},
+        {"name": "Automagic Server", "port": 30200, "protocol": "Any"},
+        {"name": "Kanboard Test Guide", "port": 30300, "protocol": "Any"},
+        {"name": "OpenSSH Server", "port": 30022, "protocol": "Any"},
+        {"name": "Web Server", "port": 30400, "protocol": "Any"},
+        {"name": "Splunk Dashboard", "port": 30500, "protocol": "Any"},
+        {"name": "Splunk MCP", "port": 30501, "protocol": "Any"},
+        {"name": "RDP Server", "port": 30390, "protocol": "Any"},
     ]
 
 

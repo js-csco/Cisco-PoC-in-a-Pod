@@ -20,6 +20,7 @@ echo "  - All Kubernetes resources (piap namespace, secrets, services)"
 echo "  - All iptables rules"
 echo "  - All symlinks created for applications"
 echo "  - Temporary setup files"
+echo "  - Python packages (duo-client)"
 echo ""
 read -p "Are you sure you want to continue? (yes/no): " CONFIRM
 
@@ -170,7 +171,16 @@ rm -f /tmp/connector-netpol.yaml 2>/dev/null || true
 echo "  ✓ Temporary files removed"
 echo ""
 
-echo "Step 11: Removing Helm (optional)..."
+echo "Step 11: Removing Python packages..."
+if command -v pip3 &> /dev/null; then
+    pip3 uninstall -y duo-client 2>/dev/null || true
+    echo "  ✓ duo-client removed"
+else
+    echo "  pip3 not found, skipping..."
+fi
+echo ""
+
+echo "Step 12: Removing Helm (optional)..."
 if command -v helm &> /dev/null; then
     read -p "Remove Helm? (yes/no): " REMOVE_HELM
     if [ "$REMOVE_HELM" = "yes" ]; then
@@ -189,7 +199,7 @@ else
 fi
 echo ""
 
-echo "Step 12: Docker cleanup (optional)..."
+echo "Step 13: Docker cleanup (optional)..."
 if command -v docker &> /dev/null; then
     read -p "Remove Docker (installed by connector setup)? (yes/no): " REMOVE_DOCKER
     if [ "$REMOVE_DOCKER" = "yes" ]; then
@@ -220,12 +230,12 @@ else
 fi
 echo ""
 
-echo "Step 13: Cleaning up kubectl config..."
+echo "Step 14: Cleaning up kubectl config..."
 rm -rf /home/$ACTUAL_USER/.kube 2>/dev/null || true
 echo "  ✓ kubectl config removed"
 echo ""
 
-echo "Step 14: Removing leftover directories..."
+echo "Step 15: Removing leftover directories..."
 rm -rf /var/lib/rancher 2>/dev/null || true
 rm -rf /var/lib/cni 2>/dev/null || true
 rm -rf /run/cilium 2>/dev/null || true
@@ -264,6 +274,7 @@ echo "  ✓ All iptables rules"
 echo "  ✓ Application symlinks"
 echo "  ✓ Temporary files"
 echo "  ✓ kubectl configuration"
+echo "  ✓ Python packages (duo-client if selected)"
 echo ""
 echo "Your system is now clean. You can:"
 echo "  1. Review your configuration files (check for SERVER_IP placeholders)"

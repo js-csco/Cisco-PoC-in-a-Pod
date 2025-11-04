@@ -12,6 +12,10 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/cds-theme-variables.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/cds-theme-blue-variables.css') }}">
 
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
   <style>
     body {
       margin: 0;
@@ -142,25 +146,25 @@
   <div class="main">
     <nav class="sidebar">
         <a href="{{ url_for('overview') }}" class="menu-item {% if active_page == 'overview' %}active{% endif %}">
-        <span class="menu-icon"></span> Overview
+        <span class="fa-solid fa-house"></span> Overview
         </a>
         <a href="{{ url_for('secure_access') }}" class="menu-item {% if active_page == 'secure_access' %}active{% endif %}">
-        <span class="menu-icon"></span> Cisco Secure Access
+        <span class="fa-solid fa-cloud"></span> Cisco Secure Access
         </a>
         <a href="{{ url_for('duo') }}" class="menu-item {% if active_page == 'duo' %}active{% endif %}">
-        <span class="menu-icon"></span> Duo & Identity Intelligence
+        <span class="fa-solid fa-user"></span> Duo & Identity Intelligence
         </a>
         <a href="{{ url_for('cilium') }}" class="menu-item {% if active_page == 'cilium' %}active{% endif %}">
-        <span class="menu-icon"></span> Cilium
+        <span class="fa-solid fa-network-wired"></span> Cilium
         </a>
         <a href="{{ url_for('tetragon') }}" class="menu-item {% if active_page == 'tetragon' %}active{% endif %}">
-        <span class="menu-icon"></span> Tetragon
+        <span class="fa-solid fa-shield-halved"></span> Tetragon
         </a>
         <a href="{{ url_for('splunk') }}" class="menu-item {% if active_page == 'splunk' %}active{% endif %}">
-        <span class="menu-icon"></span> Splunk
+        <span class="fa-solid fa-compass"></span> Splunk
         </a>
         <a href="{{ url_for('help_page') }}" class="menu-item {% if active_page == 'help' %}active{% endif %}">
-        <span class="menu-icon"></span> Help
+        <span class="fa-solid fa-circle-info"></span> Help
         </a>
     </nav>
 

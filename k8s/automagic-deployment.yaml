@@ -30,7 +30,7 @@ spec:
         - args:
             - bash
             - -c
-            - pip install --no-cache-dir flask requests && python /app/app.py
+            - pip3 install --no-cache-dir --break-system-packages flask requests duo-client && python3 /app/app.py
           env:
             - name: TZ
               value: Europe/Berlin

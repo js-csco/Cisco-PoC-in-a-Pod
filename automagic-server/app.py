@@ -18,6 +18,12 @@ from scripts.csa_scripts.create_int_policy import (
     create_int_block_apps_policy,
     create_allow_all_policy
 )
+from scripts.duo.duo_automation import (
+    create_user_and_group,
+    create_passwordless_enrollment,
+    create_authentication_policy,
+    create_saml_integration
+)
 
 
 app = Flask(__name__)
@@ -185,9 +191,90 @@ def secure_access():
     return render_template('secure-access.html')
 
 
-@app.route('/duo')
+
+############# App.Route Duo ##############
+@app.route('/duo', methods=['GET', 'POST'])
 def duo():
+    if request.method == 'POST':
+        # Get credentials from form
+        api_hostname = request.form.get('api_hostname')
+        integration_key = request.form.get('integration_key')
+        secret_key = request.form.get('secret_key')
+        action = request.form.get('action')
+        
+        # Validate credentials are provided
+        if not all([api_hostname, integration_key, secret_key]):
+            flash("⚠️ Please provide all Duo credentials (API hostname, integration key, and secret key)")
+            return redirect(url_for('duo'))
+        
+        try:
+            # Action: SETUP USERS & GROUP
+            if action == 'setup_users_group':
+                email = request.form.get('user_email')
+                username = request.form.get('user_username')
+                
+                if not email or not username:
+                    flash("⚠️ Please provide both email and username")
+                    return redirect(url_for('duo'))
+                
+                # Import and call the automation function
+                from scripts.duo.duo_automation import create_user_and_group
+                
+                result = create_user_and_group(
+                    api_hostname=api_hostname,
+                    integration_key=integration_key,
+                    secret_key=secret_key,
+                    username=username,
+                    email=email
+                )
+                
+                flash(f"✅ User '{username}' created successfully (ID: {result['user_id']})")
+                if result['group_created']:
+                    flash(f"✅ Group 'PoC Users' created (ID: {result['group_id']})")
+                else:
+                    flash(f"ℹ️ Using existing 'PoC Users' group (ID: {result['group_id']})")
+                flash(f"✅ User added to 'PoC Users' group")
+            
+            # Action: CREATE PASSWORDLESS ENROLLMENT
+            elif action == 'create_passwordless_enrollment':
+                from scripts.duo.duo_automation import create_passwordless_enrollment
+                
+                result = create_passwordless_enrollment(
+                    api_hostname=api_hostname,
+                    integration_key=integration_key,
+                    secret_key=secret_key
+                )
+                flash("ℹ️ Passwordless enrollment requires manual configuration in Duo Admin Panel")
+            
+            # Action: CREATE AUTHENTICATION POLICY
+            elif action == 'create_auth_policy':
+                from scripts.duo.duo_automation import create_authentication_policy
+                
+                result = create_authentication_policy(
+                    api_hostname=api_hostname,
+                    integration_key=integration_key,
+                    secret_key=secret_key
+                )
+                flash("ℹ️ Authentication policy requires manual configuration in Duo Admin Panel")
+            
+            # Action: CREATE SAML INTEGRATION
+            elif action == 'create_saml_integration':
+                from scripts.duo.duo_automation import create_saml_integration
+                
+                result = create_saml_integration(
+                    api_hostname=api_hostname,
+                    integration_key=integration_key,
+                    secret_key=secret_key
+                )
+                flash("ℹ️ SAML integration requires manual configuration in Duo Admin Panel")
+        
+        except Exception as e:
+            flash(f"⚠️ Error: {str(e)}")
+        
+        return redirect(url_for('duo'))
+    
     return render_template('duo.html')
+
 
 @app.route('/cilium')
 def cilium():
