@@ -18,12 +18,6 @@ from scripts.csa_scripts.create_int_policy import (
     create_int_block_apps_policy,
     create_allow_all_policy
 )
-from scripts.duo.duo_automation import (
-    create_user_and_group,
-    create_passwordless_enrollment,
-    create_authentication_policy,
-    create_saml_integration
-)
 
 
 app = Flask(__name__)
@@ -191,7 +185,6 @@ def secure_access():
     return render_template('secure-access.html')
 
 
-
 ############# App.Route Duo ##############
 @app.route('/duo', methods=['GET', 'POST'])
 def duo():
@@ -202,71 +195,113 @@ def duo():
         secret_key = request.form.get('secret_key')
         action = request.form.get('action')
         
-        # Validate credentials are provided
+        # Store credentials in session for future use
+        if api_hostname and integration_key and secret_key:
+            session['duo_api_hostname'] = api_hostname
+            session['duo_integration_key'] = integration_key
+            session['duo_secret_key'] = secret_key
+        
+        # Validate credentials are provided (either from form or session)
+        api_hostname = api_hostname or session.get('duo_api_hostname')
+        integration_key = integration_key or session.get('duo_integration_key')
+        secret_key = secret_key or session.get('duo_secret_key')
+        
         if not all([api_hostname, integration_key, secret_key]):
             flash("⚠️ Please provide all Duo credentials (API hostname, integration key, and secret key)")
             return redirect(url_for('duo'))
         
         try:
-            # Action: SETUP USERS & GROUP
-            if action == 'setup_users_group':
-                email = request.form.get('user_email')
-                username = request.form.get('user_username')
+            # Action: SETUP DUO (Complete setup with single user)
+            if action == 'setup_duo':
+                email = request.form.get('user_email', '').strip()
+                username = request.form.get('user_username', '').strip()
                 
+                # Validate user is provided
                 if not email or not username:
                     flash("⚠️ Please provide both email and username")
                     return redirect(url_for('duo'))
                 
-                # Import and call the automation function
-                from scripts.duo.duo_automation import create_user_and_group
+                # Create user list with single user
+                users_list = [{
+                    'email': email,
+                    'username': username
+                }]
                 
-                result = create_user_and_group(
+                # Import and call the complete setup function
+                from scripts.duo.duo_automation import setup_duo_complete
+                
+                result = setup_duo_complete(
                     api_hostname=api_hostname,
                     integration_key=integration_key,
                     secret_key=secret_key,
-                    username=username,
-                    email=email
+                    users_list=users_list
                 )
                 
-                flash(f"✅ User '{username}' created successfully (ID: {result['user_id']})")
+                # Display results
+                if result['users_created']:
+                    user = result['users_created'][0]
+                    flash(f"✅ User '{user['username']}' created (ID: {user['user_id']})")
+                
+                if result['users_existing']:
+                    user = result['users_existing'][0]
+                    flash(f"ℹ️ User '{user['username']}' already exists (ID: {user['user_id']})")
+                
                 if result['group_created']:
                     flash(f"✅ Group 'PoC Users' created (ID: {result['group_id']})")
                 else:
                     flash(f"ℹ️ Using existing 'PoC Users' group (ID: {result['group_id']})")
-                flash(f"✅ User added to 'PoC Users' group")
-            
-            # Action: CREATE PASSWORDLESS ENROLLMENT
-            elif action == 'create_passwordless_enrollment':
-                from scripts.duo.duo_automation import create_passwordless_enrollment
                 
-                result = create_passwordless_enrollment(
+                if result['users_added_to_group'] > 0:
+                    flash(f"✅ User added to 'PoC Users' group")
+                
+                # Display any errors
+                if result['errors']:
+                    for error in result['errors']:
+                        flash(f"⚠️ {error}")
+            
+            # Action: GET INTEGRATIONS (list all integrations)
+            elif action == 'get_integrations':
+                from scripts.duo.duo_automation import list_integrations
+                
+                integrations = list_integrations(
                     api_hostname=api_hostname,
                     integration_key=integration_key,
                     secret_key=secret_key
                 )
-                flash("ℹ️ Passwordless enrollment requires manual configuration in Duo Admin Panel")
-            
-            # Action: CREATE AUTHENTICATION POLICY
-            elif action == 'create_auth_policy':
-                from scripts.duo.duo_automation import create_authentication_policy
                 
-                result = create_authentication_policy(
+                if integrations:
+                    flash(f"📋 Found {len(integrations)} integration(s):")
+                    for integration in integrations:
+                        name = integration.get('name', 'N/A')
+                        int_type = integration.get('type', 'N/A')
+                        int_key = integration.get('integration_key', 'N/A')
+                        flash(f"• {name} | Type: {int_type} | Key: {int_key}")
+                else:
+                    flash("ℹ️ No integrations found")
+            
+            # Action: CREATE INTEGRATIONS
+            elif action == 'create_integrations':
+                from scripts.duo.duo_automation import create_integration
+                
+                # Create Generic SAML Integration
+                saml_result = create_integration(
                     api_hostname=api_hostname,
                     integration_key=integration_key,
-                    secret_key=secret_key
+                    secret_key=secret_key,
+                    name='PoC Secure Access - SAML and Identity',
+                    integration_type='sso-generic'
                 )
-                flash("ℹ️ Authentication policy requires manual configuration in Duo Admin Panel")
-            
-            # Action: CREATE SAML INTEGRATION
-            elif action == 'create_saml_integration':
-                from scripts.duo.duo_automation import create_saml_integration
                 
-                result = create_saml_integration(
-                    api_hostname=api_hostname,
-                    integration_key=integration_key,
-                    secret_key=secret_key
-                )
-                flash("ℹ️ SAML integration requires manual configuration in Duo Admin Panel")
+                if saml_result['success']:
+                    flash(f"✅ Generic SAML integration created successfully")
+                    flash(f"   Name: PoC Secure Access - SAML and Identity")
+                    flash(f"   Type: sso-generic")
+                    flash(f"🔑 Integration Key: {saml_result['integration_key']}")
+                    flash(f"🔐 Secret Key: {saml_result['secret_key']}")
+                    flash(f"🆔 Integration ID: {saml_result['integration_id']}")
+                    flash(f"✅ Integration assigned to 'PoC Users' group")
+                else:
+                    flash(f"⚠️ Error creating integration: {saml_result['error']}")
         
         except Exception as e:
             flash(f"⚠️ Error: {str(e)}")

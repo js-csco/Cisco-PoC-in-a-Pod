@@ -1,59 +1,136 @@
 """
 Duo Admin API Automation
-Creates users, groups, and manages group membership for PoC environments
+Creates users, groups, manages group membership, and creates integrations for PoC environments
 """
 
 import duo_client
 
 
-def create_user_and_group(api_hostname, integration_key, secret_key, username, email):
+def setup_duo_complete(api_hostname, integration_key, secret_key, users_list):
     """
-    Complete workflow: Create user, create 'PoC Users' group, and add user to group
+    Complete Duo setup workflow:
+    - Create all users
+    - Create 'PoC Users' group
+    - Add all users to group
     
     Args:
         api_hostname: Duo API hostname (e.g., api-xxxxx.duosecurity.com)
         integration_key: Duo integration key
         secret_key: Duo secret key
-        username: Username for the new user
-        email: Email for the new user
+        users_list: List of dicts with 'username' and 'email' keys
+                   e.g., [{'username': 'user1', 'email': 'user1@example.com'}]
     
     Returns:
-        dict: Contains user_id, group_id, and success status
+        dict: Contains user_ids, group_id, and success status
     """
+    print(f"\n========================================")
+    print(f"Starting Duo Setup")
+    print(f"API Hostname: {api_hostname}")
+    print(f"Users to process: {len(users_list)}")
+    print(f"Users list: {users_list}")
+    print(f"========================================\n")
+    
     # Initialize Duo Admin API client
-    admin_api = duo_client.Admin(
-        ikey=integration_key,
-        skey=secret_key,
-        host=api_hostname
-    )
+    try:
+        admin_api = duo_client.Admin(
+            ikey=integration_key,
+            skey=secret_key,
+            host=api_hostname
+        )
+        print(f"✅ Duo Admin API client initialized successfully")
+    except Exception as e:
+        error_msg = f"Failed to initialize Duo Admin API client: {str(e)}"
+        print(f"❌ {error_msg}")
+        raise Exception(error_msg)
     
     result = {
-        'user_created': False,
+        'users_created': [],
+        'users_existing': [],
         'group_created': False,
-        'user_added_to_group': False,
-        'user_id': None,
         'group_id': None,
-        'username': username,
-        'email': email
+        'users_added_to_group': 0,
+        'errors': []
     }
     
-    try:
-        # Step 1: Create the user
-        user_response = admin_api.add_user(
-            username=username,
-            email=email,
-            status='active'  # User is active by default
-        )
-        result['user_id'] = user_response.get('user_id')
-        result['user_created'] = True
-        print(f"✅ User created: {username} (ID: {result['user_id']})")
+    # Step 1: Create all users
+    print(f"\n=== STEP 1: Creating {len(users_list)} users ===")
+    for user_data in users_list:
+        username = user_data['username']
+        email = user_data['email']
         
-    except Exception as e:
-        print(f"⚠️ Error creating user: {e}")
-        raise Exception(f"Failed to create user: {str(e)}")
+        print(f"Processing user: {username} with email: {email}")
+        
+        try:
+            # Check if user already exists
+            print(f"Checking if user exists: {username}")
+            existing_users = admin_api.json_api_call(
+                'GET',
+                '/admin/v1/users',
+                {'username': username}
+            )
+            
+            if existing_users and len(existing_users) > 0:
+                user_id = existing_users[0].get('user_id')
+                result['users_existing'].append({
+                    'username': username,
+                    'email': email,
+                    'user_id': user_id
+                })
+                print(f"ℹ️  User already exists: {username} (ID: {user_id})")
+            else:
+                # Create new user
+                print(f"Creating new user: {username}")
+                user_response = admin_api.add_user(
+                    username=username,
+                    email=email,
+                    status='active'
+                )
+                user_id = user_response.get('user_id')
+                result['users_created'].append({
+                    'username': username,
+                    'email': email,
+                    'user_id': user_id
+                })
+                print(f"✅ User created: {username} (ID: {user_id})")
+                
+                # Send enrollment email
+                try:
+                    admin_api.json_api_call(
+                        'POST',
+                        '/admin/v1/users/enroll',
+                        {
+                            'username': username,
+                            'email': email,
+                            'valid_secs': '86400'  # 24 hours
+                        }
+                    )
+                    print(f"✅ Enrollment email sent to {email}")
+                except Exception as e:
+                    print(f"⚠️  Could not send enrollment email to {email}: {e}")
+                    result['errors'].append(f"Enrollment email failed for {username}: {str(e)}")
+        
+        except Exception as e:
+            error_msg = f"Failed to create user {username}: {str(e)}"
+            print(f"❌ {error_msg}")
+            result['errors'].append(error_msg)
     
+    # Collect all user IDs (both created and existing)
+    all_user_ids = []
+    for user in result['users_created'] + result['users_existing']:
+        all_user_ids.append(user['user_id'])
+    
+    print(f"\nTotal users processed: Created={len(result['users_created'])}, Existing={len(result['users_existing'])}")
+    print(f"Total user IDs collected: {len(all_user_ids)}")
+    
+    if not all_user_ids:
+        error_msg = "No users were created or found. Cannot proceed with group creation."
+        print(f"❌ {error_msg}")
+        result['errors'].append(error_msg)
+        return result
+    
+    # Step 2: Create 'PoC Users' group
+    print(f"\n=== STEP 2: Creating 'PoC Users' group ===")
     try:
-        # Step 2: Check if 'PoC Users' group exists, if not create it
         groups = admin_api.get_groups()
         poc_group = None
         
@@ -61,63 +138,71 @@ def create_user_and_group(api_hostname, integration_key, secret_key, username, e
             if group.get('name') == 'PoC Users':
                 poc_group = group
                 result['group_id'] = group.get('group_id')
-                print(f"ℹ️ Group 'PoC Users' already exists (ID: {result['group_id']})")
+                result['group_created'] = False
+                print(f"ℹ️  Group 'PoC Users' already exists (ID: {result['group_id']})")
                 break
         
-        # Create group if it doesn't exist
         if not poc_group:
-            group_response = admin_api.add_group(
-                name='PoC Users',
-                desc='Proof of Concept test users group'
+            group_response = admin_api.json_api_call(
+                'POST',
+                '/admin/v1/groups',
+                {
+                    'name': 'PoC Users',
+                    'desc': 'Proof of Concept test users group'
+                }
             )
             result['group_id'] = group_response.get('group_id')
             result['group_created'] = True
             print(f"✅ Group created: PoC Users (ID: {result['group_id']})")
-        
-    except Exception as e:
-        print(f"⚠️ Error with group: {e}")
-        raise Exception(f"Failed to create/find group: {str(e)}")
     
-    try:
-        # Step 3: Add user to 'PoC Users' group
-        admin_api.update_user(
-            user_id=result['user_id'],
-            groups=[result['group_id']]
-        )
-        result['user_added_to_group'] = True
-        print(f"✅ User {username} added to 'PoC Users' group")
-        
     except Exception as e:
-        print(f"⚠️ Error adding user to group: {e}")
-        raise Exception(f"Failed to add user to group: {str(e)}")
+        error_msg = f"Failed to create/find group: {str(e)}"
+        print(f"❌ {error_msg}")
+        result['errors'].append(error_msg)
+        raise Exception(error_msg)
+    
+    # Step 3: Add all users to 'PoC Users' group
+    print(f"\n=== STEP 3: Adding users to 'PoC Users' group ===")
+    for user_id in all_user_ids:
+        try:
+            # Check if user is already in group
+            user_groups = admin_api.json_api_call(
+                'GET',
+                f'/admin/v1/users/{user_id}/groups',
+                {}
+            )
+            
+            already_in_group = any(g.get('group_id') == result['group_id'] for g in user_groups)
+            
+            if not already_in_group:
+                admin_api.add_user_group(
+                    user_id=user_id,
+                    group_id=result['group_id']
+                )
+                result['users_added_to_group'] += 1
+                print(f"✅ User {user_id} added to 'PoC Users' group")
+            else:
+                print(f"ℹ️  User {user_id} already in 'PoC Users' group")
+        
+        except Exception as e:
+            error_msg = f"Failed to add user {user_id} to group: {str(e)}"
+            print(f"⚠️  {error_msg}")
+            result['errors'].append(error_msg)
     
     return result
 
 
-def create_passwordless_enrollment(api_hostname, integration_key, secret_key):
+def list_integrations(api_hostname, integration_key, secret_key):
     """
-    Configure passwordless enrollment policy
+    List all integrations in the Duo account
     
-    Note: This may require manual configuration in Duo Admin Panel
-    as not all enrollment settings are available via API
-    """
-    admin_api = duo_client.Admin(
-        ikey=integration_key,
-        skey=secret_key,
-        host=api_hostname
-    )
+    Args:
+        api_hostname: Duo API hostname
+        integration_key: Duo integration key
+        secret_key: Duo secret key
     
-    # TODO: Implement passwordless enrollment configuration
-    # This might need to be done through the Duo Admin Panel UI
-    print("ℹ️ Passwordless enrollment may require manual configuration in Duo Admin Panel")
-    return {'status': 'manual_configuration_required'}
-
-
-def create_authentication_policy(api_hostname, integration_key, secret_key):
-    """
-    Create authentication policy for PoC users
-    
-    Note: Authentication policies are typically configured in the Duo Admin Panel
+    Returns:
+        list: List of integration objects
     """
     admin_api = duo_client.Admin(
         ikey=integration_key,
@@ -125,17 +210,40 @@ def create_authentication_policy(api_hostname, integration_key, secret_key):
         host=api_hostname
     )
     
-    # TODO: Implement authentication policy creation
-    # This might need to be done through the Duo Admin Panel UI
-    print("ℹ️ Authentication policy may require manual configuration in Duo Admin Panel")
-    return {'status': 'manual_configuration_required'}
-
-
-def create_saml_integration(api_hostname, integration_key, secret_key):
-    """
-    Create Cisco Secure Access SAML integration
+    try:
+        # Get all integrations using the v3 API endpoint
+        integrations = admin_api.json_api_call(
+            'GET',
+            '/admin/v3/integrations',
+            {}
+        )
+        
+        print(f"\n=== INTEGRATIONS LIST ===")
+        print(f"Found {len(integrations)} integration(s)")
+        for integration in integrations:
+            print(f"  • {integration.get('name')} (Type: {integration.get('type')}, Key: {integration.get('integration_key')})")
+        
+        return integrations
     
-    Note: SAML integrations typically require manual configuration
+    except Exception as e:
+        print(f"❌ Error listing integrations: {e}")
+        return []
+
+
+def create_integration(api_hostname, integration_key, secret_key, name, integration_type, group_name="PoC Users"):
+    """
+    Create a new integration and assign it to a group
+    
+    Args:
+        api_hostname: Duo API hostname
+        integration_key: Duo integration key
+        secret_key: Duo secret key
+        name: Name of the integration
+        integration_type: Type of integration (e.g., 'sso-cisco-secure-access', 'sso-generic')
+        group_name: Name of the group to assign (default: 'PoC Users')
+    
+    Returns:
+        dict: Integration details or error
     """
     admin_api = duo_client.Admin(
         ikey=integration_key,
@@ -143,7 +251,63 @@ def create_saml_integration(api_hostname, integration_key, secret_key):
         host=api_hostname
     )
     
-    # TODO: Implement SAML integration creation
-    # This will likely need manual configuration in Duo Admin Panel
-    print("ℹ️ SAML integration requires manual configuration in Duo Admin Panel")
-    return {'status': 'manual_configuration_required'}
+    result = {
+        'success': False,
+        'integration_key': None,
+        'secret_key': None,
+        'integration_id': None,
+        'error': None
+    }
+    
+    try:
+        # Step 1: Find the group ID
+        print(f"\n=== Creating Integration: {name} ===")
+        print(f"Step 1: Finding group '{group_name}'")
+        
+        groups = admin_api.json_api_call('GET', '/admin/v1/groups', {})
+        group_id = None
+        
+        for group in groups:
+            if group.get('name') == group_name:
+                group_id = group.get('group_id')
+                print(f"✅ Found group '{group_name}' (ID: {group_id})")
+                break
+        
+        if not group_id:
+            error_msg = f"Group '{group_name}' not found. Please create the group first."
+            print(f"❌ {error_msg}")
+            result['error'] = error_msg
+            return result
+        
+        # Step 2: Create the integration
+        print(f"Step 2: Creating integration with type '{integration_type}'")
+        
+        integration_response = admin_api.json_api_call(
+            'POST',
+            '/admin/v3/integrations',
+            {
+                'name': name,
+                'type': integration_type,
+                'groups_allowed': [group_id]
+            }
+        )
+        
+        result['success'] = True
+        result['integration_key'] = integration_response.get('integration_key')
+        result['secret_key'] = integration_response.get('secret_key')
+        result['integration_id'] = integration_response.get('integration_id')
+        
+        print(f"✅ Integration created successfully")
+        print(f"   Name: {name}")
+        print(f"   Type: {integration_type}")
+        print(f"   Integration Key: {result['integration_key']}")
+        print(f"   Integration ID: {result['integration_id']}")
+        print(f"   Group Assigned: {group_name}")
+        
+        return result
+    
+    except Exception as e:
+        error_msg = f"Failed to create integration: {str(e)}"
+        print(f"❌ {error_msg}")
+        result['error'] = error_msg
+        return result

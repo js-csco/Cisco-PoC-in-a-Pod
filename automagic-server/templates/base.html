@@ -148,11 +148,11 @@
         <a href="{{ url_for('overview') }}" class="menu-item {% if active_page == 'overview' %}active{% endif %}">
         <span class="fa-solid fa-house"></span> Overview
         </a>
-        <a href="{{ url_for('secure_access') }}" class="menu-item {% if active_page == 'secure_access' %}active{% endif %}">
-        <span class="fa-solid fa-cloud"></span> Cisco Secure Access
-        </a>
         <a href="{{ url_for('duo') }}" class="menu-item {% if active_page == 'duo' %}active{% endif %}">
         <span class="fa-solid fa-user"></span> Duo & Identity Intelligence
+        </a>
+        <a href="{{ url_for('secure_access') }}" class="menu-item {% if active_page == 'secure_access' %}active{% endif %}">
+        <span class="fa-solid fa-cloud"></span> Secure Access
         </a>
         <a href="{{ url_for('cilium') }}" class="menu-item {% if active_page == 'cilium' %}active{% endif %}">
         <span class="fa-solid fa-network-wired"></span> Cilium
