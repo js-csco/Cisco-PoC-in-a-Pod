@@ -21,7 +21,7 @@ spec:
           image: mcp/kubectl-mcp-server:latest
           args:
             - "--transport"
-            - "sse"
+            - "streamable-http"
           ports:
             - containerPort: 8000
               protocol: TCP
