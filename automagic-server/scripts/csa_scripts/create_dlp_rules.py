@@ -79,7 +79,7 @@ def create_ai_guardrail_rule(token):
     }
 
     payload = {
-        "name": "joschwei - Block Sensitive Data to AI Apps (All Categories)",
+        "name": "DLP Rule - AI Guardrails",
         "description": "Blocks sharing of sensitive data (security, safety, privacy) with AI applications.",
         "enabled": True,
         "action": "BLOCK",
@@ -115,7 +115,7 @@ def create_ai_guardrail_rule(token):
     if r.status_code not in (200, 201):
         raise Exception(f"Failed to create AI Guardrail rule: {r.status_code} - {r.text}")
 
-    print("✅ AI Guardrail DLP rule created (all 21 classifications).")
+    print("✅ AI Guardrail DLP rule created (Security + Safety + Privacy Guardrail).")
     return r.json()
 
 
@@ -136,18 +136,33 @@ def create_realtime_dlp_rule(token):
     }
 
     payload = {
-        "name": "joschwei - Block Cloud Credentials (AWS / Azure)",
+        "name": "DLP Rule - Real-Time",
         "description": "Blocks upload/sharing of AWS and Azure access keys and secrets in real-time.",
         "enabled": True,
         "action": "BLOCK",
-        "severity": "HIGH",
-        "identities": [],
-        "excludedIdentities": [],
+        "severity": "WARNING",
+        "type": "INLINE",
+        "secureIcapEnabled": True,
+        "identities": [
+            {
+                "originId": 0,
+                "originTypeId": 9,
+                "details": "{\"id\":9,\"name\":\"roaming\",\"label\":\"Roaming Computers\",\"description\":\"Roaming devices\",\"children\":1}"
+            },
+            {
+                "originId": 0,
+                "originTypeId": 7,
+                "details": "{\"id\":7,\"name\":\"directory_user\",\"label\":\"AD Users\",\"description\":\"Active Directory user\",\"children\":6}"
+            }
+        ],
+        "applications": [],
         "classifications": [AWS_SECRET_KEY_ID, AZURE_ACCESS_KEY_ID],
-        "allDestinationsScope": "ALL",
-        "scannableContexts": ["CONTENT"],
+        "labelFileParameters": {"mipData": {}, "labelsData": []},
+        "scannableContexts": ["FILENAME", "CONTENT"],
+        "mipTags": [],
         "notifyOwner": False,
-        "notifyActor": False
+        "notifyActor": False,
+        "labels": []
     }
 
     r = requests.post(url, headers=headers, json=payload, timeout=15)
