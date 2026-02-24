@@ -10,7 +10,7 @@ spec:
   selector:
     app: kubectl-mcp
   ports:
-    - port: 8811
-      targetPort: 8811
+    - port: 8000
+      targetPort: 8000
       nodePort: 30050
       protocol: TCP
