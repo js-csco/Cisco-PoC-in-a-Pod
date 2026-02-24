@@ -79,7 +79,7 @@ def create_private_resource_group(token, vm_ip, connector_id):
 
 def create_private_resources(token, vm_ip, resource_group_id):
     """
-    Creates the 7 private resources linked to the PoC in a Pod group.
+    Creates the private resources linked to the PoC in a Pod group.
     """
     url = f"{BASE_URL}/policies/v2/privateResources"
     headers = {
@@ -99,6 +99,7 @@ def create_private_resources(token, vm_ip, resource_group_id):
         {"name": "Splunk Dashboard", "port": 30500, "protocol": "Any"},
         {"name": "Splunk MCP", "port": 30501, "protocol": "Any"},
         {"name": "RDP Server", "port": 30390, "protocol": "Any"},
+        {"name": "Kubectl MCP Server", "port": 30050, "protocol": "Any"},
     ]
 
 

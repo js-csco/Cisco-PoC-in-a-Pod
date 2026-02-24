@@ -38,7 +38,7 @@
   <label style="display:block; font-size:0.85em; color:#555; margin-bottom:6px;">MCP Server URL</label>
   <code style="display:block; background:#fff; border:1px solid #ccc; border-radius:6px; padding:10px 14px;
                font-size:0.95em; margin-bottom:24px; user-select:all;">
-    http://SERVER_IP:30050/sse
+    http://{{ server_ip }}:30050/sse
   </code>
 
   <!-- Claude Desktop sub-section -->
@@ -55,7 +55,7 @@
               overflow-x:auto; margin-bottom:28px; line-height:1.6;">{
   "mcpServers": {
     "kubectl-mcp": {
-      "url": "http://SERVER_IP:30050/sse"
+      "url": "http://{{ server_ip }}:30050/sse"
     }
   }
 }</pre>
@@ -71,7 +71,7 @@
   </p>
 
   <pre style="background:#1e1e1e; color:#d4d4d4; border-radius:8px; padding:16px 20px; font-size:0.85em;
-              overflow-x:auto; margin-bottom:0; line-height:1.6;">claude mcp add --transport sse kubectl-mcp http://SERVER_IP:30050/sse</pre>
+              overflow-x:auto; margin-bottom:0; line-height:1.6;">claude mcp add --transport sse kubectl-mcp http://{{ server_ip }}:30050/sse</pre>
 </section>
 
 <!-- WHAT YOU CAN ASK -->

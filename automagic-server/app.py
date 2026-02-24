@@ -125,6 +125,9 @@ def secure_access():
                 created = create_private_resources(token, vm_ip, group_id)
                 flash(f"✅ {len(created)} Private Resources created.")
 
+                # persist the IP so other pages (e.g. kubectl-mcp) can show it
+                session["vm_ip"] = vm_ip
+
             # Action: CREATE PRIVATE ACCESS
             elif action == "create_private":
                 if not session.get("authenticated"):
@@ -438,7 +441,8 @@ def tetragon_events():
 
 @app.route('/kubectl-mcp')
 def kubectl_mcp():
-    return render_template('kubectl-mcp.html')
+    server_ip = session.get("vm_ip", "SERVER_IP")
+    return render_template('kubectl-mcp.html', server_ip=server_ip)
 
 @app.route('/splunk')
 def splunk():
