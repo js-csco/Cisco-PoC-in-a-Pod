@@ -12,5 +12,5 @@ spec:
   ports:
     - port: 8811
       targetPort: 8811
-      nodePort: 32811
+      nodePort: 32081
       protocol: TCP
