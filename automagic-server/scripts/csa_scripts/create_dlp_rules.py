@@ -5,32 +5,33 @@ BASE_URL = "https://api.sse.cisco.com"
 
 def _get_all_pages(url, headers):
     """
-    Paginates through a Cisco SSE API collection using limit/offset.
-    Max batch size is 100; keeps fetching until no more items are returned.
+    Paginates through a Cisco SSE Admin/Policy API collection using limit + page.
+    Default returns up to 200 records; page is 1-indexed.
+    Keeps fetching until a short page is returned (last page).
     Returns a flat list of all items.
     """
     all_items = []
-    limit = 100
-    offset = 0
+    limit = 200
+    page = 1
 
     while True:
-        r = requests.get(url, headers=headers, params={"limit": limit, "offset": offset}, timeout=15)
+        r = requests.get(url, headers=headers, params={"limit": limit, "page": page}, timeout=15)
         if r.status_code not in (200, 201):
             raise Exception(f"GET {url} failed: {r.status_code} - {r.text}")
 
         data = r.json()
-        # Response may be a list or {"items": [...], "meta": {...}}
+        # Response may be a bare list or {"items": [...], "meta": {...}}
         if isinstance(data, list):
             batch = data
         else:
             batch = data.get("items", data.get("data", []))
 
         all_items.extend(batch)
-        print(f"  fetched offset={offset}, got {len(batch)} items (total so far: {len(all_items)})")
+        print(f"  fetched page={page}, got {len(batch)} items (total so far: {len(all_items)})")
 
         if len(batch) < limit:
             break  # last page
-        offset += limit
+        page += 1
 
     return all_items
 
