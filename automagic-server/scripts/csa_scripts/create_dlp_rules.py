@@ -60,23 +60,12 @@ def list_ai_guardrail_classifications(token):
 
 def create_ai_guardrail_rule(token):
     """
-    Creates an AI Guardrails DLP rule to block sharing PII / emails with AI apps.
-    Dynamically looks up the 'Privacy' classification UUID via paginated API calls.
+    Creates an AI Guardrails DLP rule to block sharing AWS/Azure credentials with AI apps.
+    Uses hardcoded UUIDs confirmed from GET /policies/v2/dlp/classifications.
     """
-    items = list_ai_guardrail_classifications(token)
-
-    privacy_id = None
-    for c in items:
-        name = c.get("name", "").lower()
-        cid = c.get("id") or c.get("uuid") or c.get("classificationId")
-        if "privacy" in name or "pii" in name:
-            privacy_id = cid
-            print(f"  Found AI Guardrail classification: '{c.get('name')}' → {cid}")
-            break
-
-    if not privacy_id:
-        available = ", ".join(c.get("name", "?") for c in items)
-        raise Exception(f"Could not find Privacy/PII AI Guardrail classification. Available ({len(items)}): {available}")
+    # Confirmed UUIDs from GET /policies/v2/dlp/classifications
+    AWS_SECRET_KEY_ID = "087d53f6-3d90-43bd-a27c-5dfcc7c7959b"   # AWS - Secret Key
+    AZURE_ACCESS_KEY_ID = "de1a5f26-b48a-45e7-af8f-919669472cb1"  # Azure - Access Key
 
     url = f"{BASE_URL}/policies/v2/dlp/aiGuardrails/rules"
     headers = {
@@ -86,15 +75,15 @@ def create_ai_guardrail_rule(token):
     }
 
     payload = {
-        "name": "joschwei - Block PII and Emails to AI Apps",
-        "description": "Blocks sharing of PII and email addresses with AI applications.",
+        "name": "joschwei - Block Cloud Credentials to AI Apps (AWS / Azure)",
+        "description": "Blocks sharing of AWS and Azure cloud credentials with AI applications.",
         "enabled": False,
         "action": "BLOCK",
         "severity": "HIGH",
         "type": "AI_DEFENSE",
         "identities": [],
         "excludedIdentities": [],
-        "classifications": [privacy_id],
+        "classifications": [AWS_SECRET_KEY_ID, AZURE_ACCESS_KEY_ID],
         "allDestinationsScope": "ALL",
         "applications": [],
         "applicationCategories": [],
@@ -109,7 +98,7 @@ def create_ai_guardrail_rule(token):
     if r.status_code not in (200, 201):
         raise Exception(f"Failed to create AI Guardrail rule: {r.status_code} - {r.text}")
 
-    print("✅ AI Guardrail DLP rule created.")
+    print("✅ AI Guardrail DLP rule created (AWS Secret Key + Azure Access Key).")
     return r.json()
 
 

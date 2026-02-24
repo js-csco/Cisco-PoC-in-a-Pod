@@ -155,25 +155,45 @@
             <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DATA LOSS PREVENTION</h3>
           </div>
 
-          <p style="margin-top:0; margin-bottom:25px; color:#555; font-size:0.95em;">
-            Automate DLP rules to protect sensitive data in real-time and across AI applications.
+          <p style="margin-top:0; margin-bottom:20px; color:#555; font-size:0.95em;">
+            Creates two DLP rules to block AWS and Azure cloud credentials from leaving the organisation.
           </p>
 
-          <h4 style="color:#005073; margin-bottom:5px;">AI Guardrails Rule</h4>
-          <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
-            Blocks sharing of PII and email addresses with AI applications (e.g. ChatGPT, DeepSeek).
-          </p>
-
-          <h4 style="color:#005073; margin-top:20px; margin-bottom:5px;">Real-Time Rule</h4>
-          <p style="margin-top:0; margin-bottom:15px; color:#666; font-size:0.9em;">
-            Blocks upload or sharing of AWS and Azure cloud credentials in proxied web traffic.
-          </p>
+          <table style="width:100%; border-collapse:collapse; font-size:0.9em; margin-bottom:20px;">
+            <thead>
+              <tr style="background:#f0f4ff; text-align:left;">
+                <th style="padding:8px 12px; border:1px solid #d0d8f0;">Rule type</th>
+                <th style="padding:8px 12px; border:1px solid #d0d8f0;">What it blocks</th>
+                <th style="padding:8px 12px; border:1px solid #d0d8f0;">Where</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding:8px 12px; border:1px solid #d0d8f0;">AI Guardrails</td>
+                <td style="padding:8px 12px; border:1px solid #d0d8f0;">AWS Secret Key &amp; Azure Access Key</td>
+                <td style="padding:8px 12px; border:1px solid #d0d8f0;">Prompts sent to AI apps (e.g. ChatGPT, DeepSeek)</td>
+              </tr>
+              <tr style="background:#fafafa;">
+                <td style="padding:8px 12px; border:1px solid #d0d8f0;">Real-Time DLP</td>
+                <td style="padding:8px 12px; border:1px solid #d0d8f0;">AWS Secret Key &amp; Azure Access Key</td>
+                <td style="padding:8px 12px; border:1px solid #d0d8f0;">All proxied web traffic (uploads, pastes, forms)</td>
+              </tr>
+            </tbody>
+          </table>
 
           <button type="submit" name="action" value="create_dlp"
                   style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
                          border-radius:6px; font-weight:500; cursor:pointer;">
             Create DLP Rules
           </button>
+
+          <div style="margin-top:25px; background:#f8f8f8; border:1px solid #ddd; border-radius:6px; padding:15px;">
+            <p style="margin:0 0 10px 0; font-weight:600; color:#333; font-size:0.9em;">Test Credentials (safe to copy &amp; paste)</p>
+            <p style="margin:0 0 6px 0; font-size:0.85em; color:#555;">AWS Secret Key</p>
+            <code style="display:block; background:#fff; border:1px solid #ccc; border-radius:4px; padding:6px 10px; font-size:0.85em; margin-bottom:12px; user-select:all;">wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY</code>
+            <p style="margin:0 0 6px 0; font-size:0.85em; color:#555;">Azure Access Key</p>
+            <code style="display:block; background:#fff; border:1px solid #ccc; border-radius:4px; padding:6px 10px; font-size:0.85em; user-select:all;">dGVzdEF6dXJlQWNjZXNzS2V5Rm9yVGVzdGluZ09ubHlEb05vdFVzZUluUHJvZA==</code>
+          </div>
         </section>
 
   {{ super() }}
