@@ -61,11 +61,32 @@ def list_ai_guardrail_classifications(token):
 def create_ai_guardrail_rule(token):
     """
     Creates an AI Guardrails DLP rule to block sharing AWS/Azure credentials with AI apps.
-    Uses hardcoded UUIDs confirmed from GET /policies/v2/dlp/classifications.
+    Dynamically looks up classification UUIDs from the AI Guardrails classifications endpoint,
+    which uses a separate UUID space from the real-time DLP classifications.
     """
-    # Confirmed UUIDs from GET /policies/v2/dlp/classifications
-    AWS_SECRET_KEY_ID = "087d53f6-3d90-43bd-a27c-5dfcc7c7959b"   # AWS - Secret Key
-    AZURE_ACCESS_KEY_ID = "de1a5f26-b48a-45e7-af8f-919669472cb1"  # Azure - Access Key
+    items = list_ai_guardrail_classifications(token)
+    print("  Available AI Guardrail classifications:")
+    for c in items:
+        print(f"    - {c.get('name')} → {c.get('id') or c.get('uuid') or c.get('classificationId')}")
+
+    aws_id = None
+    azure_id = None
+    for c in items:
+        name = c.get("name", "").lower()
+        cid = c.get("id") or c.get("uuid") or c.get("classificationId")
+        if aws_id is None and "aws" in name:
+            aws_id = cid
+            print(f"  Matched AWS: '{c.get('name')}' → {cid}")
+        if azure_id is None and "azure" in name:
+            azure_id = cid
+            print(f"  Matched Azure: '{c.get('name')}' → {cid}")
+        if aws_id and azure_id:
+            break
+
+    missing = [n for n, v in [("AWS", aws_id), ("Azure", azure_id)] if not v]
+    if missing:
+        available = ", ".join(c.get("name", "?") for c in items)
+        raise Exception(f"Could not find AI Guardrail classification(s): {missing}. Available: {available}")
 
     url = f"{BASE_URL}/policies/v2/dlp/aiGuardrails/rules"
     headers = {
@@ -83,7 +104,7 @@ def create_ai_guardrail_rule(token):
         "type": "AI_DEFENSE",
         "identities": [],
         "excludedIdentities": [],
-        "classifications": [AWS_SECRET_KEY_ID, AZURE_ACCESS_KEY_ID],
+        "classifications": [aws_id, azure_id],
         "allDestinationsScope": "ALL",
         "applications": [],
         "applicationCategories": [],
