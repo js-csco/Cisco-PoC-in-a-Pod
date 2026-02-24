@@ -25,9 +25,14 @@
     <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CONNECTION</h3>
   </div>
 
-  <p style="color:#666; font-size:0.95em; margin-top:0; margin-bottom:20px; line-height:1.6;">
+  <p style="color:#666; font-size:0.95em; margin-top:0; margin-bottom:12px; line-height:1.6;">
     The MCP server is exposed via SSE (Server-Sent Events) on a fixed NodePort. Point your Claude client
     at the URL below — no authentication required inside the PoC network.
+  </p>
+  <p style="color:#888; font-size:0.85em; margin-top:0; margin-bottom:20px; line-height:1.5;">
+    <strong>Note:</strong> SSE here stands for <em>Server-Sent Events</em> — an HTTP-based transport protocol,
+    not Cisco Secure Access. It is simply how your Claude client maintains a live connection to the MCP server.
+    The MCP server itself talks to the Kubernetes API to answer your questions.
   </p>
 
   <label style="display:block; font-size:0.85em; color:#555; margin-bottom:6px;">MCP Server URL</label>
