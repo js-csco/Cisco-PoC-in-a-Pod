@@ -8,6 +8,7 @@ metadata:
   labels:
     io.kompose.service: automagic
   name: automagic
+  namespace: piap
 spec:
   replicas: 1
   selector:
