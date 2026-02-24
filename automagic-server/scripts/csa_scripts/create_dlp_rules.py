@@ -60,32 +60,15 @@ def list_ai_guardrail_classifications(token):
 
 def create_ai_guardrail_rule(token):
     """
-    Creates an AI Guardrails DLP rule covering all available classifications.
-    UUIDs confirmed from GET /policies/v2/dlp/aiGuardrails/classifications.
+    Creates an AI Guardrails DLP rule covering Security, Safety and Privacy guardrails.
+    Structure modelled on a confirmed working rule from the tenant.
+    Applies to all AD users and roaming devices.
     """
-    # All confirmed AI Guardrail classification UUIDs
-    ALL_CLASSIFICATION_IDS = [
-        "6c312991-b6fa-11ef-a825-0242ac120002",  # American Bankers Association (ABA) Routing Number (US)
-        "f435c215-b6fa-11ef-a825-0242ac120002",  # Bank Account Number (US)
-        "c5628ff6-b6fb-11ef-a825-0242ac120002",  # Code Detection (Response)
-        "77879429-b6fa-11ef-a825-0242ac120002",  # Credit Card Number
-        "96fd3c92-b6f4-11ef-a825-0242ac120002",  # Driver's License Number (US)
-        "e0b313e6-b6f3-11ef-a825-0242ac120002",  # Email Address
-        "1625bcae-ed2b-11ef-9cc0-0242ac120002",  # Harassment
-        "7bcb4e89-ed2a-11ef-9cc0-0242ac120002",  # Hate Speech
-        "5332220b-b6fb-11ef-a825-0242ac120002",  # Individual Taxpayer Identification Number (ITIN) (US)
-        "248b4bdd-b6fb-11ef-a825-0242ac120002",  # International Bank Account Number (IBAN)
-        "193300a0-b6f4-11ef-a825-0242ac120002",  # IP Address
-        "cc176031-b6f9-11ef-a825-0242ac120002",  # Medical License Number (US)
-        "050a5aa3-b6fa-11ef-a825-0242ac120002",  # National Health Service (NHS) Number
-        "ff2831a5-b6f4-11ef-a825-0242ac120002",  # Passport Number (US)
-        "57caa2e9-b6f4-11ef-a825-0242ac120002",  # Phone Number
-        "908b86e4-ed2b-11ef-9cc0-0242ac120002",  # Profanity
-        "9714ca31-b6fb-11ef-a825-0242ac120002",  # Prompt Injection
-        "cfd4a699-ed2a-11ef-9cc0-0242ac120002",  # Sexual Content & Exploitation
-        "4ac5af67-ed2b-11ef-9cc0-0242ac120002",  # Social Division & Polarization
-        "987bfdaf-b6f5-11ef-a825-0242ac120002",  # Social Security Number (SSN) (US)
-        "cbc4d6f1-ed2b-11ef-9cc0-0242ac120002",  # Violence & Public Safety Threats
+    # High-level guardrail classification UUIDs (confirmed from existing tenant rule)
+    GUARDRAIL_CLASSIFICATION_IDS = [
+        "7e27f96e-b6fe-11ef-a825-0242ac120002",  # Security Guardrail
+        "ae792674-b6fe-11ef-a825-0242ac120002",  # Safety Guardrail
+        "d309239a-b6fd-11ef-a825-0242ac120002",  # Privacy Guardrail
     ]
 
     url = f"{BASE_URL}/policies/v2/dlp/aiGuardrails/rules"
@@ -97,18 +80,33 @@ def create_ai_guardrail_rule(token):
 
     payload = {
         "name": "joschwei - Block Sensitive Data to AI Apps (All Categories)",
-        "description": "Blocks sharing of all sensitive data categories with AI applications.",
+        "description": "Blocks sharing of sensitive data (security, safety, privacy) with AI applications.",
         "enabled": False,
         "action": "BLOCK",
-        "severity": "INFO",
+        "severity": "ALERT",
         "type": "AI_DEFENSE",
-        "identities": [],
-        "excludedIdentities": [],
-        "classifications": ALL_CLASSIFICATION_IDS,
-        "allDestinationsScope": "NONE",
-        "scannableContexts": ["CONTENT"],
+        "secureIcapEnabled": False,
+        "identities": [
+            {
+                "originId": 0,
+                "originTypeId": 7,
+                "details": "{\"id\":7,\"name\":\"directory_user\",\"label\":\"AD Users\",\"description\":\"Active Directory user\",\"children\":2}"
+            },
+            {
+                "originId": 0,
+                "originTypeId": 9,
+                "details": "{\"id\":9,\"name\":\"roaming\",\"label\":\"Roaming Computers\",\"description\":\"Roaming devices\",\"children\":1}"
+            }
+        ],
+        "applications": [
+            {"id": 46060, "trafficDirection": "REQUEST"}
+        ],
+        "classifications": GUARDRAIL_CLASSIFICATION_IDS,
+        "scannableContexts": ["FILENAME", "CONTENT"],
+        "mipTags": [],
         "notifyOwner": False,
-        "notifyActor": False
+        "notifyActor": False,
+        "labels": []
     }
 
     r = requests.post(url, headers=headers, json=payload, timeout=15)
