@@ -1,15 +1,82 @@
-from flask import flash
 import requests
 
 BASE_URL = "https://api.sse.cisco.com"
 
 
+def _get_all_pages(url, headers):
+    """
+    Paginates through a Cisco SSE API collection using limit/offset.
+    Max batch size is 100; keeps fetching until no more items are returned.
+    Returns a flat list of all items.
+    """
+    all_items = []
+    limit = 100
+    offset = 0
+
+    while True:
+        r = requests.get(url, headers=headers, params={"limit": limit, "offset": offset}, timeout=15)
+        if r.status_code not in (200, 201):
+            raise Exception(f"GET {url} failed: {r.status_code} - {r.text}")
+
+        data = r.json()
+        # Response may be a list or {"items": [...], "meta": {...}}
+        if isinstance(data, list):
+            batch = data
+        else:
+            batch = data.get("items", data.get("data", []))
+
+        all_items.extend(batch)
+        print(f"  fetched offset={offset}, got {len(batch)} items (total so far: {len(all_items)})")
+
+        if len(batch) < limit:
+            break  # last page
+        offset += limit
+
+    return all_items
+
+
+def list_dlp_classifications(token):
+    """
+    Fetches ALL real-time DLP classifications, paginating past the 100-record limit.
+    Returns a flat list of classification objects.
+    """
+    url = f"{BASE_URL}/policies/v2/dlp/classifications"
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+    print("Fetching real-time DLP classifications...")
+    return _get_all_pages(url, headers)
+
+
+def list_ai_guardrail_classifications(token):
+    """
+    Fetches ALL AI Guardrail classifications, paginating past the 100-record limit.
+    Returns a flat list of classification objects.
+    """
+    url = f"{BASE_URL}/policies/v2/dlp/aiGuardrails/classifications"
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+    print("Fetching AI Guardrail classifications...")
+    return _get_all_pages(url, headers)
+
+
 def create_ai_guardrail_rule(token):
     """
     Creates an AI Guardrails DLP rule to block sharing PII / emails with AI apps.
-    Fill in the classifications list with the UUIDs from:
-      GET /policies/v2/dlp/aiGuardrails/classifications
+    Dynamically looks up the 'Privacy' classification UUID via paginated API calls.
     """
+    items = list_ai_guardrail_classifications(token)
+
+    privacy_id = None
+    for c in items:
+        name = c.get("name", "").lower()
+        cid = c.get("id") or c.get("uuid") or c.get("classificationId")
+        if "privacy" in name or "pii" in name:
+            privacy_id = cid
+            print(f"  Found AI Guardrail classification: '{c.get('name')}' → {cid}")
+            break
+
+    if not privacy_id:
+        available = ", ".join(c.get("name", "?") for c in items)
+        raise Exception(f"Could not find Privacy/PII AI Guardrail classification. Available ({len(items)}): {available}")
+
     url = f"{BASE_URL}/policies/v2/dlp/aiGuardrails/rules"
     headers = {
         "Authorization": f"Bearer {token}",
@@ -26,9 +93,7 @@ def create_ai_guardrail_rule(token):
         "type": "AI_DEFENSE",
         "identities": [],
         "excludedIdentities": [],
-        # TODO: Add AI Guardrail classification UUIDs (e.g. Privacy)
-        # from GET /policies/v2/dlp/aiGuardrails/classifications
-        "classifications": [],
+        "classifications": [privacy_id],
         "allDestinationsScope": "ALL",
         "applications": [],
         "applicationCategories": [],
@@ -49,10 +114,30 @@ def create_ai_guardrail_rule(token):
 
 def create_realtime_dlp_rule(token):
     """
-    Creates a Real-Time DLP rule to block sharing of email addresses and IBANs.
-    Fill in the classifications list with the UUIDs from:
-      GET /policies/v2/dlp/classifications
+    Creates a Real-Time DLP rule to block email addresses and IBANs.
+    Dynamically looks up classification UUIDs via paginated API calls.
     """
+    items = list_dlp_classifications(token)
+
+    email_id = None
+    iban_id = None
+    for c in items:
+        name = c.get("name", "").lower()
+        cid = c.get("id") or c.get("uuid") or c.get("classificationId")
+        if email_id is None and "email" in name:
+            email_id = cid
+            print(f"  Found classification: '{c.get('name')}' → {cid}")
+        if iban_id is None and "iban" in name:
+            iban_id = cid
+            print(f"  Found classification: '{c.get('name')}' → {cid}")
+        if email_id and iban_id:
+            break
+
+    missing = [n for n, v in [("Email Address", email_id), ("IBAN", iban_id)] if not v]
+    if missing:
+        available = ", ".join(c.get("name", "?") for c in items)
+        raise Exception(f"Could not find classification(s): {missing}. Available ({len(items)}): {available}")
+
     url = f"{BASE_URL}/policies/v2/dlp/realTime/rules"
     headers = {
         "Authorization": f"Bearer {token}",
@@ -68,9 +153,7 @@ def create_realtime_dlp_rule(token):
         "severity": "HIGH",
         "identities": [],
         "excludedIdentities": [],
-        # TODO: Add Real-Time classification UUIDs for Email Address and IBAN
-        # from GET /policies/v2/dlp/classifications
-        "classifications": [],
+        "classifications": [email_id, iban_id],
         "allDestinationsScope": "ALL",
         "scannableContexts": ["CONTENT"],
         "notifyOwner": False,
