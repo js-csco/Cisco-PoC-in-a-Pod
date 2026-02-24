@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubectl-mcp
+  namespace: piap
+  labels:
+    app: kubectl-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubectl-mcp
+  template:
+    metadata:
+      labels:
+        app: kubectl-mcp
+    spec:
+      serviceAccountName: kubectl-mcp-sa
+      containers:
+        - name: kubectl-mcp
+          image: ghcr.io/containers/kubernetes-mcp-server:latest
+          args:
+            - "--transport=sse"
+            - "--port=8811"
+            - "--read-only"
+          ports:
+            - containerPort: 8811
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      restartPolicy: Always
