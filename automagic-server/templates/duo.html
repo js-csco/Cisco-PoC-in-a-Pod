@@ -14,7 +14,19 @@
 {% endwith %}
 
 <form method="POST" style="display:flex; flex-direction:column; gap:3rem;">
-    <h1>Cisco Duo</h1>
+  <h1>Cisco Duo</h1>
+
+  <!-- ABOUT -->
+  <section style="background:#f8f9fa; padding:20px; border-radius:8px; border-left:4px solid #0066ff;">
+    <p style="color:#555; font-size:0.95em; margin:0 0 10px 0; line-height:1.6;">
+      Cisco Duo is a multi-factor authentication (MFA) and Zero Trust access platform that verifies user
+      identities and device health before granting access to applications and resources.
+    </p>
+    <p style="color:#555; font-size:0.95em; margin:0; line-height:1.6;">
+      Use the sections below to connect to your Duo Admin API, create a test user, and set up
+      integrations for your PoC environment.
+    </p>
+  </section>
 
     <!-- GET DUO -->
     <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
@@ -70,8 +82,11 @@
         the "PoC Users" group, and assign the user to the group.
       </p>
 
-      <h4 style="color:#005073; margin-bottom:15px;">Add User</h4>
-      
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+        <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+        <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">Add User</h3>
+      </div>
+
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:25px;">
         <input type="email" id="user_email" name="user_email" placeholder="User Email" 
                style="padding:10px; border:1px solid #ccc; border-radius:6px;">
@@ -79,14 +94,14 @@
                style="padding:10px; border:1px solid #ccc; border-radius:6px;">
       </div>
 
-      <div style="background:#f8f9fa; padding:15px; border-radius:6px; margin-bottom:20px;">
-        <p style="margin:0; color:#666; font-size:0.9em;">
-          <strong>Setup Duo will perform the following:</strong><br>
-          • Create user with email and username<br>
-          • Create "PoC Users" group<br>
-          • Add user to "PoC Users" group<br>
-          • Send enrollment email to user
-        </p>
+      <div style="background:#f0f8f0; border:1px solid #c8e6c9; border-radius:8px; padding:14px 18px; margin-bottom:20px; font-size:0.88em; color:#2e7d32;">
+        <strong>Setup Duo will perform the following:</strong>
+        <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
+          <li>Create user with email and username</li>
+          <li>Create "PoC Users" group</li>
+          <li>Add user to "PoC Users" group</li>
+          <li>Send enrollment email to user</li>
+        </ul>
       </div>
 
       <button type="submit" name="action" value="setup_duo"
