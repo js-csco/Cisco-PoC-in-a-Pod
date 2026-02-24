@@ -115,29 +115,12 @@ def create_ai_guardrail_rule(token):
 
 def create_realtime_dlp_rule(token):
     """
-    Creates a Real-Time DLP rule to block email addresses and IBANs.
-    Dynamically looks up classification UUIDs via paginated API calls.
+    Creates a Real-Time DLP rule to block AWS and Azure cloud credentials.
+    Uses hardcoded UUIDs confirmed from GET /policies/v2/dlp/classifications.
     """
-    items = list_dlp_classifications(token)
-
-    email_id = None
-    iban_id = None
-    for c in items:
-        name = c.get("name", "").lower()
-        cid = c.get("id") or c.get("uuid") or c.get("classificationId")
-        if email_id is None and "email" in name:
-            email_id = cid
-            print(f"  Found classification: '{c.get('name')}' → {cid}")
-        if iban_id is None and "iban" in name:
-            iban_id = cid
-            print(f"  Found classification: '{c.get('name')}' → {cid}")
-        if email_id and iban_id:
-            break
-
-    missing = [n for n, v in [("Email Address", email_id), ("IBAN", iban_id)] if not v]
-    if missing:
-        available = ", ".join(c.get("name", "?") for c in items)
-        raise Exception(f"Could not find classification(s): {missing}. Available ({len(items)}): {available}")
+    # Confirmed UUIDs from GET /policies/v2/dlp/classifications
+    AWS_SECRET_KEY_ID = "087d53f6-3d90-43bd-a27c-5dfcc7c7959b"   # AWS - Secret Key
+    AZURE_ACCESS_KEY_ID = "de1a5f26-b48a-45e7-af8f-919669472cb1"  # Azure - Access Key
 
     url = f"{BASE_URL}/policies/v2/dlp/realTime/rules"
     headers = {
@@ -147,14 +130,14 @@ def create_realtime_dlp_rule(token):
     }
 
     payload = {
-        "name": "joschwei - Block Email Addresses and IBANs",
-        "description": "Blocks upload/sharing of email addresses and IBAN numbers in real-time.",
+        "name": "joschwei - Block Cloud Credentials (AWS / Azure)",
+        "description": "Blocks upload/sharing of AWS and Azure access keys and secrets in real-time.",
         "enabled": False,
         "action": "BLOCK",
         "severity": "HIGH",
         "identities": [],
         "excludedIdentities": [],
-        "classifications": [email_id, iban_id],
+        "classifications": [AWS_SECRET_KEY_ID, AZURE_ACCESS_KEY_ID],
         "allDestinationsScope": "ALL",
         "scannableContexts": ["CONTENT"],
         "notifyOwner": False,
@@ -167,5 +150,5 @@ def create_realtime_dlp_rule(token):
     if r.status_code not in (200, 201):
         raise Exception(f"Failed to create Real-Time DLP rule: {r.status_code} - {r.text}")
 
-    print("✅ Real-Time DLP rule created.")
+    print("✅ Real-Time DLP rule created (AWS Secret Key + Azure Access Key).")
     return r.json()
