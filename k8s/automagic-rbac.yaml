@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: automagic-sa
+  namespace: piap
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cilium-policy-manager
+  namespace: piap
+rules:
+- apiGroups: ["cilium.io"]
+  resources: ["ciliumnetworkpolicies"]
+  verbs: ["get", "list", "create", "update", "patch", "delete", "replace"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: automagic-cilium-policy-manager
+  namespace: piap
+subjects:
+- kind: ServiceAccount
+  name: automagic-sa
+  namespace: piap
+roleRef:
+  kind: Role
+  name: cilium-policy-manager
+  apiGroup: rbac.authorization.k8s.io

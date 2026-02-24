@@ -311,9 +311,35 @@ def duo():
     return render_template('duo.html')
 
 
-@app.route('/cilium')
+@app.route('/cilium', methods=['GET', 'POST'])
 def cilium():
-    return render_template('cilium.html')
+    from scripts.cilium_policies import apply_zero_trust, apply_allow_all, get_active_policies
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        try:
+            if action == 'allow_all':
+                results = apply_allow_all()
+                for r in results:
+                    flash(f"✅ {r}")
+                flash("Traffic mode set to: Allow All")
+            elif action == 'zero_trust':
+                results = apply_zero_trust()
+                for r in results:
+                    flash(f"✅ {r}")
+                flash("Traffic mode set to: Zero Trust Application Access")
+        except Exception as e:
+            flash(f"⚠️ Error applying Cilium policy: {e}")
+        return redirect(url_for('cilium'))
+
+    active_policies = []
+    policy_error = None
+    try:
+        active_policies = get_active_policies()
+    except Exception as e:
+        policy_error = str(e)
+
+    return render_template('cilium.html', active_policies=active_policies, policy_error=policy_error)
 
 @app.route('/tetragon')
 def tetragon():
