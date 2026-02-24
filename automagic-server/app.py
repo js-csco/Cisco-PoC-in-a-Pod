@@ -341,9 +341,79 @@ def cilium():
 
     return render_template('cilium.html', active_policies=active_policies, policy_error=policy_error)
 
-@app.route('/tetragon')
+@app.route('/tetragon', methods=['GET', 'POST'])
 def tetragon():
-    return render_template('tetragon.html')
+    from scripts.tetragon_policies import deploy_policies, remove_policies, get_active_policies
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        try:
+            if action == 'deploy':
+                results = deploy_policies()
+                for r in results:
+                    flash(f"✅ {r}")
+                flash("Tetragon TracingPolicies deployed.")
+            elif action == 'remove':
+                results = remove_policies()
+                for r in results:
+                    flash(f"✅ {r}")
+                flash("Tetragon TracingPolicies removed.")
+            elif action == 'simulate':
+                from scripts.tetragon_policies import simulate_attack
+                job_name = simulate_attack()
+                flash(f"🚨 Attack simulation launched — Job: {job_name}")
+                flash("Watch the live event stream below for Tetragon detections.")
+        except Exception as e:
+            flash(f"⚠️ Error: {e}")
+        return redirect(url_for('tetragon'))
+
+    active_policies = []
+    policy_error = None
+    try:
+        active_policies = get_active_policies()
+    except Exception as e:
+        policy_error = str(e)
+
+    return render_template('tetragon.html', active_policies=active_policies, policy_error=policy_error)
+
+
+@app.route('/tetragon/events')
+def tetragon_events():
+    """JSON endpoint polled by the frontend for live Tetragon events."""
+    from flask import jsonify
+    from scripts.tetragon_policies import get_tetragon_events
+    try:
+        raw_events = get_tetragon_events(max_lines=200)
+        events = []
+        for ev in raw_events:
+            # Normalise the Tetragon JSON schema into a flat display dict
+            process_exec = ev.get("process_exec") or {}
+            process_kprobe = ev.get("process_kprobe") or {}
+            process_exit = ev.get("process_exit") or {}
+
+            proc = (
+                process_exec.get("process")
+                or process_kprobe.get("process")
+                or process_exit.get("process")
+                or {}
+            )
+
+            events.append({
+                "time": ev.get("time", ""),
+                "type": ev.get("process_exec") and "exec"
+                        or ev.get("process_kprobe") and "kprobe"
+                        or ev.get("process_exit") and "exit"
+                        or "unknown",
+                "binary": proc.get("binary", ""),
+                "arguments": proc.get("arguments", ""),
+                "pod": (proc.get("pod") or {}).get("name", ""),
+                "namespace": (proc.get("pod") or {}).get("namespace", ""),
+                "action": process_kprobe.get("action", ""),
+                "func_name": process_kprobe.get("function_name", ""),
+            })
+        return jsonify({"events": events[-50:], "total": len(events)})
+    except Exception as e:
+        return jsonify({"events": [], "error": str(e)})
 
 @app.route('/splunk')
 def splunk():

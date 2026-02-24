@@ -3,8 +3,334 @@
 {% block title %}Tetragon — PoC in a Pod{% endblock %}
 
 {% block content %}
-  <h1>Tetragon</h1>
-  <p style="color:#555;">
-    🚧 Work in progress. Tetragon is coming soon to PoC in a Pod.
-  </p>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class="messages" style="list-style:none; padding:0; margin-bottom:1.5rem;">
+      {% for message in messages %}
+        <li style="background:#e8f0fe; color:#333; padding:8px 12px; border-radius:6px; margin-bottom:6px;">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+<form method="POST" style="display:flex; flex-direction:column; gap:3rem;">
+  <h1>Tetragon Runtime Security</h1>
+
+  <!-- CURRENT STATUS -->
+  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CURRENT STATUS</h3>
+    </div>
+
+    {% if policy_error %}
+      <p style="color:#c00; font-size:0.9em;">
+        ⚠️ Could not read TracingPolicies from Kubernetes API: {{ policy_error }}
+      </p>
+      <p style="color:#888; font-size:0.85em;">
+        Tetragon may not be installed yet, or the service account lacks ClusterRole permissions.
+      </p>
+    {% else %}
+      {% if active_policies | length > 0 %}
+        <div style="display:inline-flex; align-items:center; gap:8px; background:#fce4ec; border:1px solid #ef9a9a; border-radius:8px; padding:10px 16px; margin-bottom:12px;">
+          <span style="font-size:1.2rem;">🛡️</span>
+          <span style="font-weight:600; color:#b71c1c;">Runtime monitoring active — {{ active_policies | length }} TracingPolic{{ 'y' if active_policies|length == 1 else 'ies' }} deployed</span>
+        </div>
+        <p style="color:#666; font-size:0.88em; margin-top:4px;">
+          Active: {{ active_policies | join(', ') }}
+        </p>
+      {% else %}
+        <div style="display:inline-flex; align-items:center; gap:8px; background:#f5f5f5; border:1px solid #ccc; border-radius:8px; padding:10px 16px;">
+          <span style="font-size:1.2rem;">⭕</span>
+          <span style="font-weight:600; color:#555;">No TracingPolicies deployed — monitoring inactive</span>
+        </div>
+      {% endif %}
+    {% endif %}
+  </section>
+
+  <!-- WHAT IS TETRAGON -->
+  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">ABOUT TETRAGON</h3>
+    </div>
+
+    <p style="margin-top:0; margin-bottom:16px; color:#555; font-size:0.95em; line-height:1.6;">
+      Tetragon is a <strong>Cilium eBPF-based runtime security</strong> engine. Unlike antivirus or network policies,
+      Tetragon hooks directly into the Linux kernel — observing and enforcing at the syscall level
+      <em>inside every container</em>.
+    </p>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:0;">
+      <div style="background:#e8f5e9; border:1px solid #a5d6a7; border-radius:8px; padding:14px; font-size:0.88em;">
+        <strong style="color:#2e7d32;">Process Execution</strong>
+        <p style="color:#555; margin:6px 0 0 0; line-height:1.5;">
+          Detect when unexpected binaries run inside pods — shells, curl, wget.
+        </p>
+      </div>
+      <div style="background:#e3f2fd; border:1px solid #90caf9; border-radius:8px; padding:14px; font-size:0.88em;">
+        <strong style="color:#1565c0;">File Access</strong>
+        <p style="color:#555; margin:6px 0 0 0; line-height:1.5;">
+          Alert on reads of <code>/etc/shadow</code>, <code>/etc/passwd</code>, and other sensitive paths.
+        </p>
+      </div>
+      <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px; font-size:0.88em;">
+        <strong style="color:#f57f17;">Kill &amp; Enforce</strong>
+        <p style="color:#555; margin:6px 0 0 0; line-height:1.5;">
+          Optionally terminate offending processes in real-time — not just observe.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRACING POLICIES -->
+  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">TRACING POLICIES</h3>
+    </div>
+
+    <p style="margin-top:0; margin-bottom:20px; color:#555; font-size:0.95em; line-height:1.6;">
+      Deploy both eBPF <code>TracingPolicy</code> objects to the cluster. These run as kernel probes
+      and emit structured JSON events for every matching syscall across all pods.
+    </p>
+
+    <!-- Policy card: sensitive file read -->
+    <div style="border:1px solid #e0e0e0; border-radius:10px; padding:18px 20px; margin-bottom:14px;">
+      <div style="display:flex; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+        <span style="font-size:1.3rem; margin-top:2px;">📂</span>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
+            <strong style="font-size:0.95rem;">detect-sensitive-file-read</strong>
+            {% if 'detect-sensitive-file-read' in active_policies %}
+              <span style="background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px; font-size:0.78rem; font-weight:600;">ACTIVE</span>
+            {% else %}
+              <span style="background:#f5f5f5; color:#888; border:1px solid #ddd; border-radius:4px; padding:2px 8px; font-size:0.78rem;">INACTIVE</span>
+            {% endif %}
+          </div>
+          <p style="margin:0; color:#666; font-size:0.88em; line-height:1.5;">
+            kprobe on <code>fd_install</code> — fires whenever any container opens
+            <code>/etc/shadow</code> or <code>/etc/passwd</code>.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Policy card: shell execution -->
+    <div style="border:1px solid #e0e0e0; border-radius:10px; padding:18px 20px; margin-bottom:20px;">
+      <div style="display:flex; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+        <span style="font-size:1.3rem; margin-top:2px;">💻</span>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
+            <strong style="font-size:0.95rem;">detect-shell-execution</strong>
+            {% if 'detect-shell-execution' in active_policies %}
+              <span style="background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px; font-size:0.78rem; font-weight:600;">ACTIVE</span>
+            {% else %}
+              <span style="background:#f5f5f5; color:#888; border:1px solid #ddd; border-radius:4px; padding:2px 8px; font-size:0.78rem;">INACTIVE</span>
+            {% endif %}
+          </div>
+          <p style="margin:0; color:#666; font-size:0.88em; line-height:1.5;">
+            kprobe on <code>security_bprm_check</code> — fires when <code>/bin/sh</code>,
+            <code>/bin/bash</code>, or <code>/bin/dash</code> is executed inside any pod.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <button type="submit" name="action" value="deploy"
+              style="background-color:#0066ff; color:#fff; border:none; padding:10px 24px;
+                     border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
+        🛡️ Deploy TracingPolicies
+      </button>
+      <button type="submit" name="action" value="remove"
+              style="background-color:#757575; color:#fff; border:none; padding:10px 24px;
+                     border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
+        ✖ Remove TracingPolicies
+      </button>
+    </div>
+  </section>
+
+  <!-- SIMULATE ATTACK -->
+  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:6px; height:20px; background-color:#d32f2f; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SIMULATE ATTACK</h3>
+    </div>
+
+    <p style="margin-top:0; margin-bottom:16px; color:#555; font-size:0.95em; line-height:1.6;">
+      Launches a short-lived Kubernetes <code>Job</code> in the <code>piap</code> namespace.
+      The simulated attacker pod attempts to read <code>/etc/shadow</code> and <code>/etc/passwd</code>,
+      then spawns a shell — the exact patterns Tetragon's TracingPolicies are watching for.
+    </p>
+
+    <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px 18px; margin-bottom:16px; font-size:0.88em; color:#5d4037;">
+      <strong>What the Job executes:</strong>
+      <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.8; font-family:monospace; color:#333; font-size:0.95em;">
+        <li>cat /etc/shadow</li>
+        <li>cat /etc/passwd</li>
+        <li>sh -c 'id; whoami'</li>
+      </ul>
+    </div>
+
+    <div style="background:#fce4ec; border:1px solid #ef9a9a; border-radius:8px; padding:10px 16px; margin-bottom:20px; font-size:0.85em; color:#b71c1c;">
+      ⚠️ Deploy TracingPolicies first so Tetragon can detect the simulation. The Job auto-deletes after 2 minutes.
+    </div>
+
+    <button type="submit" name="action" value="simulate"
+            onclick="return confirm('Launch attack simulation job in the piap namespace?')"
+            style="background-color:#d32f2f; color:#fff; border:none; padding:10px 24px;
+                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
+      🚨 Simulate Attack
+    </button>
+  </section>
+
+  <!-- LIVE EVENT STREAM -->
+  <section>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">LIVE EVENT STREAM</h3>
+        <span id="live-dot" style="display:inline-block; width:8px; height:8px; border-radius:50%;
+              background:#ccc; margin-left:4px;" title="Polling status"></span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span id="event-count" style="color:#888; font-size:0.85em;"></span>
+        <button type="button" id="toggle-poll"
+                style="background:#f5f5f5; border:1px solid #ddd; border-radius:6px;
+                       padding:5px 14px; cursor:pointer; font-size:0.85rem; color:#333;">
+          ⏸ Pause
+        </button>
+        <button type="button" id="clear-events"
+                style="background:#f5f5f5; border:1px solid #ddd; border-radius:6px;
+                       padding:5px 14px; cursor:pointer; font-size:0.85rem; color:#333;">
+          🗑 Clear
+        </button>
+      </div>
+    </div>
+
+    <p style="margin:0 0 12px 0; color:#888; font-size:0.85em;">
+      Polls <code>/tetragon/events</code> every 3 s. Events are sourced from the Tetragon
+      <code>export-stdout</code> container logs in <code>kube-system</code>.
+    </p>
+
+    <div id="event-stream"
+         style="background:#0d1117; border-radius:8px; padding:16px; min-height:260px;
+                max-height:440px; overflow-y:auto; font-family:monospace; font-size:0.82rem;
+                color:#c9d1d9; position:relative;">
+      <div id="event-placeholder" style="color:#555; padding-top:80px; text-align:center;">
+        Waiting for Tetragon events…<br>
+        <span style="font-size:0.9em;">Deploy TracingPolicies, then click Simulate Attack to generate events.</span>
+      </div>
+    </div>
+  </section>
+
+</form>
+
+<script>
+(function () {
+  var stream      = document.getElementById('event-stream');
+  var placeholder = document.getElementById('event-placeholder');
+  var countEl     = document.getElementById('event-count');
+  var dot         = document.getElementById('live-dot');
+  var toggleBtn   = document.getElementById('toggle-poll');
+  var clearBtn    = document.getElementById('clear-events');
+
+  var polling  = true;
+  var seenKeys = {};
+
+  function typeColor(type) {
+    if (type === 'kprobe') return '#ff7b72';
+    if (type === 'exec')   return '#d2a8ff';
+    if (type === 'exit')   return '#8b949e';
+    return '#58a6ff';
+  }
+
+  function actionBadge(action) {
+    if (!action) return '';
+    var color = (action.toLowerCase().indexOf('kill') !== -1) ? '#ff4d4f' : '#fa8c16';
+    return '<span style="background:' + color + '22; color:' + color + '; border:1px solid ' + color + '55;' +
+           'border-radius:3px; padding:0 5px; font-size:0.78rem; margin-left:6px;">' + action + '</span>';
+  }
+
+  function formatTime(iso) {
+    if (!iso) return '--:--:--';
+    try { return new Date(iso).toLocaleTimeString(); }
+    catch (e) { return iso.substring(11, 19) || ''; }
+  }
+
+  function esc(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function appendEvent(ev) {
+    var key = ev.time + '|' + ev.binary + '|' + ev.type + '|' + ev.func_name;
+    if (seenKeys[key]) return;
+    seenKeys[key] = true;
+
+    placeholder.style.display = 'none';
+
+    var row = document.createElement('div');
+    row.style.cssText = 'border-bottom:1px solid #21262d; padding:5px 0; line-height:1.5;';
+
+    var podPart = ev.pod
+      ? '<span style="color:#79c0ff">' + esc(ev.namespace || 'ns') + '/' + esc(ev.pod) + '</span> '
+      : '';
+    var binPart = ev.binary
+      ? '<span style="color:#f0e68c">' + esc(ev.binary) + '</span>'
+      : '';
+    var argPart = ev.arguments
+      ? '<span style="color:#8b949e"> ' + esc(ev.arguments) + '</span>'
+      : '';
+    var fnPart  = ev.func_name
+      ? '<span style="color:#888"> [' + esc(ev.func_name) + ']</span>'
+      : '';
+
+    row.innerHTML =
+      '<span style="color:#8b949e">' + formatTime(ev.time) + '</span> ' +
+      '<span style="color:' + typeColor(ev.type) + '; font-weight:600;">' +
+        (ev.type || 'UNK').toUpperCase().substring(0,6) + '</span> ' +
+      podPart + binPart + argPart + fnPart + actionBadge(ev.action);
+
+    stream.appendChild(row);
+    stream.scrollTop = stream.scrollHeight;
+
+    var count = Object.keys(seenKeys).length;
+    countEl.textContent = count + ' event' + (count === 1 ? '' : 's');
+  }
+
+  function poll() {
+    if (!polling) return;
+    fetch('/tetragon/events')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        dot.style.background = '#2ea44f';
+        if (data.error) { dot.style.background = '#f85149'; return; }
+        (data.events || []).forEach(appendEvent);
+      })
+      .catch(function() { dot.style.background = '#f85149'; });
+  }
+
+  setInterval(poll, 3000);
+  poll();
+
+  toggleBtn.addEventListener('click', function() {
+    polling = !polling;
+    toggleBtn.textContent = polling ? '⏸ Pause' : '▶ Resume';
+    dot.style.background  = polling ? '#2ea44f' : '#ccc';
+    if (polling) poll();
+  });
+
+  clearBtn.addEventListener('click', function() {
+    Array.from(stream.children).forEach(function(el) {
+      if (el.id !== 'event-placeholder') el.remove();
+    });
+    seenKeys = {};
+    countEl.textContent = '';
+    placeholder.style.display = 'block';
+  });
+})();
+</script>
+
 {% endblock %}
