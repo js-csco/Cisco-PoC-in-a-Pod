@@ -18,6 +18,10 @@ from scripts.csa_scripts.create_int_policy import (
     create_int_block_apps_policy,
     create_allow_all_policy
 )
+from scripts.csa_scripts.create_dlp_rules import (
+    create_ai_guardrail_rule,
+    create_realtime_dlp_rule
+)
 
 
 app = Flask(__name__)
@@ -156,6 +160,23 @@ def secure_access():
 
                 ### start API Call in script /scripts/.py files
 
+
+            # Action: CREATE DLP RULES
+            elif action == "create_dlp":
+                if not session.get("authenticated"):
+                    flash("⚠️ Please authenticate first.")
+                    return redirect(url_for("secure_access"))
+
+                token = token_cache.get("access_token")
+                if not token:
+                    flash("⚠️ Missing token — please re-authenticate.")
+                    return redirect(url_for("secure_access"))
+
+                create_ai_guardrail_rule(token)
+                flash("✅ AI Guardrails rule created: Block PII / Emails to AI Apps.")
+
+                create_realtime_dlp_rule(token)
+                flash("✅ Real-Time DLP rule created: Block Email Addresses and IBANs.")
 
             # Action: CREATE INTERNET ACCESS
             elif action == "create_internet":

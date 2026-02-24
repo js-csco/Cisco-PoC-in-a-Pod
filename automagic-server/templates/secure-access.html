@@ -148,6 +148,34 @@
 
 
 
+        <!-- DATA LOSS PREVENTION -->
+        <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+            <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DATA LOSS PREVENTION</h3>
+          </div>
+
+          <p style="margin-top:0; margin-bottom:25px; color:#555; font-size:0.95em;">
+            Automate DLP rules to protect sensitive data in real-time and across AI applications.
+          </p>
+
+          <h4 style="color:#005073; margin-bottom:5px;">AI Guardrails Rule</h4>
+          <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
+            Blocks sharing of PII and email addresses with AI applications (e.g. ChatGPT, DeepSeek).
+          </p>
+
+          <h4 style="color:#005073; margin-top:20px; margin-bottom:5px;">Real-Time Rule</h4>
+          <p style="margin-top:0; margin-bottom:15px; color:#666; font-size:0.9em;">
+            Blocks upload or sharing of email addresses and IBAN numbers in proxied web traffic.
+          </p>
+
+          <button type="submit" name="action" value="create_dlp"
+                  style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                         border-radius:6px; font-weight:500; cursor:pointer;">
+            Create DLP Rules
+          </button>
+        </section>
+
   {{ super() }}
 </form>
 {% endblock %}
