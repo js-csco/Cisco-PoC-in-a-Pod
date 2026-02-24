@@ -60,33 +60,33 @@ def list_ai_guardrail_classifications(token):
 
 def create_ai_guardrail_rule(token):
     """
-    Creates an AI Guardrails DLP rule to block sharing AWS/Azure credentials with AI apps.
-    Dynamically looks up classification UUIDs from the AI Guardrails classifications endpoint,
-    which uses a separate UUID space from the real-time DLP classifications.
+    Creates an AI Guardrails DLP rule covering all available classifications.
+    UUIDs confirmed from GET /policies/v2/dlp/aiGuardrails/classifications.
     """
-    items = list_ai_guardrail_classifications(token)
-    print("  Available AI Guardrail classifications:")
-    for c in items:
-        print(f"    - {c.get('name')} → {c.get('id') or c.get('uuid') or c.get('classificationId')}")
-
-    aws_id = None
-    azure_id = None
-    for c in items:
-        name = c.get("name", "").lower()
-        cid = c.get("id") or c.get("uuid") or c.get("classificationId")
-        if aws_id is None and "aws" in name:
-            aws_id = cid
-            print(f"  Matched AWS: '{c.get('name')}' → {cid}")
-        if azure_id is None and "azure" in name:
-            azure_id = cid
-            print(f"  Matched Azure: '{c.get('name')}' → {cid}")
-        if aws_id and azure_id:
-            break
-
-    missing = [n for n, v in [("AWS", aws_id), ("Azure", azure_id)] if not v]
-    if missing:
-        available = ", ".join(c.get("name", "?") for c in items)
-        raise Exception(f"Could not find AI Guardrail classification(s): {missing}. Available: {available}")
+    # All confirmed AI Guardrail classification UUIDs
+    ALL_CLASSIFICATION_IDS = [
+        "6c312991-b6fa-11ef-a825-0242ac120002",  # American Bankers Association (ABA) Routing Number (US)
+        "f435c215-b6fa-11ef-a825-0242ac120002",  # Bank Account Number (US)
+        "c5628ff6-b6fb-11ef-a825-0242ac120002",  # Code Detection (Response)
+        "77879429-b6fa-11ef-a825-0242ac120002",  # Credit Card Number
+        "96fd3c92-b6f4-11ef-a825-0242ac120002",  # Driver's License Number (US)
+        "e0b313e6-b6f3-11ef-a825-0242ac120002",  # Email Address
+        "1625bcae-ed2b-11ef-9cc0-0242ac120002",  # Harassment
+        "7bcb4e89-ed2a-11ef-9cc0-0242ac120002",  # Hate Speech
+        "5332220b-b6fb-11ef-a825-0242ac120002",  # Individual Taxpayer Identification Number (ITIN) (US)
+        "248b4bdd-b6fb-11ef-a825-0242ac120002",  # International Bank Account Number (IBAN)
+        "193300a0-b6f4-11ef-a825-0242ac120002",  # IP Address
+        "cc176031-b6f9-11ef-a825-0242ac120002",  # Medical License Number (US)
+        "050a5aa3-b6fa-11ef-a825-0242ac120002",  # National Health Service (NHS) Number
+        "ff2831a5-b6f4-11ef-a825-0242ac120002",  # Passport Number (US)
+        "57caa2e9-b6f4-11ef-a825-0242ac120002",  # Phone Number
+        "908b86e4-ed2b-11ef-9cc0-0242ac120002",  # Profanity
+        "9714ca31-b6fb-11ef-a825-0242ac120002",  # Prompt Injection
+        "cfd4a699-ed2a-11ef-9cc0-0242ac120002",  # Sexual Content & Exploitation
+        "4ac5af67-ed2b-11ef-9cc0-0242ac120002",  # Social Division & Polarization
+        "987bfdaf-b6f5-11ef-a825-0242ac120002",  # Social Security Number (SSN) (US)
+        "cbc4d6f1-ed2b-11ef-9cc0-0242ac120002",  # Violence & Public Safety Threats
+    ]
 
     url = f"{BASE_URL}/policies/v2/dlp/aiGuardrails/rules"
     headers = {
@@ -96,15 +96,15 @@ def create_ai_guardrail_rule(token):
     }
 
     payload = {
-        "name": "joschwei - Block Cloud Credentials to AI Apps (AWS / Azure)",
-        "description": "Blocks sharing of AWS and Azure cloud credentials with AI applications.",
+        "name": "joschwei - Block Sensitive Data to AI Apps (All Categories)",
+        "description": "Blocks sharing of all sensitive data categories with AI applications.",
         "enabled": False,
         "action": "BLOCK",
         "severity": "HIGH",
         "type": "AI_DEFENSE",
         "identities": [],
         "excludedIdentities": [],
-        "classifications": [aws_id, azure_id],
+        "classifications": ALL_CLASSIFICATION_IDS,
         "allDestinationsScope": "ALL",
         "applications": [],
         "applicationCategories": [],
@@ -119,7 +119,7 @@ def create_ai_guardrail_rule(token):
     if r.status_code not in (200, 201):
         raise Exception(f"Failed to create AI Guardrail rule: {r.status_code} - {r.text}")
 
-    print("✅ AI Guardrail DLP rule created (AWS Secret Key + Azure Access Key).")
+    print("✅ AI Guardrail DLP rule created (all 21 classifications).")
     return r.json()
 
 
