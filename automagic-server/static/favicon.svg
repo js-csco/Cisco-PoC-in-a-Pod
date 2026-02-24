@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Cisco 6-bar bridge logo in Cisco blue -->
+  <rect x="2"  y="22" width="3" height="9"  fill="#00bceb"/>
+  <rect x="7"  y="16" width="3" height="15" fill="#00bceb"/>
+  <rect x="12" y="10" width="3" height="21" fill="#00bceb"/>
+  <rect x="17" y="10" width="3" height="21" fill="#00bceb"/>
+  <rect x="22" y="16" width="3" height="15" fill="#00bceb"/>
+  <rect x="27" y="22" width="3" height="9"  fill="#00bceb"/>
+</svg>
