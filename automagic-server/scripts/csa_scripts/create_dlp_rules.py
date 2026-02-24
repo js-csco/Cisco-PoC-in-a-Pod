@@ -121,12 +121,12 @@ def create_ai_guardrail_rule(token):
 
 def create_realtime_dlp_rule(token):
     """
-    Creates a Real-Time DLP rule to block AWS and Azure cloud credentials.
-    Uses hardcoded UUIDs confirmed from GET /policies/v2/dlp/classifications.
+    Creates a Real-Time DLP rule using built-in classification UUIDs confirmed
+    from an existing working rule in the tenant.
     """
-    # Confirmed UUIDs from GET /policies/v2/dlp/classifications
-    AWS_SECRET_KEY_ID = "087d53f6-3d90-43bd-a27c-5dfcc7c7959b"   # AWS - Secret Key
-    AZURE_ACCESS_KEY_ID = "de1a5f26-b48a-45e7-af8f-919669472cb1"  # Azure - Access Key
+    # Confirmed classification UUIDs from existing working real-time DLP rule
+    PCI_CLASSIFICATION_ID = "39b3b945-2e21-4831-bbbc-86fc5200ddf7"   # Built-in PCI Classification
+    PII_CLASSIFICATION_ID = "726c599d-6f08-44a9-a72d-f178d1281765"   # Built-in PII Classification
 
     url = f"{BASE_URL}/policies/v2/dlp/realTime/rules"
     headers = {
@@ -137,7 +137,7 @@ def create_realtime_dlp_rule(token):
 
     payload = {
         "name": "DLP Rule - Real-Time",
-        "description": "Blocks upload/sharing of AWS and Azure access keys and secrets in real-time.",
+        "description": "Blocks upload/sharing of PCI and PII classified data in real-time.",
         "enabled": True,
         "action": "BLOCK",
         "severity": "WARNING",
@@ -156,7 +156,7 @@ def create_realtime_dlp_rule(token):
             }
         ],
         "applications": [],
-        "classifications": [AWS_SECRET_KEY_ID, AZURE_ACCESS_KEY_ID],
+        "classifications": [PCI_CLASSIFICATION_ID, PII_CLASSIFICATION_ID],
         "labelFileParameters": {"mipData": {}, "labelsData": []},
         "scannableContexts": ["FILENAME", "CONTENT"],
         "mipTags": [],
@@ -171,5 +171,5 @@ def create_realtime_dlp_rule(token):
     if r.status_code not in (200, 201):
         raise Exception(f"Failed to create Real-Time DLP rule: {r.status_code} - {r.text}")
 
-    print("✅ Real-Time DLP rule created (AWS Secret Key + Azure Access Key).")
+    print("✅ Real-Time DLP rule created (Built-in PCI + PII Classification).")
     return r.json()
