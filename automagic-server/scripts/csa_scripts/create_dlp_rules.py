@@ -81,7 +81,7 @@ def create_ai_guardrail_rule(token):
     payload = {
         "name": "joschwei - Block Sensitive Data to AI Apps (All Categories)",
         "description": "Blocks sharing of sensitive data (security, safety, privacy) with AI applications.",
-        "enabled": False,
+        "enabled": True,
         "action": "BLOCK",
         "severity": "ALERT",
         "type": "AI_DEFENSE",
@@ -138,7 +138,7 @@ def create_realtime_dlp_rule(token):
     payload = {
         "name": "joschwei - Block Cloud Credentials (AWS / Azure)",
         "description": "Blocks upload/sharing of AWS and Azure access keys and secrets in real-time.",
-        "enabled": False,
+        "enabled": True,
         "action": "BLOCK",
         "severity": "HIGH",
         "identities": [],
