@@ -18,11 +18,10 @@ spec:
       serviceAccountName: kubectl-mcp-sa
       containers:
         - name: kubectl-mcp
-          image: ghcr.io/containers/kubernetes-mcp-server:latest
+          image: mcp/kubectl-mcp-server:latest
           args:
-            - "--transport=streamable-http"
-            - "--port=8000"
-            - "--read-only"
+            - "--transport"
+            - "sse"
           ports:
             - containerPort: 8000
               protocol: TCP
