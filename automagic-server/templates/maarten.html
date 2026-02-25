@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% set active_page = 'maarten' %}
+{% block title %}Maarten - Cisco PoC in a Pod{% endblock %}
+
+{% block content %}
+<h1>Maarten</h1>
+
+<!-- INTRO -->
+<section style="background:#f8f9fa; padding:20px; border-radius:8px; border-left:4px solid #0066ff; margin-bottom:3rem;">
+  <p style="color:#555; font-size:0.95em; margin:0; line-height:1.6;">
+    This page provides background information about <strong>Cisco</strong> and the security solutions
+    demonstrated in this Proof of Concept environment.
+  </p>
+</section>
+
+<!-- ABOUT CISCO -->
+<section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0; margin-bottom:3rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">ABOUT CISCO</h3>
+  </div>
+  <p style="color:#555; font-size:0.95em; line-height:1.7; margin:0 0 12px 0;">
+    Cisco Systems is a worldwide technology leader specialising in networking, cybersecurity, cloud, and
+    collaboration solutions. Founded in 1984 and headquartered in San Jose, California, Cisco connects
+    organisations of all sizes — from small businesses to global enterprises and governments — enabling
+    them to securely digitise operations and achieve their strategic goals.
+  </p>
+  <p style="color:#555; font-size:0.95em; line-height:1.7; margin:0;">
+    With a portfolio spanning hardware, software, and services, Cisco is consistently recognised as one
+    of the world's most innovative and trusted technology companies.
+  </p>
+</section>
+
+<!-- CISCO SECURITY PORTFOLIO -->
+<section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0; margin-bottom:3rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CISCO SECURITY PORTFOLIO</h3>
+  </div>
+  <p style="color:#555; font-size:0.95em; line-height:1.7; margin:0 0 20px 0;">
+    Cisco's security portfolio is one of the most comprehensive in the industry, covering every layer of
+    the modern attack surface — from the network edge to the cloud workload.
+  </p>
+
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+    <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+    <h4 style="color:#333; margin:0; font-size:1rem;">Cisco Secure Access (SSE)</h4>
+  </div>
+  <p style="color:#555; font-size:0.9em; line-height:1.6; margin:0 0 20px 0;">
+    A cloud-delivered Security Service Edge platform that converges Zero Trust Network Access (ZTNA),
+    Secure Web Gateway (SWG), Cloud Access Security Broker (CASB), Firewall-as-a-Service (FWaaS),
+    and DNS-layer security into a single unified service. It ensures users can access any application,
+    from anywhere, securely.
+  </p>
+
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+    <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+    <h4 style="color:#333; margin:0; font-size:1rem;">Cisco Duo</h4>
+  </div>
+  <p style="color:#555; font-size:0.9em; line-height:1.6; margin:0 0 20px 0;">
+    A leading Multi-Factor Authentication (MFA) and Zero Trust access solution. Duo verifies the identity
+    of users and the health of their devices before granting access to applications, protecting
+    organisations against credential theft and account takeover attacks.
+  </p>
+
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+    <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+    <h4 style="color:#333; margin:0; font-size:1rem;">Cilium & Tetragon</h4>
+  </div>
+  <p style="color:#555; font-size:0.9em; line-height:1.6; margin:0 0 20px 0;">
+    Open-source, eBPF-based projects under the CNCF umbrella. <strong>Cilium</strong> provides
+    high-performance networking, observability, and network policy enforcement for Kubernetes workloads.
+    <strong>Tetragon</strong> delivers deep runtime security, detecting and blocking threats at the
+    kernel level using eBPF tracing policies.
+  </p>
+
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+    <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+    <h4 style="color:#333; margin:0; font-size:1rem;">Splunk</h4>
+  </div>
+  <p style="color:#555; font-size:0.9em; line-height:1.6; margin:0;">
+    Acquired by Cisco in 2024, Splunk is the industry-leading platform for security information and
+    event management (SIEM), observability, and IT operations. It enables teams to investigate threats,
+    monitor infrastructure, and respond to incidents at machine speed.
+  </p>
+</section>
+
+<!-- THIS POC -->
+<section style="padding-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">THIS PROOF OF CONCEPT</h3>
+  </div>
+  <p style="color:#555; font-size:0.95em; line-height:1.7; margin:0 0 12px 0;">
+    <strong>PoC in a Pod</strong> bundles a representative slice of the Cisco security stack into a
+    self-contained Kubernetes environment that can be spun up in minutes. It is designed to let you
+    experience the integration between these products hands-on, without needing a full production deployment.
+  </p>
+  <ul style="color:#555; font-size:0.9em; line-height:2; padding-left:20px; margin:0;">
+    <li>Zero Trust access control via <strong>Cisco Secure Access</strong></li>
+    <li>Multi-Factor Authentication via <strong>Cisco Duo</strong></li>
+    <li>Kubernetes network policy enforcement via <strong>Cilium</strong></li>
+    <li>Runtime threat detection via <strong>Tetragon</strong></li>
+    <li>Centralised log aggregation via <strong>Splunk</strong></li>
+    <li>AI-powered cluster inspection via <strong>Kubectl MCP</strong></li>
+  </ul>
+</section>
+
+{{ super() }}
+{% endblock %}
