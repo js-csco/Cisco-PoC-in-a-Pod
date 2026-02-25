@@ -445,10 +445,6 @@ def kubectl_mcp():
 def splunk():
     return render_template('splunk.html')
 
-@app.route('/maarten')
-def maarten():
-    return render_template('maarten.html')
-
 @app.route('/help')
 def help_page():
     return render_template('help.html')
