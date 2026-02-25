@@ -458,6 +458,10 @@ def kubectl_mcp():
 def splunk():
     return render_template('splunk.html')
 
+@app.route('/thousandeyes')
+def thousandeyes():
+    return render_template('thousandeyes.html')
+
 @app.route('/help')
 def help_page():
     return render_template('help.html')
