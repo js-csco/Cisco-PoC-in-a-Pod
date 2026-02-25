@@ -119,41 +119,16 @@
       </div>
 
       <p style="margin-top:0; margin-bottom:20px; color:#555; font-size:0.95em;">
-        Two integrations are required to connect Duo with Cisco Secure Access. These must be configured manually in both dashboards.
+        A single integration connects Duo with Cisco Secure Access, covering both SSO and user provisioning (SCIM).
+        In the <strong>Duo Admin Panel</strong>, go to <em>Applications → Protect an Application</em>, search for
+        <strong>Cisco Secure Access</strong>, and follow the setup guide to configure SSO and enable user provisioning.
       </p>
 
-      <!-- Integration 1: User Directory -->
-      <div style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:8px; padding:18px; margin-bottom:16px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-          <span style="background:#0066ff; color:#fff; font-size:0.75em; font-weight:700; padding:2px 8px; border-radius:4px;">1</span>
-          <strong style="color:#111; font-size:0.95em;">User Directory — sync Duo users into Secure Access</strong>
-        </div>
-        <p style="margin:0 0 10px 0; color:#555; font-size:0.88em; line-height:1.6;">
-          This integration provisions Duo users into Cisco Secure Access so they can be assigned to policies.
-        </p>
-        <ol style="margin:0; padding-left:20px; color:#555; font-size:0.88em; line-height:1.9;">
-          <li>In the <strong>Duo Admin Panel</strong>, go to <em>Users → Directory Sync</em> and add a new directory.</li>
-          <li>Choose <strong>Cisco Secure Access</strong> as the target and follow the SCIM setup wizard.</li>
-          <li>In the <strong>Secure Access Dashboard</strong>, go to <em>Users &amp; Groups → User Management</em> and confirm users appear after the first sync.</li>
-        </ol>
-      </div>
-
-      <!-- Integration 2: SAML IdP -->
-      <div style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:8px; padding:18px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-          <span style="background:#0066ff; color:#fff; font-size:0.75em; font-weight:700; padding:2px 8px; border-radius:4px;">2</span>
-          <strong style="color:#111; font-size:0.95em;">SAML Identity Provider — set Duo as the IdP for Secure Access</strong>
-        </div>
-        <p style="margin:0 0 10px 0; color:#555; font-size:0.88em; line-height:1.6;">
-          This integration makes Duo the authentication provider so users are challenged with Duo MFA when accessing resources through Secure Access.
-        </p>
-        <ol style="margin:0; padding-left:20px; color:#555; font-size:0.88em; line-height:1.9;">
-          <li>In the <strong>Duo Admin Panel</strong>, go to <em>Applications → Protect an Application</em> and search for <strong>Cisco Secure Access</strong>.</li>
-          <li>Copy the <strong>Entity ID</strong>, <strong>SSO URL</strong>, and download the <strong>Certificate</strong>.</li>
-          <li>In the <strong>Secure Access Dashboard</strong>, go to <em>Settings → Identity → Identity Providers</em> and add a new SAML provider using the values from Duo.</li>
-          <li>Copy the <strong>SP Entity ID</strong> and <strong>ACS URL</strong> from Secure Access back into the Duo application settings and save.</li>
-        </ol>
-      </div>
+      <a href="https://duo.com/docs/sso-cisco-secure-access" target="_blank"
+         style="display:inline-block; background-color:#0066ff; color:#fff; text-decoration:none;
+                padding:10px 20px; border-radius:6px; font-weight:500;">
+        Duo SSO – Cisco Secure Access Docs
+      </a>
     </section>
 
   {{ super() }}
