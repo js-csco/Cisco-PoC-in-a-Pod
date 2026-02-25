@@ -233,21 +233,20 @@ def duo():
             return redirect(url_for('duo'))
         
         try:
-            # Action: SETUP DUO (Complete setup with single user)
+            # Action: SETUP DUO (Complete setup with up to 3 users)
             if action == 'setup_duo':
-                email = request.form.get('user_email', '').strip()
-                username = request.form.get('user_username', '').strip()
-                
-                # Validate user is provided
-                if not email or not username:
-                    flash("⚠️ Please provide both email and username")
+                # Collect up to 3 users; skip rows where either field is blank
+                users_list = []
+                for i in range(1, 4):
+                    email = request.form.get(f'user_email_{i}', '').strip()
+                    username = request.form.get(f'user_username_{i}', '').strip()
+                    if email and username:
+                        users_list.append({'email': email, 'username': username})
+
+                # Validate at least one user is provided
+                if not users_list:
+                    flash("⚠️ Please provide at least one email and username")
                     return redirect(url_for('duo'))
-                
-                # Create user list with single user
-                users_list = [{
-                    'email': email,
-                    'username': username
-                }]
                 
                 # Import and call the complete setup function
                 from scripts.duo.duo_automation import setup_duo_complete
@@ -260,21 +259,19 @@ def duo():
                 )
                 
                 # Display results
-                if result['users_created']:
-                    user = result['users_created'][0]
+                for user in result['users_created']:
                     flash(f"✅ User '{user['username']}' created (ID: {user['user_id']})")
-                
-                if result['users_existing']:
-                    user = result['users_existing'][0]
+
+                for user in result['users_existing']:
                     flash(f"ℹ️ User '{user['username']}' already exists (ID: {user['user_id']})")
-                
+
                 if result['group_created']:
                     flash(f"✅ Group 'PoC Users' created (ID: {result['group_id']})")
                 else:
                     flash(f"ℹ️ Using existing 'PoC Users' group (ID: {result['group_id']})")
-                
+
                 if result['users_added_to_group'] > 0:
-                    flash(f"✅ User added to 'PoC Users' group")
+                    flash(f"✅ {result['users_added_to_group']} user(s) added to 'PoC Users' group")
                 
                 # Display any errors
                 if result['errors']:
