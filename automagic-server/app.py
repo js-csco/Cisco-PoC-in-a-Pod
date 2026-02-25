@@ -62,14 +62,28 @@ def ensure_valid_token(api_key, api_secret):
 @app.route("/secure-access", methods=["GET", "POST"])
 def secure_access():
     
-    # NEEDS AUTHENTICATION
+    # If token is gone (e.g. after a rebuild), try to restore it from session credentials
     if not token_cache.get("access_token"):
         session.pop("authenticated", None)
+        stored_key = session.get("csa_api_key")
+        stored_secret = session.get("csa_api_secret")
+        if stored_key and stored_secret:
+            try:
+                get_access_token(stored_key, stored_secret)
+                session["authenticated"] = True
+            except Exception:
+                pass  # credentials may be expired; user will see the form pre-filled
 
     if request.method == "POST":
-        api_key = request.form.get("api_key")
-        api_secret = request.form.get("api_secret")
+        # Use form values if provided, otherwise fall back to session-stored credentials
+        api_key = request.form.get("api_key", "").strip() or session.get("csa_api_key", "")
+        api_secret = request.form.get("api_secret", "").strip() or session.get("csa_api_secret", "")
         action = request.form.get("action")
+
+        # Persist credentials to session whenever they are explicitly submitted
+        if request.form.get("api_key", "").strip():
+            session["csa_api_key"] = api_key
+            session["csa_api_secret"] = api_secret
 
         # NEEDS NO AUTHENTICATION
         # Goto CSA Dashboard & manual config
@@ -87,8 +101,10 @@ def secure_access():
 
             # Action: AUTHENTICATE
             if action == "auth":
-                # 1️⃣ Authenticate
+                # 1️⃣ Authenticate and persist credentials
                 token = get_access_token(api_key, api_secret)
+                session["csa_api_key"] = api_key
+                session["csa_api_secret"] = api_secret
 
                 # 2️⃣ Mark the session as authenticated so the UI updates
                 session["authenticated"] = True

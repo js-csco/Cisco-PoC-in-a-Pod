@@ -41,9 +41,11 @@
 
     {% if not session.get('authenticated') %}
       <input type="password" id="api_key" name="api_key" placeholder="API Key" required
+             value="{{ session.get('csa_api_key', '') }}"
              style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
 
       <input type="password" id="api_secret" name="api_secret" placeholder="API Secret" required
+             value="{{ session.get('csa_api_secret', '') }}"
              style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
 
       <button type="submit" name="action" value="auth"
