@@ -279,6 +279,18 @@ def duo():
                 else:
                     flash("ℹ️ No integrations found")
             
+            # Action: GET USER STATUS
+            elif action == 'get_user_status':
+                from scripts.duo.duo_automation import get_user_status
+
+                users = get_user_status(
+                    api_hostname=api_hostname,
+                    integration_key=integration_key,
+                    secret_key=secret_key
+                )
+                session['duo_users'] = users
+                flash(f"✅ Retrieved status for {len(users)} user(s)")
+
             # Action: CREATE INTEGRATIONS
             elif action == 'create_integrations':
                 from scripts.duo.duo_automation import create_integration

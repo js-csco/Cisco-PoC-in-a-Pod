@@ -192,6 +192,59 @@ def setup_duo_complete(api_hostname, integration_key, secret_key, users_list):
     return result
 
 
+def get_user_status(api_hostname, integration_key, secret_key):
+    """
+    Retrieve all users with their enrollment status, devices, last login, and group membership.
+
+    Returns:
+        list: List of user status dicts
+    """
+    from datetime import datetime
+
+    admin_api = duo_client.Admin(
+        ikey=integration_key,
+        skey=secret_key,
+        host=api_hostname
+    )
+
+    try:
+        users = admin_api.get_users()
+        result = []
+
+        for user in users:
+            last_login = user.get('last_login')
+            last_login_str = (
+                datetime.utcfromtimestamp(last_login).strftime('%Y-%m-%d %H:%M UTC')
+                if last_login else 'Never'
+            )
+
+            phones = user.get('phones', [])
+            groups = user.get('groups', [])
+
+            devices = []
+            for phone in phones:
+                ptype = phone.get('type', 'Unknown')
+                model = phone.get('name') or phone.get('model', 'Unknown device')
+                devices.append(f"{ptype}: {model}")
+
+            result.append({
+                'username': user.get('username', ''),
+                'email': user.get('email', ''),
+                'status': user.get('status', 'unknown'),
+                'is_enrolled': len(phones) > 0,
+                'devices': devices,
+                'last_login': last_login_str,
+                'groups': [g.get('name', '') for g in groups],
+            })
+
+        print(f"✅ Retrieved status for {len(result)} user(s)")
+        return result
+
+    except Exception as e:
+        print(f"❌ Error getting user status: {e}")
+        raise
+
+
 def list_integrations(api_hostname, integration_key, secret_key):
     """
     List all integrations in the Duo account

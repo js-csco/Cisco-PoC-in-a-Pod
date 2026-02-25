@@ -96,6 +96,91 @@
       </button>
     </section>
 
+    <!-- USER STATUS & ENROLLMENT -->
+    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">USER STATUS & ENROLLMENT</h3>
+      </div>
+
+      <p style="margin-top:0; margin-bottom:20px; color:#555; font-size:0.95em;">
+        View enrollment status, registered devices, last login, and group membership for all users in your Duo account.
+      </p>
+
+      <button type="submit" name="action" value="get_user_status"
+              style="background-color:#0066ff; color:#fff; border:none; padding:12px 24px;
+                     border-radius:6px; font-weight:500; cursor:pointer; font-size:1rem; margin-bottom:24px;">
+        Refresh User Status
+      </button>
+
+      {% if session.get('duo_users') %}
+        {% set users = session.get('duo_users') %}
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.9em;">
+            <thead>
+              <tr style="background:#f0f4ff; border-bottom:2px solid #cdd8ff;">
+                <th style="padding:10px 14px; text-align:left; color:#333; font-weight:600;">Username</th>
+                <th style="padding:10px 14px; text-align:left; color:#333; font-weight:600;">Email</th>
+                <th style="padding:10px 14px; text-align:left; color:#333; font-weight:600;">Status</th>
+                <th style="padding:10px 14px; text-align:left; color:#333; font-weight:600;">Enrolled</th>
+                <th style="padding:10px 14px; text-align:left; color:#333; font-weight:600;">Devices</th>
+                <th style="padding:10px 14px; text-align:left; color:#333; font-weight:600;">Last Login</th>
+                <th style="padding:10px 14px; text-align:left; color:#333; font-weight:600;">Groups</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in users %}
+                {% set row_bg = 'white' if loop.index is odd else '#fafbff' %}
+                <tr style="background:{{ row_bg }}; border-bottom:1px solid #e8eaf0;">
+                  <td style="padding:10px 14px; font-weight:500; color:#111;">{{ user.username }}</td>
+                  <td style="padding:10px 14px; color:#555;">{{ user.email }}</td>
+                  <td style="padding:10px 14px;">
+                    {% if user.status == 'active' %}
+                      <span style="background:#d4edda; color:#155724; padding:3px 10px; border-radius:12px; font-size:0.85em; font-weight:500;">active</span>
+                    {% elif user.status == 'bypass' %}
+                      <span style="background:#fff3cd; color:#856404; padding:3px 10px; border-radius:12px; font-size:0.85em; font-weight:500;">bypass</span>
+                    {% elif user.status == 'disabled' %}
+                      <span style="background:#e2e3e5; color:#383d41; padding:3px 10px; border-radius:12px; font-size:0.85em; font-weight:500;">disabled</span>
+                    {% elif user.status == 'locked out' %}
+                      <span style="background:#f8d7da; color:#721c24; padding:3px 10px; border-radius:12px; font-size:0.85em; font-weight:500;">locked out</span>
+                    {% else %}
+                      <span style="background:#fde8d8; color:#7d3a0a; padding:3px 10px; border-radius:12px; font-size:0.85em; font-weight:500;">{{ user.status }}</span>
+                    {% endif %}
+                  </td>
+                  <td style="padding:10px 14px;">
+                    {% if user.is_enrolled %}
+                      <span style="background:#d4edda; color:#155724; padding:3px 10px; border-radius:12px; font-size:0.85em; font-weight:500;">Enrolled</span>
+                    {% else %}
+                      <span style="background:#fde8d8; color:#7d3a0a; padding:3px 10px; border-radius:12px; font-size:0.85em; font-weight:500;">Pending</span>
+                    {% endif %}
+                  </td>
+                  <td style="padding:10px 14px; color:#555;">
+                    {% if user.devices %}
+                      {% for device in user.devices %}
+                        <div>{{ device }}</div>
+                      {% endfor %}
+                    {% else %}
+                      <span style="color:#aaa;">None</span>
+                    {% endif %}
+                  </td>
+                  <td style="padding:10px 14px; color:#555; white-space:nowrap;">{{ user.last_login }}</td>
+                  <td style="padding:10px 14px; color:#555;">
+                    {% if user.groups %}
+                      {% for group in user.groups %}
+                        <span style="display:inline-block; background:#e8f0fe; color:#1a56db; padding:2px 8px; border-radius:10px; font-size:0.82em; margin:2px 2px 2px 0;">{{ group }}</span>
+                      {% endfor %}
+                    {% else %}
+                      <span style="color:#aaa;">—</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </section>
+
     <!-- INTEGRATIONS -->
     <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
