@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: playwright-mcp
+  namespace: piap
+  labels:
+    app: playwright-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: playwright-mcp
+  template:
+    metadata:
+      labels:
+        app: playwright-mcp
+    spec:
+      containers:
+        - name: playwright-mcp
+          image: mcr.microsoft.com/playwright/mcp:latest
+          imagePullPolicy: Always
+          # Override default stdio entrypoint to expose SSE/HTTP on port 8931
+          command: ["node"]
+          args:
+            - "cli.js"
+            - "--headless"
+            - "--browser"
+            - "chromium"
+            - "--no-sandbox"
+            - "--port"
+            - "8931"
+            - "--host"
+            - "0.0.0.0"
+          ports:
+            - containerPort: 8931
+              protocol: TCP
+          # Chromium needs a larger /dev/shm to avoid tab crashes
+          volumeMounts:
+            - mountPath: /dev/shm
+              name: dshm
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 512Mi
+      restartPolicy: Always

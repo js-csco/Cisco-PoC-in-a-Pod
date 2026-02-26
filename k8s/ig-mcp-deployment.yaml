@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ig-mcp
+  namespace: piap
+  labels:
+    app: ig-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ig-mcp
+  template:
+    metadata:
+      labels:
+        app: ig-mcp
+    spec:
+      serviceAccountName: ig-mcp-sa
+      containers:
+        - name: ig-mcp
+          image: ghcr.io/inspektor-gadget/ig-mcp-server:latest
+          imagePullPolicy: Always
+          args:
+            - "-transport=sse"
+            - "-transport-host=0.0.0.0"
+            - "-transport-port=8080"
+            - "-gadget-discoverer=artifacthub"
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          # Cache for downloaded gadget OCI artifacts
+          volumeMounts:
+            - mountPath: /root/.cache/ig-mcp-server
+              name: ig-cache
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: ig-cache
+          emptyDir: {}
+      restartPolicy: Always
