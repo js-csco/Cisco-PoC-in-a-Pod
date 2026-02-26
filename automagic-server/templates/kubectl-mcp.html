@@ -5,9 +5,39 @@
 {% block content %}
 <h1 style="color:#111; margin-bottom:2rem;">Kubectl MCP</h1>
 
-<section style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4rem 2rem; text-align:center;">
+<!-- What is MCP -->
+<section style="margin-bottom:2rem;">
+  <h2 style="color:#222; font-size:1.2rem; margin-bottom:1rem;">What is MCP?</h2>
+  <p style="color:#444; line-height:1.7;">
+    The <strong>Model Context Protocol (MCP)</strong> is an open standard developed by Anthropic that allows AI models
+    like Claude to securely call external tools and services. Instead of just answering questions from training data,
+    Claude can use MCP servers to take real-time actions — querying APIs, running commands, reading files, and more.
+  </p>
+  <p style="color:#444; line-height:1.7; margin-top:0.75rem;">
+    MCP follows a client-server architecture. Your AI client (e.g. Claude Desktop or Claude Code) connects to one or
+    more MCP servers. Each server exposes a set of <strong>tools</strong> the model can call — similar to plugins,
+    but standardised and transport-agnostic (stdio, SSE, or Streamable HTTP).
+  </p>
+</section>
+
+<!-- What does Kubectl MCP do -->
+<section style="margin-bottom:2rem; padding:1.5rem; background:#f0f4ff; border-radius:8px; border-left:4px solid #0066ff;">
+  <h2 style="color:#222; font-size:1.1rem; margin:0 0 0.75rem 0;">
+    <span class="fa-solid fa-dharmachakra" style="color:#0066ff; margin-right:8px;"></span>
+    Kubectl MCP Server
+  </h2>
+  <p style="color:#444; line-height:1.7; margin:0;">
+    The <strong>Kubectl MCP Server</strong> running in this cluster gives Claude direct, read-only access to your
+    Kubernetes environment. You can ask Claude questions like <em>"Which pods are not running?"</em> or
+    <em>"Show me the logs of the automagic pod"</em> and it will query the cluster in real time to answer.
+    It exposes standard Kubernetes operations as MCP tools — no <code>kubectl</code> CLI needed on your machine.
+  </p>
+</section>
+
+<!-- Work in Progress -->
+<section style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem 2rem; text-align:center;">
   <span class="fa-solid fa-screwdriver-wrench" style="font-size:3rem; color:#bbb; margin-bottom:1.5rem;"></span>
   <h2 style="color:#555; font-weight:500; margin:0 0 0.5rem 0;">Work in Progress</h2>
-  <p style="color:#999; font-size:0.95em; margin:0;">This section is coming soon.</p>
+  <p style="color:#999; font-size:0.95em; margin:0;">Setup guide and integration instructions coming soon.</p>
 </section>
 {% endblock %}
