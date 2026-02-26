@@ -29,6 +29,7 @@ echo "Step 1: Creating symlinks for application directories..."
 ln -sf "$REPO_ROOT/automagic-server" /automagic-server && echo "  ✓ /automagic-server"
 ln -sf "$REPO_ROOT/dashy" /dashy && echo "  ✓ /dashy"
 mkdir -p /unittcms/data && echo "  ✓ /unittcms/data"
+ln -sf "$REPO_ROOT/unittcms/entrypoint.js" /unittcms/entrypoint.js && echo "  ✓ /unittcms/entrypoint.js"
 ln -sf "$REPO_ROOT/web" /web && echo "  ✓ /web"
 echo ""
 

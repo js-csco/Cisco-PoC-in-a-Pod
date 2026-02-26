@@ -37,15 +37,15 @@ spec:
             # Persistent SQLite database
             - mountPath: /app/backend/data
               name: unittcms-data
-            # Override entrypoint to handle re-seed gracefully on pod restart
+            # Override entrypoint (single source of truth: unittcms/entrypoint.js in git)
             - mountPath: /app/entrypoint.js
-              subPath: entrypoint.js
-              name: unittcms-config
+              name: unittcms-entrypoint
       volumes:
         - name: unittcms-data
           hostPath:
             path: /unittcms/data
             type: DirectoryOrCreate
-        - name: unittcms-config
-          configMap:
-            name: unittcms-config
+        - name: unittcms-entrypoint
+          hostPath:
+            path: /unittcms/entrypoint.js
+            type: File

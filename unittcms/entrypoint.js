@@ -181,6 +181,16 @@ async function runMigrations() {
     });
     console.log('Database migrations completed successfully.');
 
+    // Sequelize-cli may write the DB to the backend root rather than data/.
+    // Move it into the PVC-mounted location so the app and seed agree on the path.
+    const targetDb = path.join(__dirname, 'backend/data/database.sqlite');
+    const rootDb   = path.join(__dirname, 'backend/database.sqlite');
+    if (!fs.existsSync(targetDb) && fs.existsSync(rootDb)) {
+      console.log(`[db] Moving database to PVC: ${rootDb} → ${targetDb}`);
+      fs.mkdirSync(path.dirname(targetDb), { recursive: true });
+      fs.renameSync(rootDb, targetDb);
+    }
+
     await seedDatabase();
   } catch (error) {
     console.error('Error running database migrations:', error);
