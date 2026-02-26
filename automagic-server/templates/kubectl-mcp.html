@@ -43,7 +43,8 @@
   </div>
 
   <p style="color:#666; font-size:0.9em; margin-top:0; margin-bottom:10px; line-height:1.5;">
-    Add the following to your <code>claude_desktop_config.json</code>:
+    Add the <code>kubectl-mcp</code> entry inside the <code>mcpServers</code> block of your
+    <code>claude_desktop_config.json</code>. Keep any existing keys (e.g. <code>preferences</code>) in place:
   </p>
 
   <pre style="background:#1e1e1e; color:#d4d4d4; border-radius:8px; padding:16px 20px; font-size:0.85em;
@@ -52,6 +53,9 @@
     "kubectl-mcp": {
       "url": "http://SERVER_IP:30050/sse"
     }
+  },
+  "preferences": {
+    "...keep your existing preferences here..."
   }
 }</pre>
 
