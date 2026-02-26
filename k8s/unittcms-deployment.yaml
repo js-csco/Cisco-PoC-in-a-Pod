@@ -33,8 +33,6 @@ spec:
               value: "8000"
             - name: FRONTEND_ORIGIN
               value: "http://localhost:8000"
-            - name: IS_DEMO
-              value: "true"
           volumeMounts:
             # Persistent SQLite database
             - mountPath: /app/backend/data
