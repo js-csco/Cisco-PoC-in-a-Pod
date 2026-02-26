@@ -41,7 +41,7 @@ data:
         }
 
         console.log('Seeding PIAP demo data...');
-        const hash = await bcrypt.hash('admin', 10);
+        const hash = await bcrypt.hash('password', 10);
         const qi = sequelize.getQueryInterface();
         const now = new Date();
 
@@ -164,7 +164,7 @@ data:
         ]);
 
         await sequelize.close();
-        console.log('Seed complete. Login: admin@piap.local / admin');
+        console.log('Seed complete. Login: admin@piap.local / password');
       } catch (e) {
         console.error('Seeding failed:', e.message);
         // Non-fatal — app continues even if seed fails
