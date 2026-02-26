@@ -93,11 +93,9 @@ data:
       });
 
   seed.js: |
-    'use strict';
+    import bcrypt from 'bcrypt';
 
-    const bcrypt = require('bcrypt');
-
-    module.exports = {
+    export default {
       async up(queryInterface, Sequelize) {
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash('password', saltRounds);
