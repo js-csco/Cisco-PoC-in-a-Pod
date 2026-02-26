@@ -34,19 +34,26 @@ async function seedDatabase() {
     }
 
     console.log('Seeding PIAP demo data...');
+
+    // Discover actual column names so the INSERT matches the real schema.
+    const [userCols] = await sequelize.query('PRAGMA table_info(users)');
+    const colNames = userCols.map(c => c.name);
+    console.log('[seed] users table columns:', colNames.join(', '));
+
     const hash = await bcrypt.hash('password', 10);
     const qi = sequelize.getQueryInterface();
     const now = new Date();
 
-    await qi.bulkInsert('users', [{
-      email: 'admin@piap.local',
-      password: hash,
-      username: 'Admin',
-      role: 0,
-      avatar_path: null,
-      created_at: now,
-      updated_at: now,
-    }]);
+    const userRow = { email: 'admin@piap.local', password: hash, role: 0 };
+    // Handle both 'username' and 'name' column naming conventions.
+    if (colNames.includes('username'))    userRow.username    = 'Admin';
+    if (colNames.includes('name'))        userRow.name        = 'Admin';
+    if (colNames.includes('avatar_path')) userRow.avatar_path = null;
+    // Handle both snake_case and camelCase timestamp conventions.
+    if (colNames.includes('created_at'))  { userRow.created_at  = now; userRow.updated_at  = now; }
+    if (colNames.includes('createdAt'))   { userRow.createdAt   = now; userRow.updatedAt   = now; }
+
+    await qi.bulkInsert('users', [userRow]);
 
     await qi.bulkInsert('projects', [{
       name: 'Cisco Secure Access',
@@ -160,6 +167,7 @@ async function seedDatabase() {
     console.log('Seed complete. Login: admin@piap.local / password');
   } catch (e) {
     console.error('Seeding failed:', e.message);
+    console.error(e.stack);
     // Non-fatal — app continues even if seed fails
   }
 }
