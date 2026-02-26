@@ -48,15 +48,12 @@
     <pre id="config-block" style="background:#1e1e1e; color:#d4d4d4; padding:1.4rem; border-radius:8px; font-size:0.82em; line-height:1.6; overflow-x:auto; margin:0; white-space:pre;">{
   "mcpServers": {
     "kubectl-mcp": {
-      "type": "sse",
       "url": "http://<span id='ip1'>YOUR_SERVER_IP</span>:30050/mcp"
     },
     "inspektor-gadget": {
-      "type": "sse",
       "url": "http://<span id='ip2'>YOUR_SERVER_IP</span>:30060/mcp"
     },
     "playwright": {
-      "type": "sse",
       "url": "http://<span id='ip3'>YOUR_SERVER_IP</span>:30070/mcp"
     }
   }
@@ -220,15 +217,12 @@
     const config = `{
   "mcpServers": {
     "kubectl-mcp": {
-      "type": "sse",
       "url": "http://${ip}:30050/mcp"
     },
     "inspektor-gadget": {
-      "type": "sse",
       "url": "http://${ip}:30060/mcp"
     },
     "playwright": {
-      "type": "sse",
       "url": "http://${ip}:30070/mcp"
     }
   }
