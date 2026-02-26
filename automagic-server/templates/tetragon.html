@@ -186,6 +186,46 @@
     </button>
   </section>
 
+  <!-- WHAT TO EXPECT IN THE STREAM -->
+  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">WHAT TO EXPECT IN THE STREAM</h3>
+    </div>
+
+    <p style="margin-top:0; margin-bottom:16px; color:#555; font-size:0.95em; line-height:1.6;">
+      After clicking Simulate Attack, you should see <strong>3 types of events</strong> appear, each color-coded:
+    </p>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="background:#1e0a2e; border:1px solid #6e3da0; border-radius:8px; padding:14px 18px;">
+        <div style="font-family:monospace; font-size:0.88rem; color:#d2a8ff; font-weight:700; margin-bottom:6px;">EXEC — purple</div>
+        <p style="margin:0; color:#ccc; font-size:0.88em; line-height:1.6;">
+          One event per binary launched by the attacker pod: <code>sh</code>, <code>cat</code>, <code>id</code>, <code>whoami</code>.
+          These are process start events — Tetragon sees every execution.
+        </p>
+      </div>
+      <div style="background:#2d0a0a; border:1px solid #a03d3d; border-radius:8px; padding:14px 18px;">
+        <div style="font-family:monospace; font-size:0.88rem; color:#ff7b72; font-weight:700; margin-bottom:6px;">KPROBE — red &nbsp;⚠ these are the actual detections</div>
+        <p style="margin:0; color:#ccc; font-size:0.88em; line-height:1.6;">
+          These are the Tetragon security alerts — kernel probes that fired because a policy matched:
+        </p>
+        <ul style="margin:8px 0 0 0; padding-left:18px; color:#ccc; font-size:0.88em; line-height:1.9;">
+          <li><code style="color:#ff7b72;">fd_install</code> — fires when <code>/etc/shadow</code> or <code>/etc/passwd</code> is opened
+            &nbsp;<span style="color:#888; font-size:0.85em;">(policy: detect-sensitive-file-read)</span></li>
+          <li><code style="color:#ff7b72;">security_bprm_check</code> — fires when <code>/sh</code> or <code>/ash</code> is executed
+            &nbsp;<span style="color:#888; font-size:0.85em;">(policy: detect-shell-execution)</span></li>
+        </ul>
+      </div>
+      <div style="background:#161b22; border:1px solid #3d444d; border-radius:8px; padding:14px 18px;">
+        <div style="font-family:monospace; font-size:0.88rem; color:#8b949e; font-weight:700; margin-bottom:6px;">EXIT — grey</div>
+        <p style="margin:0; color:#ccc; font-size:0.88em; line-height:1.6;">
+          Process termination events for each of the above, emitted when the process exits.
+        </p>
+      </div>
+    </div>
+  </section>
+
   <!-- LIVE EVENT STREAM -->
   <section>
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
@@ -283,8 +323,11 @@
     var argPart = ev.arguments
       ? '<span style="color:#8b949e"> ' + esc(ev.arguments) + '</span>'
       : '';
-    var fnPart  = ev.func_name
-      ? '<span style="color:#888"> [' + esc(ev.func_name) + ']</span>'
+    var fnLabel = ev.func_name
+      ? (ev.type === 'kprobe' ? 'SECURITY EVENT: ' + esc(ev.func_name) : esc(ev.func_name))
+      : '';
+    var fnPart  = fnLabel
+      ? '<span style="color:' + (ev.type === 'kprobe' ? '#ff7b72' : '#888') + '"> [' + fnLabel + ']</span>'
       : '';
 
     row.innerHTML =
