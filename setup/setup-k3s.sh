@@ -227,15 +227,7 @@ fi
 echo "  ✓ Resource Connector launched"
 echo ""
 
-# Wait for connector to be fully running
-echo "Step 12.6: Building UnitTCMS image with pre-loaded PIAP test cases..."
-echo "  (Docker is now available — building from source with custom seed...)"
-docker build -t piap-unittcms:latest "$REPO_ROOT/unittcms/" 2>&1 | tail -5
-docker save piap-unittcms:latest | k3s ctr images import -
-echo "  ✓ UnitTCMS image built and imported into k3s"
-echo ""
-
-echo "Step 12.7: Verifying connector status..."
+echo "Step 12.6: Verifying connector status..."
 sleep 10
 
 # Fix: Use the actual connector name, not "resource-connector"
