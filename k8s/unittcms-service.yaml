@@ -13,4 +13,4 @@ spec:
     - name: unittcms
       port: 9300
       targetPort: 8000
-      nodePort: 30300
+      nodePort: 30350
