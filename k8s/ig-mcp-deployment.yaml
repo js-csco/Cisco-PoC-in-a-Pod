@@ -21,7 +21,7 @@ spec:
           image: ghcr.io/inspektor-gadget/ig-mcp-server:latest
           imagePullPolicy: Always
           args:
-            - "-transport=sse"
+            - "-transport=streamable-http"
             - "-transport-host=0.0.0.0"
             - "-transport-port=8080"
             - "-gadget-discoverer=artifacthub"

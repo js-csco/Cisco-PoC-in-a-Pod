@@ -10,7 +10,7 @@ spec:
   selector:
     app: playwright-mcp
   ports:
-    - port: 8931
-      targetPort: 8931
+    - port: 8080
+      targetPort: 8080
       nodePort: 30070
       protocol: TCP

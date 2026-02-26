@@ -16,10 +16,28 @@ spec:
         app: playwright-mcp
     spec:
       containers:
+        # nginx proxy — rewrites Host header so playwright-mcp accepts external requests.
+        # NodePort maps external :30070 → internal :8931, causing a Host header mismatch.
+        # nginx sits in front and forces Host: localhost:8931 before forwarding.
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /etc/nginx/conf.d
+              name: nginx-config
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+
         - name: playwright-mcp
           image: mcr.microsoft.com/playwright/mcp:latest
           imagePullPolicy: Always
-          # Override default stdio entrypoint to expose SSE/HTTP on port 8931
           command: ["node"]
           args:
             - "cli.js"
@@ -30,11 +48,7 @@ spec:
             - "--port"
             - "8931"
             - "--host"
-            - "0.0.0.0"
-          ports:
-            - containerPort: 8931
-              protocol: TCP
-          # Chromium needs a larger /dev/shm to avoid tab crashes
+            - "127.0.0.1"
           volumeMounts:
             - mountPath: /dev/shm
               name: dshm
@@ -45,7 +59,11 @@ spec:
             limits:
               cpu: 1000m
               memory: 1Gi
+
       volumes:
+        - name: nginx-config
+          configMap:
+            name: playwright-mcp-nginx
         - name: dshm
           emptyDir:
             medium: Memory
