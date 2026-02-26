@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unittcms
+  namespace: piap
+  labels:
+    app: unittcms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: unittcms
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: unittcms
+    spec:
+      containers:
+        - name: unittcms
+          image: piap-unittcms:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          env:
+            - name: TZ
+              value: Europe/Berlin
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "8000"
+            - name: FRONTEND_ORIGIN
+              value: "http://localhost:8000"
+            # IS_DEMO=true triggers db:seed:all on startup.
+            # The custom entrypoint handles re-seed gracefully if data
+            # already exists (e.g. after a pod restart with a persistent DB).
+            - name: IS_DEMO
+              value: "true"
+          volumeMounts:
+            - mountPath: /app/backend/data
+              name: unittcms-data
+      volumes:
+        - name: unittcms-data
+          hostPath:
+            path: /unittcms/data
+            type: DirectoryOrCreate
