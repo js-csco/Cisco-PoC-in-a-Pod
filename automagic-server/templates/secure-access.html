@@ -130,7 +130,7 @@
     </div>
 
     <label style="display:block; font-size:0.85em; color:#555; margin-bottom:6px;">Pod IP address</label>
-    <input type="text" id="vm_ip" name="vm_ip" value="SERVER_IP"
+    <input type="text" id="vm_ip" name="vm_ip" value="{{ request.host.split(':')[0] }}"
            style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
 
     <button type="submit" name="action" value="create_pod"
