@@ -43,21 +43,28 @@
   </div>
 
   <p style="color:#666; font-size:0.9em; margin-top:0; margin-bottom:10px; line-height:1.5;">
-    Add the <code>kubectl-mcp</code> entry inside the <code>mcpServers</code> block of your
-    <code>claude_desktop_config.json</code>. Keep any existing keys (e.g. <code>preferences</code>) in place:
+    Claude Desktop requires a local stdio bridge via <code>mcp-remote</code> (Node.js must be installed).
+    Add the entry inside the <code>mcpServers</code> block of your <code>claude_desktop_config.json</code>,
+    keeping any existing keys (e.g. <code>preferences</code>) in place:
   </p>
 
   <pre style="background:#1e1e1e; color:#d4d4d4; border-radius:8px; padding:16px 20px; font-size:0.85em;
-              overflow-x:auto; margin-bottom:28px; line-height:1.6;">{
+              overflow-x:auto; margin-bottom:12px; line-height:1.6;">{
   "mcpServers": {
     "kubectl-mcp": {
-      "url": "http://SERVER_IP:30050/sse"
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "http://SERVER_IP:30050/sse"]
     }
   },
   "preferences": {
     "...keep your existing preferences here..."
   }
 }</pre>
+
+  <p style="color:#999; font-size:0.82em; margin:0 0 24px 0;">
+    Node.js required — verify with <code>node --version</code> in your terminal.
+    Install from <a href="https://nodejs.org" target="_blank" style="color:#0066ff;">nodejs.org</a> if missing.
+  </p>
 
   <!-- Claude Code sub-section -->
   <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
