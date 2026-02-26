@@ -123,5 +123,27 @@
     </button>
   </section>
 
+  <!-- HUBBLE UI -->
+  <section style="padding-bottom:2.5rem; border-top:1px solid #e0e0e0; padding-top:2.5rem;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">HUBBLE UI</h3>
+    </div>
+
+    <p style="margin-top:0; margin-bottom:16px; color:#555; font-size:0.95em; line-height:1.6;">
+      Hubble is Cilium's built-in observability layer. It gives you a real-time visual graph of
+      network flows between pods — which connections are allowed, which are dropped, and by which policy.
+      Open it filtered to the <code>piap</code> namespace to watch traffic while toggling policies above.
+    </p>
+
+    <a href="http://{{ request.host.split(':')[0] }}:30800/?namespace=piap"
+       target="_blank"
+       style="display:inline-flex; align-items:center; gap:8px; background:#0066ff; color:#fff;
+              text-decoration:none; padding:10px 24px; border-radius:6px; font-weight:500;
+              font-size:0.95rem;">
+      Open Hubble UI — piap namespace ↗
+    </a>
+  </section>
+
 </form>
 {% endblock %}
