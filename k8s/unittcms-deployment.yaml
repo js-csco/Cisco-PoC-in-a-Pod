@@ -39,10 +39,7 @@ spec:
             # Persistent SQLite database
             - mountPath: /app/backend/data
               name: unittcms-data
-            # Inject PIAP custom seed and entrypoint via ConfigMap
-            - mountPath: /app/backend/seeders/seed.js
-              subPath: seed.js
-              name: unittcms-config
+            # Override entrypoint to handle re-seed gracefully on pod restart
             - mountPath: /app/entrypoint.js
               subPath: entrypoint.js
               name: unittcms-config
