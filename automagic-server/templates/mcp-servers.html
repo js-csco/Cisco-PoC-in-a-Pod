@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+{% set active_page = 'mcp_servers' %}
+{% block title %}MCP Servers — Cisco PoC in a Pod{% endblock %}
+
+{% block content %}
+<h1 style="color:#111; margin-bottom:0.4rem;">MCP Servers</h1>
+<p style="color:#666; margin-top:0; margin-bottom:2.5rem; font-size:0.95em; line-height:1.6;">
+  Connect Claude Desktop to this PoC environment via the <strong>Model Context Protocol (MCP)</strong>.
+  MCP lets Claude interact directly with your cluster and browser — no copy-pasting, no screenshots.
+</p>
+
+<!-- WHAT IS MCP -->
+<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">WHAT IS MCP?</h3>
+  </div>
+  <p style="color:#555; font-size:0.9em; line-height:1.7; margin:0;">
+    The <strong>Model Context Protocol</strong> is an open standard that lets AI models like Claude call tools
+    on external servers in real time. Instead of pasting logs or screenshots into Claude, you configure
+    Claude Desktop with the server URLs below — Claude then queries your cluster, runs browser actions,
+    and reads live data directly during the conversation.
+  </p>
+</section>
+
+<!-- STEP 1: CLAUDE DESKTOP CONFIG -->
+<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CLAUDE DESKTOP SETUP</h3>
+  </div>
+  <p style="color:#555; font-size:0.9em; line-height:1.7; margin-top:0; margin-bottom:1.2rem;">
+    Open your <code style="background:#f0f0f0; padding:1px 5px; border-radius:3px;">claude_desktop_config.json</code>
+    and add the block below. The file is located at:
+  </p>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1.4rem;">
+    <div style="background:#f8f9fa; padding:12px 15px; border-radius:7px; font-size:0.82em;">
+      <strong style="color:#555; display:block; margin-bottom:4px;">macOS</strong>
+      <code style="color:#333;">~/Library/Application Support/Claude/claude_desktop_config.json</code>
+    </div>
+    <div style="background:#f8f9fa; padding:12px 15px; border-radius:7px; font-size:0.82em;">
+      <strong style="color:#555; display:block; margin-bottom:4px;">Windows</strong>
+      <code style="color:#333;">%APPDATA%\Claude\claude_desktop_config.json</code>
+    </div>
+  </div>
+
+  <div style="position:relative;">
+    <pre id="config-block" style="background:#1e1e1e; color:#d4d4d4; padding:1.4rem; border-radius:8px; font-size:0.82em; line-height:1.6; overflow-x:auto; margin:0; white-space:pre;">{
+  "mcpServers": {
+    "kubectl-mcp": {
+      "type": "sse",
+      "url": "http://<span id='ip1'>YOUR_SERVER_IP</span>:30050/mcp"
+    },
+    "inspektor-gadget": {
+      "type": "sse",
+      "url": "http://<span id='ip2'>YOUR_SERVER_IP</span>:30060/mcp"
+    },
+    "playwright": {
+      "type": "sse",
+      "url": "http://<span id='ip3'>YOUR_SERVER_IP</span>:30070/mcp"
+    }
+  }
+}</pre>
+    <button onclick="copyConfig()" style="position:absolute; top:10px; right:10px; background:#0066ff; color:#fff; border:none; border-radius:5px; padding:5px 12px; font-size:0.78em; cursor:pointer;">
+      <span class="fa-regular fa-copy"></span> Copy
+    </button>
+  </div>
+  <p style="color:#888; font-size:0.8em; margin-top:0.6rem;">
+    After saving, restart Claude Desktop. The MCP tools will appear in the tool picker.
+  </p>
+</section>
+
+<!-- KUBECTL MCP -->
+<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem;">
+    <span class="fa-solid fa-dharmachakra" style="color:#0066ff; font-size:1.3rem;"></span>
+    <div>
+      <h3 style="color:#111; margin:0; font-size:1.05rem;">Kubectl MCP</h3>
+      <span style="font-size:0.8em; color:#888;">Port 30050 · Read-only · Official Kubernetes MCP Server</span>
+    </div>
+  </div>
+  <p style="color:#555; font-size:0.9em; line-height:1.7; margin-top:0; margin-bottom:1.2rem;">
+    Gives Claude read-only access to the k3s cluster — pods, logs, deployments, services, events,
+    Cilium network policies, and more. Safe to use in demos: no write permissions are granted.
+  </p>
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:1rem;">
+    <div style="width:6px; height:16px; background-color:#bbb; border-radius:2px;"></div>
+    <span style="font-size:0.82em; font-weight:600; color:#555; letter-spacing:0.3px;">TEST PROMPTS</span>
+  </div>
+  <div style="display:flex; flex-direction:column; gap:10px;">
+    <div class="prompt-card" onclick="copyPrompt(this)">
+      <span class="fa-regular fa-clipboard prompt-icon"></span>
+      <span>"List all running pods in the <strong>piap</strong> namespace with their current status and restart counts."</span>
+    </div>
+    <div class="prompt-card" onclick="copyPrompt(this)">
+      <span class="fa-regular fa-clipboard prompt-icon"></span>
+      <span>"Show me the last 30 log lines from the <strong>unittcms</strong> deployment. Are there any errors?"</span>
+    </div>
+    <div class="prompt-card" onclick="copyPrompt(this)">
+      <span class="fa-regular fa-clipboard prompt-icon"></span>
+      <span>"What NodePort services are exposed in the piap namespace? List the port, target, and pod they route to."</span>
+    </div>
+  </div>
+</section>
+
+<!-- INSPEKTOR GADGET MCP -->
+<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem;">
+    <span class="fa-solid fa-eye" style="color:#0066ff; font-size:1.3rem;"></span>
+    <div>
+      <h3 style="color:#111; margin:0; font-size:1.05rem;">Inspektor Gadget MCP</h3>
+      <span style="font-size:0.8em; color:#888;">Port 30060 · eBPF observability · Official Inspektor Gadget</span>
+    </div>
+  </div>
+  <p style="color:#555; font-size:0.9em; line-height:1.7; margin-top:0; margin-bottom:1.2rem;">
+    Uses eBPF to give Claude live, kernel-level visibility into what your containers are actually doing —
+    DNS queries, TCP connections, syscalls, file access. Ideal for verifying Cisco Secure Access is
+    intercepting traffic, or confirming Tetragon detections.
+  </p>
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:1rem;">
+    <div style="width:6px; height:16px; background-color:#bbb; border-radius:2px;"></div>
+    <span style="font-size:0.82em; font-weight:600; color:#555; letter-spacing:0.3px;">TEST PROMPTS</span>
+  </div>
+  <div style="display:flex; flex-direction:column; gap:10px;">
+    <div class="prompt-card" onclick="copyPrompt(this)">
+      <span class="fa-regular fa-clipboard prompt-icon"></span>
+      <span>"Trace all DNS queries made by pods in the <strong>piap</strong> namespace for the next 15 seconds. What external domains are they resolving?"</span>
+    </div>
+    <div class="prompt-card" onclick="copyPrompt(this)">
+      <span class="fa-regular fa-clipboard prompt-icon"></span>
+      <span>"Which pods in the cluster are making outbound TCP connections right now, and to which IPs and ports?"</span>
+    </div>
+    <div class="prompt-card" onclick="copyPrompt(this)">
+      <span class="fa-regular fa-clipboard prompt-icon"></span>
+      <span>"Monitor network traffic from the <strong>splunk</strong> pod for 20 seconds. Does it make any unexpected outbound connections?"</span>
+    </div>
+  </div>
+</section>
+
+<!-- PLAYWRIGHT MCP -->
+<section style="padding-bottom:1rem;">
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem;">
+    <span class="fa-solid fa-globe" style="color:#0066ff; font-size:1.3rem;"></span>
+    <div>
+      <h3 style="color:#111; margin:0; font-size:1.05rem;">Playwright MCP</h3>
+      <span style="font-size:0.8em; color:#888;">Port 30070 · Headless Chromium · Official Microsoft</span>
+    </div>
+  </div>
+  <p style="color:#555; font-size:0.9em; line-height:1.7; margin-top:0; margin-bottom:1.2rem;">
+    Gives Claude a real headless Chromium browser running inside the cluster. Claude can navigate to
+    URLs, take screenshots, fill forms, and read page content — perfect for validating that Cisco
+    Secure Access block, warn, and isolate pages are rendered correctly.
+  </p>
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:1rem;">
+    <div style="width:6px; height:16px; background-color:#bbb; border-radius:2px;"></div>
+    <span style="font-size:0.82em; font-weight:600; color:#555; letter-spacing:0.3px;">TEST PROMPTS</span>
+  </div>
+  <div style="display:flex; flex-direction:column; gap:10px;">
+    <div class="prompt-card" onclick="copyPrompt(this)">
+      <span class="fa-regular fa-clipboard prompt-icon"></span>
+      <span>"Navigate to <strong>https://ifconfig.co</strong> and tell me the public egress IP shown. Is it a Cisco Secure Access IP?"</span>
+    </div>
+    <div class="prompt-card" onclick="copyPrompt(this)">
+      <span class="fa-regular fa-clipboard prompt-icon"></span>
+      <span>"Open <strong>https://policy.test.sse.cisco.com</strong> and take a screenshot. Does it confirm a Cisco Secure Access policy is active?"</span>
+    </div>
+    <div class="prompt-card" onclick="copyPrompt(this)">
+      <span class="fa-regular fa-clipboard prompt-icon"></span>
+      <span>"Try to navigate to <strong>https://deepseek.com</strong>. Take a screenshot — do you see a Cisco Secure Access block page?"</span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .prompt-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #f8f9fa;
+    border: 1px solid #e2e4e8;
+    border-radius: 7px;
+    padding: 12px 15px;
+    font-size: 0.88em;
+    color: #333;
+    line-height: 1.5;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .prompt-card:hover {
+    background: #eef2ff;
+    border-color: #0066ff;
+  }
+  .prompt-card:active {
+    background: #dde8ff;
+  }
+  .prompt-icon {
+    color: #aaa;
+    margin-top: 1px;
+    flex-shrink: 0;
+    transition: color 0.15s;
+  }
+  .prompt-card:hover .prompt-icon {
+    color: #0066ff;
+  }
+</style>
+
+<script>
+  // Auto-detect server IP from the browser's location
+  (function () {
+    const ip = window.location.hostname;
+    if (ip && ip !== 'localhost') {
+      document.getElementById('ip1').textContent = ip;
+      document.getElementById('ip2').textContent = ip;
+      document.getElementById('ip3').textContent = ip;
+    }
+  })();
+
+  function copyConfig() {
+    const ip = window.location.hostname || 'YOUR_SERVER_IP';
+    const config = `{
+  "mcpServers": {
+    "kubectl-mcp": {
+      "type": "sse",
+      "url": "http://${ip}:30050/mcp"
+    },
+    "inspektor-gadget": {
+      "type": "sse",
+      "url": "http://${ip}:30060/mcp"
+    },
+    "playwright": {
+      "type": "sse",
+      "url": "http://${ip}:30070/mcp"
+    }
+  }
+}`;
+    navigator.clipboard.writeText(config).then(() => {
+      const btn = event.target.closest('button');
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<span class="fa-solid fa-check"></span> Copied!';
+      btn.style.background = '#28a745';
+      setTimeout(() => { btn.innerHTML = orig; btn.style.background = '#0066ff'; }, 2000);
+    });
+  }
+
+  function copyPrompt(card) {
+    const text = card.querySelector('span:last-child').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const icon = card.querySelector('.prompt-icon');
+      icon.className = 'fa-solid fa-check prompt-icon';
+      icon.style.color = '#28a745';
+      setTimeout(() => {
+        icon.className = 'fa-regular fa-clipboard prompt-icon';
+        icon.style.color = '';
+      }, 1500);
+    });
+  }
+</script>
+{% endblock %}

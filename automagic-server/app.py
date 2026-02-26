@@ -450,9 +450,9 @@ def tetragon_events():
     except Exception as e:
         return jsonify({"events": [], "error": str(e)})
 
-@app.route('/kubectl-mcp')
-def kubectl_mcp():
-    return render_template('kubectl-mcp.html')
+@app.route('/mcp-servers')
+def mcp_servers():
+    return render_template('mcp-servers.html')
 
 @app.route('/splunk')
 def splunk():
