@@ -2,231 +2,309 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Cisco Secure Access – Automation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cisco Secure Access — Zero Trust Demo</title>
   <style>
     :root {
-      --cisco-blue: #049fd9;
-      --cisco-dark-blue: #005073;
-      --cisco-light-gray: #f5f7fa;
-      --cisco-gray: #dce1e5;
-      --base-font: 15px;          /* slightly smaller base */
+      --blue:  #049fd9;
+      --dark:  #005073;
+      --green: #16a34a;
+      --orange:#c2410c;
     }
+
+    * { box-sizing: border-box; }
 
     body {
-      font-family: "CiscoSans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--cisco-light-gray);
-      color: #222;
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f5f7fa;
       margin: 0;
-      padding: 0;
-      font-size: var(--base-font);
+      color: #222;
+      font-size: 15px;
     }
 
+    /* ── header ── */
     header {
-      background: linear-gradient(90deg, var(--cisco-dark-blue), var(--cisco-blue));
-      color: white;
-      padding: 16px 30px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      background: linear-gradient(90deg, var(--dark), var(--blue));
+      color: #fff;
+      padding: 16px 32px;
       display: flex;
       align-items: center;
       gap: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
     }
+    header img  { height: 38px; }
+    header .t   { font-size: 1.2em; font-weight: 600; }
+    header .sub { font-size: 0.85em; opacity: 0.8; margin-top: 2px; }
 
-    header img {
-      height: 42px;
-      width: auto;
-    }
-
-    header div.text-block {
+    /* ── layout ── */
+    main {
+      max-width: 700px;
+      margin: 36px auto 48px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      gap: 20px;
+      padding: 0 16px;
     }
 
-    header h1 {
-      margin: 0;
-      font-size: 1.4em;
-      font-weight: 600;
-      letter-spacing: 0.3px;
-    }
-
-    header h2 {
-      margin: 2px 0 0 0;
-      font-weight: 400;
-      font-size: 0.95em;
-      opacity: 0.9;
-    }
-
-    main {
-      max-width: 750px;
-      margin: 35px auto;
-      background: white;
-      padding: 35px 45px;
+    /* ── status banner ── */
+    .banner {
       border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-      font-size: 0.95em;
+      padding: 26px 30px;
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      border: 2px solid transparent;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .banner.checking { background:#f0f4ff; border-color:#93c5fd; }
+    .banner.ztna     { background:#f0fdf4; border-color:#4ade80; }
+    .banner.direct   { background:#fff7ed; border-color:#fb923c; }
+
+    .banner-icon { font-size: 2.4rem; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+
+    .banner-tag {
+      font-size: 0.68em;
+      font-weight: 700;
+      letter-spacing: 0.9px;
+      margin-bottom: 5px;
+    }
+    .banner.checking .banner-tag { color: #3b82f6; }
+    .banner.ztna     .banner-tag { color: var(--green); }
+    .banner.direct   .banner-tag { color: var(--orange); }
+
+    .banner-title {
+      font-size: 1.15em;
+      font-weight: 700;
+      margin: 0 0 7px;
+      color: #111;
+    }
+    .banner-body {
+      font-size: 0.88em;
+      color: #555;
+      line-height: 1.65;
+      margin: 0;
     }
 
-    section {
-      margin-bottom: 35px;
+    /* ── card ── */
+    .card {
+      background: #fff;
+      border: 1px solid #e2e4e8;
+      border-radius: 10px;
+      padding: 22px 28px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .card-title {
+      font-size: 0.68em;
+      font-weight: 700;
+      color: #aaa;
+      letter-spacing: 0.8px;
+      margin: 0 0 18px;
     }
 
-    section h3 {
-      border-left: 5px solid var(--cisco-blue);
-      padding-left: 10px;
-      color: var(--cisco-dark-blue);
-      margin-bottom: 15px;
-      font-weight: 600;
-      font-size: 1.05em;
+    /* ── detail grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 24px;
     }
-
-    label {
+    .grid label {
       display: block;
-      margin-top: 10px;
-      font-weight: 500;
+      font-size: 0.68em;
+      font-weight: 700;
+      color: #999;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
     }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border: 1px solid var(--cisco-gray);
-      border-radius: 6px;
-      font-size: 0.95em;
-      background-color: #fff;
-      transition: border-color 0.2s;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: var(--cisco-blue);
-      box-shadow: 0 0 0 2px rgba(4,159,217,0.2);
-    }
-
-    button {
-      background-color: var(--cisco-blue);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      font-size: 0.95em;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: background-color 0.2s, box-shadow 0.2s;
-    }
-
-    button:hover {
-      background-color: #08b8f0;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    }
-
-    .btn-secondary {
-      background-color: var(--cisco-blue);
-    }
-
-    .btn-secondary:hover {
-      background-color: #08b8f0;
-    }
-
-    ul.messages {
-      background-color: #e7f5ff;
-      border-left: 4px solid var(--cisco-blue);
-      padding: 10px 15px;
-      border-radius: 6px;
-      list-style: none;
-      color: #003d4d;
-      margin-bottom: 25px;
+    .grid .val {
       font-size: 0.9em;
+      font-weight: 600;
+      color: #111;
+      font-family: ui-monospace, "Cascadia Code", monospace;
+      word-break: break-all;
     }
+    .val.ip { font-size: 1.05em; color: var(--blue); }
 
+    /* ── explanation panels ── */
+    .explain-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .explain-panel {
+      flex: 1;
+      min-width: 200px;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.82em;
+      line-height: 1.6;
+      color: #444;
+    }
+    .explain-panel strong { display: block; margin-bottom: 3px; font-size: 1.05em; }
+    .panel-ztna   { background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .panel-direct { background: #fff7ed; border: 1px solid #fed7aa; }
+    .panel-ztna   strong { color: var(--green); }
+    .panel-direct strong { color: var(--orange); }
+
+    /* ── footer ── */
     footer {
       text-align: center;
-      color: #777;
-      font-size: 0.85em;
-      padding: 18px 0 25px;
-    }
-
-    /* Section styling */
-    section {
-      margin-bottom: 45px;           /* more breathing room */
-      padding-bottom: 30px;
-      border-bottom: 1px solid #e3e7eb; /* subtle divider line */
-    }
-
-    /* Remove the last section divider */
-    section:last-of-type {
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-
-    /* Ensure proper positioning */
-    main {
-      position: relative;
-    }
-
-    /* Optional spacing between subheadings (h4) */
-    h4 {
-      margin-top: 25px;
-      font-size: 1em;
+      color: #aaa;
+      font-size: 0.8em;
+      padding: 16px 0 32px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <img src="https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png"
-         alt="Cisco Logo">
-    <div class="text-block">
-      <h1>Cisco Secure Access</h1>
-      <h2>Web Server</h2>
+
+<header>
+  <img src="https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png" alt="Cisco">
+  <div>
+    <div class="t">Cisco Secure Access</div>
+    <div class="sub">Zero Trust Application Access · Live Demo</div>
+  </div>
+</header>
+
+<main>
+
+  <!-- Status banner — state toggled by JS -->
+  <div class="banner checking" id="banner">
+    <div class="banner-icon" id="bIcon">⏳</div>
+    <div>
+      <div class="banner-tag" id="bTag">CHECKING…</div>
+      <h2 class="banner-title" id="bTitle">Verifying your connection</h2>
+      <p class="banner-body" id="bBody">Analysing the access path to this server…</p>
     </div>
-  </header>
+  </div>
 
-  <main>
+  <!-- Connection details -->
+  <div class="card">
+    <div class="card-title">CONNECTION DETAILS</div>
+    <div class="grid">
 
-    <form method="POST">
+      <div>
+        <label>SERVER SEES YOUR IP AS</label>
+        <!--
+          nginx SSI injects the real client IP here at request time.
+          Through ZTNA this will be the Connector pod's internal cluster IP.
+          Accessed directly this will be your real public IP.
+        -->
+        <div class="val ip" id="serverIp"><!--# echo var="remote_addr" default="n/a" --></div>
+      </div>
 
-      <!-- Secure Private Access Policies -->
-      <section>
-        <h3>Web Server</h3>
-        <p style="margin-top:-5px; margin-bottom:20px; color:#555;">
-          Try out the remote access to this web server (port 8080) from your roaming user.
-        </p>
-      </section>
+      <div>
+        <label>ACCESS METHOD</label>
+        <div class="val" id="accessMethod">—</div>
+      </div>
 
+      <div>
+        <label>HOSTNAME</label>
+        <div class="val" id="valHostname">—</div>
+      </div>
 
-      <!-- IPS Check -->
-      <section>
-        <h3>IPS Test (Empty)</h3>
-        <p style="margin-top:-5px; margin-bottom:15px; color:#555;">
-          Insert the EICAR file here to validate that Cisco Secure Access inserts IPS capabilities when your remote users access your apps.
-        </p>
-        <input type="text" id="ipnut_ips" name="ipnut_ips" placeholder="Insert text or file: e.g. EICAR">
-        <button type="submit" class="btn-secondary"
-                style="margin-top:15px;margin-bottom:20px;">
-          Check IPS
-        </button>
+      <div>
+        <label>PROTOCOL</label>
+        <div class="val" id="valProtocol">—</div>
+      </div>
 
-      </section>
+      <div>
+        <label>PORT</label>
+        <div class="val" id="valPort">—</div>
+      </div>
 
-      <section>
-      <!-- Task Done -->
-      <h4 style="color:#005073; margin-bottom:5px;">Tasks Done?</h4>
-      <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
-        Jump back to Kanboard and move all those tasks to “Done” — congrats! <br>
-        If it asks you for creds - classic: admin/admin.
-      </p>
-      <a href="http://localhost:8090/board/1" target="_blank"
-        style="display:inline-block; text-decoration:none; background-color:#e0e0e0; color:#333;
-                padding:8px 16px; border-radius:6px; font-size:0.9em; transition:background-color 0.2s;">
-        Kanboard Test Guide
-      </a>
-      </section>
+      <div>
+        <label>TIMESTAMP</label>
+        <div class="val" id="valTime">—</div>
+      </div>
 
-    </form>
-  </main>
+    </div>
+  </div>
 
-  <footer>
-    © Cisco Secure Access Automation — Powered by joschwei
-  </footer>
+  <!-- Explanation -->
+  <div class="card">
+    <div class="card-title">WHY THE IP TELLS THE STORY</div>
+    <p style="font-size:0.88em; color:#555; line-height:1.7; margin:0;">
+      With Cisco Secure Access ZTNA your browser never opens a direct connection to this server.
+      Traffic flows through the <strong>Secure Access cloud gateway</strong> and then through the
+      on-premises <strong>Connector</strong> pod running in this k3s cluster —
+      so the server sees the Connector's internal cluster IP, not yours.
+    </p>
+    <div class="explain-row">
+      <div class="explain-panel panel-ztna">
+        <strong>✅ Via ZTNA</strong>
+        Server sees the Connector's <em>private cluster IP</em>. Your real IP is never exposed to the application.
+      </div>
+      <div class="explain-panel panel-direct">
+        <strong>⚠️ Direct Access</strong>
+        Server sees your <em>real public IP</em>. Zero Trust policies are not in effect for this connection.
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>Cisco Secure Access · PoC in a Pod · Zero Trust Demo</footer>
+
+<script>
+(function () {
+  // IP was injected server-side by nginx SSI at request time
+  const ip = document.getElementById('serverIp').textContent.trim();
+
+  // Fill client-side metadata
+  document.getElementById('valHostname').textContent = window.location.hostname || '—';
+  document.getElementById('valProtocol').textContent =
+    window.location.protocol.replace(':', '').toUpperCase();
+  document.getElementById('valPort').textContent =
+    window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+  document.getElementById('valTime').textContent = new Date().toLocaleString();
+
+  // Classify the server-seen IP
+  function isPrivate(addr) {
+    return /^10\./.test(addr)
+      || /^172\.(1[6-9]|2\d|3[01])\./.test(addr)
+      || /^192\.168\./.test(addr)
+      || /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(addr) // CGNAT
+      || /^127\./.test(addr)
+      || addr === '::1';
+  }
+
+  const banner = document.getElementById('banner');
+  const bIcon  = document.getElementById('bIcon');
+  const bTag   = document.getElementById('bTag');
+  const bTitle = document.getElementById('bTitle');
+  const bBody  = document.getElementById('bBody');
+  const method = document.getElementById('accessMethod');
+
+  if (!ip || ip === 'n/a') {
+    // SSI not available (e.g. opened as a local file)
+    bIcon.textContent  = '🔍';
+    bTag.textContent   = 'IP UNAVAILABLE';
+    bTitle.textContent = 'Could not determine access method';
+    bBody.textContent  = 'Server-side IP injection requires nginx SSI to be enabled.';
+    method.textContent = 'Unknown';
+
+  } else if (isPrivate(ip)) {
+    banner.className   = 'banner ztna';
+    bIcon.textContent  = '✅';
+    bTag.textContent   = 'ZERO TRUST ACCESS VERIFIED';
+    bTitle.textContent = 'You are accessing this server through Cisco Secure Access';
+    bBody.textContent  =
+      'The server sees ' + ip + ' — a private cluster IP belonging to the Secure Access ' +
+      'Connector. Your real IP is hidden and Zero Trust policies are enforced.';
+    method.textContent = 'ZTNA (Cisco Secure Access)';
+
+  } else {
+    banner.className   = 'banner direct';
+    bIcon.textContent  = '⚠️';
+    bTag.textContent   = 'DIRECT ACCESS DETECTED';
+    bTitle.textContent = 'You are NOT accessing this server through Cisco Secure Access';
+    bBody.textContent  =
+      'The server sees ' + ip + ' — your real public IP. ' +
+      'This connection bypasses Zero Trust controls.';
+    method.textContent = 'Direct (no ZTNA)';
+  }
+})();
+</script>
+
 </body>
 </html>
