@@ -426,7 +426,15 @@ def tetragon():
     except Exception as e:
         policy_error = str(e)
 
-    return render_template('tetragon.html', active_policies=active_policies, policy_error=policy_error)
+    running_sims = set()
+    try:
+        from scripts.tetragon_policies import get_running_simulations
+        running_sims = get_running_simulations()
+    except Exception:
+        pass
+
+    return render_template('tetragon.html', active_policies=active_policies,
+                           policy_error=policy_error, running_sims=running_sims)
 
 
 @app.route('/tetragon/events')

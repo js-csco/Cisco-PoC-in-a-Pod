@@ -310,18 +310,19 @@ ls -la /</pre>
             </div>
           </div>
         </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        {% if 'recon' in running_sims %}
+          <button type="submit" name="action" value="stop_attacks"
+                  style="background-color:#c62828; color:#fff; border:none; padding:9px 20px;
+                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
+            🛑 Stop Recon Simulation
+          </button>
+        {% else %}
           <button type="submit" name="action" value="simulate_recon"
                   style="background-color:#1565c0; color:#fff; border:none; padding:9px 20px;
                          border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
             🔍 Launch Recon Simulation
           </button>
-          <button type="submit" name="action" value="stop_attacks"
-                  style="background-color:#fff; color:#c62828; border:1px solid #c62828; padding:9px 20px;
-                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
-            🛑 Stop Attack
-          </button>
-        </div>
+        {% endif %}
       </div>
     </div>
 
@@ -366,18 +367,19 @@ wget http://169.254.169.254/ # AWS IMDS</pre>
             </div>
           </div>
         </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        {% if 'credentials' in running_sims %}
+          <button type="submit" name="action" value="stop_attacks"
+                  style="background-color:#c62828; color:#fff; border:none; padding:9px 20px;
+                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
+            🛑 Stop Credential Hunting Simulation
+          </button>
+        {% else %}
           <button type="submit" name="action" value="simulate_credentials"
                   style="background-color:#e65100; color:#fff; border:none; padding:9px 20px;
                          border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
             🔑 Launch Credential Hunting Simulation
           </button>
-          <button type="submit" name="action" value="stop_attacks"
-                  style="background-color:#fff; color:#c62828; border:1px solid #c62828; padding:9px 20px;
-                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
-            🛑 Stop Attack
-          </button>
-        </div>
+        {% endif %}
       </div>
     </div>
 

@@ -398,3 +398,29 @@ def stop_attacks():
         )
         deleted.append(name)
     return deleted
+
+
+def get_running_simulations():
+    """
+    Return the set of scenario names that currently have an existing job
+    (active or recently completed but not yet TTL-cleaned).
+    Used to toggle Launch/Stop buttons in the UI.
+    """
+    _, _, batch_v1 = _get_clients()
+    try:
+        jobs = batch_v1.list_namespaced_job(
+            namespace=NAMESPACE,
+            label_selector="app=tetragon-attack-sim",
+        )
+        active = set()
+        for job in jobs.items:
+            name = job.metadata.name
+            if name.startswith("sim-recon-"):
+                active.add("recon")
+            elif name.startswith("sim-creds-"):
+                active.add("credentials")
+            elif name.startswith("sim-persist-"):
+                active.add("persistence")
+        return active
+    except Exception:
+        return set()
