@@ -393,11 +393,21 @@ def tetragon():
                 for r in results:
                     flash(f"✅ {r}")
                 flash("Tetragon TracingPolicies removed.")
-            elif action == 'simulate':
-                from scripts.tetragon_policies import simulate_attack
-                job_name = simulate_attack()
-                flash(f"🚨 Attack simulation launched — Job: {job_name}")
-                flash("Watch the live event stream below for Tetragon detections.")
+            elif action in ('simulate', 'simulate_recon'):
+                from scripts.tetragon_policies import simulate_recon
+                job_name = simulate_recon()
+                flash(f"🔍 Recon simulation launched — Job: {job_name}")
+                flash("Watch the live event stream for shell execution events.")
+            elif action == 'simulate_credentials':
+                from scripts.tetragon_policies import simulate_credentials
+                job_name = simulate_credentials()
+                flash(f"🔑 Credential hunting simulation launched — Job: {job_name}")
+                flash("Watch for sensitive-file-read and k8s-secret-access events.")
+            elif action == 'simulate_persistence':
+                from scripts.tetragon_policies import simulate_persistence
+                job_name = simulate_persistence()
+                flash(f"🪝 Persistence simulation launched — Job: {job_name}")
+                flash("Watch for shell execution and file write events.")
         except Exception as e:
             flash(f"⚠️ Error: {e}")
         return redirect(url_for('tetragon'))
