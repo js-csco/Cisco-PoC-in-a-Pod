@@ -50,8 +50,8 @@ POLICY_CONNECTOR_ALLOW = {
         "endpointSelector": {
             "matchLabels": {"app": "connector"}
         },
-        "ingress": [{}],
-        "egress": [{}],
+        "ingress": [{"fromEntities": ["world", "cluster", "host"]}],
+        "egress":  [{"toEntities":   ["world", "cluster", "host"]}],
     },
 }
 
