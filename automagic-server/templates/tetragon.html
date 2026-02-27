@@ -196,16 +196,19 @@
   </div>
 
   <div style="display:flex; gap:12px; flex-wrap:wrap;">
+    {% if active_policies | length > 0 %}
+    <button type="submit" name="action" value="remove"
+            style="background-color:#c62828; color:#fff; border:none; padding:10px 24px;
+                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.92rem;">
+      ✖ Remove All TracingPolicies
+    </button>
+    {% else %}
     <button type="submit" name="action" value="deploy"
             style="background-color:#0066ff; color:#fff; border:none; padding:10px 24px;
                    border-radius:6px; font-weight:500; cursor:pointer; font-size:0.92rem;">
       🛡️ Deploy All TracingPolicies
     </button>
-    <button type="submit" name="action" value="remove"
-            style="background-color:#757575; color:#fff; border:none; padding:10px 24px;
-                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.92rem;">
-      ✖ Remove All TracingPolicies
-    </button>
+    {% endif %}
   </div>
 </section>
 
