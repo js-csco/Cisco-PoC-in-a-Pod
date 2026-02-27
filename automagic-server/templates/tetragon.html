@@ -388,7 +388,7 @@ wget http://169.254.169.254/ # AWS IMDS</pre>
       <div style="background:#fce4ec; padding:14px 20px; display:flex; align-items:center; gap:12px;">
         <span style="font-size:1.5rem;">🪝</span>
         <div>
-          <div style="font-weight:700; color:#b71c1c; font-size:0.95rem;">Phase 4 — Persistence Attempts</div>
+          <div style="font-weight:700; color:#b71c1c; font-size:0.95rem;">Phase 3 — Persistence Attempts</div>
           <div style="color:#555; font-size:0.82em; margin-top:2px;">Try to install backdoors so access survives restarts — SSH keys, cron jobs, new users</div>
         </div>
       </div>
@@ -432,16 +432,19 @@ history -c; rm ~/.bash_history</pre>
           </div>
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          {% if 'persistence' in running_sims %}
+          <button type="submit" name="action" value="stop_attacks"
+                  style="background-color:#c62828; color:#fff; border:none; padding:9px 20px;
+                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
+            🛑 Stop Persistence Simulation
+          </button>
+          {% else %}
           <button type="submit" name="action" value="simulate_persistence"
                   style="background-color:#b71c1c; color:#fff; border:none; padding:9px 20px;
                          border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
             🪝 Launch Persistence Simulation
           </button>
-          <button type="submit" name="action" value="stop_attacks"
-                  style="background-color:#fff; color:#c62828; border:1px solid #c62828; padding:9px 20px;
-                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
-            🛑 Stop Attack
-          </button>
+          {% endif %}
         </div>
       </div>
     </div>
