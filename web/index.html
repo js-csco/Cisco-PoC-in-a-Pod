@@ -225,18 +225,18 @@
     <div class="card-title">WHY THE IP TELLS THE STORY</div>
     <p style="font-size:0.88em; color:#555; line-height:1.7; margin:0;">
       With Cisco Secure Access ZTNA your browser never opens a direct connection to this server.
-      Traffic flows through the <strong>Secure Access cloud gateway</strong> and then through the
-      on-premises <strong>Connector</strong> pod running in this k3s cluster —
-      so the server sees the Connector's internal cluster IP, not yours.
+      Traffic flows through the <strong>Secure Access cloud gateway</strong>, which NATs the source
+      to its own IP in the <strong>CGNAT range (100.64.0.0/10)</strong>, then reaches the server
+      via the on-premises <strong>Connector</strong> pod — so your real IP is never seen by the application.
     </p>
     <div class="explain-row">
       <div class="explain-panel panel-ztna">
         <strong>✅ Via ZTNA</strong>
-        Server sees the Connector's <em>private cluster IP</em>. Your real IP is never exposed to the application.
+        Server sees a <em>100.64.x.x</em> address — the Cisco Secure Access gateway NAT IP. Your real IP is fully hidden.
       </div>
       <div class="explain-panel panel-direct">
         <strong>⚠️ Direct Access</strong>
-        Server sees your <em>real public IP</em>. Zero Trust policies are not in effect for this connection.
+        Server sees your <em>LAN or public IP</em> directly. Zero Trust policies are not in effect.
       </div>
     </div>
   </div>
@@ -258,12 +258,18 @@
     window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
   document.getElementById('valTime').textContent = new Date().toLocaleString();
 
-  // Classify the server-seen IP
-  function isPrivate(addr) {
+  // Cisco Secure Access uses the CGNAT range (100.64.0.0/10) as its gateway NAT.
+  // When traffic flows through ZTNA the server sees an IP in this range —
+  // not the user's real IP and not a plain private LAN address.
+  function isCGNAT(addr) {
+    const m = addr.match(/^100\.(\d+)\./);
+    return m && parseInt(m[1]) >= 64 && parseInt(m[1]) <= 127;
+  }
+
+  function isPrivateLAN(addr) {
     return /^10\./.test(addr)
       || /^172\.(1[6-9]|2\d|3[01])\./.test(addr)
       || /^192\.168\./.test(addr)
-      || /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(addr) // CGNAT
       || /^127\./.test(addr)
       || addr === '::1';
   }
@@ -276,32 +282,41 @@
   const method = document.getElementById('accessMethod');
 
   if (!ip || ip === 'n/a') {
-    // SSI not available (e.g. opened as a local file)
     bIcon.textContent  = '🔍';
     bTag.textContent   = 'IP UNAVAILABLE';
     bTitle.textContent = 'Could not determine access method';
     bBody.textContent  = 'Server-side IP injection requires nginx SSI to be enabled.';
     method.textContent = 'Unknown';
 
-  } else if (isPrivate(ip)) {
+  } else if (isCGNAT(ip)) {
     banner.className   = 'banner ztna';
     bIcon.textContent  = '✅';
     bTag.textContent   = 'ZERO TRUST ACCESS VERIFIED';
     bTitle.textContent = 'You are accessing this server through Cisco Secure Access';
     bBody.textContent  =
-      'The server sees ' + ip + ' — a private cluster IP belonging to the Secure Access ' +
-      'Connector. Your real IP is hidden and Zero Trust policies are enforced.';
+      'The server sees ' + ip + ' — a Cisco Secure Access gateway IP (CGNAT 100.64.0.0/10). '
+      + 'Your traffic is tunnelled through ZTNA and your real IP is never exposed to the application.';
     method.textContent = 'ZTNA (Cisco Secure Access)';
+
+  } else if (isPrivateLAN(ip)) {
+    banner.className   = 'banner direct';
+    bIcon.textContent  = '⚠️';
+    bTag.textContent   = 'LOCAL NETWORK ACCESS — NO ZTNA';
+    bTitle.textContent = 'You are NOT accessing this server through Cisco Secure Access';
+    bBody.textContent  =
+      'The server sees ' + ip + ' — a private LAN address. '
+      + 'You are reaching the server directly over the local network, bypassing Zero Trust controls.';
+    method.textContent = 'Direct (local LAN)';
 
   } else {
     banner.className   = 'banner direct';
     bIcon.textContent  = '⚠️';
-    bTag.textContent   = 'DIRECT ACCESS DETECTED';
+    bTag.textContent   = 'DIRECT INTERNET ACCESS — NO ZTNA';
     bTitle.textContent = 'You are NOT accessing this server through Cisco Secure Access';
     bBody.textContent  =
-      'The server sees ' + ip + ' — your real public IP. ' +
-      'This connection bypasses Zero Trust controls.';
-    method.textContent = 'Direct (no ZTNA)';
+      'The server sees ' + ip + ' — your real public IP. '
+      + 'This connection bypasses Zero Trust controls entirely.';
+    method.textContent = 'Direct (internet)';
   }
 })();
 </script>
