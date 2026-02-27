@@ -379,3 +379,22 @@ def simulate_persistence():
 # Backward compatibility alias
 def simulate_attack():
     return simulate_recon()
+
+
+def stop_attacks():
+    """Delete all running attack simulation jobs in the piap namespace."""
+    _, _, batch_v1 = _get_clients()
+    jobs = batch_v1.list_namespaced_job(
+        namespace=NAMESPACE,
+        label_selector="app=tetragon-attack-sim",
+    )
+    deleted = []
+    for job in jobs.items:
+        name = job.metadata.name
+        batch_v1.delete_namespaced_job(
+            name=name,
+            namespace=NAMESPACE,
+            body=client.V1DeleteOptions(propagation_policy="Background"),
+        )
+        deleted.append(name)
+    return deleted

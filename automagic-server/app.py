@@ -408,6 +408,13 @@ def tetragon():
                 job_name = simulate_persistence()
                 flash(f"🪝 Persistence simulation launched — Job: {job_name}")
                 flash("Watch for shell execution and file write events.")
+            elif action == 'stop_attacks':
+                from scripts.tetragon_policies import stop_attacks
+                deleted = stop_attacks()
+                if deleted:
+                    flash(f"🛑 Stopped {len(deleted)} simulation job(s): {', '.join(deleted)}")
+                else:
+                    flash("No running simulation jobs found.")
         except Exception as e:
             flash(f"⚠️ Error: {e}")
         return redirect(url_for('tetragon'))

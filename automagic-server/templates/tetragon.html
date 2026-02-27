@@ -310,12 +310,18 @@ ls -la /</pre>
             </div>
           </div>
         </div>
-        <button type="submit" name="action" value="simulate_recon"
-                onclick="return confirm('Launch Recon simulation job in the piap namespace?')"
-                style="background-color:#1565c0; color:#fff; border:none; padding:9px 20px;
-                       border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
-          🔍 Launch Recon Simulation
-        </button>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button type="submit" name="action" value="simulate_recon"
+                  style="background-color:#1565c0; color:#fff; border:none; padding:9px 20px;
+                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
+            🔍 Launch Recon Simulation
+          </button>
+          <button type="submit" name="action" value="stop_attacks"
+                  style="background-color:#fff; color:#c62828; border:1px solid #c62828; padding:9px 20px;
+                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
+            🛑 Stop Attack
+          </button>
+        </div>
       </div>
     </div>
 
@@ -360,12 +366,18 @@ wget http://169.254.169.254/ # AWS IMDS</pre>
             </div>
           </div>
         </div>
-        <button type="submit" name="action" value="simulate_credentials"
-                onclick="return confirm('Launch Credential Hunting simulation job in the piap namespace?')"
-                style="background-color:#e65100; color:#fff; border:none; padding:9px 20px;
-                       border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
-          🔑 Launch Credential Hunting Simulation
-        </button>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button type="submit" name="action" value="simulate_credentials"
+                  style="background-color:#e65100; color:#fff; border:none; padding:9px 20px;
+                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
+            🔑 Launch Credential Hunting Simulation
+          </button>
+          <button type="submit" name="action" value="stop_attacks"
+                  style="background-color:#fff; color:#c62828; border:1px solid #c62828; padding:9px 20px;
+                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
+            🛑 Stop Attack
+          </button>
+        </div>
       </div>
     </div>
 
@@ -417,12 +429,18 @@ history -c; rm ~/.bash_history</pre>
             </div>
           </div>
         </div>
-        <button type="submit" name="action" value="simulate_persistence"
-                onclick="return confirm('Launch Persistence simulation job in the piap namespace?')"
-                style="background-color:#b71c1c; color:#fff; border:none; padding:9px 20px;
-                       border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
-          🪝 Launch Persistence Simulation
-        </button>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button type="submit" name="action" value="simulate_persistence"
+                  style="background-color:#b71c1c; color:#fff; border:none; padding:9px 20px;
+                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
+            🪝 Launch Persistence Simulation
+          </button>
+          <button type="submit" name="action" value="stop_attacks"
+                  style="background-color:#fff; color:#c62828; border:1px solid #c62828; padding:9px 20px;
+                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
+            🛑 Stop Attack
+          </button>
+        </div>
       </div>
     </div>
 
