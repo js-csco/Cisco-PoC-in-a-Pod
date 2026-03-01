@@ -14,7 +14,7 @@ echo "Repository root: $REPO_ROOT"
 echo ""
 
 # Check if running as root or with sudo
-if [ "$EUID" -ne 0 ]; then 
+if [ "$EUID" -ne 0 ]; then
     echo "Please run with sudo: sudo ./setup.sh"
     exit 1
 fi
@@ -24,16 +24,155 @@ ACTUAL_USER=${SUDO_USER:-$USER}
 echo "Running as user: $ACTUAL_USER"
 echo ""
 
-# Step 1: Create symlinks for volume mounts
-echo "Step 1: Creating symlinks for application directories..."
+# Resolve server IP early — used in Cilium install, config updates, and status output.
+SERVER_IP=$(hostname -I | awk '{print $1}')
+echo "Server IP: $SERVER_IP"
+echo ""
+
+# ============================================================
+#  Phase 1: Cisco Resource Connector (BEFORE K3s)
+#
+#  setup_connector.sh installs Docker and starts the connector
+#  as a Docker container.  We MUST do this before installing
+#  K3s because K3s's embedded containerd conflicts with the
+#  Docker daemon start-up on Linux 4.4 kernels.
+#
+#  After setup_connector.sh succeeds we immediately stop the
+#  Docker-managed connector so that K8s (started in Phase 2)
+#  becomes the sole owner of the container.
+# ============================================================
+
+echo "================================================"
+echo "  Cisco Secure Access Resource Connector Setup"
+echo "================================================"
+echo ""
+
+echo "Please enter your connector credentials from Secure Access dashboard:"
+echo "(Connect > Network Connection > Connector Groups > *Table*)"
+read -p "Enter Connector Name: " CONNECTOR_NAME
+read -p "Enter Connector Key: " CONNECTOR_KEY
+echo ""
+
+if [ -z "$CONNECTOR_NAME" ] || [ -z "$CONNECTOR_KEY" ]; then
+    echo "❌ Connector name and key are required!"
+    exit 1
+fi
+
+# Step 1: System prep — create symlinks and remove the system containerd package
+# so Docker (installed next) can use its own bundled containerd without conflicts.
+echo "Step 1: Creating symlinks and preparing system..."
 ln -sf "$REPO_ROOT/automagic-server" /automagic-server && echo "  ✓ /automagic-server"
 ln -sf "$REPO_ROOT/dashy" /dashy && echo "  ✓ /dashy"
 ln -sf "$REPO_ROOT/web" /web && echo "  ✓ /web"
+
+echo "  Removing system containerd package (Docker brings its own)..."
+apt-get remove -y containerd 2>/dev/null || true
+echo "  ✓ System prepared"
 echo ""
 
-# Step 2: Install k3s
-echo "Step 2: Installing k3s (without default CNI and kube-proxy)..."
-if command -v k3s &> /dev/null; then
+# Step 2: Download Cisco setup script
+echo "Step 2: Downloading Cisco Resource Connector setup script..."
+CONNECTOR_SETUP_SCRIPT="/tmp/setup_connector.sh"
+curl -o "$CONNECTOR_SETUP_SCRIPT" https://us.repo.acgw.sse.cisco.com/scripts/latest/setup_connector.sh
+
+if [ ! -f "$CONNECTOR_SETUP_SCRIPT" ]; then
+    echo "❌ Failed to download setup_connector.sh"
+    exit 1
+fi
+
+chmod +x "$CONNECTOR_SETUP_SCRIPT"
+echo "  ✓ Setup script downloaded"
+echo ""
+
+# Step 3: Run the Cisco setup script
+# This installs Docker, pulls the connector image, installs AppArmor/seccomp
+# profiles, and starts the connector as a Docker container.
+# We tolerate a non-zero exit (e.g. the connector health check fails for some
+# reason) and verify Docker + image are available ourselves below.
+echo "Step 3: Running Cisco Resource Connector installation..."
+echo "  This installs Docker, pulls the connector image, and configures security profiles..."
+echo ""
+
+"$CONNECTOR_SETUP_SCRIPT" || true
+
+# Verify Docker is installed and running — hard fail if not.
+if ! command -v docker &>/dev/null; then
+    echo "❌ Docker was not installed by setup_connector.sh"
+    exit 1
+fi
+if ! docker info &>/dev/null; then
+    echo "❌ Docker daemon is not running after setup_connector.sh"
+    exit 1
+fi
+
+# Read the image name written by setup_connector.sh.
+CONNECTOR_IMAGE=$(cat /opt/connector/image_name 2>/dev/null || echo "")
+if [ -z "$CONNECTOR_IMAGE" ]; then
+    echo "❌ /opt/connector/image_name not found — setup_connector.sh may have failed"
+    exit 1
+fi
+echo "  ✓ Connector image: $CONNECTOR_IMAGE"
+
+echo "Step 3.1: Verifying daemontools installation..."
+if ! command -v svc &>/dev/null; then
+    echo "  ⚠ Warning: daemontools 'svc' not found — connector service management may differ"
+else
+    echo "  ✓ daemontools installed"
+fi
+echo ""
+
+# Step 4: Stop the Docker-managed connector
+# K8s will own the connector from here on.  Remove the daemontools service entry
+# first so supervise cannot restart the container, then stop the container itself.
+echo "Step 4: Stopping Docker connector (K8s will manage it instead)..."
+
+for svc_dir in /etc/service/*connector*; do
+    [ -e "$svc_dir" ] || continue
+    svc -d "$svc_dir" 2>/dev/null || true
+    rm -rf "$svc_dir"
+    echo "  ✓ Daemontools service removed: $svc_dir"
+done
+
+docker ps -q --filter name=connector | xargs -r docker stop 2>/dev/null || true
+docker ps -aq --filter name=connector | xargs -r docker rm  2>/dev/null || true
+echo "  ✓ Docker connector container stopped and removed"
+echo ""
+
+# Step 5: Initialize connector data (replicates connector.sh first_boot)
+# The K8s pod reads these files on startup — they must exist before the pod launches.
+echo "Step 5: Initializing connector data (first boot)..."
+
+if [ ! -c /dev/net/tun ]; then
+    echo "  /dev/net/tun not found — loading tun kernel module..."
+    modprobe tun
+fi
+
+mkdir -p /opt/connector/etc
+mkdir -p /opt/connector/data/init
+mkdir -p /opt/connector/data/anyconnect_logs
+touch /opt/connector/etc/hosts
+touch /opt/connector/etc/resolv.conf
+
+cp /etc/machine-id /opt/connector/data/init/
+
+resolvectl dns > /opt/connector/data/init/resolvectl.output 2>/dev/null || true
+
+ACAD_VM_LOCAL_IP=$(ip addr show | grep global | grep -v docker | grep 'inet ' | awk '{print $2}' | cut -d/ -f1 | head -n1)
+
+echo "KEY=$CONNECTOR_KEY"                      > /opt/connector/data/init/user-data
+echo "ACAD_VM_LOCAL_IP=$ACAD_VM_LOCAL_IP"     >> /opt/connector/data/init/user-data
+echo "CNTR_DATA=/opt/connector"                > /opt/connector/data/init/common_config.sh
+
+echo "  ✓ Connector data initialised (KEY written, local IP: $ACAD_VM_LOCAL_IP)"
+echo ""
+
+# ============================================================
+#  Phase 2: K3s + CNI stack
+# ============================================================
+
+# Step 6: Install k3s
+echo "Step 6: Installing k3s (without default CNI and kube-proxy)..."
+if command -v k3s &>/dev/null; then
     echo "  k3s already installed, skipping..."
 else
     curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--flannel-backend=none --disable-network-policy --disable-kube-proxy" sh -
@@ -41,31 +180,30 @@ else
 fi
 echo ""
 
-# Step 3: Configure kubectl access
-echo "Step 3: Configuring kubectl access..."
+# Step 7: Configure kubectl access
+echo "Step 7: Configuring kubectl access..."
 export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 chmod 644 /etc/rancher/k3s/k3s.yaml
 
-# Create .kube config for the user
 mkdir -p /home/$ACTUAL_USER/.kube
 cp /etc/rancher/k3s/k3s.yaml /home/$ACTUAL_USER/.kube/config
 chown -R $ACTUAL_USER:$ACTUAL_USER /home/$ACTUAL_USER/.kube
 echo "  ✓ kubectl configured for user $ACTUAL_USER"
 echo ""
 
-# Wait for k3s to be ready
-echo "Step 4: Waiting for k3s API server..."
+# Step 8: Wait for k3s API server
+echo "Step 8: Waiting for k3s API server..."
 sleep 15
-until kubectl get nodes &> /dev/null; do
+until kubectl get nodes &>/dev/null; do
     echo "  Waiting for k3s API server to respond..."
     sleep 5
 done
 echo "  ✓ k3s API server is ready (node will become Ready after Cilium is installed)"
 echo ""
 
-# Step 5: Install Helm if not present
-echo "Step 5: Installing Helm..."
-if command -v helm &> /dev/null; then
+# Step 9: Install Helm
+echo "Step 9: Installing Helm..."
+if command -v helm &>/dev/null; then
     echo "  Helm already installed"
 else
     curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
@@ -73,20 +211,20 @@ else
 fi
 echo ""
 
-# Step 5.5: Clean up any old Cilium iptables rules
-echo "Step 5.5: Cleaning up any old Cilium iptables rules..."
-iptables -t nat -F OLD_CILIUM_POST_nat 2>/dev/null || true
-iptables -t nat -F OLD_CILIUM_PRE_nat 2>/dev/null || true
-iptables -t nat -F OLD_CILIUM_OUTPUT_nat 2>/dev/null || true
-iptables -t nat -X OLD_CILIUM_POST_nat 2>/dev/null || true
-iptables -t nat -X OLD_CILIUM_PRE_nat 2>/dev/null || true
-iptables -t nat -X OLD_CILIUM_OUTPUT_nat 2>/dev/null || true
+# Step 10: Clean up any old Cilium iptables rules
+echo "Step 10: Cleaning up any old Cilium iptables rules..."
+iptables -t nat -F OLD_CILIUM_POST_nat    2>/dev/null || true
+iptables -t nat -F OLD_CILIUM_PRE_nat     2>/dev/null || true
+iptables -t nat -F OLD_CILIUM_OUTPUT_nat  2>/dev/null || true
+iptables -t nat -X OLD_CILIUM_POST_nat    2>/dev/null || true
+iptables -t nat -X OLD_CILIUM_PRE_nat     2>/dev/null || true
+iptables -t nat -X OLD_CILIUM_OUTPUT_nat  2>/dev/null || true
 echo "  ✓ Cleanup complete"
 echo ""
 
-# Step 6: Install Cilium CLI if not present
-echo "Step 6: Installing Cilium CLI..."
-if command -v cilium &> /dev/null; then
+# Step 11: Install Cilium CLI
+echo "Step 11: Installing Cilium CLI..."
+if command -v cilium &>/dev/null; then
     echo "  Cilium CLI already installed"
 else
     CILIUM_CLI_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt)
@@ -100,10 +238,8 @@ else
 fi
 echo ""
 
-# Step 7: Install Cilium with proper configuration
-echo "Step 7: Installing Cilium CNI with native routing and masquerade..."
-# Get the server's primary IP address for API server configuration
-SERVER_IP=$(hostname -I | awk '{print $1}')
+# Step 12: Install Cilium CNI
+echo "Step 12: Installing Cilium CNI with native routing and masquerade..."
 echo "  Using API server IP: $SERVER_IP"
 
 cilium install --version 1.16.5 \
@@ -119,25 +255,25 @@ cilium install --version 1.16.5 \
 echo "  ✓ Cilium installation started"
 echo ""
 
-# Step 8: Wait for Cilium to be ready
-echo "Step 8: Waiting for Cilium to be ready..."
+# Step 13: Wait for Cilium
+echo "Step 13: Waiting for Cilium to be ready..."
 cilium status --wait
 echo "  ✓ Cilium is ready"
 echo ""
 
-# Step 9: Enable Hubble
-echo "Step 9: Enabling Hubble..."
+# Step 14: Enable Hubble
+echo "Step 14: Enabling Hubble..."
 cilium hubble enable --ui
 echo "  Waiting for Hubble to be ready..."
 kubectl wait --for=condition=Ready pod -l k8s-app=hubble-relay -n kube-system --timeout=120s || true
-kubectl wait --for=condition=Ready pod -l k8s-app=hubble-ui -n kube-system --timeout=120s || true
+kubectl wait --for=condition=Ready pod -l k8s-app=hubble-ui   -n kube-system --timeout=120s || true
 echo "  Exposing Hubble UI on NodePort 30800..."
 kubectl patch svc hubble-ui -n kube-system -p '{"spec":{"type":"NodePort","ports":[{"port":80,"targetPort":8081,"nodePort":30800}]}}'
 echo "  ✓ Hubble enabled and accessible on port 30800"
 echo ""
 
-# Step 10: Install Tetragon
-echo "Step 10: Installing Tetragon..."
+# Step 15: Install Tetragon
+echo "Step 15: Installing Tetragon..."
 helm repo add cilium https://helm.cilium.io 2>/dev/null || true
 helm repo update
 helm install tetragon cilium/tetragon -n kube-system --create-namespace || echo "  Tetragon already installed"
@@ -146,124 +282,35 @@ kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=tetragon -n kub
 echo "  ✓ Tetragon installed"
 echo ""
 
-# Step 11: Verify DNS and connectivity
-echo "Step 11: Verifying DNS and internet connectivity..."
-echo "  Testing DNS resolution..."
-kubectl run test-dns --image=busybox --rm -i --restart=Never --timeout=30s -- nslookup google.com > /dev/null 2>&1 && echo "  ✓ DNS is working" || echo "  ⚠ DNS test failed (you may need to check your network)"
+# Step 16: Verify DNS and connectivity
+echo "Step 16: Verifying DNS and internet connectivity..."
+kubectl run test-dns --image=busybox --rm -i --restart=Never --timeout=30s -- nslookup google.com > /dev/null 2>&1 \
+    && echo "  ✓ DNS is working" \
+    || echo "  ⚠ DNS test failed (you may need to check your network)"
 echo ""
 
-# Step 12: Deploy Cisco Secure Access Resource Connector
-echo "================================================"
-echo "  Cisco Secure Access Resource Connector Setup"
-echo "================================================"
-echo ""
+# ============================================================
+#  Phase 3: Wire connector image into K3s and deploy
+# ============================================================
 
-# Prompt for Cisco Connector credentials
-echo "Please enter your connector credentials from Secure Access dashboard:"
-echo "(Connect > Network Connection > Connector Groups > *Table*)"
-read -p "Enter Connector Name: " CONNECTOR_NAME
-read -p "Enter Connector Key: " CONNECTOR_KEY
-echo ""
-
-# Validate inputs
-if [ -z "$CONNECTOR_NAME" ] || [ -z "$CONNECTOR_KEY" ]; then
-    echo "❌ Connector name and key are required!"
-    exit 1
-fi
-
-echo "Step 12.1: Preparing system for Cisco Resource Connector..."
-echo "  Removing conflicting containerd package (Docker will install its own)..."
-apt-get remove -y containerd 2>/dev/null || true
-echo "  ✓ System prepared"
-echo ""
-
-echo "Step 12.2: Downloading Cisco Resource Connector setup script..."
-CONNECTOR_SETUP_SCRIPT="/tmp/setup_connector.sh"
-curl -o "$CONNECTOR_SETUP_SCRIPT" https://us.repo.acgw.sse.cisco.com/scripts/latest/setup_connector.sh
-
-if [ ! -f "$CONNECTOR_SETUP_SCRIPT" ]; then
-    echo "❌ Failed to download setup_connector.sh"
-    exit 1
-fi
-
-chmod +x "$CONNECTOR_SETUP_SCRIPT"
-echo "  ✓ Setup script downloaded"
-echo ""
-
-echo "Step 12.3: Running Cisco Resource Connector installation..."
-echo "  This will install Docker, download the connector image, and configure security policies..."
-echo ""
-
-# Run the Cisco setup script
-"$CONNECTOR_SETUP_SCRIPT"
-
-if [ $? -ne 0 ]; then
-    echo "❌ Connector installation failed!"
-    exit 1
-fi
-
-echo "  ✓ Connector installed successfully"
-echo ""
-
-echo "Step 12.4: Verifying daemontools installation..."
-if ! command -v svc &> /dev/null; then
-    echo "  ⚠ Warning: daemontools 'svc' command not found"
-    echo "  This may cause issues with connector service management"
-else
-    echo "  ✓ daemontools installed correctly"
-fi
-echo ""
-
-echo "Step 12.5: Initializing connector data (first boot)..."
-# Replicate connector.sh first_boot() so the K8s pod finds its provisioning data
-# on startup without needing to launch a Docker container first.
-
-# Ensure /dev/net/tun exists (required for the connector's tunnel interface)
-if [ ! -c /dev/net/tun ]; then
-    echo "  /dev/net/tun not found — loading tun kernel module..."
-    modprobe tun
-fi
-
-mkdir -p /opt/connector/etc
-mkdir -p /opt/connector/data/init
-mkdir -p /opt/connector/data/anyconnect_logs
-touch /opt/connector/etc/hosts
-touch /opt/connector/etc/resolv.conf
-
-cp /etc/machine-id /opt/connector/data/init/
-
-# Capture DNS resolver info (same as connector.sh first_boot for Ubuntu)
-resolvectl dns > /opt/connector/data/init/resolvectl.output 2>/dev/null || true
-
-# Capture host IP (excluding Docker bridge addresses)
-ACAD_VM_LOCAL_IP=$(ip addr show | grep global | grep -v docker | grep 'inet ' | awk '{print $2}' | cut -d/ -f1 | head -n1)
-
-echo "KEY=$CONNECTOR_KEY"           > /opt/connector/data/init/user-data
-echo "ACAD_VM_LOCAL_IP=$ACAD_VM_LOCAL_IP" >> /opt/connector/data/init/user-data
-echo "CNTR_DATA=/opt/connector"     > /opt/connector/data/init/common_config.sh
-
-echo "  ✓ Connector data initialised (KEY written, local IP: $ACAD_VM_LOCAL_IP)"
-echo ""
-
-# Step 13: Prepare connector image and seccomp profile for K3s
-echo "Step 13: Preparing connector image and seccomp profile for K3s..."
-
-# K3s uses containerd — its image cache is separate from Docker's.
-# Import the already-pulled (and cosign-verified) Docker image directly
-# so K3s doesn't need to pull from the registry again.
-CONNECTOR_IMAGE=$(cat /opt/connector/image_name 2>/dev/null || echo "ciscosecure/resource-connector:latest")
-echo "  Importing image '$CONNECTOR_IMAGE' from Docker into K3s containerd..."
+# Step 17: Import connector image from Docker into K3s containerd
+# K3s's containerd cache is separate from Docker's — import avoids a registry pull.
+echo "Step 17: Importing connector image into K3s containerd..."
+echo "  Image: $CONNECTOR_IMAGE"
 docker save "$CONNECTOR_IMAGE" | k3s ctr images import -
 echo "  ✓ Image imported to K3s"
 
 # Copy the seccomp profile to the K3s kubelet seccomp directory.
-# K8s 'Localhost' seccomp profiles are resolved relative to this path.
 mkdir -p /var/lib/rancher/k3s/agent/seccomp
-cp /opt/connector/install/connector-seccomp.json /var/lib/rancher/k3s/agent/seccomp/
-echo "  ✓ Seccomp profile copied to /var/lib/rancher/k3s/agent/seccomp/"
+if [ -f /opt/connector/install/connector-seccomp.json ]; then
+    cp /opt/connector/install/connector-seccomp.json /var/lib/rancher/k3s/agent/seccomp/
+    echo "  ✓ Seccomp profile copied to /var/lib/rancher/k3s/agent/seccomp/"
+else
+    echo "  ⚠ connector-seccomp.json not found — pod will use RuntimeDefault seccomp"
+fi
 echo ""
 
-# Step 14: Prompt for Splunk admin password (optional)
+# Step 18: Prompt for Splunk admin password (optional)
 echo "================================================"
 echo "  Splunk Configuration (optional)"
 echo "================================================"
@@ -296,51 +343,43 @@ else
 fi
 echo ""
 
-# Step 15: Update configuration files with server IP
-echo "Step 15: Updating configuration files..."
+# Step 19: Update configuration files with server IP
+echo "Step 19: Updating configuration files..."
 
-# Update Dashy config with actual server IP
 if [ -f "$REPO_ROOT/dashy/conf.yml" ]; then
     echo "  Updating Dashy config with server IP..."
     sed -i "s/SERVER_IP/$SERVER_IP/g" "$REPO_ROOT/dashy/conf.yml"
 fi
 
-# Update HTML files with server IP
 if [ -f "$REPO_ROOT/web/index.html" ]; then
     echo "  Updating web files with server IP..."
     sed -i "s/SERVER_IP/$SERVER_IP/g" "$REPO_ROOT/web/index.html"
 fi
 
-# Update automagic templates if they exist
 if [ -d "$REPO_ROOT/automagic-server/templates" ]; then
     echo "  Updating automagic templates with server IP..."
     find "$REPO_ROOT/automagic-server/templates" -name "*.html" -exec sed -i "s/SERVER_IP/$SERVER_IP/g" {} \;
 fi
 echo ""
 
-# Step 16: Deploy Kubernetes applications
-echo "Step 16: Deploying applications to Kubernetes..."
+# Step 20: Deploy Kubernetes applications
+echo "Step 20: Deploying applications to Kubernetes..."
 
-# Create namespace
 kubectl create namespace piap --dry-run=client -o yaml | kubectl apply -f -
 
-# Create Connector Secret (for reference in K8s, even though connector runs externally)
-echo "  Creating Connector credentials reference..."
+echo "  Creating Connector credentials secret..."
 kubectl create secret generic connector-creds -n piap \
   --from-literal=connector-name="$CONNECTOR_NAME" \
   --from-literal=connector-key="$CONNECTOR_KEY" \
-  --from-literal=connector-ip="$CONNECTOR_IP" \
   --dry-run=client -o yaml | kubectl apply -f -
 
-# Create Splunk Secret and deploy Splunk only if a password was provided
 if [ "$DEPLOY_SPLUNK" = "true" ]; then
-    echo "  Creating Splunk credentials..."
+    echo "  Creating Splunk credentials secret..."
     kubectl create secret generic splunk-creds -n piap \
       --from-literal=password="$SPLUNK_PASSWORD" \
       --dry-run=client -o yaml | kubectl apply -f -
 fi
 
-# Apply manifests — skip Splunk files if not deploying Splunk
 for manifest in "$REPO_ROOT/k8s/"*.yaml; do
     case "$manifest" in
         *splunk*)
@@ -369,13 +408,13 @@ done
 echo "  ✓ Applications deployed to namespace 'piap'"
 echo ""
 
-# Step 17: Wait for pods to be ready
-echo "Step 17: Waiting for pods to start..."
+# Step 21: Wait for pods to start
+echo "Step 21: Waiting for pods to start..."
 sleep 10
 kubectl get pods -n piap
 echo ""
 
-# Step 18: Show access information
+# Step 22: Show access information
 echo "================================================"
 echo "  Setup Complete!"
 echo "================================================"
@@ -390,7 +429,6 @@ echo "  Image:  $CONNECTOR_IMAGE"
 echo ""
 echo "  ✓ Provisioning data written to /opt/connector/data/init/"
 echo "  ✓ Image imported to K3s containerd"
-echo "  ✓ Seccomp profile deployed"
 echo "  ✓ AppArmor profile: docker_secure (installed by setup_connector.sh)"
 echo ""
 echo "  Check connector pod:"
@@ -400,7 +438,7 @@ echo "  Follow connector logs:"
 echo "    kubectl logs -n piap -l app=connector -f"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  🌐 Your Services"
+echo "  Your Services"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 kubectl get svc -n piap -o wide
@@ -444,7 +482,6 @@ echo ""
 echo "Kubernetes:"
 echo "  kubectl get pods -n piap              # Check pod status"
 echo "  kubectl get svc -n piap               # Check services"
-echo "  kubectl get svc connector             # Check connector service"
 echo "  kubectl logs <pod-name> -n piap       # View logs"
 echo ""
 echo "Cilium:"
