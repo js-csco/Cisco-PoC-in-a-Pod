@@ -8,6 +8,7 @@ metadata:
   labels:
     io.kompose.service: automagic
   name: automagic
+  namespace: piap
 spec:
   replicas: 1
   selector:
@@ -30,7 +31,7 @@ spec:
         - args:
             - bash
             - -c
-            - pip3 install --no-cache-dir --break-system-packages flask requests duo-client && python3 /app/app.py
+            - pip3 install --no-cache-dir --break-system-packages flask requests duo-client kubernetes && python3 /app/app.py
           env:
             - name: TZ
               value: Europe/Berlin
@@ -43,6 +44,7 @@ spec:
           volumeMounts:
             - mountPath: /app
               name: code
+      serviceAccountName: automagic-sa
       restartPolicy: Always
       volumes:
         - name: code

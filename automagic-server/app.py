@@ -18,6 +18,10 @@ from scripts.csa_scripts.create_int_policy import (
     create_int_block_apps_policy,
     create_allow_all_policy
 )
+from scripts.csa_scripts.create_dlp_rules import (
+    create_ai_guardrail_rule,
+    create_realtime_dlp_rule
+)
 
 
 app = Flask(__name__)
@@ -58,14 +62,28 @@ def ensure_valid_token(api_key, api_secret):
 @app.route("/secure-access", methods=["GET", "POST"])
 def secure_access():
     
-    # NEEDS AUTHENTICATION
+    # If token is gone (e.g. after a rebuild), try to restore it from session credentials
     if not token_cache.get("access_token"):
         session.pop("authenticated", None)
+        stored_key = session.get("csa_api_key")
+        stored_secret = session.get("csa_api_secret")
+        if stored_key and stored_secret:
+            try:
+                get_access_token(stored_key, stored_secret)
+                session["authenticated"] = True
+            except Exception:
+                pass  # credentials may be expired; user will see the form pre-filled
 
     if request.method == "POST":
-        api_key = request.form.get("api_key")
-        api_secret = request.form.get("api_secret")
+        # Use form values if provided, otherwise fall back to session-stored credentials
+        api_key = request.form.get("api_key", "").strip() or session.get("csa_api_key", "")
+        api_secret = request.form.get("api_secret", "").strip() or session.get("csa_api_secret", "")
         action = request.form.get("action")
+
+        # Persist credentials to session whenever they are explicitly submitted
+        if request.form.get("api_key", "").strip():
+            session["csa_api_key"] = api_key
+            session["csa_api_secret"] = api_secret
 
         # NEEDS NO AUTHENTICATION
         # Goto CSA Dashboard & manual config
@@ -83,8 +101,10 @@ def secure_access():
 
             # Action: AUTHENTICATE
             if action == "auth":
-                # 1️⃣ Authenticate
+                # 1️⃣ Authenticate and persist credentials
                 token = get_access_token(api_key, api_secret)
+                session["csa_api_key"] = api_key
+                session["csa_api_secret"] = api_secret
 
                 # 2️⃣ Mark the session as authenticated so the UI updates
                 session["authenticated"] = True
@@ -121,6 +141,7 @@ def secure_access():
                 created = create_private_resources(token, vm_ip, group_id)
                 flash(f"✅ {len(created)} Private Resources created.")
 
+
             # Action: CREATE PRIVATE ACCESS
             elif action == "create_private":
                 if not session.get("authenticated"):
@@ -156,6 +177,23 @@ def secure_access():
 
                 ### start API Call in script /scripts/.py files
 
+
+            # Action: CREATE DLP RULES
+            elif action == "create_dlp":
+                if not session.get("authenticated"):
+                    flash("⚠️ Please authenticate first.")
+                    return redirect(url_for("secure_access"))
+
+                token = token_cache.get("access_token")
+                if not token:
+                    flash("⚠️ Missing token — please re-authenticate.")
+                    return redirect(url_for("secure_access"))
+
+                create_ai_guardrail_rule(token)
+                flash("✅ AI Guardrails rule created: Block PII / Emails to AI Apps.")
+
+                create_realtime_dlp_rule(token)
+                flash("✅ Real-Time DLP rule created: Block Email Addresses and IBANs.")
 
             # Action: CREATE INTERNET ACCESS
             elif action == "create_internet":
@@ -211,21 +249,20 @@ def duo():
             return redirect(url_for('duo'))
         
         try:
-            # Action: SETUP DUO (Complete setup with single user)
+            # Action: SETUP DUO (Complete setup with up to 3 users)
             if action == 'setup_duo':
-                email = request.form.get('user_email', '').strip()
-                username = request.form.get('user_username', '').strip()
-                
-                # Validate user is provided
-                if not email or not username:
-                    flash("⚠️ Please provide both email and username")
+                # Collect up to 3 users; skip rows where either field is blank
+                users_list = []
+                for i in range(1, 4):
+                    email = request.form.get(f'user_email_{i}', '').strip()
+                    username = request.form.get(f'user_username_{i}', '').strip()
+                    if email and username:
+                        users_list.append({'email': email, 'username': username})
+
+                # Validate at least one user is provided
+                if not users_list:
+                    flash("⚠️ Please provide at least one email and username")
                     return redirect(url_for('duo'))
-                
-                # Create user list with single user
-                users_list = [{
-                    'email': email,
-                    'username': username
-                }]
                 
                 # Import and call the complete setup function
                 from scripts.duo.duo_automation import setup_duo_complete
@@ -238,21 +275,19 @@ def duo():
                 )
                 
                 # Display results
-                if result['users_created']:
-                    user = result['users_created'][0]
+                for user in result['users_created']:
                     flash(f"✅ User '{user['username']}' created (ID: {user['user_id']})")
-                
-                if result['users_existing']:
-                    user = result['users_existing'][0]
+
+                for user in result['users_existing']:
                     flash(f"ℹ️ User '{user['username']}' already exists (ID: {user['user_id']})")
-                
+
                 if result['group_created']:
                     flash(f"✅ Group 'PoC Users' created (ID: {result['group_id']})")
                 else:
                     flash(f"ℹ️ Using existing 'PoC Users' group (ID: {result['group_id']})")
-                
+
                 if result['users_added_to_group'] > 0:
-                    flash(f"✅ User added to 'PoC Users' group")
+                    flash(f"✅ {result['users_added_to_group']} user(s) added to 'PoC Users' group")
                 
                 # Display any errors
                 if result['errors']:
@@ -311,17 +346,146 @@ def duo():
     return render_template('duo.html')
 
 
-@app.route('/cilium')
+@app.route('/cilium', methods=['GET', 'POST'])
 def cilium():
-    return render_template('cilium.html')
+    from scripts.cilium_policies import apply_zero_trust, apply_allow_all, get_active_policies
 
-@app.route('/tetragon')
+    if request.method == 'POST':
+        action = request.form.get('action')
+        try:
+            if action == 'allow_all':
+                results = apply_allow_all()
+                for r in results:
+                    flash(f"✅ {r}")
+                flash("Traffic mode set to: Allow All")
+            elif action == 'zero_trust':
+                results = apply_zero_trust()
+                for r in results:
+                    flash(f"✅ {r}")
+                flash("Traffic mode set to: Zero Trust Application Access")
+        except Exception as e:
+            flash(f"⚠️ Error applying Cilium policy: {e}")
+        return redirect(url_for('cilium'))
+
+    active_policies = []
+    policy_error = None
+    try:
+        active_policies = get_active_policies()
+    except Exception as e:
+        policy_error = str(e)
+
+    return render_template('cilium.html', active_policies=active_policies, policy_error=policy_error)
+
+@app.route('/tetragon', methods=['GET', 'POST'])
 def tetragon():
-    return render_template('tetragon.html')
+    from scripts.tetragon_policies import deploy_policies, remove_policies, get_active_policies
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        try:
+            if action == 'deploy':
+                results = deploy_policies()
+                for r in results:
+                    flash(f"✅ {r}")
+                flash("Tetragon TracingPolicies deployed.")
+            elif action == 'remove':
+                results = remove_policies()
+                for r in results:
+                    flash(f"✅ {r}")
+                flash("Tetragon TracingPolicies removed.")
+            elif action in ('simulate', 'simulate_recon'):
+                from scripts.tetragon_policies import simulate_recon
+                job_name = simulate_recon()
+                flash(f"🔍 Recon simulation launched — Job: {job_name}")
+                flash("Watch the live event stream for shell execution events.")
+            elif action == 'simulate_credentials':
+                from scripts.tetragon_policies import simulate_credentials
+                job_name = simulate_credentials()
+                flash(f"🔑 Credential hunting simulation launched — Job: {job_name}")
+                flash("Watch for sensitive-file-read and k8s-secret-access events.")
+            elif action == 'simulate_persistence':
+                from scripts.tetragon_policies import simulate_persistence
+                job_name = simulate_persistence()
+                flash(f"🪝 Persistence simulation launched — Job: {job_name}")
+                flash("Watch for shell execution and file write events.")
+            elif action == 'stop_attacks':
+                from scripts.tetragon_policies import stop_attacks
+                deleted = stop_attacks()
+                if deleted:
+                    flash(f"🛑 Stopped {len(deleted)} simulation job(s): {', '.join(deleted)}")
+                else:
+                    flash("No running simulation jobs found.")
+        except Exception as e:
+            flash(f"⚠️ Error: {e}")
+        return redirect(url_for('tetragon'))
+
+    active_policies = []
+    policy_error = None
+    try:
+        active_policies = get_active_policies()
+    except Exception as e:
+        policy_error = str(e)
+
+    running_sims = set()
+    try:
+        from scripts.tetragon_policies import get_running_simulations
+        running_sims = get_running_simulations()
+    except Exception:
+        pass
+
+    return render_template('tetragon.html', active_policies=active_policies,
+                           policy_error=policy_error, running_sims=running_sims)
+
+
+@app.route('/tetragon/events')
+def tetragon_events():
+    """JSON endpoint polled by the frontend for live Tetragon events."""
+    from flask import jsonify
+    from scripts.tetragon_policies import get_tetragon_events
+    try:
+        raw_events = get_tetragon_events(max_lines=200)
+        events = []
+        for ev in raw_events:
+            # Normalise the Tetragon JSON schema into a flat display dict
+            process_exec = ev.get("process_exec") or {}
+            process_kprobe = ev.get("process_kprobe") or {}
+            process_exit = ev.get("process_exit") or {}
+
+            proc = (
+                process_exec.get("process")
+                or process_kprobe.get("process")
+                or process_exit.get("process")
+                or {}
+            )
+
+            events.append({
+                "time": ev.get("time", ""),
+                "type": ev.get("process_exec") and "exec"
+                        or ev.get("process_kprobe") and "kprobe"
+                        or ev.get("process_exit") and "exit"
+                        or "unknown",
+                "binary": proc.get("binary", ""),
+                "arguments": proc.get("arguments", ""),
+                "pod": (proc.get("pod") or {}).get("name", ""),
+                "namespace": (proc.get("pod") or {}).get("namespace", ""),
+                "action": process_kprobe.get("action", ""),
+                "func_name": process_kprobe.get("function_name", ""),
+            })
+        return jsonify({"events": events[-50:], "total": len(events)})
+    except Exception as e:
+        return jsonify({"events": [], "error": str(e)})
+
+@app.route('/mcp-servers')
+def mcp_servers():
+    return render_template('mcp-servers.html')
 
 @app.route('/splunk')
 def splunk():
     return render_template('splunk.html')
+
+@app.route('/thousandeyes')
+def thousandeyes():
+    return render_template('thousandeyes.html')
 
 @app.route('/help')
 def help_page():

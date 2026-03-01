@@ -1,176 +1,269 @@
 {% extends "base.html" %}
 {% set active_page = 'overview' %}
 
-{% block title %}Overview - Cisco PoC in a Pod{% endblock %}
+{% block title %}Overview — Cisco PoC in a Pod{% endblock %}
 
 {% block content %}
-<h1>Overview: PoC in a Pod</h1>
-<p style="color:#555; line-height: 1.6; margin-bottom: 2.5rem;">
-  Welcome to your Cisco PoC environment. This platform demonstrates <strong>Cisco Universal Zero Trust Application Access</strong>,
-  providing security across two critical dimensions: securing the network connection and controlling application access.
+<h1 style="color:#111; margin-bottom:0.4rem;">Overview</h1>
+<p style="color:#666; margin-top:0; margin-bottom:2.5rem; font-size:0.95em; line-height:1.6;">
+  A self-contained Kubernetes demo environment showcasing Cisco's
+  <strong>Zero Trust Application Access</strong> portfolio — fully integrated and ready to run.
 </p>
 
-<!-- Zero Trust Dimensions -->
-<section style="margin-bottom: 3rem;">
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+<!-- WHAT IS POC IN A POD -->
+<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
     <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-    <h2 style="color:#111; margin:0; font-size:1.3rem; letter-spacing:0.3px;">ZERO TRUST ACCESS DIMENSIONS</h2>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">WHAT IS POC IN A POD?</h3>
   </div>
-  
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-top: 20px;">
-    
-    <!-- Dimension 1: Network Connection -->
-    <div style="background: #fff; border: 2px solid #0066ff; border-radius: 12px; padding: 24px;">
-      <div style="background: #0066ff; color: white; padding: 8px 12px; border-radius: 6px; display: inline-block; margin-bottom: 16px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px;">
-        DIMENSION 1
-      </div>
-      <h3 style="color: #0066ff; margin: 0 0 12px 0; font-size: 1.2rem;">Network Connection</h3>
-      <p style="color: #666; font-size: 0.9rem; margin-bottom: 16px; line-height: 1.5;">
-        Client to Server Connection - Establishing secure connectivity
-      </p>
-      
-      <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
-        <div style="flex: 1;">
-          <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 0.85rem;">User & Device</div>
-          <ul style="margin: 0; padding-left: 18px; color: #666; font-size: 0.85rem; line-height: 1.6;">
-            <li>Approved Device Posture</li>
-            <li>Approved User Identity</li>
-            <li>Approved Device Process</li>
-            <li>User Experience</li>
-          </ul>
-        </div>
-        
-        <div style="flex-shrink: 0;">
-          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-            <path d="M10 20 L30 20 M30 20 L24 14 M30 20 L24 26" stroke="#0066ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        
-        <div style="flex: 1;">
-          <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 0.85rem;">Application</div>
-          <ul style="margin: 0; padding-left: 18px; color: #666; font-size: 0.85rem; line-height: 1.6;">
-            <li>Approved Port</li>
-            <li>Approved Process</li>
-            <li>Microsegmented Surface</li>
-            <li>Observable Access</li>
-            <li>Runtime Security</li>
-            <li>L7: IPS, DLP & File Inspection</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Dimension 2: Application Access -->
-    <div style="background: #fff; border: 2px solid #10b981; border-radius: 12px; padding: 24px;">
-      <div style="background: #10b981; color: white; padding: 8px 12px; border-radius: 6px; display: inline-block; margin-bottom: 16px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px;">
-        DIMENSION 2
-      </div>
-      <h3 style="color: #10b981; margin: 0 0 12px 0; font-size: 1.2rem;">Application Access</h3>
-      <p style="color: #666; font-size: 0.9rem; margin-bottom: 16px; line-height: 1.5;">
-        User to Application Authentication & Authorization
-      </p>
-      
-      <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
-        <div style="flex: 1;">
-          <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 0.85rem;">User & Device</div>
-          <ul style="margin: 0; padding-left: 18px; color: #666; font-size: 0.85rem; line-height: 1.6;">
-            <li>Approved User Trust Level</li>
-            <li style="text-decoration: underline;">Passwordless UX</li>
-          </ul>
-        </div>
-        
-        <div style="flex-shrink: 0;">
-          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-            <path d="M10 20 L30 20 M30 20 L24 14 M30 20 L24 26" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        
-        <div style="flex: 1;">
-          <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 0.85rem;">Application</div>
-          <ul style="margin: 0; padding-left: 18px; color: #666; font-size: 0.85rem; line-height: 1.6;">
-            <li>RBAC</li>
-            <li style="text-decoration: underline;">Visibility</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-    
-  </div>
-</section>
-
-<!-- Environment Summary -->
-<section style="margin-bottom: 3rem;">
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
-    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-    <h2 style="color:#111; margin:0; font-size:1.3rem; letter-spacing:0.3px;">ENVIRONMENT SUMMARY</h2>
-  </div>
-  
-  <div style="background: #f8f9fa; border-left: 3px solid #0066ff; padding: 20px; border-radius: 8px;">
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-      <div>
-        <div style="color: #333; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;">GOAL</div>
-        <div style="color: #666; font-size: 0.9rem;">Showcase Cisco Universal Zero Trust Application Access</div>
-      </div>
-      <div>
-        <div style="color: #333; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;">INTEGRATED MODULES</div>
-        <div style="color: #666; font-size: 0.9rem;">Secure Access, Duo, Cilium, Tetragon, Splunk</div>
-      </div>
-      <div>
-        <div style="color: #333; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;">STATUS</div>
-        <div style="color: #10b981; font-size: 0.9rem; font-weight: 600;">Active & Ready for Configuration</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Current Metrics -->
-<section style="margin-bottom: 3rem;">
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
-    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-    <h2 style="color:#111; margin:0; font-size:1.3rem; letter-spacing:0.3px;">CURRENT METRICS</h2>
-  </div>
-  
-  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-top:1rem;">
-    <div style="background:#fff; border:2px solid #e0e0e0; border-radius:10px; padding:1.5rem; text-align:center;">
-      <h3 style="color:#0066ff; margin:0.25rem 0; font-size: 2rem;">99.9%</h3>
-      <p style="margin:0; color:#666; font-size:0.85rem; font-weight: 600; letter-spacing: 0.3px;">UPTIME</p>
-    </div>
-    <div style="background:#fff; border:2px solid #e0e0e0; border-radius:10px; padding:1.5rem; text-align:center;">
-      <h3 style="color:#0066ff; margin:0.25rem 0; font-size: 2rem;">5</h3>
-      <p style="margin:0; color:#666; font-size:0.85rem; font-weight: 600; letter-spacing: 0.3px;">ACTIVE MODULES</p>
-    </div>
-    <div style="background:#fff; border:2px solid #e0e0e0; border-radius:10px; padding:1.5rem; text-align:center;">
-      <h3 style="color:#0066ff; margin:0.25rem 0; font-size: 2rem;">12</h3>
-      <p style="margin:0; color:#666; font-size:0.85rem; font-weight: 600; letter-spacing: 0.3px;">CONFIGURED POLICIES</p>
-    </div>
-  </div>
-</section>
-
-<!-- Next Steps -->
-<section style="margin-bottom: 3rem;">
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
-    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-    <h2 style="color:#111; margin:0; font-size:1.3rem; letter-spacing:0.3px;">NEXT STEPS</h2>
-  </div>
-  
-  <p style="color:#666; line-height: 1.6; margin-bottom: 20px; font-size: 0.95rem;">
-    Get started by visiting the <strong>Cisco Secure Access</strong> module to authenticate,
-    create private access resources, and deploy initial configurations. Use the Dashy dashboard
-    to access all integrated services.
+  <p style="color:#555; font-size:0.9em; line-height:1.7; margin:0 0 0.75rem 0;">
+    <strong>PoC in a Pod</strong> is a portable, self-contained demo environment running on a single node
+    using k3s (lightweight Kubernetes). It bundles Cisco's key security products — all pre-configured and
+    integrated — so you can demonstrate, explore, and test the full Zero Trust Application Access story
+    without complex infrastructure setup.
   </p>
-  
-  <a href="http://SERVER_IP:30100"
-     style="display:inline-block; background-color:#0066ff; color:#fff;
-            padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600;
-            font-size: 0.95rem; letter-spacing: 0.3px; transition: background-color 0.2s;">
-    OPEN DASHY DASHBOARD
-  </a>
+  <p style="color:#555; font-size:0.9em; line-height:1.7; margin:0;">
+    Everything runs as Kubernetes pods: the protected demo application, the ZTNA connector, network
+    enforcement, runtime security, and observability tooling. This <strong>Automagic Server</strong>
+    ties it all together with guided configuration steps for each module.
+  </p>
 </section>
 
-<style>
-  a[href*="30100"]:hover {
-    background-color: #0052cc;
-  }
-</style>
+<!-- WHAT IS ZERO TRUST APPLICATION ACCESS -->
+<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">WHAT IS ZERO TRUST APPLICATION ACCESS?</h3>
+  </div>
+  <p style="color:#555; font-size:0.9em; line-height:1.7; margin:0 0 1rem 0;">
+    Traditional VPN grants users broad network access once authenticated.
+    <strong>Zero Trust Application Access (ZTAA)</strong> replaces this with identity-centric,
+    per-application access that continuously verifies trust — before and during every session.
+    Users never touch the network directly; they reach specific applications only when policy permits.
+  </p>
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+    <div style="background:#f0f4ff; border-radius:8px; padding:14px 16px;">
+      <div style="font-weight:700; color:#0066ff; font-size:0.78em; letter-spacing:0.5px; margin-bottom:6px;">VERIFY IDENTITY</div>
+      <p style="color:#555; font-size:0.85em; line-height:1.6; margin:0;">Every access request is authenticated — user identity, device posture, and risk level are evaluated before any connection is established.</p>
+    </div>
+    <div style="background:#f0f4ff; border-radius:8px; padding:14px 16px;">
+      <div style="font-weight:700; color:#0066ff; font-size:0.78em; letter-spacing:0.5px; margin-bottom:6px;">LEAST-PRIVILEGE ACCESS</div>
+      <p style="color:#555; font-size:0.85em; line-height:1.6; margin:0;">Users reach specific applications, not the entire network. Policies define who can access what resource, on which port, from which context.</p>
+    </div>
+    <div style="background:#f0f4ff; border-radius:8px; padding:14px 16px;">
+      <div style="font-weight:700; color:#0066ff; font-size:0.78em; letter-spacing:0.5px; margin-bottom:6px;">CONTINUOUS ENFORCEMENT</div>
+      <p style="color:#555; font-size:0.85em; line-height:1.6; margin:0;">Network and runtime security layers enforce policies in real time — microsegmentation, process monitoring, and behavioral threat detection.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ENVIRONMENT -->
+<section>
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">ENVIRONMENT</h3>
+  </div>
+  <p style="color:#555; font-size:0.9em; line-height:1.7; margin:0 0 1.5rem 0;">
+    All components run as pods in a single-node k3s cluster. Cloud services connect from outside.
+    The diagram shows the access flow and how each layer contributes.
+  </p>
+
+  <!-- Architecture Diagram -->
+  <div style="background:#f8f9fa; border:1px solid #e2e4e8; border-radius:10px; padding:1.5rem; margin-bottom:2rem; overflow-x:auto;">
+    <div style="font-size:0.7em; font-weight:700; color:#aaa; letter-spacing:0.7px; margin-bottom:14px;">ACCESS FLOW</div>
+
+    <div style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap; min-width:580px;">
+
+      <!-- User -->
+      <div style="text-align:center; flex-shrink:0;">
+        <div style="background:#fff; border:2px solid #0066ff; border-radius:8px; padding:10px 14px;">
+          <span class="fa-solid fa-laptop" style="font-size:1.3rem; color:#0066ff; display:block; margin-bottom:4px;"></span>
+          <div style="font-size:0.75em; font-weight:600; color:#333; line-height:1.2;">User</div>
+          <div style="font-size:0.68em; color:#999;">Device</div>
+        </div>
+      </div>
+
+      <!-- Duo label + arrow -->
+      <div style="display:flex; flex-direction:column; align-items:center; gap:1px; flex-shrink:0;">
+        <span style="font-size:0.68em; color:#7c4dff; font-weight:600; white-space:nowrap;">Duo MFA</span>
+        <span style="color:#ccc; font-size:1.3rem; line-height:1;">→</span>
+      </div>
+
+      <!-- Secure Access cloud -->
+      <div style="text-align:center; flex-shrink:0;">
+        <div style="background:#fff; border:2px solid #049fd9; border-radius:8px; padding:10px 14px;">
+          <span class="fa-solid fa-cloud" style="font-size:1.3rem; color:#049fd9; display:block; margin-bottom:4px;"></span>
+          <div style="font-size:0.75em; font-weight:600; color:#333; line-height:1.2;">Secure Access</div>
+          <div style="font-size:0.68em; color:#999;">ZTNA Cloud</div>
+        </div>
+      </div>
+
+      <span style="color:#ccc; font-size:1.3rem; flex-shrink:0;">→</span>
+
+      <!-- k3s cluster -->
+      <div style="border:2px dashed #0066ff; border-radius:10px; padding:12px 14px; flex:1; min-width:330px;">
+        <div style="font-size:0.7em; font-weight:700; color:#0066ff; letter-spacing:0.6px; margin-bottom:10px;">k3s CLUSTER</div>
+
+        <!-- Cilium fabric: all pods sit inside the blue-tinted area, Cilium bar is the foundation -->
+        <div style="background:#e8f1ff; border:2px solid #0066ff; border-radius:8px; overflow:hidden; margin-bottom:10px;">
+
+          <!-- Pod row: all pods float on Cilium's fabric -->
+          <div style="display:flex; gap:8px; padding:10px 10px 8px 10px; flex-wrap:wrap; align-items:stretch;">
+            <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:7px 10px; text-align:center; font-size:0.75em; flex-shrink:0;">
+              <span class="fa-solid fa-plug" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
+              <span style="color:#333; font-weight:500;">Connector</span>
+            </div>
+            <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:7px 10px; text-align:center; font-size:0.75em; flex-shrink:0;">
+              <span class="fa-solid fa-globe" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
+              <span style="color:#333; font-weight:500;">Web App</span>
+            </div>
+            <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:7px 10px; text-align:center; font-size:0.75em; flex-shrink:0;">
+              <span class="fa-solid fa-desktop" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
+              <span style="color:#333; font-weight:500;">RDP / SSH</span>
+            </div>
+            <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:7px 10px; text-align:center; font-size:0.75em; flex-shrink:0;">
+              <span class="fa-solid fa-compass" style="color:#ff6600; display:block; margin-bottom:2px;"></span>
+              <span style="color:#333; font-weight:500;">Splunk</span>
+            </div>
+            <div style="background:#f0f4ff; border:1px dashed #aac0ff; border-radius:6px; padding:7px 8px; text-align:center; font-size:0.72em; color:#5580cc; flex-shrink:0; display:flex; align-items:center;">
+              &hellip; more
+            </div>
+          </div>
+
+          <!-- Cilium foundation bar spanning full width -->
+          <div style="background:#0066ff; padding:6px 12px; display:flex; align-items:center; gap:8px;">
+            <span class="fa-solid fa-network-wired" style="color:#fff; font-size:0.9rem; flex-shrink:0;"></span>
+            <span style="color:#fff; font-weight:700; font-size:0.75em; letter-spacing:0.3px;">Cilium</span>
+            <span style="color:rgba(255,255,255,0.75); font-size:0.72em;">— CNI · eBPF network fabric · L4/L7 policies for all pods</span>
+          </div>
+        </div>
+
+        <!-- Tetragon bar -->
+        <div style="background:#fff8f0; border:1px dashed #e08000; border-radius:6px; padding:7px 10px; font-size:0.75em; display:flex; align-items:center; gap:8px;">
+          <span class="fa-solid fa-shield-halved" style="color:#e08000; flex-shrink:0;"></span>
+          <span style="color:#664400; font-weight:600;">Tetragon</span>
+          <span style="color:#998060;">— runtime security monitoring across all pods</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Observability row -->
+    <div style="border-top:1px dashed #ddd; margin-top:14px; padding-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+      <div style="background:#fff; border:1px solid #e0e0e0; border-radius:6px; padding:8px 14px; font-size:0.78em; color:#555; display:flex; align-items:center; gap:8px; flex:1; min-width:200px;">
+        <span class="fa-solid fa-compass" style="color:#ff6600; flex-shrink:0;"></span>
+        <span><strong>Splunk</strong> — collects events from Tetragon, Cilium, and application logs</span>
+      </div>
+      <div style="background:#fff; border:1px solid #e0e0e0; border-radius:6px; padding:8px 14px; font-size:0.78em; color:#555; display:flex; align-items:center; gap:8px; flex:1; min-width:200px;">
+        <span class="fa-solid fa-eye" style="color:#00a0b0; flex-shrink:0;"></span>
+        <span><strong>ThousandEyes</strong> — network path visibility and performance monitoring</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Component Cards -->
+  <div style="font-size:0.7em; font-weight:700; color:#aaa; letter-spacing:0.7px; margin-bottom:12px;">COMPONENTS</div>
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:12px;">
+
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-cloud" style="color:#049fd9; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">Cisco Secure Access</div>
+          <div style="font-size:0.72em; color:#999;">Cloud · ZTNA Gateway</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">Provides Zero Trust Network Access. The on-prem Connector in the cluster tunnels traffic from the cloud gateway to private resources — no inbound firewall rules needed.</p>
+    </div>
+
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-user-shield" style="color:#7c4dff; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">Duo</div>
+          <div style="font-size:0.72em; color:#999;">Cloud · Identity & MFA</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">Multi-factor authentication and Identity Intelligence. Provides passwordless MFA, device trust verification, and risk-based authentication policies integrated with Secure Access.</p>
+    </div>
+
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-network-wired" style="color:#0066ff; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">Cilium</div>
+          <div style="font-size:0.72em; color:#999;">k3s DaemonSet · CNI / Network Policy</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">eBPF-based CNI providing Layer 4/7 network policies and microsegmentation. Enforces which pods can communicate and on which ports — without iptables overhead.</p>
+    </div>
+
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-shield-halved" style="color:#e08000; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">Tetragon</div>
+          <div style="font-size:0.72em; color:#999;">k3s DaemonSet · Runtime Security</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">eBPF-based runtime security. Monitors process execution, file access, network calls, and syscall activity across all pods in real time. Events are exported to Splunk.</p>
+    </div>
+
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-compass" style="color:#ff6600; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">Splunk</div>
+          <div style="font-size:0.72em; color:#999;">Pod · Port 30500 · SIEM</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">Log aggregation and SIEM. Ingests security events from Tetragon, Cilium, and application logs for full visibility, dashboards, and alerting.</p>
+    </div>
+
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-eye" style="color:#00a0b0; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">ThousandEyes</div>
+          <div style="font-size:0.72em; color:#999;">Cloud · Network Monitoring</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">End-to-end network path visibility. Monitors connectivity and performance for the ZTNA access path from user to application.</p>
+    </div>
+
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-globe" style="color:#0066ff; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">Demo Web App</div>
+          <div style="font-size:0.72em; color:#999;">Pod · Port 30400 · nginx</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">A sample nginx web application serving as the private resource behind Zero Trust. Accessible only through Cisco Secure Access policies — not directly from the internet.</p>
+    </div>
+
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-desktop" style="color:#555; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">RDP / SSH Servers</div>
+          <div style="font-size:0.72em; color:#999;">Pods · Port 30389 / 30022</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">Remote desktop and SSH servers exposed as private resources. Demonstrates Cisco Secure Access protecting non-web protocols via browser-based agentless access.</p>
+    </div>
+
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-table-cells-large" style="color:#0066ff; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">Dashy</div>
+          <div style="font-size:0.72em; color:#999;">Pod · Port 30100 · Dashboard</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">Self-hosted link dashboard. Provides a single start page with tiles linking to all services in the PoC environment.</p>
+    </div>
+
+  </div>
+</section>
 
 {% endblock %}

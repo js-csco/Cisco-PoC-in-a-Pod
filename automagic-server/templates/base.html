@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Cisco PoC in a Pod{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
 
   <!-- Base CSS (from your static files) -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/magnetic.css') }}">
@@ -162,6 +163,12 @@
         </a>
         <a href="{{ url_for('splunk') }}" class="menu-item {% if active_page == 'splunk' %}active{% endif %}">
         <span class="fa-solid fa-compass"></span> Splunk
+        </a>
+        <a href="{{ url_for('thousandeyes') }}" class="menu-item {% if active_page == 'thousandeyes' %}active{% endif %}">
+        <span class="fa-solid fa-eye"></span> ThousandEyes
+        </a>
+        <a href="{{ url_for('mcp_servers') }}" class="menu-item {% if active_page == 'mcp_servers' %}active{% endif %}">
+        <span class="fa-solid fa-robot"></span> MCP Servers
         </a>
         <a href="{{ url_for('help_page') }}" class="menu-item {% if active_page == 'help' %}active{% endif %}">
         <span class="fa-solid fa-circle-info"></span> Help

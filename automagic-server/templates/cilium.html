@@ -3,8 +3,147 @@
 {% block title %}Cilium — PoC in a Pod{% endblock %}
 
 {% block content %}
-  <h1>Cilium</h1>
-  <p style="color:#555;">
-    🚧 Work in progress. Cilium is coming soon to PoC in a Pod.
-  </p>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class="messages" style="list-style:none; padding:0; margin-bottom:1.5rem;">
+      {% for message in messages %}
+        <li style="background:#e8f0fe; color:#333; padding:8px 12px; border-radius:6px; margin-bottom:6px;">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+<form method="POST" style="display:flex; flex-direction:column; gap:3rem;">
+  <h1>Cilium Network Policy</h1>
+
+  <!-- CURRENT STATUS -->
+  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CURRENT STATUS</h3>
+    </div>
+
+    {% if policy_error %}
+      <p style="color:#c00; font-size:0.9em;">
+        ⚠️ Could not read policies from Kubernetes API: {{ policy_error }}
+      </p>
+    {% else %}
+      {% set zero_trust_active = ('piap-zero-trust' in active_policies and 'piap-connector-allow' in active_policies) %}
+      {% if zero_trust_active %}
+        <div style="display:inline-flex; align-items:center; gap:8px; background:#fff3e0; border:1px solid #f90; border-radius:8px; padding:10px 16px;">
+          <span style="font-size:1.2rem;">🔒</span>
+          <span style="font-weight:600; color:#b36a00;">Zero Trust Application Access — active</span>
+        </div>
+        <p style="color:#666; font-size:0.88em; margin-top:8px;">
+          Active policies: {{ active_policies | join(', ') }}
+        </p>
+      {% elif active_policies %}
+        <div style="display:inline-flex; align-items:center; gap:8px; background:#fff8e1; border:1px solid #ccc; border-radius:8px; padding:10px 16px;">
+          <span style="font-size:1.2rem;">⚙️</span>
+          <span style="font-weight:600; color:#555;">Custom policies active: {{ active_policies | join(', ') }}</span>
+        </div>
+      {% else %}
+        <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:10px 16px;">
+          <span style="font-size:1.2rem;">🟢</span>
+          <span style="font-weight:600; color:#2e7d32;">Allow All Traffic — active (no policies)</span>
+        </div>
+      {% endif %}
+    {% endif %}
+  </section>
+
+  <!-- ALLOW ALL TRAFFIC -->
+  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">ALLOW ALL TRAFFIC</h3>
+    </div>
+
+    <p style="margin-top:0; margin-bottom:16px; color:#555; font-size:0.95em; line-height:1.6;">
+      Removes all Cilium network policies from the <code>piap</code> namespace.<br>
+      Cilium's default behaviour with no policies is <strong>allow all</strong> — pods can be reached
+      from the local LAN, from the Resource Connector, and from each other without restriction.
+    </p>
+
+    <div style="background:#f0f8f0; border:1px solid #c8e6c9; border-radius:8px; padding:14px 18px; margin-bottom:20px; font-size:0.88em; color:#2e7d32;">
+      <strong>What gets allowed:</strong>
+      <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
+        <li>Direct LAN access to all pods (SSH, RDP, web services, Splunk, …)</li>
+        <li>Traffic between pods within the cluster</li>
+        <li>Traffic from the Cisco Resource Connector to all pods</li>
+      </ul>
+    </div>
+
+    <button type="submit" name="action" value="allow_all"
+            style="background-color:#28a745; color:#fff; border:none; padding:10px 24px;
+                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
+      🟢 Allow All Traffic
+    </button>
+  </section>
+
+  <!-- ZERO TRUST APPLICATION ACCESS -->
+  <section style="padding-bottom:2.5rem;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">ZERO TRUST APPLICATION ACCESS</h3>
+    </div>
+
+    <p style="margin-top:0; margin-bottom:16px; color:#555; font-size:0.95em; line-height:1.6;">
+      Applies two <code>CiliumNetworkPolicy</code> objects that enforce Zero Trust
+      at the network layer inside the cluster. All workload pods accept ingress
+      <strong>only from the Resource Connector</strong> — users must go through
+      Cisco Secure Access to reach any service.
+    </p>
+
+    <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px 18px; margin-bottom:16px; font-size:0.88em; color:#5d4037;">
+      <strong>Policy: <code>piap-zero-trust</code></strong> — applied to all workload pods (nginx, splunk, kanboard, rdp-server, ssh-server, dashy)
+      <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
+        <li>Ingress: only from pods labelled <code>app=connector</code></li>
+        <li>Egress: unrestricted (responses &amp; outbound traffic still flow)</li>
+      </ul>
+    </div>
+
+    <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px 18px; margin-bottom:20px; font-size:0.88em; color:#5d4037;">
+      <strong>Policy: <code>piap-connector-allow</code></strong> — applied to the Resource Connector pod
+      <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
+        <li>Ingress: allow all (Cisco SSE cloud tunnel terminates here)</li>
+        <li>Egress: allow all (connector reaches both cloud and internal pods)</li>
+      </ul>
+    </div>
+
+    <div style="background:#fce4ec; border:1px solid #ef9a9a; border-radius:8px; padding:10px 16px; margin-bottom:20px; font-size:0.85em; color:#b71c1c;">
+      ⚠️ <strong>Note:</strong> Direct LAN access to workload pods will be blocked after applying this policy.
+      The <em>Automagic</em> dashboard remains reachable at all times.
+    </div>
+
+    <button type="submit" name="action" value="zero_trust"
+            style="background-color:#d9534f; color:#fff; border:none; padding:10px 24px;
+                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
+      🔒 Zero Trust Application Access
+    </button>
+  </section>
+
+  <!-- HUBBLE UI -->
+  <section style="padding-bottom:2.5rem; border-top:1px solid #e0e0e0; padding-top:2.5rem;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">HUBBLE UI</h3>
+    </div>
+
+    <p style="margin-top:0; margin-bottom:16px; color:#555; font-size:0.95em; line-height:1.6;">
+      Hubble is Cilium's built-in observability layer. It gives you a real-time visual graph of
+      network flows between pods — which connections are allowed, which are dropped, and by which policy.
+      Open it filtered to the <code>piap</code> namespace to watch traffic while toggling policies above.
+    </p>
+
+    <a href="http://{{ request.host.split(':')[0] }}:30800/?namespace=piap"
+       target="_blank"
+       style="display:inline-flex; align-items:center; gap:8px; background:#0066ff; color:#fff;
+              text-decoration:none; padding:10px 24px; border-radius:6px; font-weight:500;
+              font-size:0.95rem;">
+      Open Hubble UI — piap namespace ↗
+    </a>
+  </section>
+
+</form>
 {% endblock %}

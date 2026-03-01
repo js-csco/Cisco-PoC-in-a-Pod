@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubectl-mcp
+  namespace: piap
+  labels:
+    app: kubectl-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubectl-mcp
+  template:
+    metadata:
+      labels:
+        app: kubectl-mcp
+    spec:
+      serviceAccountName: kubectl-mcp-sa
+      containers:
+        - name: kubectl-mcp
+          image: quay.io/containers/kubernetes_mcp_server:latest
+          args:
+            - "--port"
+            - "8080"
+            - "--read-only"
+            - "--cluster-provider"
+            - "in-cluster"
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      restartPolicy: Always

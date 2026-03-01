@@ -27,8 +27,9 @@ echo ""
 # Step 1: Create symlinks for volume mounts
 echo "Step 1: Creating symlinks for application directories..."
 ln -sf "$REPO_ROOT/automagic-server" /automagic-server && echo "  ✓ /automagic-server"
-ln -sf "$REPO_ROOT/kanboard" /kanboard && echo "  ✓ /kanboard"
 ln -sf "$REPO_ROOT/dashy" /dashy && echo "  ✓ /dashy"
+mkdir -p /unittcms/data && echo "  ✓ /unittcms/data"
+ln -sf "$REPO_ROOT/unittcms/entrypoint.js" /unittcms/entrypoint.js && echo "  ✓ /unittcms/entrypoint.js"
 ln -sf "$REPO_ROOT/web" /web && echo "  ✓ /web"
 echo ""
 
@@ -227,7 +228,6 @@ fi
 echo "  ✓ Resource Connector launched"
 echo ""
 
-# Wait for connector to be fully running
 echo "Step 12.6: Verifying connector status..."
 sleep 10
 
@@ -343,29 +343,37 @@ echo "  ✓ Network policies created (CIDR-based, permissive mode)"
 echo "  Note: All traffic to/from connector is allowed"
 echo ""
 
-# Step 14: Prompt for Splunk admin password
+# Step 14: Prompt for Splunk admin password (optional)
 echo "================================================"
-echo "  Splunk Configuration"
+echo "  Splunk Configuration (optional)"
 echo "================================================"
 echo ""
-echo "Set a password for the Splunk admin user (default username: admin)"
-echo "Password requirements: minimum 8 characters"
-read -s -p "Splunk Admin Password: " SPLUNK_PASSWORD
+echo "Splunk requires a Splunk Enterprise or Free license accepted on first login."
+echo "Leave empty and press Enter to skip Splunk — all other services will still deploy."
 echo ""
-read -s -p "Confirm Splunk Admin Password: " SPLUNK_PASSWORD_CONFIRM
+read -s -p "Splunk Admin Password (min 8 chars, or Enter to skip): " SPLUNK_PASSWORD
 echo ""
 
-if [ "$SPLUNK_PASSWORD" != "$SPLUNK_PASSWORD_CONFIRM" ]; then
-    echo "❌ Passwords do not match!"
-    exit 1
-fi
+DEPLOY_SPLUNK=false
+if [ -n "$SPLUNK_PASSWORD" ]; then
+    read -s -p "Confirm Splunk Admin Password: " SPLUNK_PASSWORD_CONFIRM
+    echo ""
 
-if [ ${#SPLUNK_PASSWORD} -lt 8 ]; then
-    echo "❌ Password must be at least 8 characters long!"
-    exit 1
-fi
+    if [ "$SPLUNK_PASSWORD" != "$SPLUNK_PASSWORD_CONFIRM" ]; then
+        echo "❌ Passwords do not match!"
+        exit 1
+    fi
 
-echo "✓ Splunk password set"
+    if [ ${#SPLUNK_PASSWORD} -lt 8 ]; then
+        echo "❌ Password must be at least 8 characters long!"
+        exit 1
+    fi
+
+    DEPLOY_SPLUNK=true
+    echo "✓ Splunk password set — Splunk will be deployed"
+else
+    echo "  Skipping Splunk — running without Splunk"
+fi
 echo ""
 
 # Step 15: Update configuration files with server IP
@@ -404,14 +412,29 @@ kubectl create secret generic connector-creds -n piap \
   --from-literal=connector-ip="$CONNECTOR_IP" \
   --dry-run=client -o yaml | kubectl apply -f -
 
-# Create Splunk Secret with user-provided password
-echo "  Creating Splunk credentials..."
-kubectl create secret generic splunk-creds -n piap \
-  --from-literal=password="$SPLUNK_PASSWORD" \
-  --dry-run=client -o yaml | kubectl apply -f -
+# Create Splunk Secret and deploy Splunk only if a password was provided
+if [ "$DEPLOY_SPLUNK" = "true" ]; then
+    echo "  Creating Splunk credentials..."
+    kubectl create secret generic splunk-creds -n piap \
+      --from-literal=password="$SPLUNK_PASSWORD" \
+      --dry-run=client -o yaml | kubectl apply -f -
+fi
 
-# Apply all manifests
-kubectl apply -f "$REPO_ROOT/k8s/" -n piap
+# Apply manifests — skip Splunk files if not deploying Splunk
+for manifest in "$REPO_ROOT/k8s/"*.yaml; do
+    case "$manifest" in
+        *splunk*)
+            if [ "$DEPLOY_SPLUNK" = "true" ]; then
+                kubectl apply -f "$manifest" -n piap
+            else
+                echo "  Skipping $(basename $manifest) (Splunk not configured)"
+            fi
+            ;;
+        *)
+            kubectl apply -f "$manifest" -n piap
+            ;;
+    esac
+done
 echo "  ✓ Applications deployed to namespace 'piap'"
 echo ""
 

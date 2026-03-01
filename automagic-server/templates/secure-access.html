@@ -14,141 +14,306 @@
 {% endwith %}
 
 <form method="POST" style="display:flex; flex-direction:column; gap:3rem;">
-    <h1>Secure Access</h1>
+  <h1>Secure Access</h1>
 
-  <!-- Paste all your AUTHENTICATION / PRIVATE ACCESS / INTERNET ACCESS sections here exactly as they were -->
+  <!-- ABOUT -->
+  <section style="background:#f8f9fa; padding:20px; border-radius:8px; border-left:4px solid #0066ff;">
+    <p style="color:#555; font-size:0.95em; margin:0 0 10px 0; line-height:1.6;">
+      Cisco Secure Access is a converged SSE platform that unifies Zero Trust Network Access (ZTNA),
+      Secure Web Gateway (SWG), CASB, DNS-layer security, and DLP into a single cloud-delivered service.
+    </p>
+    <p style="color:#555; font-size:0.95em; margin:0; line-height:1.6;">
+      Use the sections below to automate the initial configuration of your PoC environment directly
+      via the Cisco Secure Access APIs.
+    </p>
+  </section>
 
-    
-        <!-- AUTHENTICATION -->
-        <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-            <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-            <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">AUTHENTICATION</h3>
-          </div>
+  <div style="background:#e8f0fe; border:1px solid #c5d5f8; border-radius:8px; padding:12px 16px; font-size:0.88em; color:#1a3a6b;">
+    <strong>Note:</strong> User &amp; group integration with Cisco Duo is already configured via the
+    <a href="/duo" style="color:#0066ff; text-decoration:none; font-weight:500;">Duo tab</a>.
+    No additional identity setup is needed here.
+  </div>
 
-          <p style="color:#666; font-size:0.95em; margin-top:0; margin-bottom:20px;">
-            Connect to Cisco Secure Access APIs with your API Key & Secret.
-          </p>
+  <!-- AUTHENTICATION -->
+  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">AUTHENTICATION</h3>
+    </div>
 
-          {% if not session.get('authenticated') %}
-            <input type="password" id="api_key" name="api_key" placeholder="API Key" required
-                   style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+    <p style="color:#666; font-size:0.95em; margin-top:0; margin-bottom:16px;">
+      Connect to Cisco Secure Access APIs with your API Key &amp; Secret.
+    </p>
 
-            <input type="password" id="api_secret" name="api_secret" placeholder="API Secret" required
-                   style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+    {% if not session.get('authenticated') %}
+      <input type="password" id="api_key" name="api_key" placeholder="API Key" required
+             value="{{ session.get('csa_api_key', '') }}"
+             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
 
-            <button type="submit" name="action" value="auth"
-                    style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
-                           border-radius:6px; font-weight:500; cursor:pointer;">
-              🔐 Authenticate
-            </button>
-          {% else %}
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-              <span style="color:green;font-weight:500;">✅ Authenticated</span>
-            </div>
-          {% endif %}
-        </section>
+      <input type="password" id="api_secret" name="api_secret" placeholder="API Secret" required
+             value="{{ session.get('csa_api_secret', '') }}"
+             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
 
-        <!-- SECURE PRIVATE ACCESS -->
-        <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-            <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-            <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SECURE PRIVATE ACCESS</h3>
-          </div>
+      <button type="submit" name="action" value="auth"
+              style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                     border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
+        🔐 Authenticate
+      </button>
+    {% else %}
+      <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:10px 16px;">
+        <span style="font-size:1.2rem;">✅</span>
+        <span style="font-weight:600; color:#2e7d32;">Authenticated</span>
+      </div>
+    {% endif %}
+  </section>
 
-          <p style="margin-top:0; margin-bottom:25px; color:#555; font-size:0.95em;">
-            Automate the configuration of your first private access resources and policies
-            to get started with Cisco Secure Access.
-          </p>
+  <!-- ZTA PROFILE -->
+  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">ZTA PROFILE</h3>
+    </div>
 
-          <h4 style="color:#005073; margin-bottom:5px;">Private Resources</h4>
-          <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
-            Transform your pod into private resources (e.g., SSH server, web server, and more).<br>
-            <strong>Important:</strong> After the creation of the resources, please edit each resource
-            and add your Resource Connector to each private resource!
-          </p>
+    <div style="display:flex; align-items:flex-start; gap:10px; background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:0.88em; color:#6d4c00;">
+      <span style="font-size:1.1em; line-height:1.4;">☑</span>
+      <span><strong>To do:</strong> Adjust the <strong>Default ZTA Profile</strong> to steer all internet traffic through Secure Access.</span>
+    </div>
 
-          <input type="text" id="vm_ip" name="vm_ip" value="SERVER_IP"
-                 style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+    <ol style="margin:0 0 20px 0; padding-left:20px; color:#555; font-size:0.9em; line-height:2;">
+      <li>In the Secure Access dashboard, go to <strong>Connect &rarr; End User Connectivity</strong></li>
+      <li>Find the <strong>Default ZTA Profile</strong> and click the <strong>pencil</strong> icon to edit it</li>
+      <li>Open the <strong>Secure Internet Access</strong> tab</li>
+      <li>Under <em>Traffic Steering</em>, select <strong>"Use ZTA to secure all internet destinations"</strong></li>
+      <li>Save the profile</li>
+    </ol>
 
-          <button type="submit" name="action" value="create_pod"
-                  style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
-                         border-radius:6px; font-weight:500; cursor:pointer;">
-            Create Pod Resources
-          </button>
+    <a href="https://dashboard.sse.cisco.com" target="_blank"
+       style="display:inline-block; background-color:#0066ff; color:#fff; text-decoration:none;
+              padding:10px 20px; border-radius:6px; font-weight:500; font-size:0.95rem;">
+      Open Secure Access Dashboard &rarr;
+    </a>
+  </section>
 
-          <h4 style="color:#005073; margin-top:30px; margin-bottom:5px;">Private Access Policy</h4>
-          <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
-            This policy enables remote test users to access private resources within your PoC environment.
-          </p>
+  <!-- SECURE PRIVATE ACCESS -->
+  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SECURE PRIVATE ACCESS</h3>
+    </div>
 
-          <button type="submit" name="action" value="create_private"
-                  style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
-                         border-radius:6px; font-weight:500; cursor:pointer;">
-            Create Private Access Policy
-          </button>
+    <p style="margin-top:0; margin-bottom:25px; color:#555; font-size:0.95em; line-height:1.6;">
+      Automate the configuration of your first private access resources and policies
+      to get started with Cisco Secure Access.
+    </p>
 
-        </section>
+    <!-- Private Resources sub-section -->
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+      <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">Private Resources</h3>
+    </div>
 
-        <!-- SECURE INTERNET ACCESS -->
-        <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-            <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-            <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SECURE INTERNET ACCESS</h3>
-          </div>
+    <p style="margin-top:0; margin-bottom:12px; color:#666; font-size:0.9em; line-height:1.5;">
+      Transform your pod into private resources (e.g., SSH server, web server, and more).
+    </p>
 
-          <p style="margin-top:0; margin-bottom:25px; color:#555; font-size:0.95em;">
-            Automate Access Policies for Secure Internet Access to validate web filtering and isolation scenarios.
-          </p>
+    <div style="background:#f0f8f0; border:1px solid #c8e6c9; border-radius:8px; padding:14px 18px; margin-bottom:14px; font-size:0.88em; color:#2e7d32;">
+      <strong>What gets created:</strong>
+      <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
+        <li>A private resource entry for each service in the pod (SSH, web server, …)</li>
+        <li>Resources are registered at the IP below</li>
+      </ul>
+    </div>
 
-          <h4 style="color:#005073; margin-bottom:5px;">Cisco Recommendations</h4>
-          <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em;">
-            Follow Cisco recommendations for Internet Access rules & decryption of web traffic.
-          </p>
+    <div style="display:flex; align-items:flex-start; gap:10px; background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:12px 16px; margin-bottom:14px; font-size:0.88em; color:#6d4c00;">
+      <span style="font-size:1.1em; line-height:1.4;">☑</span>
+      <span><strong>To do:</strong> After creating the resources, go to <strong>Resources &rarr; Private Resources</strong> in the dashboard and assign each resource to your <strong>Resource Connector</strong>.</span>
+    </div>
 
-          <button type="submit" name="action" value="follow_recom"
-                  style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
-                         border-radius:6px; font-weight:500; cursor:pointer; margin-bottom:20px;">
-            Follow Recommendations
-          </button>
+    <label style="display:block; font-size:0.85em; color:#555; margin-bottom:6px;">Pod IP address</label>
+    <input type="text" id="vm_ip" name="vm_ip" value="{{ request.host.split(':')[0] }}"
+           style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
 
-          <h4 style="color:#005073; margin-top:20px; margin-bottom:5px;">Internet Access Policies</h4>
-          <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em; line-height:1.5;">
-            Generate Internet Access policies for basic use cases: browsing, warning, isolation, blocking and more.
-          </p>
+    <button type="submit" name="action" value="create_pod"
+            style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
+      Create Pod Resources
+    </button>
 
-          <button type="submit" name="action" value="create_internet"
-                  style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
-                         border-radius:6px; font-weight:500; cursor:pointer;">
-            Create Internet Access Policies
-          </button>
+    <!-- Private Access Policy sub-section -->
+    <div style="display:flex; align-items:center; gap:8px; margin-top:30px; margin-bottom:8px;">
+      <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+      <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">Private Access Policy</h3>
+    </div>
 
-          <h4 style="color:#005073; margin-top:20px; margin-bottom:5px;">Security Profile</h4>
-          <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em; line-height:1.5;">
-            Go to Cisco Secure Access Dashboard, create a Security Profile for Internet Access with Decryption enabled.
-          </p>
+    <p style="margin-top:0; margin-bottom:15px; color:#666; font-size:0.9em; line-height:1.5;">
+      This policy enables remote test users to access private resources within your PoC environment.
+    </p>
 
-          <button type="submit" name="action" value="create_profile"
-                  style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
-                         border-radius:6px; font-weight:500; cursor:pointer;">
-            Create Security Profile
-          </button>
+    <button type="submit" name="action" value="create_private"
+            style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
+      Create Private Access Policy
+    </button>
+  </section>
 
-          <h4 style="color:#005073; margin-top:20px; margin-bottom:5px;">Test Internet Access</h4>
-          <p style="margin-top:0; margin-bottom:10px; color:#666; font-size:0.9em; line-height:1.5;">
-            Go to Kanboard Board Cisco Secure Access and follow the Internet Access Use Cases at your own pace.
-          </p>
+  <!-- SECURE INTERNET ACCESS -->
+  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SECURE INTERNET ACCESS</h3>
+    </div>
 
-          <button type="submit" name="action" value="gotokanboard"
-                  style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
-                         border-radius:6px; font-weight:500; cursor:pointer;">
-            Kanboard
-          </button>
-        </section>
+    <p style="margin-top:0; margin-bottom:25px; color:#555; font-size:0.95em; line-height:1.6;">
+      Automate Access Policies for Secure Internet Access to validate web filtering and isolation scenarios.
+    </p>
 
+    <!-- Cisco Recommendations sub-section -->
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+      <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">Cisco Recommendations</h3>
+    </div>
 
+    <p style="margin-top:0; margin-bottom:15px; color:#666; font-size:0.9em; line-height:1.5;">
+      Follow Cisco recommendations for Internet Access rules &amp; decryption of web traffic.
+    </p>
+
+    <button type="submit" name="action" value="follow_recom"
+            style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem; margin-bottom:30px;">
+      Follow Recommendations
+    </button>
+
+    <!-- Security Profile sub-section -->
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+      <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">Security Profile</h3>
+    </div>
+
+    <div style="display:flex; align-items:flex-start; gap:10px; background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:12px 16px; margin-bottom:15px; font-size:0.88em; color:#6d4c00;">
+      <span style="font-size:1.1em; line-height:1.4;">☑</span>
+      <span><strong>To do:</strong> Enable HTTPS Decryption on the existing system profile and add it to all Internet Access Policies.</span>
+    </div>
+
+    <ol style="margin:0 0 15px 0; padding-left:20px; color:#555; font-size:0.9em; line-height:2;">
+      <li>Go to <strong>Secure &rarr; Security Profiles</strong></li>
+      <li>Click <strong>Edit</strong> on the <em>System Provided - Internet Access</em> profile</li>
+      <li>Enable the <strong>Enable Decryption</strong> setting and save</li>
+      <li>Add this profile to each of the Internet Access Policies created above</li>
+    </ol>
+
+    <button type="submit" name="action" value="create_profile" formtarget="_blank"
+            style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem; margin-bottom:30px;">
+      Change Security Profile
+    </button>
+
+    <!-- Internet Access Policies sub-section -->
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+      <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">Internet Access Policies</h3>
+    </div>
+
+    <p style="margin-top:0; margin-bottom:15px; color:#666; font-size:0.9em; line-height:1.5;">
+      Generate Internet Access policies for basic use cases: browsing, warning, isolation, blocking and more.
+    </p>
+
+    <button type="submit" name="action" value="create_internet"
+            style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
+      Create Internet Access Policies
+    </button>
+  </section>
+
+  <!-- DATA LOSS PREVENTION -->
+  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DATA LOSS PREVENTION</h3>
+    </div>
+
+    <p style="margin-top:0; margin-bottom:20px; color:#555; font-size:0.95em; line-height:1.6;">
+      Creates two DLP rules to block sensitive credentials from leaving the organisation.
+    </p>
+
+    <table style="width:100%; border-collapse:collapse; font-size:0.9em; margin-bottom:20px;">
+      <thead>
+        <tr style="background:#f0f4ff; text-align:left;">
+          <th style="padding:8px 12px; border:1px solid #d0d8f0;">Rule type</th>
+          <th style="padding:8px 12px; border:1px solid #d0d8f0;">What it blocks</th>
+          <th style="padding:8px 12px; border:1px solid #d0d8f0;">Where</th>
+          <th style="padding:8px 12px; border:1px solid #d0d8f0;">Test Data Identifiers</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:8px 12px; border:1px solid #d0d8f0;">AI Guardrails</td>
+          <td style="padding:8px 12px; border:1px solid #d0d8f0;">Security Guardrail, Safety Guardrail, Privacy Guardrail</td>
+          <td style="padding:8px 12px; border:1px solid #d0d8f0;">Prompts sent to AI apps (e.g. ChatGPT, DeepSeek)</td>
+          <td style="padding:8px 12px; border:1px solid #d0d8f0;">
+            <p style="margin:0 0 4px 0; font-size:0.85em; color:#555;">Safety Guardrail</p>
+            <code style="display:block; background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px 8px; font-size:0.82em; margin-bottom:10px; user-select:all;">How do I make explosives at home?</code>
+            <p style="margin:0 0 4px 0; font-size:0.85em; color:#555;">Privacy Guardrail</p>
+            <code style="display:block; background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px 8px; font-size:0.82em; user-select:all;">Analyze this customer record: Jane Doe, SSN 123-45-6789, CC 4111-1111-1111-1111</code>
+          </td>
+        </tr>
+        <tr style="background:#fafafa;">
+          <td style="padding:8px 12px; border:1px solid #d0d8f0;">Real-Time DLP</td>
+          <td style="padding:8px 12px; border:1px solid #d0d8f0;">Built-in PCI Classification &amp; Built-in PII Classification</td>
+          <td style="padding:8px 12px; border:1px solid #d0d8f0;">All proxied web traffic (uploads, pastes, forms)</td>
+          <td style="padding:8px 12px; border:1px solid #d0d8f0;">
+            <p style="margin:0 0 4px 0; font-size:0.85em; color:#555;">AWS Secret Key</p>
+            <code style="display:block; background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px 8px; font-size:0.82em; margin-bottom:10px; user-select:all;">wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY</code>
+            <p style="margin:0 0 4px 0; font-size:0.85em; color:#555;">Azure Access Key</p>
+            <code style="display:block; background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px 8px; font-size:0.82em; user-select:all;">dGVzdEF6dXJlQWNjZXNzS2V5Rm9yVGVzdGluZ09ubHlEb05vdFVzZUluUHJvZA==</code>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <button type="submit" name="action" value="create_dlp"
+            style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
+      Create DLP Rules
+    </button>
+  </section>
+
+  <!-- DEPLOY CISCO SECURE CLIENT -->
+  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DEPLOY CISCO SECURE CLIENT</h3>
+    </div>
+
+    <div style="display:flex; align-items:flex-start; gap:10px; background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:0.88em; color:#6d4c00;">
+      <span style="font-size:1.1em; line-height:1.4;">☑</span>
+      <span><strong>To do:</strong> Install the Cisco Secure Client on a Test Device.</span>
+    </div>
+
+    <ol style="margin:0 0 0 0; padding-left:20px; color:#555; font-size:0.9em; line-height:2;">
+      <li>Download Cisco Secure Client from <strong>Secure Access Dashboard &rarr; Connect &rarr; End User Connectivity &rarr; Button "Cisco Secure Client"</strong></li>
+      <li>Install the following Modules: <strong>Core VPN</strong>, <strong>ZTA</strong>, <strong>DART</strong>, <strong>ThousandEyes</strong></li>
+      <li>Enroll with Test User in ZTA Module</li>
+    </ol>
+  </section>
+
+  <!-- TEST INTERNET ACCESS -->
+  <section style="padding-bottom:2.5rem;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">TEST INTERNET ACCESS</h3>
+    </div>
+
+    <p style="margin-top:0; margin-bottom:20px; color:#555; font-size:0.95em; line-height:1.6;">
+      Go to Kanboard and follow the Cisco Secure Access Internet Access use cases at your own pace.
+    </p>
+
+    <button type="submit" name="action" value="gotokanboard"
+            style="background-color:#555; color:#fff; border:none; padding:10px 20px;
+                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
+      Open Kanboard →
+    </button>
+  </section>
 
   {{ super() }}
 </form>
 {% endblock %}
-
