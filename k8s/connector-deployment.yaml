@@ -15,10 +15,31 @@ spec:
       labels:
         io.kompose.service: connector
         app: connector
+      annotations:
+        # AppArmor profile installed by setup_connector.sh on the host
+        container.apparmor.security.beta.kubernetes.io/connector: localhost/docker_secure
     spec:
+      hostname: CONNECTOR_HOSTNAME_PLACEHOLDER
+      volumes:
+      - name: connector-data
+        hostPath:
+          path: /opt/connector/data
+          type: DirectoryOrCreate
+      - name: connector-etc
+        hostPath:
+          path: /opt/connector/etc
+          type: DirectoryOrCreate
+      - name: journal
+        hostPath:
+          path: /run/systemd/journal
+          type: DirectoryOrCreate
+      - name: tun-device
+        hostPath:
+          path: /dev/net/tun
+          type: CharDevice
       containers:
       - name: connector
-        image: ciscosecure/resource-connector:latest
+        image: CONNECTOR_IMAGE_PLACEHOLDER
         env:
         - name: CONNECTOR_NAME
           valueFrom:
@@ -35,16 +56,28 @@ spec:
         - name: ACAD_VM_LOCAL_IP
           valueFrom:
             fieldRef:
-              fieldPath: status.podIP
+              fieldPath: status.hostIP
         - name: ACAD_VM_PUBLIC_IP
           valueFrom:
             fieldRef:
               fieldPath: status.hostIP
+        securityContext:
+          capabilities:
+            add: ["NET_ADMIN"]
+          seccompProfile:
+            type: Localhost
+            # Path relative to /var/lib/rancher/k3s/agent/seccomp/
+            localhostProfile: connector-seccomp.json
         volumeMounts:
         - name: connector-data
           mountPath: /data
-      volumes:
-      - name: connector-data
-        hostPath:
-          path: /opt/connector-data
-          type: DirectoryOrCreate
+        - name: connector-etc
+          mountPath: /etc/hosts
+          subPath: hosts
+        - name: connector-etc
+          mountPath: /etc/resolv.conf
+          subPath: resolv.conf
+        - name: journal
+          mountPath: /run/systemd/journal
+        - name: tun-device
+          mountPath: /dev/net/tun

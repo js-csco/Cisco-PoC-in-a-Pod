@@ -214,131 +214,53 @@ else
 fi
 echo ""
 
-echo "Step 12.5: Launching Resource Connector..."
-# Launch the connector with provided credentials
-sudo /opt/connector/install/connector.sh launch --name "$CONNECTOR_NAME" --key "$CONNECTOR_KEY"
+echo "Step 12.5: Initializing connector data (first boot)..."
+# Replicate connector.sh first_boot() so the K8s pod finds its provisioning data
+# on startup without needing to launch a Docker container first.
 
-if [ $? -ne 0 ]; then
-    echo "❌ Connector launch failed!"
-    exit 1
+# Ensure /dev/net/tun exists (required for the connector's tunnel interface)
+if [ ! -c /dev/net/tun ]; then
+    echo "  /dev/net/tun not found — loading tun kernel module..."
+    modprobe tun
 fi
 
-echo "  ✓ Resource Connector launched"
+mkdir -p /opt/connector/etc
+mkdir -p /opt/connector/data/init
+mkdir -p /opt/connector/data/anyconnect_logs
+touch /opt/connector/etc/hosts
+touch /opt/connector/etc/resolv.conf
+
+cp /etc/machine-id /opt/connector/data/init/
+
+# Capture DNS resolver info (same as connector.sh first_boot for Ubuntu)
+resolvectl dns > /opt/connector/data/init/resolvectl.output 2>/dev/null || true
+
+# Capture host IP (excluding Docker bridge addresses)
+ACAD_VM_LOCAL_IP=$(ip addr show | grep global | grep -v docker | grep 'inet ' | awk '{print $2}' | cut -d/ -f1 | head -n1)
+
+echo "KEY=$CONNECTOR_KEY"           > /opt/connector/data/init/user-data
+echo "ACAD_VM_LOCAL_IP=$ACAD_VM_LOCAL_IP" >> /opt/connector/data/init/user-data
+echo "CNTR_DATA=/opt/connector"     > /opt/connector/data/init/common_config.sh
+
+echo "  ✓ Connector data initialised (KEY written, local IP: $ACAD_VM_LOCAL_IP)"
 echo ""
 
-echo "Step 12.6: Verifying connector status..."
-sleep 10
+# Step 13: Prepare connector image and seccomp profile for K3s
+echo "Step 13: Preparing connector image and seccomp profile for K3s..."
 
-# Fix: Use the actual connector name, not "resource-connector"
-CONNECTOR_CONTAINER=$(docker ps --format "{{.Names}}" | grep -i connector | head -n 1)
-if [ -z "$CONNECTOR_CONTAINER" ]; then
-    echo "⚠ Warning: Could not find running connector container"
-    echo "  Checking all containers..."
-    docker ps -a
-    CONNECTOR_IP=$SERVER_IP
-else
-    echo "  ✓ Connector container running: $CONNECTOR_CONTAINER"
-    
-    # Check connector logs for errors
-    echo "  Checking connector logs..."
-    docker logs "$CONNECTOR_CONTAINER" 2>&1 | tail -n 20
-    
-    # Get connector IP
-    CONNECTOR_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$CONNECTOR_CONTAINER")
-    if [ -z "$CONNECTOR_IP" ]; then
-        # If no bridge IP, it might be using host network
-        CONNECTOR_IP=$SERVER_IP
-        echo "  Connector using host network"
-    fi
-    echo "  Connector IP: $CONNECTOR_IP"
-fi
-echo ""
+# K3s uses containerd — its image cache is separate from Docker's.
+# Import the already-pulled (and cosign-verified) Docker image directly
+# so K3s doesn't need to pull from the registry again.
+CONNECTOR_IMAGE=$(cat /opt/connector/image_name 2>/dev/null || echo "ciscosecure/resource-connector:latest")
+echo "  Importing image '$CONNECTOR_IMAGE' from Docker into K3s containerd..."
+docker save "$CONNECTOR_IMAGE" | k3s ctr images import -
+echo "  ✓ Image imported to K3s"
 
-# Step 13: Register Connector with Cilium (Simple approach)
-echo "Step 13: Creating Kubernetes Service for Resource Connector..."
-
-# Detect connector ports
-CONNECTOR_PORTS=$(docker port "$CONNECTOR_CONTAINER" 2>/dev/null || echo "")
-if [ -n "$CONNECTOR_PORTS" ]; then
-    echo "  Detected connector ports: $CONNECTOR_PORTS"
-else
-    echo "  Could not detect ports (connector may use host network or custom config)"
-fi
-
-# Create Service and Endpoints
-cat > /tmp/connector-service.yaml <<EOF
-apiVersion: v1
-kind: Service
-metadata:
-  name: connector
-  namespace: default
-  labels:
-    app: connector
-spec:
-  type: ClusterIP
-  clusterIP: None
-  ports:
-  - port: 443
-    protocol: TCP
-    name: https
-  - port: 80
-    protocol: TCP
-    name: http
----
-apiVersion: v1
-kind: Endpoints
-metadata:
-  name: connector
-  namespace: default
-subsets:
-- addresses:
-  - ip: ${CONNECTOR_IP}
-  ports:
-  - port: 443
-    name: https
-  - port: 80
-    name: http
-EOF
-
-kubectl apply -f /tmp/connector-service.yaml
-echo "  ✓ Service created: connector.default.svc.cluster.local"
-echo ""
-
-# Step 13.1: Create permissive Network Policy
-echo "Step 13.1: Creating Network Policy (permissive - allows all traffic)..."
-cat > /tmp/connector-netpol.yaml <<EOF
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-to-connector
-  namespace: default
-spec:
-  description: "Allow all pods to reach connector"
-  endpointSelector: {}
-  egress:
-  - toCIDR:
-    - ${CONNECTOR_IP}/32
-  - toFQDNs:
-    - matchName: "connector.default.svc.cluster.local"
-  - toFQDNs:
-    - matchName: "connector"
----
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: allow-from-connector
-  namespace: default
-spec:
-  description: "Allow traffic from connector to cluster"
-  endpointSelector: {}
-  ingress:
-  - fromCIDR:
-    - ${CONNECTOR_IP}/32
-EOF
-
-kubectl apply -f /tmp/connector-netpol.yaml
-echo "  ✓ Network policies created (CIDR-based, permissive mode)"
-echo "  Note: All traffic to/from connector is allowed"
+# Copy the seccomp profile to the K3s kubelet seccomp directory.
+# K8s 'Localhost' seccomp profiles are resolved relative to this path.
+mkdir -p /var/lib/rancher/k3s/agent/seccomp
+cp /opt/connector/install/connector-seccomp.json /var/lib/rancher/k3s/agent/seccomp/
+echo "  ✓ Seccomp profile copied to /var/lib/rancher/k3s/agent/seccomp/"
 echo ""
 
 # Step 14: Prompt for Splunk admin password (optional)
@@ -428,6 +350,14 @@ for manifest in "$REPO_ROOT/k8s/"*.yaml; do
                 echo "  Skipping $(basename $manifest) (Splunk not configured)"
             fi
             ;;
+        *connector-deployment*)
+            # Substitute hostname and image placeholders before applying
+            sed \
+                -e "s|CONNECTOR_HOSTNAME_PLACEHOLDER|$CONNECTOR_NAME|g" \
+                -e "s|CONNECTOR_IMAGE_PLACEHOLDER|$CONNECTOR_IMAGE|g" \
+                "$manifest" | kubectl apply -f - -n piap
+            echo "  ✓ connector-deployment applied (hostname: $CONNECTOR_NAME, image: $CONNECTOR_IMAGE)"
+            ;;
         *)
             kubectl apply -f "$manifest" -n piap
             ;;
@@ -448,23 +378,23 @@ echo "  Setup Complete!"
 echo "================================================"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  🎯 Cisco Resource Connector Status"
+echo "  Cisco Resource Connector Status"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "  Status: Running as external service"
-echo "  Container: ${CONNECTOR_CONTAINER:-Not found}"
-echo "  IP Address: $CONNECTOR_IP"
-echo "  Service DNS: connector.default.svc.cluster.local"
+echo "  Status: Running as K8s pod in namespace 'piap'"
+echo "  Name:   $CONNECTOR_NAME"
+echo "  Image:  $CONNECTOR_IMAGE"
 echo ""
-echo "  ✓ Service and Endpoints created"
-echo "  ✓ Network policies: PERMISSIVE (all traffic allowed)"
-echo "  ✓ Pods can reach connector via: connector.default.svc.cluster.local"
+echo "  ✓ Provisioning data written to /opt/connector/data/init/"
+echo "  ✓ Image imported to K3s containerd"
+echo "  ✓ Seccomp profile deployed"
+echo "  ✓ AppArmor profile: docker_secure (installed by setup_connector.sh)"
 echo ""
-echo "  Check connector logs:"
-echo "    docker logs ${CONNECTOR_CONTAINER:-<container-name>}"
+echo "  Check connector pod:"
+echo "    kubectl get pod -n piap -l app=connector"
 echo ""
-echo "  Verify connector is reaching cloud:"
-echo "    docker logs ${CONNECTOR_CONTAINER:-<container-name>} | grep -i 'connect\|auth\|error'"
+echo "  Follow connector logs:"
+echo "    kubectl logs -n piap -l app=connector -f"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  🌐 Your Services"
@@ -520,17 +450,11 @@ echo "  cilium hubble ui                      # Open Hubble UI"
 echo "  kubectl get ciliumnetworkpolicy       # Check network policies"
 echo ""
 echo "Connector:"
-echo "  docker ps | grep connector            # Check connector container"
-echo "  docker logs ${CONNECTOR_CONTAINER:-<container>}     # View connector logs"
-echo "  docker logs -f ${CONNECTOR_CONTAINER:-<container>}  # Follow connector logs"
-echo ""
-echo "Test connectivity from a pod:"
-echo "  kubectl run test --image=nicolaka/netshoot -it --rm -- bash"
-echo "  # Inside pod:"
-echo "  curl http://connector.default.svc.cluster.local"
-echo "  nslookup connector.default.svc.cluster.local"
+echo "  kubectl get pod -n piap -l app=connector          # Check connector pod"
+echo "  kubectl logs -n piap -l app=connector -f          # Follow connector logs"
+echo "  kubectl describe pod -n piap -l app=connector     # Debug pod events"
 echo ""
 echo "Cleanup:"
 echo "  sudo /usr/local/bin/k3s-uninstall.sh  # Uninstall K3s"
-echo "  docker rm -f ${CONNECTOR_CONTAINER:-<container>}    # Stop connector"
+echo "  kubectl delete pod -n piap -l app=connector       # Restart connector pod"
 echo ""
