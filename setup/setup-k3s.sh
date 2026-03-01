@@ -67,6 +67,10 @@ ln -sf "$REPO_ROOT/web" /web && echo "  ✓ /web"
 
 echo "  Removing system containerd package (Docker brings its own)..."
 apt-get remove -y containerd 2>/dev/null || true
+# Kill any running containerd processes and remove stale sockets so Docker's
+# bundled containerd.io can start cleanly on the next systemd invocation.
+pkill -f '/usr/bin/containerd' 2>/dev/null || true
+rm -f /run/containerd/containerd.sock 2>/dev/null || true
 echo "  ✓ System prepared"
 echo ""
 
@@ -95,21 +99,63 @@ echo ""
 
 "$CONNECTOR_SETUP_SCRIPT" || true
 
-# Verify Docker is installed and running — hard fail if not.
+# Verify Docker is installed — hard fail if not (nothing we can do without it).
 if ! command -v docker &>/dev/null; then
     echo "❌ Docker was not installed by setup_connector.sh"
     exit 1
 fi
+
+# On Linux 4.4 kernels the Docker daemon can fail to start after the Cisco
+# script runs because (a) containerd.service didn't come up cleanly, or (b)
+# Docker was configured with the systemd cgroup driver which requires cgroup v2.
+# Attempt recovery before hard-failing.
 if ! docker info &>/dev/null; then
-    echo "❌ Docker daemon is not running after setup_connector.sh"
-    exit 1
+    echo "  ⚠ Docker daemon not running — attempting Linux 4.4 compatibility recovery..."
+
+    # 1. Ensure containerd is up — Docker depends on containerd.service.
+    systemctl start containerd 2>/dev/null || true
+    sleep 2
+
+    # 2. Switch to cgroupfs cgroup driver (works on Linux 4.4; systemd driver needs cgroup v2).
+    if [ -f /etc/docker/daemon.json ]; then
+        python3 -c "
+import json, sys
+try:
+    cfg = json.load(open('/etc/docker/daemon.json'))
+except Exception:
+    cfg = {}
+opts = cfg.get('exec-opts', [])
+opts = [o for o in opts if 'cgroupdriver' not in o]
+opts.append('native.cgroupdriver=cgroupfs')
+cfg['exec-opts'] = opts
+json.dump(cfg, open('/etc/docker/daemon.json', 'w'), indent=2)
+" 2>/dev/null || true
+    else
+        echo '{"exec-opts": ["native.cgroupdriver=cgroupfs"]}' > /etc/docker/daemon.json
+    fi
+
+    systemctl daemon-reload
+    systemctl start docker 2>/dev/null || true
+    sleep 5
 fi
 
+if ! docker info &>/dev/null; then
+    echo "❌ Docker daemon is not running — cannot continue"
+    echo "   Run: journalctl -xe -u docker -u containerd | tail -40"
+    exit 1
+fi
+echo "  ✓ Docker daemon running"
+
 # Read the image name written by setup_connector.sh.
+# If setup_connector.sh failed to pull (Docker wasn't up then) but Docker is up
+# now after recovery, pull the image ourselves.
 CONNECTOR_IMAGE=$(cat /opt/connector/image_name 2>/dev/null || echo "")
 if [ -z "$CONNECTOR_IMAGE" ]; then
-    echo "❌ /opt/connector/image_name not found — setup_connector.sh may have failed"
-    exit 1
+    echo "  /opt/connector/image_name missing — pulling connector image now..."
+    CONNECTOR_IMAGE="ciscosecure/resource-connector:latest"
+    docker pull "$CONNECTOR_IMAGE"
+    mkdir -p /opt/connector
+    echo "$CONNECTOR_IMAGE" > /opt/connector/image_name
 fi
 echo "  ✓ Connector image: $CONNECTOR_IMAGE"
 
