@@ -40,6 +40,7 @@ spec:
       containers:
       - name: connector
         image: CONNECTOR_IMAGE_PLACEHOLDER
+        imagePullPolicy: IfNotPresent
         env:
         - name: CONNECTOR_NAME
           valueFrom:

@@ -351,12 +351,15 @@ for manifest in "$REPO_ROOT/k8s/"*.yaml; do
             fi
             ;;
         *connector-deployment*)
-            # Substitute hostname and image placeholders before applying
+            # K8s spec.hostname must be a valid DNS label (lowercase only).
+            # CONNECTOR_NAME is used as-is for Cisco SSE identity; only the
+            # K8s hostname gets lowercased.
+            CONNECTOR_HOSTNAME=$(echo "$CONNECTOR_NAME" | tr '[:upper:]' '[:lower:]')
             sed \
-                -e "s|CONNECTOR_HOSTNAME_PLACEHOLDER|$CONNECTOR_NAME|g" \
+                -e "s|CONNECTOR_HOSTNAME_PLACEHOLDER|$CONNECTOR_HOSTNAME|g" \
                 -e "s|CONNECTOR_IMAGE_PLACEHOLDER|$CONNECTOR_IMAGE|g" \
                 "$manifest" | kubectl apply -f - -n piap
-            echo "  ✓ connector-deployment applied (hostname: $CONNECTOR_NAME, image: $CONNECTOR_IMAGE)"
+            echo "  ✓ connector-deployment applied (hostname: $CONNECTOR_HOSTNAME, image: $CONNECTOR_IMAGE)"
             ;;
         *)
             kubectl apply -f "$manifest" -n piap
