@@ -34,13 +34,19 @@ ACTUAL_USER=${SUDO_USER:-$USER}
 
 echo ""
 echo "Step 1: Stopping and removing Cisco Resource Connector..."
-# Stop connector if it's running
+# Stop connector if it's running (handles Docker container case)
 if [ -f "/opt/connector/install/connector.sh" ]; then
     /opt/connector/install/connector.sh stop 2>/dev/null || true
     echo "  ✓ Connector stopped"
 fi
 
-# Find and remove connector containers
+# Remove daemontools service symlink (created by connector.sh launch)
+if [ -L "/etc/service/connector_svc" ] || [ -d "/etc/service/connector_svc" ]; then
+    rm -rf /etc/service/connector_svc
+    echo "  ✓ Daemontools service symlink removed"
+fi
+
+# Find and remove connector containers (handles any leftover Docker containers)
 CONNECTOR_CONTAINERS=$(docker ps -a --filter "name=resource-connector" --format "{{.Names}}" 2>/dev/null || true)
 if [ -n "$CONNECTOR_CONTAINERS" ]; then
     echo "  Removing connector containers..."
@@ -48,13 +54,25 @@ if [ -n "$CONNECTOR_CONTAINERS" ]; then
     echo "  ✓ Connector containers removed"
 fi
 
-# Remove connector images
+# Remove connector images from Docker
 CONNECTOR_IMAGES=$(docker images --filter "reference=*connector*" --format "{{.ID}}" 2>/dev/null || true)
 if [ -n "$CONNECTOR_IMAGES" ]; then
     echo "  Removing connector images..."
     docker rmi -f $CONNECTOR_IMAGES 2>/dev/null || true
     echo "  ✓ Connector images removed"
 fi
+
+# Unload and remove AppArmor profile installed by setup_connector.sh
+if [ -f "/etc/apparmor.d/connector-apparmor.cfg" ]; then
+    apparmor_parser -R /etc/apparmor.d/connector-apparmor.cfg 2>/dev/null || true
+    rm -f /etc/apparmor.d/connector-apparmor.cfg
+    echo "  ✓ AppArmor profile removed"
+fi
+
+# Remove packages installed by setup_connector.sh
+echo "  Removing packages installed by setup_connector.sh..."
+apt-get remove -y daemontools daemontools-run 2>/dev/null || true
+echo "  ✓ daemontools removed"
 
 # Remove connector installation directory
 if [ -d "/opt/connector" ]; then
@@ -267,13 +285,14 @@ echo ""
 echo "What was removed:"
 echo "  ✓ K3s cluster and all workloads"
 echo "  ✓ Cilium CNI and network policies"
-echo "  ✓ Cisco Resource Connector (container and files)"
+echo "  ✓ Cisco Resource Connector (pod, data, AppArmor profile, daemontools service)"
 echo "  ✓ All Kubernetes resources (piap namespace, secrets, services)"
 echo "  ✓ Tetragon security observability"
 echo "  ✓ All iptables rules"
 echo "  ✓ Application symlinks"
 echo "  ✓ Temporary files"
 echo "  ✓ kubectl configuration"
+echo "  ✓ daemontools packages"
 echo "  ✓ Python packages (duo-client if selected)"
 echo ""
 echo "Your system is now clean. You can:"
