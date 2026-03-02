@@ -140,6 +140,12 @@ json.dump(cfg, open('/etc/docker/daemon.json', 'w'), indent=2)
     fi
 
     systemctl daemon-reload
+    # docker.service uses -H fd:// (socket activation). Starting docker.service
+    # directly without docker.socket active gives dockerd no fd to listen on
+    # ("no sockets found via socket activation"). Start the socket first so
+    # systemd holds the listening fd, then start the service.
+    systemctl restart docker.socket 2>/dev/null || true
+    sleep 1
     systemctl start docker 2>/dev/null || true
     sleep 5
 fi
