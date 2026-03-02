@@ -105,6 +105,11 @@ if ! command -v docker &>/dev/null; then
     exit 1
 fi
 
+# Ensure the docker group exists — docker.socket chowns the socket to this group
+# and will fail with status 216/GROUP if the group is missing. The Cisco installer
+# does not always create it (e.g. on first-time installs on this kernel).
+getent group docker &>/dev/null || groupadd docker
+
 # On Linux 4.4 kernels the Docker daemon can fail to start after the Cisco
 # script runs because (a) containerd.service didn't come up cleanly, or (b)
 # Docker was configured with the systemd cgroup driver which requires cgroup v2.
