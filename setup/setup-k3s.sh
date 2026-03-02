@@ -110,21 +110,24 @@ fi
 # does not always create it (e.g. on first-time installs on this kernel).
 getent group docker &>/dev/null || groupadd docker
 
-# On Linux 4.4 kernels the Docker daemon can fail to start after the Cisco
-# script runs because (a) containerd.service didn't come up cleanly, or (b)
-# Docker was configured with the systemd cgroup driver which requires cgroup v2.
-# Attempt recovery before hard-failing.
-if ! docker info &>/dev/null; then
-    echo "  ⚠ Docker daemon not running — attempting Linux 4.4 compatibility recovery..."
+# The Cisco installer can leave Docker in any state: running, stopped, or
+# rate-limit-failed. Rather than trying to detect which state we're in (a race —
+# Docker may be up when we check but stop a moment later), always do a clean
+# restart under our control.
+#
+# Key details for Linux 4.4 / Ubuntu 24.04:
+#   • docker.socket has PartOf=docker.service: stopping the service also stops
+#     the socket. Systemd's Restart= then tries to bring back docker.service
+#     without a socket fd, fails 3×, and locks the service in "failed" state.
+#   • dockerd uses -H fd:// (socket activation), so docker.socket MUST be
+#     started before docker.service.
+#   • The systemd cgroup driver requires cgroup v2; use cgroupfs on 4.4 kernels.
+echo "  Applying Linux 4.4 kernel compatibility settings and restarting Docker..."
 
-    # 1. Ensure containerd is up — Docker depends on containerd.service.
-    systemctl start containerd 2>/dev/null || true
-    sleep 2
-
-    # 2. Switch to cgroupfs cgroup driver (works on Linux 4.4; systemd driver needs cgroup v2).
-    if [ -f /etc/docker/daemon.json ]; then
-        python3 -c "
-import json, sys
+# 1. Switch to cgroupfs cgroup driver.
+if [ -f /etc/docker/daemon.json ]; then
+    python3 -c "
+import json
 try:
     cfg = json.load(open('/etc/docker/daemon.json'))
 except Exception:
@@ -135,22 +138,22 @@ opts.append('native.cgroupdriver=cgroupfs')
 cfg['exec-opts'] = opts
 json.dump(cfg, open('/etc/docker/daemon.json', 'w'), indent=2)
 " 2>/dev/null || true
-    else
-        echo '{"exec-opts": ["native.cgroupdriver=cgroupfs"]}' > /etc/docker/daemon.json
-    fi
-
-    systemctl daemon-reload
-    # docker.socket has PartOf=docker.service, so when the Cisco installer runs
-    # `systemctl stop docker` it also stops docker.socket. Docker's auto-restart
-    # then exhausts the rate limit, locking the service in "failed" state.
-    # Reset the failed state first, then restart the socket (so systemd holds
-    # the listening fd for -H fd:// socket activation), then start the service.
-    systemctl reset-failed docker.service 2>/dev/null || true
-    systemctl restart docker.socket 2>/dev/null || true
-    sleep 1
-    systemctl start docker 2>/dev/null || true
-    sleep 5
+else
+    echo '{"exec-opts": ["native.cgroupdriver=cgroupfs"]}' > /etc/docker/daemon.json
 fi
+
+# 2. Reload unit files, then bring everything to a known-stopped state.
+systemctl daemon-reload
+systemctl stop docker.service docker.socket 2>/dev/null || true
+systemctl reset-failed docker.service docker.socket 2>/dev/null || true
+sleep 1
+
+# 3. Start socket first (so systemd holds the fd), then the service.
+systemctl start containerd 2>/dev/null || true
+systemctl start docker.socket
+sleep 1
+systemctl start docker.service
+sleep 3
 
 if ! docker info &>/dev/null; then
     echo "❌ Docker daemon is not running — cannot continue"
