@@ -362,11 +362,15 @@ echo "  Image: $CONNECTOR_IMAGE"
 docker save "$CONNECTOR_IMAGE" | k3s ctr images import -
 echo "  ✓ Image imported to K3s"
 
-# Copy the seccomp profile to the K3s kubelet seccomp directory.
-mkdir -p /var/lib/rancher/k3s/agent/seccomp
+# Copy the seccomp profile to both paths K3s kubelet may use.
+# K3s's kubelet resolves Localhost seccomp profiles relative to its root dir.
+# Depending on the K3s version this is either /var/lib/rancher/k3s/agent/seccomp
+# or /var/lib/kubelet/seccomp — copy to both so either path works.
+mkdir -p /var/lib/rancher/k3s/agent/seccomp /var/lib/kubelet/seccomp
 if [ -f /opt/connector/install/connector-seccomp.json ]; then
     cp /opt/connector/install/connector-seccomp.json /var/lib/rancher/k3s/agent/seccomp/
-    echo "  ✓ Seccomp profile copied to /var/lib/rancher/k3s/agent/seccomp/"
+    cp /opt/connector/install/connector-seccomp.json /var/lib/kubelet/seccomp/
+    echo "  ✓ Seccomp profile copied to /var/lib/rancher/k3s/agent/seccomp/ and /var/lib/kubelet/seccomp/"
 else
     echo "  ⚠ connector-seccomp.json not found — pod will use RuntimeDefault seccomp"
 fi
