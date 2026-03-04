@@ -225,18 +225,18 @@
     <div class="card-title">WHY THE IP TELLS THE STORY</div>
     <p style="font-size:0.88em; color:#555; line-height:1.7; margin:0;">
       With Cisco Secure Access ZTNA your browser never opens a direct connection to this server.
-      Traffic flows through the <strong>Secure Access cloud gateway</strong>, which NATs the source
-      to its own IP in the <strong>CGNAT range (100.64.0.0/10)</strong>, then reaches the server
-      via the on-premises <strong>Connector</strong> pod — so your real IP is never seen by the application.
+      Traffic flows through the <strong>Secure Access cloud gateway</strong>, then arrives via the
+      on-premises <strong>Resource Connector</strong> (host <code>SERVER_IP</code>) — so the server
+      only ever sees the connector's host IP, never your real IP.
     </p>
     <div class="explain-row">
       <div class="explain-panel panel-ztna">
         <strong>✅ Via ZTNA</strong>
-        Server sees a <em>100.64.x.x</em> address — the Cisco Secure Access gateway NAT IP. Your real IP is fully hidden.
+        Server sees <em>SERVER_IP</em> — the Cisco Resource Connector host IP. Your real IP is fully hidden behind the connector.
       </div>
       <div class="explain-panel panel-direct">
         <strong>⚠️ Direct Access</strong>
-        Server sees your <em>LAN or public IP</em> directly. Zero Trust policies are not in effect.
+        Server sees your <em>actual LAN or public IP</em>. Zero Trust policies are not in effect.
       </div>
     </div>
   </div>
@@ -258,12 +258,13 @@
     window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
   document.getElementById('valTime').textContent = new Date().toLocaleString();
 
-  // Cisco Secure Access uses the CGNAT range (100.64.0.0/10) as its gateway NAT.
-  // When traffic flows through ZTNA the server sees an IP in this range —
-  // not the user's real IP and not a plain private LAN address.
-  function isCGNAT(addr) {
-    const m = addr.match(/^100\.(\d+)\./);
-    return m && parseInt(m[1]) >= 64 && parseInt(m[1]) <= 127;
+  // The Resource Connector runs on the same host as this server.
+  // When traffic arrives via ZTNA the server sees the connector host's LAN IP —
+  // not the user's real IP. This value is injected by setup at install time.
+  const CONNECTOR_IP = 'SERVER_IP';
+
+  function isConnector(addr) {
+    return addr === CONNECTOR_IP;
   }
 
   function isPrivateLAN(addr) {
@@ -288,13 +289,13 @@
     bBody.textContent  = 'Server-side IP injection requires nginx SSI to be enabled.';
     method.textContent = 'Unknown';
 
-  } else if (isCGNAT(ip)) {
+  } else if (isConnector(ip)) {
     banner.className   = 'banner ztna';
     bIcon.textContent  = '✅';
     bTag.textContent   = 'ZERO TRUST ACCESS VERIFIED';
     bTitle.textContent = 'You are accessing this server through Cisco Secure Access';
     bBody.textContent  =
-      'The server sees ' + ip + ' — a Cisco Secure Access gateway IP (CGNAT 100.64.0.0/10). '
+      'The server sees ' + ip + ' — the Cisco Resource Connector host IP. '
       + 'Your traffic is tunnelled through ZTNA and your real IP is never exposed to the application.';
     method.textContent = 'ZTNA (Cisco Secure Access)';
 
