@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: checker
+  name: checker
+  namespace: piap
+spec:
+  type: NodePort
+  selector:
+    io.kompose.service: checker
+  ports:
+    - name: "checker"
+      port: 9550
+      targetPort: 80
+      nodePort: 30550
+status:
+  loadBalancer: {}
