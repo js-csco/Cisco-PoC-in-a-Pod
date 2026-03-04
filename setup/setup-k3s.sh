@@ -493,8 +493,8 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 KUBECTL=/usr/local/bin/kubectl
 
 while IFS=$'\t' read -r SVC_NAME NODE_PORT TARGET_PORT; do
-    [ -z "${NODE_PORT:-}" ] || [ "$NODE_PORT" = "null" ] && continue
-    [ -z "${TARGET_PORT:-}" ] || [ "$TARGET_PORT" = "null" ] && continue
+    { [ -z "${NODE_PORT:-}" ] || [ "$NODE_PORT" = "null" ]; } && continue
+    { [ -z "${TARGET_PORT:-}" ] || [ "$TARGET_PORT" = "null" ]; } && continue
 
     POD_IP=$($KUBECTL get pods -n piap -l "io.kompose.service=${SVC_NAME}" \
         -o jsonpath='{.items[0].status.podIP}' 2>/dev/null || true)
@@ -507,7 +507,7 @@ while IFS=$'\t' read -r SVC_NAME NODE_PORT TARGET_PORT; do
       | sed 's/^-A PREROUTING/-D PREROUTING/' \
       | while IFS= read -r old_rule; do
             iptables -t nat $old_rule 2>/dev/null || true
-        done
+        done || true
 
     iptables -t nat -I PREROUTING -i docker0 -p tcp --dport "$NODE_PORT" \
         -j DNAT --to-destination "${POD_IP}:${TARGET_PORT}"
@@ -518,7 +518,7 @@ while IFS=$'\t' read -r SVC_NAME NODE_PORT TARGET_PORT; do
       | sed 's/^-A FORWARD/-D FORWARD/' \
       | while IFS= read -r old_rule; do
             iptables $old_rule 2>/dev/null || true
-        done
+        done || true
 
     iptables -I FORWARD -i docker0 -d "$POD_IP" -p tcp --dport "$TARGET_PORT" \
         -m comment --comment "piap/${SVC_NAME}" -j ACCEPT
