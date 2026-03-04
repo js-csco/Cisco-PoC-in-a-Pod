@@ -426,6 +426,11 @@ if [ -f "$REPO_ROOT/web/index.html" ]; then
     sed -i "s/CONNECTOR_IP/$CONNECTOR_IP/g" "$REPO_ROOT/web/index.html"
 fi
 
+if [ -f "$REPO_ROOT/k8s/nginx-deployment.yaml" ]; then
+    echo "  Updating nginx deployment with web path..."
+    sed -i "s|WEB_PATH|$REPO_ROOT/web|g" "$REPO_ROOT/k8s/nginx-deployment.yaml"
+fi
+
 if [ -d "$REPO_ROOT/automagic-server/templates" ]; then
     echo "  Updating automagic templates with server IP..."
     find "$REPO_ROOT/automagic-server/templates" -name "*.html" -exec sed -i "s/SERVER_IP/$SERVER_IP/g" {} \;

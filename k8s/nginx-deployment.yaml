@@ -18,15 +18,6 @@ spec:
         io.kompose.service: nginx
         app: nginx
     spec:
-      initContainers:
-        - name: copy-html
-          image: busybox
-          command: ['sh', '-c', 'cp /source/index.html /www/']
-          volumeMounts:
-            - name: source-files
-              mountPath: /source
-            - name: nginx-www
-              mountPath: /www
       containers:
         - image: nginx:alpine
           name: nginx-web
@@ -43,15 +34,14 @@ spec:
               subPath: default.conf
             - name: nginx-www
               mountPath: /usr/share/nginx/html
+              readOnly: true
       restartPolicy: Always
       volumes:
-        - name: source-files
-          hostPath:
-            path: /web
-            type: Directory
         - name: nginx-config
           configMap:
             name: nginx-config
         - name: nginx-www
-          emptyDir: {}
+          hostPath:
+            path: WEB_PATH
+            type: Directory
 status: {}
