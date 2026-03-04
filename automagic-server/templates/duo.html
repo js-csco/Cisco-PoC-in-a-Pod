@@ -154,6 +154,58 @@
                 padding:10px 20px; border-radius:6px; font-weight:500;">
         Duo SSO – Cisco Secure Access Docs
       </a>
+
+      <!-- Provisioning of Users -->
+      <div style="margin-top:28px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">Provisioning of Users</h3>
+        </div>
+
+        <p style="color:#555; font-size:0.95em; margin-top:0; margin-bottom:16px;">
+          When SCIM provisioning is enabled, Duo syncs user attributes to Cisco Secure Access.
+          The table below shows the default attribute mapping used during provisioning.
+        </p>
+
+        <p style="color:#555; font-size:0.9rem; font-weight:600; margin:0 0 8px 0;">Attribute Mapping</p>
+
+        <table style="width:100%; border-collapse:collapse; font-size:0.88em;">
+          <thead>
+            <tr style="background:#f0f4ff; border-bottom:2px solid #c0d0ff;">
+              <th style="text-align:left; padding:10px 14px; color:#333; font-weight:600;">Duo User Attribute</th>
+              <th style="text-align:left; padding:10px 14px; color:#333; font-weight:600;">Application Attribute</th>
+              <th style="text-align:left; padding:10px 14px; color:#333; font-weight:600;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #e8e8e8;">
+              <td style="padding:9px 14px; color:#444; font-family:monospace;">displayName</td>
+              <td style="padding:9px 14px; color:#999;">—</td>
+              <td style="padding:9px 14px; color:#999;">—</td>
+            </tr>
+            <tr style="border-bottom:1px solid #e8e8e8; background:#fafafa;">
+              <td style="padding:9px 14px; color:#444; font-family:monospace;">emails</td>
+              <td style="padding:9px 14px; color:#999;">—</td>
+              <td style="padding:9px 14px; color:#999;">—</td>
+            </tr>
+            <tr style="border-bottom:1px solid #e8e8e8;">
+              <td style="padding:9px 14px; color:#444; font-family:monospace;">name.familyName</td>
+              <td style="padding:9px 14px; color:#999;">—</td>
+              <td style="padding:9px 14px; color:#999;">—</td>
+            </tr>
+            <tr style="border-bottom:1px solid #e8e8e8; background:#fafafa;">
+              <td style="padding:9px 14px; color:#444; font-family:monospace;">name.givenName</td>
+              <td style="padding:9px 14px; color:#999;">—</td>
+              <td style="padding:9px 14px; color:#999;">—</td>
+            </tr>
+            <tr>
+              <td style="padding:9px 14px; color:#444; font-family:monospace;">userName</td>
+              <td style="padding:9px 14px; color:#999;">—</td>
+              <td style="padding:9px 14px; color:#999;">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <!-- IDENTITY INTELLIGENCE -->
