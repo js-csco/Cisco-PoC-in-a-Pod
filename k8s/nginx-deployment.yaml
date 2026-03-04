@@ -19,14 +19,12 @@ spec:
         app: nginx
     spec:
       initContainers:
-        - name: copy-files
+        - name: copy-html
           image: busybox
-          command: ['sh', '-c', 'cp /source/nginx.conf /config/ && cp /source/index.html /www/']
+          command: ['sh', '-c', 'cp /source/index.html /www/']
           volumeMounts:
             - name: source-files
               mountPath: /source
-            - name: nginx-config
-              mountPath: /config
             - name: nginx-www
               mountPath: /www
       containers:
@@ -41,8 +39,8 @@ spec:
           resources: {}
           volumeMounts:
             - name: nginx-config
-              mountPath: /etc/nginx/nginx.conf
-              subPath: nginx.conf
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
             - name: nginx-www
               mountPath: /usr/share/nginx/html
       restartPolicy: Always
@@ -52,7 +50,8 @@ spec:
             path: /web
             type: Directory
         - name: nginx-config
-          emptyDir: {}
+          configMap:
+            name: nginx-config
         - name: nginx-www
           emptyDir: {}
 status: {}
