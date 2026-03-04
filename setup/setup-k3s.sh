@@ -217,29 +217,6 @@ fi
 
 "$CONNECTOR_SH" launch --name "$CONNECTOR_NAME" --key "$CONNECTOR_KEY"
 echo "  ✓ Resource Connector running as Docker container (managed by daemontools)"
-
-# Detect Docker's default bridge CIDR now that Docker is running and the
-# connector has been launched (docker0 exists at this point).
-# This CIDR varies by machine — Docker defaults to 172.17.0.0/16 but the
-# Cisco installer can configure a different subnet.  We capture it here so
-# it can be stored in a K8s ConfigMap and used by the Cilium zero-trust policy.
-DOCKER_BRIDGE_CIDR=$(python3 -c "
-import ipaddress, subprocess, sys
-try:
-    out = subprocess.check_output(['ip','addr','show','docker0'], text=True)
-    for tok in out.split():
-        try:
-            net = ipaddress.ip_network(tok, strict=False)
-            if net.prefixlen < 32:
-                print(str(net))
-                sys.exit(0)
-        except ValueError:
-            pass
-except Exception:
-    pass
-print('172.17.0.0/16')
-" 2>/dev/null || echo "172.17.0.0/16")
-echo "  ✓ Docker bridge CIDR: $DOCKER_BRIDGE_CIDR"
 echo ""
 
 # ============================================================
@@ -469,13 +446,6 @@ for manifest in "$REPO_ROOT/k8s/"*.yaml; do
     esac
 done
 echo "  ✓ Applications deployed to namespace 'piap'"
-
-# Store the Docker bridge CIDR in a ConfigMap so the automagic pod can read it
-# at runtime (used by the Cilium zero-trust policy to allow connector traffic).
-kubectl create configmap piap-network-config -n piap \
-  --from-literal=docker-bridge-cidr="$DOCKER_BRIDGE_CIDR" \
-  --dry-run=client -o yaml | kubectl apply -f -
-echo "  ✓ piap-network-config ConfigMap: docker-bridge-cidr=$DOCKER_BRIDGE_CIDR"
 echo ""
 
 # Step 19: Wait for pods to be ready
@@ -484,45 +454,69 @@ kubectl wait --for=condition=Ready pods --all -n piap --timeout=120s || true
 kubectl get pods -n piap
 echo ""
 
-# Step 19.1: Add iptables DNAT rules so connector can reach K8s NodePorts via docker0.
+# Step 19.1: Install and start the iptables-refresh controller.
 #
 # Background: Cilium's kube-proxy replacement handles NodePort via eBPF TC hooks
-# attached only to the primary interface (e.g. ens34).  The connector container
-# (240.0.0.x) exits via docker0, which has no TC hook on Linux 4.4 kernels.
-# Without these iptables rules the connector's SYNs arrive on docker0 and are
-# silently dropped — traffic from SSE never reaches the pods.
+# attached only to the primary network interface (e.g. ens34).  The Cisco
+# connector (240.0.0.x) exits via docker0.  On modern kernels, Step 12.1 tells
+# Cilium to also watch docker0, so Cilium's TC hook handles it natively — no
+# iptables needed.  On Linux 4.4 the TC attachment fails silently, so iptables
+# DNAT rules are the actual fix.
 #
-# Cilium's TC hook (added in Step 12.1) runs BEFORE iptables on newer kernels,
-# so on a modern kernel Cilium handles it directly and these rules are a no-op.
-# On Linux 4.4 (and any kernel where the Cilium devices patch has no effect)
-# these iptables rules are the actual fix.
-echo "Step 19.1: Adding iptables DNAT rules for connector → K8s NodePorts (docker0)..."
-while IFS=$'\t' read -r SVC_NAME NODE_PORT TARGET_PORT; do
-    [ -z "$NODE_PORT" ] || [ "$NODE_PORT" = "null" ] && continue
-    [ -z "$TARGET_PORT" ] || [ "$TARGET_PORT" = "null" ] && continue
+# Pod IPs change whenever a pod restarts.  The controller below runs every 30 s
+# and re-syncs the iptables DNAT rules with the current pod IPs, so a pod crash
+# never leaves a stale rule pointing at a dead IP.
+echo "Step 19.1: Installing iptables-refresh controller..."
 
-    POD_IP=$(kubectl get pods -n piap -l "io.kompose.service=${SVC_NAME}" \
+mkdir -p /opt/piap
+
+# Write the refresh script.  It is idempotent: it reads the current pod IPs
+# from kubectl and atomically replaces any stale DNAT rules per NodePort.
+cat > /opt/piap/refresh-iptables.sh << 'REFRESH_EOF'
+#!/bin/bash
+# Refresh iptables DNAT rules so the Cisco connector (docker0 / 240.0.0.x)
+# can reach K8s NodePort services when pod IPs change after pod restarts.
+#
+# On modern kernels Cilium's TC hook on docker0 runs BEFORE iptables, so this
+# script is a no-op when Cilium handles the traffic correctly.  On Linux 4.4
+# where Cilium cannot attach TC to docker0, these rules are the actual fix.
+set -euo pipefail
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+KUBECTL=/usr/local/bin/kubectl
+
+while IFS=$'\t' read -r SVC_NAME NODE_PORT TARGET_PORT; do
+    [ -z "${NODE_PORT:-}" ] || [ "$NODE_PORT" = "null" ] && continue
+    [ -z "${TARGET_PORT:-}" ] || [ "$TARGET_PORT" = "null" ] && continue
+
+    POD_IP=$($KUBECTL get pods -n piap -l "io.kompose.service=${SVC_NAME}" \
         -o jsonpath='{.items[0].status.podIP}' 2>/dev/null || true)
 
-    if [ -z "$POD_IP" ]; then
-        echo "  ⚠ No running pod for $SVC_NAME (NodePort $NODE_PORT) — skipping"
-        continue
-    fi
+    [ -z "$POD_IP" ] && continue
 
-    # Remove stale rule if present, then insert fresh at top of PREROUTING.
-    iptables -t nat -D PREROUTING -i docker0 -p tcp --dport "$NODE_PORT" \
-        -j DNAT --to-destination "${POD_IP}:${TARGET_PORT}" 2>/dev/null || true
+    # Remove any stale DNAT rule for this NodePort (pod IP may have changed).
+    iptables -t nat -S PREROUTING 2>/dev/null \
+      | grep -- "-i docker0 -p tcp --dport ${NODE_PORT} -j DNAT" \
+      | sed 's/^-A PREROUTING/-D PREROUTING/' \
+      | while IFS= read -r old_rule; do
+            iptables -t nat $old_rule 2>/dev/null || true
+        done
+
     iptables -t nat -I PREROUTING -i docker0 -p tcp --dport "$NODE_PORT" \
         -j DNAT --to-destination "${POD_IP}:${TARGET_PORT}"
 
-    iptables -D FORWARD -i docker0 -d "$POD_IP" -p tcp --dport "$TARGET_PORT" \
-        -j ACCEPT 2>/dev/null || true
-    iptables -I FORWARD -i docker0 -d "$POD_IP" -p tcp --dport "$TARGET_PORT" \
-        -j ACCEPT
+    # Remove stale FORWARD accept for this service (identified by comment tag).
+    iptables -S FORWARD 2>/dev/null \
+      | grep -- "--comment piap/${SVC_NAME}" \
+      | sed 's/^-A FORWARD/-D FORWARD/' \
+      | while IFS= read -r old_rule; do
+            iptables $old_rule 2>/dev/null || true
+        done
 
-    echo "  ✓ docker0:${NODE_PORT} → ${SVC_NAME} (${POD_IP}:${TARGET_PORT})"
-done < <(kubectl get svc -n piap -o json | \
-    python3 -c "
+    iptables -I FORWARD -i docker0 -d "$POD_IP" -p tcp --dport "$TARGET_PORT" \
+        -m comment --comment "piap/${SVC_NAME}" -j ACCEPT
+
+    echo "  docker0:${NODE_PORT} → ${SVC_NAME} (${POD_IP}:${TARGET_PORT})"
+done < <($KUBECTL get svc -n piap -o json | python3 -c "
 import json, sys
 data = json.load(sys.stdin)
 for svc in data['items']:
@@ -535,6 +529,43 @@ for svc in data['items']:
         if np and tp:
             print(f'{name}\t{np}\t{tp}')
 ")
+REFRESH_EOF
+chmod +x /opt/piap/refresh-iptables.sh
+
+# Systemd service — runs the script once per invocation (oneshot).
+cat > /etc/systemd/system/piap-iptables-refresh.service << 'SERVICE_EOF'
+[Unit]
+Description=Refresh piap iptables DNAT rules for K8s NodePorts
+After=k3s.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/piap/refresh-iptables.sh
+StandardOutput=journal
+StandardError=journal
+SERVICE_EOF
+
+# Systemd timer — triggers the service every 30 s, starting 60 s after boot
+# (giving K3s and pods time to become ready first).
+cat > /etc/systemd/system/piap-iptables-refresh.timer << 'TIMER_EOF'
+[Unit]
+Description=Refresh piap iptables DNAT rules every 30 seconds
+
+[Timer]
+OnBootSec=60s
+OnUnitActiveSec=30s
+
+[Install]
+WantedBy=timers.target
+TIMER_EOF
+
+systemctl daemon-reload
+systemctl enable --now piap-iptables-refresh.timer
+
+# Run once immediately so rules are active without waiting 30 s.
+echo "  Running initial rule sync..."
+/opt/piap/refresh-iptables.sh
+echo "  ✓ iptables-refresh controller installed and active (every 30 s)"
 echo ""
 
 # Step 20: Show access information

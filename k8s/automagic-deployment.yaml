@@ -35,12 +35,6 @@ spec:
           env:
             - name: TZ
               value: Europe/Berlin
-            - name: DOCKER_BRIDGE_CIDR
-              valueFrom:
-                configMapKeyRef:
-                  name: piap-network-config
-                  key: docker-bridge-cidr
-                  optional: true
           image: python:3.11-slim
           name: automagic
           ports:

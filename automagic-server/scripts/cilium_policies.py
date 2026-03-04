@@ -1,5 +1,3 @@
-import os
-
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
@@ -10,15 +8,10 @@ PLURAL = "ciliumnetworkpolicies"
 
 POLICY_NAMES = ["piap-zero-trust"]
 
-# Docker bridge CIDR — injected at deploy time by the setup script via a K8s
-# ConfigMap (piap-network-config / docker-bridge-cidr).  Falls back to Docker's
-# standard default so the policy is never empty even if the ConfigMap is absent.
-DOCKER_BRIDGE_CIDR = os.environ.get("DOCKER_BRIDGE_CIDR", "172.17.0.0/16")
-
 # Zero trust policy: restricts all workload pods (everything except automagic)
 # to only accept ingress from the Cisco Resource Connector Docker container.
-# The connector runs as a plain Docker container on the host's default bridge.
-# Traffic it forwards reaches pods with source IP in DOCKER_BRIDGE_CIDR.
+# The Cisco setup_connector.sh always assigns 240.0.0.0/29 to Docker's bridge
+# network — this CIDR is fixed and identical on every machine this runs on.
 POLICY_ZERO_TRUST = {
     "apiVersion": "cilium.io/v2",
     "kind": "CiliumNetworkPolicy",
@@ -38,7 +31,7 @@ POLICY_ZERO_TRUST = {
         },
         "ingress": [
             {
-                "fromCIDR": [DOCKER_BRIDGE_CIDR]
+                "fromCIDR": ["240.0.0.0/29"]
             }
         ],
     },
