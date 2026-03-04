@@ -44,8 +44,7 @@ spec:
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
             - name: nginx-www
-              mountPath: /usr/share/nginx/html/index.html
-              subPath: index.html
+              mountPath: /usr/share/nginx/html
       restartPolicy: Always
       volumes:
         - name: source-files
