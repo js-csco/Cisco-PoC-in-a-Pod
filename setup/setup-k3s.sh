@@ -492,11 +492,12 @@ set -euo pipefail
 export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 KUBECTL=/usr/local/bin/kubectl
 
-while IFS=$'\t' read -r SVC_NAME NODE_PORT TARGET_PORT; do
+while IFS=$'\t' read -r SVC_NAME NODE_PORT TARGET_PORT SELECTOR; do
     { [ -z "${NODE_PORT:-}" ] || [ "$NODE_PORT" = "null" ]; } && continue
     { [ -z "${TARGET_PORT:-}" ] || [ "$TARGET_PORT" = "null" ]; } && continue
+    { [ -z "${SELECTOR:-}" ] || [ "$SELECTOR" = "null" ]; } && continue
 
-    POD_IP=$($KUBECTL get pods -n piap -l "io.kompose.service=${SVC_NAME}" \
+    POD_IP=$($KUBECTL get pods -n piap -l "${SELECTOR}" \
         -o jsonpath='{.items[0].status.podIP}' 2>/dev/null || true)
 
     [ -z "$POD_IP" ] && continue
@@ -531,11 +532,15 @@ for svc in data['items']:
     if svc['spec'].get('type') != 'NodePort':
         continue
     name = svc['metadata']['name']
+    selector = svc['spec'].get('selector', {})
+    selector_str = ','.join(f'{k}={v}' for k, v in selector.items())
+    if not selector_str:
+        continue
     for p in svc['spec']['ports']:
         np = p.get('nodePort')
         tp = p.get('targetPort')
         if np and tp:
-            print(f'{name}\t{np}\t{tp}')
+            print(f'{name}\t{np}\t{tp}\t{selector_str}')
 ")
 REFRESH_EOF
 chmod +x /opt/piap/refresh-iptables.sh
