@@ -6,10 +6,13 @@ GROUP = "cilium.io"
 VERSION = "v2"
 PLURAL = "ciliumnetworkpolicies"
 
-POLICY_NAMES = ["piap-zero-trust", "piap-connector-allow"]
+POLICY_NAMES = ["piap-zero-trust"]
 
-# Zero trust policy: restricts all workload pods (everything except automagic and connector)
-# to only accept ingress traffic from the connector pod.
+# Zero trust policy: restricts all workload pods (everything except automagic)
+# to only accept ingress from the Cisco Resource Connector Docker container.
+# The connector is no longer a K8s pod — it runs as a plain Docker container
+# on the host's default bridge (240.0.0.0/29).  Traffic it forwards reaches
+# pods with source IP 240.0.0.2, so we match on that CIDR.
 POLICY_ZERO_TRUST = {
     "apiVersion": "cilium.io/v2",
     "kind": "CiliumNetworkPolicy",
@@ -23,35 +26,15 @@ POLICY_ZERO_TRUST = {
                 {
                     "key": "io.kompose.service",
                     "operator": "NotIn",
-                    "values": ["automagic", "connector"],
+                    "values": ["automagic"],
                 }
             ]
         },
         "ingress": [
             {
-                "fromEndpoints": [
-                    {"matchLabels": {"app": "connector"}}
-                ]
+                "fromCIDR": ["240.0.0.0/29"]
             }
         ],
-    },
-}
-
-# Connector policy: allows the connector pod all ingress and egress so the
-# Cisco Secure Access tunnel to the SSE cloud continues to work.
-POLICY_CONNECTOR_ALLOW = {
-    "apiVersion": "cilium.io/v2",
-    "kind": "CiliumNetworkPolicy",
-    "metadata": {
-        "name": "piap-connector-allow",
-        "namespace": NAMESPACE,
-    },
-    "spec": {
-        "endpointSelector": {
-            "matchLabels": {"app": "connector"}
-        },
-        "ingress": [{"fromEntities": ["world", "cluster", "host"]}],
-        "egress":  [{"toEntities":   ["world", "cluster", "host"]}],
     },
 }
 
@@ -65,20 +48,19 @@ def _get_api():
 
 
 def apply_zero_trust():
-    """Apply Zero Trust policies: workload pods only accept traffic from connector."""
+    """Apply Zero Trust policy: workload pods only accept traffic from the connector Docker bridge."""
     api = _get_api()
     results = []
-    for policy in [POLICY_ZERO_TRUST, POLICY_CONNECTOR_ALLOW]:
-        name = policy["metadata"]["name"]
-        try:
-            api.create_namespaced_custom_object(GROUP, VERSION, NAMESPACE, PLURAL, policy)
-            results.append(f"Created policy: {name}")
-        except ApiException as e:
-            if e.status == 409:
-                api.replace_namespaced_custom_object(GROUP, VERSION, NAMESPACE, PLURAL, name, policy)
-                results.append(f"Updated policy: {name}")
-            else:
-                raise
+    name = POLICY_ZERO_TRUST["metadata"]["name"]
+    try:
+        api.create_namespaced_custom_object(GROUP, VERSION, NAMESPACE, PLURAL, POLICY_ZERO_TRUST)
+        results.append(f"Created policy: {name}")
+    except ApiException as e:
+        if e.status == 409:
+            api.replace_namespaced_custom_object(GROUP, VERSION, NAMESPACE, PLURAL, name, POLICY_ZERO_TRUST)
+            results.append(f"Updated policy: {name}")
+        else:
+            raise
     return results
 
 

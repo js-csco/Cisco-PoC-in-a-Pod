@@ -29,7 +29,7 @@
         ⚠️ Could not read policies from Kubernetes API: {{ policy_error }}
       </p>
     {% else %}
-      {% set zero_trust_active = ('piap-zero-trust' in active_policies and 'piap-connector-allow' in active_policies) %}
+      {% set zero_trust_active = ('piap-zero-trust' in active_policies) %}
       {% if zero_trust_active %}
         <div style="display:inline-flex; align-items:center; gap:8px; background:#fff3e0; border:1px solid #f90; border-radius:8px; padding:10px 16px;">
           <span style="font-size:1.2rem;">🔒</span>
@@ -89,25 +89,17 @@
     </div>
 
     <p style="margin-top:0; margin-bottom:16px; color:#555; font-size:0.95em; line-height:1.6;">
-      Applies two <code>CiliumNetworkPolicy</code> objects that enforce Zero Trust
+      Applies a <code>CiliumNetworkPolicy</code> that enforces Zero Trust
       at the network layer inside the cluster. All workload pods accept ingress
       <strong>only from the Resource Connector</strong> — users must go through
       Cisco Secure Access to reach any service.
     </p>
 
-    <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px 18px; margin-bottom:16px; font-size:0.88em; color:#5d4037;">
+    <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px 18px; margin-bottom:20px; font-size:0.88em; color:#5d4037;">
       <strong>Policy: <code>piap-zero-trust</code></strong> — applied to all workload pods (nginx, splunk, kanboard, rdp-server, ssh-server, dashy)
       <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
-        <li>Ingress: only from pods labelled <code>app=connector</code></li>
+        <li>Ingress: only from the Cisco Resource Connector Docker bridge (<code>240.0.0.0/29</code>)</li>
         <li>Egress: unrestricted (responses &amp; outbound traffic still flow)</li>
-      </ul>
-    </div>
-
-    <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px 18px; margin-bottom:20px; font-size:0.88em; color:#5d4037;">
-      <strong>Policy: <code>piap-connector-allow</code></strong> — applied to the Resource Connector pod
-      <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
-        <li>Ingress: allow all (Cisco SSE cloud tunnel terminates here)</li>
-        <li>Egress: allow all (connector reaches both cloud and internal pods)</li>
       </ul>
     </div>
 
