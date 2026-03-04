@@ -27,6 +27,14 @@ echo ""
 # Resolve server IP early — used in Cilium install, config updates, and status output.
 SERVER_IP=$(hostname -I | awk '{print $1}')
 echo "Server IP: $SERVER_IP"
+
+# Detect the primary network interface (the one with the default route).
+# Cilium needs this plus docker0 so that NodePort eBPF programs are attached on
+# both interfaces — without docker0, connections from the Cisco connector
+# container (which exits via docker0) to K3s NodePorts are silently dropped
+# because Cilium's kube-proxy replacement only hooks the devices it knows about.
+PRIMARY_IFACE=$(ip route | awk '/^default/{print $5; exit}')
+echo "Primary interface: $PRIMARY_IFACE"
 echo ""
 
 # ============================================================
@@ -294,7 +302,8 @@ cilium install --version 1.16.5 \
   --set enableIPv4Masquerade=true \
   --set kubeProxyReplacement=true \
   --set k8sServiceHost=$SERVER_IP \
-  --set k8sServicePort=6443
+  --set k8sServicePort=6443 \
+  --set devices="${PRIMARY_IFACE} docker0"
 
 echo "  ✓ Cilium installation started"
 echo ""
@@ -303,6 +312,27 @@ echo ""
 echo "Step 12: Waiting for Cilium to be ready..."
 cilium status --wait
 echo "  ✓ Cilium is ready"
+echo ""
+
+# Step 12.1: Ensure docker0 is in Cilium's device list.
+# This is a no-op on a fresh install (the cilium install command above already
+# passes --set devices=...), but is needed when re-running the script against an
+# already-running cluster so existing deployments pick up the change.
+echo "Step 12.1: Ensuring Cilium watches docker0 for NodePort (connector → K3s)..."
+CURRENT_DEVICES=$(kubectl get configmap cilium-config -n kube-system \
+  -o jsonpath='{.data.devices}' 2>/dev/null || true)
+WANT_DEVICES="${PRIMARY_IFACE} docker0"
+if [ "$CURRENT_DEVICES" != "$WANT_DEVICES" ]; then
+    kubectl patch configmap cilium-config -n kube-system \
+        --type merge \
+        -p "{\"data\":{\"devices\":\"${WANT_DEVICES}\"}}"
+    echo "  Restarting Cilium daemonset to apply new device list..."
+    kubectl rollout restart daemonset/cilium -n kube-system
+    kubectl rollout status daemonset/cilium -n kube-system --timeout=120s || true
+    echo "  ✓ Cilium device list updated: ${WANT_DEVICES}"
+else
+    echo "  ✓ Cilium device list already correct: ${CURRENT_DEVICES}"
+fi
 echo ""
 
 # Step 13: Enable Hubble
