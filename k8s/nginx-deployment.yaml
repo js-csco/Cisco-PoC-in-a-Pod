@@ -18,6 +18,17 @@ spec:
         io.kompose.service: nginx
         app: nginx
     spec:
+      initContainers:
+        - name: copy-files
+          image: busybox
+          command: ['sh', '-c', 'cp /source/nginx.conf /config/ && cp /source/index.html /www/']
+          volumeMounts:
+            - name: source-files
+              mountPath: /source
+            - name: nginx-config
+              mountPath: /config
+            - name: nginx-www
+              mountPath: /www
       containers:
         - image: nginx:alpine
           name: nginx-web
@@ -29,16 +40,20 @@ spec:
               protocol: TCP
           resources: {}
           volumeMounts:
-            - name: web-files
+            - name: nginx-config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
-            - name: web-files
+            - name: nginx-www
               mountPath: /usr/share/nginx/html/index.html
               subPath: index.html
       restartPolicy: Always
       volumes:
-        - name: web-files
+        - name: source-files
           hostPath:
             path: /web
             type: Directory
+        - name: nginx-config
+          emptyDir: {}
+        - name: nginx-www
+          emptyDir: {}
 status: {}
