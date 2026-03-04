@@ -410,7 +410,20 @@ fi
 
 if [ -f "$REPO_ROOT/web/index.html" ]; then
     echo "  Updating web files with server IP..."
+    # Detect the connector's source IP as seen by apps inside the cluster.
+    # Try docker inspect first; if the connector uses host-networking or a
+    # non-bridge network, fall back to the secondary host NIC IP.
+    CONNECTOR_IP=$(docker inspect "$CONNECTOR_NAME" \
+        --format '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}' 2>/dev/null \
+        | tr ' ' '\n' | grep -v '^$' | grep -v '^172\.17\.' | head -1)
+    if [ -z "$CONNECTOR_IP" ]; then
+        CONNECTOR_IP=$(hostname -I | tr ' ' '\n' \
+            | grep -v "^$SERVER_IP$" | grep -v '^127\.' | grep -v '^::' | head -1)
+    fi
+    CONNECTOR_IP=${CONNECTOR_IP:-$SERVER_IP}
+    echo "  Connector source IP (as seen by apps): $CONNECTOR_IP"
     sed -i "s/SERVER_IP/$SERVER_IP/g" "$REPO_ROOT/web/index.html"
+    sed -i "s/CONNECTOR_IP/$CONNECTOR_IP/g" "$REPO_ROOT/web/index.html"
 fi
 
 if [ -d "$REPO_ROOT/automagic-server/templates" ]; then

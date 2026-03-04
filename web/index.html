@@ -224,15 +224,15 @@
   <div class="card">
     <div class="card-title">HOW ACCESS IS DETECTED</div>
     <p style="font-size:0.88em; color:#555; line-height:1.7; margin:0;">
-      The Resource Connector runs on this server (<code>SERVER_IP</code>) as a Docker container.
+      The Resource Connector runs on this server as a Docker container with IP <code>CONNECTOR_IP</code>.
       When you access via Cisco Secure Access, your traffic travels through the
       <strong>Secure Access cloud</strong> and exits through the on-premises connector —
-      so the application only ever sees <strong>SERVER_IP</strong> as the source, never your real IP.
+      so the application only ever sees <strong>CONNECTOR_IP</strong> as the source, never your real IP.
       Accessing directly over the LAN or internet exposes your actual IP instead.
     </p>
     <div class="explain-row">
       <div class="explain-panel panel-ztna">
-        <strong>✅ Via ZTNA — source IP: SERVER_IP</strong>
+        <strong>✅ Via ZTNA — source IP: CONNECTOR_IP</strong>
         Traffic arrived through the Cisco Resource Connector running on this host.
         Your real IP is hidden — Zero Trust policies are enforced.
       </div>
@@ -264,7 +264,7 @@
   // The Resource Connector runs on the same host as this server.
   // When traffic arrives via ZTNA the server sees the connector host's LAN IP —
   // not the user's real IP. This value is injected by setup at install time.
-  const CONNECTOR_IP = 'SERVER_IP';
+  const CONNECTOR_IP = 'CONNECTOR_IP';
 
   function isConnector(addr) {
     return addr === CONNECTOR_IP;
