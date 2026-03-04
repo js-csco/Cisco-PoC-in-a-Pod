@@ -22,7 +22,7 @@ def create_int_warn_policy(token):
 
     payload = {
         "ruleDescription": "Warn Page for Roaming Devices to Gen AI Category Apps. Decryption in Security Profile is required for the Warn Page.",
-        "ruleIsEnabled": False,
+        "ruleIsEnabled": True,
         "ruleIsDefault": False,
         "ruleSettings": [
             {
@@ -88,7 +88,7 @@ def create_inet_isolate_policy(token):
         "ruleIName": None,
         "ruleAction": "isolate",
         "ruleDescription": "Browser Isolation for Roaming Devices to News Websites. Decryption in Security Profile is required for the Browser Isolation.",
-        "ruleIsEnabled": False,
+        "ruleIsEnabled": True,
         "ruleExternalId": None,
         "ruleSettings": [
             {
@@ -167,7 +167,7 @@ def create_int_block_content_policy(token):
             }
         ],
         "ruleDescription": "Block Access for Roaming Devices to Alcohol Websites. Decryption in Security Profile is required for the Block Page.",
-        "ruleIsEnabled": False,
+        "ruleIsEnabled": True,
         "rulePriority": 3,
         "ruleIName": None,
         "ruleSettings": [
@@ -248,7 +248,7 @@ def create_int_block_apps_policy(token):
         ],
         "ruleExternalId": None,
         "ruleIName": None,
-        "ruleIsEnabled": False,
+        "ruleIsEnabled": True,
         "ruleAccess": "public_internet"
     }
     r = requests.post(url, headers=headers, json=payload, timeout=15)
@@ -306,7 +306,7 @@ def create_allow_all_policy(token):
         "rulePriority": 5,
         "ruleIName": None,
         "ruleAction": "allow",
-        "ruleIsEnabled": False,
+        "ruleIsEnabled": True,
         "ruleIsDefault": False,
         "ruleExternalId": None,
         "ruleAccess": "public_internet"

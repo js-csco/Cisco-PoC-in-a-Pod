@@ -26,7 +26,7 @@ def create_private_access_policy(token):
         "rulePriority": 1,
         "ruleAction": "allow",
         "ruleAccess": "private_network",
-        "ruleIsEnabled": False,
+        "ruleIsEnabled": True,
         "ruleSettings": [
             {
                 "settingId": 5,
