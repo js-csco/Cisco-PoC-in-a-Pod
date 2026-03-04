@@ -264,10 +264,10 @@
   // The Resource Connector runs on the same host as this server.
   // When traffic arrives via ZTNA the server sees the connector host's LAN IP —
   // not the user's real IP. This value is injected by setup at install time.
-  const CONNECTOR_IP = 'CONNECTOR_IP';
+  const connectorIp = 'CONNECTOR_IP';
 
   function isConnector(addr) {
-    return addr === CONNECTOR_IP;
+    return addr === connectorIp;
   }
 
   function isPrivateLAN(addr) {
