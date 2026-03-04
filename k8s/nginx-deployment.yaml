@@ -1,3 +1,19 @@
+# nginx SSI config — enables server-side IP injection into index.html
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: piap
+data:
+  default.conf: |
+    server {
+        listen 80;
+        root /usr/share/nginx/html;
+        index index.html;
+        ssi on;
+        ssi_silent_errors on;
+    }
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -21,13 +37,9 @@ spec:
       containers:
         - image: nginx:alpine
           name: nginx-web
-          env:
-            - name: TZ
-              value: Europe/Berlin
           ports:
             - containerPort: 80
               protocol: TCP
-          resources: {}
           volumeMounts:
             - name: nginx-config
               mountPath: /etc/nginx/conf.d/default.conf
