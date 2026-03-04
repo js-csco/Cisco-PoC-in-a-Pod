@@ -456,12 +456,18 @@ echo ""
 
 # Step 19.1: Install and start the iptables-refresh controller.
 #
-# Background: Cilium's kube-proxy replacement handles NodePort via eBPF TC hooks
-# attached only to the primary network interface (e.g. ens34).  The Cisco
-# connector (240.0.0.x) exits via docker0.  On modern kernels, Step 12.1 tells
-# Cilium to also watch docker0, so Cilium's TC hook handles it natively — no
-# iptables needed.  On Linux 4.4 the TC attachment fails silently, so iptables
-# DNAT rules are the actual fix.
+# Background: Cilium's kube-proxy replacement handles NodePort via eBPF TC hooks.
+# Step 12.1 tells Cilium to also watch docker0 (in addition to the primary NIC)
+# so that the connector (240.0.0.x) can reach K8s NodePorts.  However, Cilium
+# reads the devices list at startup — if docker0 doesn't exist yet when Cilium
+# initialises (because the connector container starts later), Cilium silently
+# skips it and the TC hook is never attached.  This is a startup-ordering issue,
+# not a kernel limitation, and it affects any kernel version.
+#
+# iptables DNAT rules are the reliable fallback: they are installed after the
+# connector and all pods are running, so pod IPs are known and docker0 exists.
+# If Cilium did attach its TC hook to docker0, it runs BEFORE iptables in the
+# kernel stack, so these rules become a harmless no-op in that case.
 #
 # Pod IPs change whenever a pod restarts.  The controller below runs every 30 s
 # and re-syncs the iptables DNAT rules with the current pod IPs, so a pod crash
@@ -477,9 +483,11 @@ cat > /opt/piap/refresh-iptables.sh << 'REFRESH_EOF'
 # Refresh iptables DNAT rules so the Cisco connector (docker0 / 240.0.0.x)
 # can reach K8s NodePort services when pod IPs change after pod restarts.
 #
-# On modern kernels Cilium's TC hook on docker0 runs BEFORE iptables, so this
-# script is a no-op when Cilium handles the traffic correctly.  On Linux 4.4
-# where Cilium cannot attach TC to docker0, these rules are the actual fix.
+# Cilium is configured (Step 12.1) to attach TC hooks to docker0, but it reads
+# the devices list at startup — if docker0 doesn't exist yet at that point,
+# the hook is never attached.  These iptables rules are the reliable fallback.
+# If Cilium's TC hook IS attached, it runs before iptables in the kernel stack
+# and these rules are never triggered.
 set -euo pipefail
 export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 KUBECTL=/usr/local/bin/kubectl
