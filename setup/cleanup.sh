@@ -110,7 +110,20 @@ else
 fi
 echo ""
 
-echo "Step 5: Cleaning up Cilium iptables rules..."
+echo "Step 5: Cleaning up iptables rules..."
+# Remove piap DNAT rules from PREROUTING
+iptables -t nat -S PREROUTING 2>/dev/null \
+  | grep -- "-i docker0 -p tcp.*-j DNAT" \
+  | sed 's/^-A PREROUTING/-D PREROUTING/' \
+  | while IFS= read -r rule; do iptables -t nat $rule 2>/dev/null || true; done || true
+# Remove piap FORWARD rules (tagged with comment piap/)
+iptables -S FORWARD 2>/dev/null \
+  | grep -- "--comment piap/" \
+  | sed 's/^-A FORWARD/-D FORWARD/' \
+  | while IFS= read -r rule; do iptables $rule 2>/dev/null || true; done || true
+echo "  ✓ piap iptables rules removed"
+
+# Remove Cilium iptables rules
 # Remove Cilium chains
 iptables -t nat -F CILIUM_POST_nat 2>/dev/null || true
 iptables -t nat -F CILIUM_PRE_nat 2>/dev/null || true
@@ -157,6 +170,13 @@ echo "  ✓ CNI configuration removed"
 echo ""
 
 echo "Step 9: Cleaning up systemd services..."
+systemctl stop piap-iptables-refresh.timer 2>/dev/null || true
+systemctl disable piap-iptables-refresh.timer 2>/dev/null || true
+systemctl stop piap-iptables-refresh.service 2>/dev/null || true
+rm -f /etc/systemd/system/piap-iptables-refresh.timer
+rm -f /etc/systemd/system/piap-iptables-refresh.service
+rm -rf /opt/piap
+echo "  ✓ piap iptables-refresh timer/service removed"
 systemctl stop k3s 2>/dev/null || true
 systemctl disable k3s 2>/dev/null || true
 rm -f /etc/systemd/system/k3s.service 2>/dev/null || true
