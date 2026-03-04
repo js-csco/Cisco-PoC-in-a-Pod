@@ -222,21 +222,24 @@
 
   <!-- Explanation -->
   <div class="card">
-    <div class="card-title">WHY THE IP TELLS THE STORY</div>
+    <div class="card-title">HOW ACCESS IS DETECTED</div>
     <p style="font-size:0.88em; color:#555; line-height:1.7; margin:0;">
-      With Cisco Secure Access ZTNA your browser never opens a direct connection to this server.
-      Traffic flows through the <strong>Secure Access cloud gateway</strong>, then arrives via the
-      on-premises <strong>Resource Connector</strong> (host <code>SERVER_IP</code>) — so the server
-      only ever sees the connector's host IP, never your real IP.
+      The Resource Connector runs on this server (<code>SERVER_IP</code>) as a Docker container.
+      When you access via Cisco Secure Access, your traffic travels through the
+      <strong>Secure Access cloud</strong> and exits through the on-premises connector —
+      so the application only ever sees <strong>SERVER_IP</strong> as the source, never your real IP.
+      Accessing directly over the LAN or internet exposes your actual IP instead.
     </p>
     <div class="explain-row">
       <div class="explain-panel panel-ztna">
-        <strong>✅ Via ZTNA</strong>
-        Server sees <em>SERVER_IP</em> — the Cisco Resource Connector host IP. Your real IP is fully hidden behind the connector.
+        <strong>✅ Via ZTNA — source IP: SERVER_IP</strong>
+        Traffic arrived through the Cisco Resource Connector running on this host.
+        Your real IP is hidden — Zero Trust policies are enforced.
       </div>
       <div class="explain-panel panel-direct">
-        <strong>⚠️ Direct Access</strong>
-        Server sees your <em>actual LAN or public IP</em>. Zero Trust policies are not in effect.
+        <strong>⚠️ Direct Access — source IP: your IP</strong>
+        Your device connected directly to this server over the LAN or internet,
+        bypassing the connector and Zero Trust controls entirely.
       </div>
     </div>
   </div>
