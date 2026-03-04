@@ -1,10 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
-    kompose.version: 1.31.2 (a92241f79)
-  creationTimestamp: null
   labels:
     io.kompose.service: nginx
   name: nginx
@@ -17,49 +13,32 @@ spec:
     type: Recreate
   template:
     metadata:
-      annotations:
-        kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
-        kompose.version: 1.31.2 (a92241f79)
-      creationTimestamp: null
       labels:
         io.kompose.network/piap-kind-komp-cisco-pod-network: "true"
         io.kompose.service: nginx
         app: nginx
     spec:
-      initContainers:
-        - name: copy-files
-          image: busybox
-          command: ['sh', '-c', 'cp /source/nginx.conf /config/nginx/ && cp /source/index.html /config/www/']
-          volumeMounts:
-            - name: source-files
-              mountPath: /source
-            - name: nginx-config
-              mountPath: /config/nginx
-            - name: nginx-www
-              mountPath: /config/www
       containers:
-        - env:
+        - image: nginx:alpine
+          name: nginx-web
+          env:
             - name: TZ
               value: Europe/Berlin
-          image: lscr.io/linuxserver/nginx:latest
-          name: nginx-web
           ports:
             - containerPort: 80
               protocol: TCP
           resources: {}
           volumeMounts:
-            - name: nginx-config
-              mountPath: /config/nginx
-            - name: nginx-www
-              mountPath: /config/www
+            - name: web-files
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+            - name: web-files
+              mountPath: /usr/share/nginx/html/index.html
+              subPath: index.html
       restartPolicy: Always
       volumes:
-        - name: source-files
+        - name: web-files
           hostPath:
             path: /web
             type: Directory
-        - name: nginx-config
-          emptyDir: {}
-        - name: nginx-www
-          emptyDir: {}
 status: {}
