@@ -46,14 +46,6 @@ if [ -L "/etc/service/connector_svc" ] || [ -d "/etc/service/connector_svc" ]; t
     echo "  ✓ Daemontools service symlink removed"
 fi
 
-# Find and remove connector containers (handles any leftover Docker containers)
-CONNECTOR_CONTAINERS=$(docker ps -a --filter "name=resource-connector" --format "{{.Names}}" 2>/dev/null || true)
-if [ -n "$CONNECTOR_CONTAINERS" ]; then
-    echo "  Removing connector containers..."
-    docker rm -f $CONNECTOR_CONTAINERS 2>/dev/null || true
-    echo "  ✓ Connector containers removed"
-fi
-
 # Remove connector images from Docker
 CONNECTOR_IMAGES=$(docker images --filter "reference=*connector*" --format "{{.ID}}" 2>/dev/null || true)
 if [ -n "$CONNECTOR_IMAGES" ]; then
@@ -89,16 +81,6 @@ if command -v kubectl &> /dev/null; then
     # Delete piap namespace (this removes all resources within it)
     kubectl delete namespace piap --ignore-not-found=true 2>/dev/null || true
     echo "  ✓ Namespace 'piap' deleted"
-    
-    # Delete connector service and endpoints from default namespace
-    kubectl delete service connector -n default --ignore-not-found=true 2>/dev/null || true
-    kubectl delete endpoints connector -n default --ignore-not-found=true 2>/dev/null || true
-    echo "  ✓ Connector service and endpoints deleted"
-    
-    # Delete Cilium Network Policies
-    kubectl delete ciliumnetworkpolicy allow-to-connector -n default --ignore-not-found=true 2>/dev/null || true
-    kubectl delete ciliumnetworkpolicy allow-from-connector -n default --ignore-not-found=true 2>/dev/null || true
-    echo "  ✓ Cilium network policies deleted"
     
     # Delete Tetragon
     if command -v helm &> /dev/null; then
@@ -184,8 +166,6 @@ echo ""
 
 echo "Step 10: Removing temporary setup files..."
 rm -f /tmp/setup_connector.sh 2>/dev/null || true
-rm -f /tmp/connector-service.yaml 2>/dev/null || true
-rm -f /tmp/connector-netpol.yaml 2>/dev/null || true
 echo "  ✓ Temporary files removed"
 echo ""
 
@@ -265,17 +245,11 @@ echo "================================================"
 echo "  Configuration Files Notice"
 echo "================================================"
 echo ""
-echo "⚠️  Note: The setup script modified the following files"
-echo "    by replacing SERVER_IP placeholders:"
-echo ""
-echo "    - dashy/conf.yml"
-echo "    - web/index.html"
-echo "    - automagic-server/templates/*.html"
-echo ""
-echo "    These files were NOT restored to their original state."
-echo "    If you have these backed up (e.g., in Git), you can restore them:"
-echo ""
-echo "    git checkout dashy/conf.yml web/index.html automagic-server/templates/"
+echo "Restoring config files modified by setup (SERVER_IP substitution)..."
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+git -C "$REPO_ROOT" checkout -- dashy/conf.yml web/index.html automagic-server/templates/ 2>/dev/null \
+    && echo "  ✓ Config files restored from git" \
+    || echo "  ⚠ Could not restore config files — restore manually: git checkout dashy/conf.yml web/index.html automagic-server/templates/"
 echo ""
 
 echo "================================================"
@@ -285,7 +259,7 @@ echo ""
 echo "What was removed:"
 echo "  ✓ K3s cluster and all workloads"
 echo "  ✓ Cilium CNI and network policies"
-echo "  ✓ Cisco Resource Connector (pod, data, AppArmor profile, daemontools service)"
+echo "  ✓ Cisco Resource Connector (Docker container, data, AppArmor profile, daemontools service)"
 echo "  ✓ All Kubernetes resources (piap namespace, secrets, services)"
 echo "  ✓ Tetragon security observability"
 echo "  ✓ All iptables rules"

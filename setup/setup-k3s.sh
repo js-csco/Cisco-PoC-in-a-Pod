@@ -199,8 +199,7 @@ for svc_dir in /etc/service/*connector*; do
     echo "  ✓ Daemontools service paused: $svc_dir"
 done
 
-docker ps -q --filter name=connector | xargs -r docker stop 2>/dev/null || true
-docker ps -aq --filter name=connector | xargs -r docker rm  2>/dev/null || true
+docker ps -aq --filter name=connector | xargs -r docker rm -f 2>/dev/null || true
 echo "  ✓ Any previously running connector container removed"
 
 if [ ! -x "$CONNECTOR_SH" ]; then
@@ -239,7 +238,6 @@ echo ""
 
 # Step 7: Wait for k3s API server
 echo "Step 7: Waiting for k3s API server..."
-sleep 15
 until kubectl get nodes &>/dev/null; do
     echo "  Waiting for k3s API server to respond..."
     sleep 5
@@ -411,10 +409,6 @@ for manifest in "$REPO_ROOT/k8s/"*.yaml; do
             else
                 echo "  Skipping $(basename $manifest) (Splunk not configured)"
             fi
-            ;;
-        *connector-deployment*)
-            # Connector runs as a Docker container outside K3s — skip this manifest.
-            echo "  Skipping $(basename $manifest) (connector runs as Docker, not K8s)"
             ;;
         *)
             kubectl apply -f "$manifest" -n piap
