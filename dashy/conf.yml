@@ -63,7 +63,12 @@ sections:
         icon: fas fa-server
         url: http://SERVER_IP:30800
         statusCheck: true
-      - title: Splunk 
+      - title: Checker
+        description: Alpine nginx checker on port 30550
+        icon: fas fa-check-circle
+        url: http://SERVER_IP:30550
+        statusCheck: true
+      - title: Splunk
         description: Aggregate Telemetry and Logs
         icon: fas fa-server
         url: http://SERVER_IP:30500
