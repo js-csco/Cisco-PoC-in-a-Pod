@@ -241,68 +241,6 @@
 
 <main>
 
-  <!-- Access Flow Diagram -->
-  <div class="diagram-card">
-    <div class="diagram-label">ACCESS FLOW</div>
-
-    <div class="flow">
-
-      <!-- User -->
-      <div class="flow-node">
-        <div class="flow-box">
-          <i class="fa-solid fa-laptop" style="color: var(--indigo);"></i>
-          <div class="fn">You</div>
-          <div class="fs">Device</div>
-        </div>
-      </div>
-
-      <!-- Arrow: Duo MFA -->
-      <div class="flow-arrow">
-        <span class="alabel">Duo MFA</span>
-        <span class="aline">→</span>
-      </div>
-
-      <!-- Secure Access Cloud -->
-      <div class="flow-node">
-        <div class="flow-box cloud">
-          <i class="fa-solid fa-cloud" style="color: var(--blue);"></i>
-          <div class="fn">Secure Access</div>
-          <div class="fs">ZTNA Cloud</div>
-        </div>
-      </div>
-
-      <!-- Arrow -->
-      <div class="flow-arrow">
-        <span class="aline" style="color:#ccc;">→</span>
-      </div>
-
-      <!-- Connector -->
-      <div class="flow-node">
-        <div class="flow-box">
-          <i class="fa-solid fa-plug" style="color: var(--indigo);"></i>
-          <div class="fn">Connector</div>
-          <div class="fs">Pod · SERVER_IP</div>
-        </div>
-      </div>
-
-      <!-- Arrow -->
-      <div class="flow-arrow">
-        <span class="aline" style="color:#ccc;">→</span>
-      </div>
-
-      <!-- SSE Check Pod -->
-      <div class="flow-node">
-        <div class="flow-box pod">
-          <i class="fa-solid fa-circle-check" style="color: #16a34a;"></i>
-          <div class="fn">SSE Check</div>
-          <div class="fs">This page · :30550</div>
-        </div>
-      </div>
-
-    </div>
-
-  </div>
-
   <!-- Status banner -->
   <div class="banner checking" id="banner">
     <div class="banner-icon" id="bIcon">⏳</div>
@@ -366,18 +304,6 @@
       so this application only ever sees <strong>SERVER_IP</strong> as the source, never your real IP.
       Accessing directly over the LAN or internet exposes your actual IP instead.
     </p>
-    <div class="explain-row">
-      <div class="explain-panel panel-ztna">
-        <strong>✅ Via ZTNA — source IP: SERVER_IP</strong>
-        Traffic arrived through the Cisco Resource Connector. Your real IP is hidden —
-        Zero Trust policies are enforced end-to-end.
-      </div>
-      <div class="explain-panel panel-direct">
-        <strong>⚠️ Direct Access — source IP: your IP</strong>
-        Your device connected directly to this server over the LAN or internet,
-        bypassing the connector and Zero Trust controls entirely.
-      </div>
-    </div>
   </div>
 
 </main>
