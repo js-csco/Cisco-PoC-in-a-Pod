@@ -1,3 +1,5 @@
+import os
+
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
@@ -8,40 +10,10 @@ PLURAL = "ciliumnetworkpolicies"
 
 POLICY_NAMES = ["piap-zero-trust"]
 
-# Cisco's setup_connector.sh always assigns 240.0.0.0/29 to the Docker bridge
-# used by the Resource Connector container — this is fixed across every machine.
-#
-# With externalTrafficPolicy: Cluster (default), Cilium SNATs ALL NodePort traffic
-# (connector AND LAN clients) to NODE_IP, making them indistinguishable in the pod.
-#
-# With externalTrafficPolicy: Local (applied below during zero trust), Cilium
-# preserves real source IPs — connector traffic arrives from 240.0.0.x, LAN clients
-# from their actual IP (e.g. 10.10.5.50).  The 240.0.0.0/29 CIDR then correctly
-# allows the connector and blocks direct LAN access.
-CONNECTOR_CIDR = "240.0.0.0/29"
-
 # piap services to lock down. automagic is excluded — always reachable from LAN.
 _PIAP_RESTRICTED_SERVICES = [
     "nginx", "splunk", "rdp-server", "ssh-server", "dashy", "sse-check", "kubectl-mcp",
 ]
-
-POLICY_ZERO_TRUST = {
-    "apiVersion": "cilium.io/v2",
-    "kind": "CiliumNetworkPolicy",
-    "metadata": {"name": "piap-zero-trust", "namespace": NAMESPACE},
-    "spec": {
-        "endpointSelector": {
-            "matchExpressions": [
-                {
-                    "key": "io.kompose.service",
-                    "operator": "NotIn",
-                    "values": ["automagic"],
-                }
-            ]
-        },
-        "ingress": [{"fromCIDR": [CONNECTOR_CIDR]}],
-    },
-}
 
 
 # ---------------------------------------------------------------------------
@@ -62,6 +34,58 @@ def _get_core_api():
     except config.ConfigException:
         config.load_kube_config()
     return client.CoreV1Api()
+
+
+def _get_cilium_host_cidr():
+    """
+    Return the CIDR that connector traffic appears to come from inside pods.
+
+    Why this is needed:
+      With externalTrafficPolicy: Local, Cilium skips its NodePort SNAT so real
+      source IPs reach the pod.  Connector traffic enters from Docker bridge
+      240.0.0.0/29, but the host's iptables MASQUERADE rule rewrites the source
+      to the outgoing interface's IP — which is cilium_host (the virtual interface
+      Cilium creates to route traffic into pods, e.g. 10.0.0.180/32).  LAN clients
+      arrive with their real IP (e.g. 10.10.5.x), so allowing only the cilium_host
+      /32 correctly gates on connector vs. direct LAN access.
+
+    The cilium_host IP is stored in the k8s Node annotation:
+      network.cilium.io/ipv4-cilium-host
+
+    Falls back to '240.0.0.0/29' (the Docker bridge CIDR) if NODE_NAME env var is
+    not set or the annotation is absent.
+    """
+    node_name = os.environ.get("NODE_NAME")
+    if not node_name:
+        return "240.0.0.0/29"
+    try:
+        node = _get_core_api().read_node(node_name)
+        ip = (node.metadata.annotations or {}).get("network.cilium.io/ipv4-cilium-host")
+        if ip:
+            return f"{ip}/32"
+    except Exception:
+        pass
+    return "240.0.0.0/29"
+
+
+def _build_zero_trust_policy(connector_cidr):
+    return {
+        "apiVersion": "cilium.io/v2",
+        "kind": "CiliumNetworkPolicy",
+        "metadata": {"name": "piap-zero-trust", "namespace": NAMESPACE},
+        "spec": {
+            "endpointSelector": {
+                "matchExpressions": [
+                    {
+                        "key": "io.kompose.service",
+                        "operator": "NotIn",
+                        "values": ["automagic"],
+                    }
+                ]
+            },
+            "ingress": [{"fromCIDR": [connector_cidr]}],
+        },
+    }
 
 
 def _patch_service_traffic_policy(svc_name, policy):
@@ -112,10 +136,11 @@ def apply_zero_trust():
     """
     Apply Zero Trust:
       1. Switch restricted piap services to externalTrafficPolicy: Local so Cilium
-         sees real client IPs (no NodePort SNAT) — connector traffic stays at
-         240.0.0.x, LAN clients stay at their real IPs.
-      2. Apply CiliumNetworkPolicy allowing ingress only from 240.0.0.0/29.
+         preserves real client IPs — connector traffic masquerades to cilium_host IP,
+         LAN clients keep their real IPs (e.g. 10.10.5.x).
+      2. Apply CiliumNetworkPolicy allowing ingress only from the cilium_host CIDR.
     """
+    connector_cidr = _get_cilium_host_cidr()
     api = _get_api()
     results = []
 
@@ -123,7 +148,8 @@ def apply_zero_trust():
         if _patch_service_traffic_policy(svc, "Local"):
             results.append(f"Service {svc}: externalTrafficPolicy=Local")
 
-    results.append(_apply_policy(api, dict(POLICY_ZERO_TRUST)))
+    results.append(_apply_policy(api, _build_zero_trust_policy(connector_cidr)))
+    results.append(f"Connector CIDR: {connector_cidr}")
     return results
 
 

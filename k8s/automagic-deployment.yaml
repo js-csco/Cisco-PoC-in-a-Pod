@@ -35,6 +35,10 @@ spec:
           env:
             - name: TZ
               value: Europe/Berlin
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
           image: python:3.11-slim
           name: automagic
           ports:
