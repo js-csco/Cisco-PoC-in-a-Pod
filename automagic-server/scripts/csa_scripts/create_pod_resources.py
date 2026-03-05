@@ -91,15 +91,16 @@ def create_private_resources(token, vm_ip, resource_group_id):
 
     # add more resources here:
     resources = [
-        {"name": "Dashy Overview", "port": 30100, "protocol": "Any"},
-        {"name": "Automagic Server", "port": 30200, "protocol": "Any"},
-        {"name": "Kanboard Test Guide", "port": 30300, "protocol": "Any"},
-        {"name": "OpenSSH Server", "port": 30022, "protocol": "Any"},
-        {"name": "Web Server", "port": 30400, "protocol": "Any"},
+        {"name": "Dashy Overview", "port": 30100, "protocol": "http/https"},
+        {"name": "Automagic Server", "port": 30200, "protocol": "http/https"},
+        {"name": "Kanboard Test Guide", "port": 30300, "protocol": "http/https"},
+        {"name": "OpenSSH Server", "port": 30022, "protocol": "ssh"},
+        {"name": "Web Server", "port": 30400, "protocol": "http/https"},
         {"name": "Splunk Dashboard", "port": 30500, "protocol": "Any"},
         {"name": "Splunk MCP", "port": 30501, "protocol": "Any"},
-        {"name": "RDP Server", "port": 30390, "protocol": "Any"},
+        {"name": "RDP Server", "port": 30390, "protocol": "rdp"},
         {"name": "Kubectl MCP Server", "port": 30050, "protocol": "Any"},
+        {"name": "Hubble UI", "port": 30800, "protocol": "http/https"},
     ]
 
 
