@@ -407,18 +407,6 @@
 
   const connectorIp = 'CONNECTOR_IP';
 
-  function isConnector(addr) {
-    return addr === connectorIp;
-  }
-
-  function isPrivateLAN(addr) {
-    return /^10\./.test(addr)
-      || /^172\.(1[6-9]|2\d|3[01])\./.test(addr)
-      || /^192\.168\./.test(addr)
-      || /^127\./.test(addr)
-      || addr === '::1';
-  }
-
   const banner = document.getElementById('banner');
   const bIcon  = document.getElementById('bIcon');
   const bTag   = document.getElementById('bTag');
@@ -433,7 +421,7 @@
     bBody.textContent  = 'Server-side IP injection requires nginx SSI to be enabled.';
     method.textContent = 'Unknown';
 
-  } else if (isConnector(ip)) {
+  } else if (ip === connectorIp) {
     banner.className   = 'banner ztna';
     bIcon.textContent  = '✅';
     bTag.textContent   = 'ZERO TRUST ACCESS VERIFIED';
@@ -443,25 +431,15 @@
       + 'Your traffic is tunnelled through ZTNA and your real IP is never exposed to the application.';
     method.textContent = 'ZTNA (Cisco Secure Access)';
 
-  } else if (isPrivateLAN(ip)) {
-    banner.className   = 'banner direct';
-    bIcon.textContent  = '⚠️';
-    bTag.textContent   = 'LOCAL NETWORK ACCESS — NO ZTNA';
-    bTitle.textContent = 'You are NOT accessing this server through Cisco Secure Access';
-    bBody.textContent  =
-      'The server sees ' + ip + ' — a private LAN address. '
-      + 'You are reaching the server directly over the local network, bypassing Zero Trust controls.';
-    method.textContent = 'Direct (local LAN)';
-
   } else {
     banner.className   = 'banner direct';
     bIcon.textContent  = '⚠️';
-    bTag.textContent   = 'DIRECT INTERNET ACCESS — NO ZTNA';
+    bTag.textContent   = 'DIRECT ACCESS — NO ZTNA';
     bTitle.textContent = 'You are NOT accessing this server through Cisco Secure Access';
     bBody.textContent  =
-      'The server sees ' + ip + ' — your real public IP. '
-      + 'This connection bypasses Zero Trust controls entirely.';
-    method.textContent = 'Direct (internet)';
+      'The server sees ' + ip + ' — not the connector IP. '
+      + 'You are reaching this server directly, bypassing Zero Trust controls.';
+    method.textContent = 'Direct (no ZTNA)';
   }
 })();
 </script>
