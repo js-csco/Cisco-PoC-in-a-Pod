@@ -63,8 +63,8 @@ sections:
         icon: fas fa-server
         url: http://SERVER_IP:30800
         statusCheck: true
-      - title: Checker
-        description: Alpine nginx checker on port 30550
+      - title: SSE Check
+        description: Verify your access path — ZTNA or direct
         icon: fas fa-check-circle
         url: http://SERVER_IP:30550
         statusCheck: true

@@ -101,7 +101,7 @@ def create_private_resources(token, vm_ip, resource_group_id):
         {"name": "RDP Server", "port": 30390, "protocol": "rdp"},
         {"name": "Kubectl MCP Server", "port": 30050, "protocol": "Any"},
         {"name": "Hubble UI", "port": 30800, "protocol": "http/https"},
-        {"name": "Checker", "port": 30550, "protocol": "http/https"},
+        {"name": "SSE Check", "port": 30550, "protocol": "http/https"},
     ]
 
 
