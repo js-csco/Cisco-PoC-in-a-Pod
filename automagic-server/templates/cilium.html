@@ -98,7 +98,7 @@
     <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px 18px; margin-bottom:12px; font-size:0.88em; color:#5d4037;">
       <strong>Policy: <code>piap-zero-trust</code></strong> — all piap workload pods (nginx, splunk, rdp-server, ssh-server, dashy, sse-check)
       <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
-        <li>Ingress: only from the Resource Connector (<code>NODE_IP/32</code>, auto-detected via Downward API)</li>
+        <li>Ingress: only from the Resource Connector Docker bridge (<code>240.0.0.0/29</code>)</li>
         <li>Egress: unrestricted (responses &amp; outbound traffic still flow)</li>
       </ul>
     </div>

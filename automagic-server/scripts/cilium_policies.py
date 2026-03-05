@@ -1,4 +1,3 @@
-import os
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
@@ -9,11 +8,40 @@ PLURAL = "ciliumnetworkpolicies"
 
 POLICY_NAMES = ["piap-zero-trust"]
 
-# piap services that should be locked down under zero trust.
-# automagic is intentionally excluded — it must always be reachable from the LAN.
+# Cisco's setup_connector.sh always assigns 240.0.0.0/29 to the Docker bridge
+# used by the Resource Connector container — this is fixed across every machine.
+#
+# With externalTrafficPolicy: Cluster (default), Cilium SNATs ALL NodePort traffic
+# (connector AND LAN clients) to NODE_IP, making them indistinguishable in the pod.
+#
+# With externalTrafficPolicy: Local (applied below during zero trust), Cilium
+# preserves real source IPs — connector traffic arrives from 240.0.0.x, LAN clients
+# from their actual IP (e.g. 10.10.5.50).  The 240.0.0.0/29 CIDR then correctly
+# allows the connector and blocks direct LAN access.
+CONNECTOR_CIDR = "240.0.0.0/29"
+
+# piap services to lock down. automagic is excluded — always reachable from LAN.
 _PIAP_RESTRICTED_SERVICES = [
     "nginx", "splunk", "rdp-server", "ssh-server", "dashy", "sse-check", "kubectl-mcp",
 ]
+
+POLICY_ZERO_TRUST = {
+    "apiVersion": "cilium.io/v2",
+    "kind": "CiliumNetworkPolicy",
+    "metadata": {"name": "piap-zero-trust", "namespace": NAMESPACE},
+    "spec": {
+        "endpointSelector": {
+            "matchExpressions": [
+                {
+                    "key": "io.kompose.service",
+                    "operator": "NotIn",
+                    "values": ["automagic"],
+                }
+            ]
+        },
+        "ingress": [{"fromCIDR": [CONNECTOR_CIDR]}],
+    },
+}
 
 
 # ---------------------------------------------------------------------------
@@ -49,45 +77,31 @@ def _patch_service_traffic_policy(svc_name, policy):
         raise
 
 
-def _node_ip():
-    """Return NODE_IP injected by the Kubernetes Downward API (status.hostIP)."""
-    ip = os.environ.get("NODE_IP", "")
-    if not ip:
-        raise RuntimeError("NODE_IP environment variable is not set.")
-    return ip
+def _apply_policy(api, policy):
+    """Create or replace a CiliumNetworkPolicy, handling resourceVersion correctly."""
+    name = policy["metadata"]["name"]
+    ns = policy["metadata"]["namespace"]
+    try:
+        api.create_namespaced_custom_object(GROUP, VERSION, ns, PLURAL, policy)
+        return f"Created policy: {name}"
+    except ApiException as e:
+        if e.status == 409:
+            # Kubernetes requires resourceVersion for updates — fetch it first.
+            existing = api.get_namespaced_custom_object(GROUP, VERSION, ns, PLURAL, name)
+            policy["metadata"]["resourceVersion"] = existing["metadata"]["resourceVersion"]
+            api.replace_namespaced_custom_object(GROUP, VERSION, ns, PLURAL, name, policy)
+            return f"Updated policy: {name}"
+        raise
 
 
-def _build_zero_trust_policy():
-    """
-    CiliumNetworkPolicy for the piap namespace.
-
-    All workload pods except automagic only accept ingress from NODE_IP/32.
-
-    Why NODE_IP/32?
-      The Resource Connector runs as a Docker container on the same VM.
-      Docker masquerades (SNATs) its traffic to the host's LAN IP before it
-      reaches k3s, so pods see NODE_IP as the connector's source address.
-      With externalTrafficPolicy: Local on every restricted service, real
-      client IPs are preserved for NodePort traffic — direct LAN clients
-      (e.g. 10.10.5.50) are therefore NOT NODE_IP and get blocked.
-    """
-    return {
-        "apiVersion": "cilium.io/v2",
-        "kind": "CiliumNetworkPolicy",
-        "metadata": {"name": "piap-zero-trust", "namespace": NAMESPACE},
-        "spec": {
-            "endpointSelector": {
-                "matchExpressions": [
-                    {
-                        "key": "io.kompose.service",
-                        "operator": "NotIn",
-                        "values": ["automagic"],
-                    }
-                ]
-            },
-            "ingress": [{"fromCIDR": [f"{_node_ip()}/32"]}],
-        },
-    }
+def _delete_policy(api, name, namespace):
+    try:
+        api.delete_namespaced_custom_object(GROUP, VERSION, namespace, PLURAL, name)
+        return f"Deleted policy: {name}"
+    except ApiException as e:
+        if e.status == 404:
+            return f"Policy not found (already removed): {name}"
+        raise
 
 
 # ---------------------------------------------------------------------------
@@ -97,32 +111,19 @@ def _build_zero_trust_policy():
 def apply_zero_trust():
     """
     Apply Zero Trust:
-      1. Patch restricted piap services to externalTrafficPolicy: Local so that
-         real client IPs are visible to Cilium (no NodePort SNAT for external traffic).
-      2. Apply a CiliumNetworkPolicy that only allows ingress from NODE_IP/32
-         (the connector's Docker-NAT'd address).
+      1. Switch restricted piap services to externalTrafficPolicy: Local so Cilium
+         sees real client IPs (no NodePort SNAT) — connector traffic stays at
+         240.0.0.x, LAN clients stay at their real IPs.
+      2. Apply CiliumNetworkPolicy allowing ingress only from 240.0.0.0/29.
     """
     api = _get_api()
     results = []
 
-    # Step 1 — preserve real source IPs on restricted services
     for svc in _PIAP_RESTRICTED_SERVICES:
         if _patch_service_traffic_policy(svc, "Local"):
             results.append(f"Service {svc}: externalTrafficPolicy=Local")
 
-    # Step 2 — apply network policy
-    policy = _build_zero_trust_policy()
-    name = policy["metadata"]["name"]
-    try:
-        api.create_namespaced_custom_object(GROUP, VERSION, NAMESPACE, PLURAL, policy)
-        results.append(f"Created policy: {name}")
-    except ApiException as e:
-        if e.status == 409:
-            api.replace_namespaced_custom_object(GROUP, VERSION, NAMESPACE, PLURAL, name, policy)
-            results.append(f"Updated policy: {name}")
-        else:
-            raise
-
+    results.append(_apply_policy(api, dict(POLICY_ZERO_TRUST)))
     return results
 
 
@@ -135,18 +136,9 @@ def apply_allow_all():
     api = _get_api()
     results = []
 
-    # Step 1 — remove policy
     for name in POLICY_NAMES:
-        try:
-            api.delete_namespaced_custom_object(GROUP, VERSION, NAMESPACE, PLURAL, name)
-            results.append(f"Deleted policy: {name}")
-        except ApiException as e:
-            if e.status == 404:
-                results.append(f"Policy not found (already removed): {name}")
-            else:
-                raise
+        results.append(_delete_policy(api, name, NAMESPACE))
 
-    # Step 2 — restore default traffic policy
     for svc in _PIAP_RESTRICTED_SERVICES:
         if _patch_service_traffic_policy(svc, "Cluster"):
             results.append(f"Service {svc}: externalTrafficPolicy=Cluster")
