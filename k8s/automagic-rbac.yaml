@@ -4,7 +4,7 @@ metadata:
   name: automagic-sa
   namespace: piap
 ---
-# Namespace-scoped: manage CiliumNetworkPolicies and Jobs in the piap namespace
+# Namespace-scoped: manage CiliumNetworkPolicies, Services and Jobs in the piap namespace
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -14,6 +14,9 @@ rules:
 - apiGroups: ["cilium.io"]
   resources: ["ciliumnetworkpolicies"]
   verbs: ["get", "list", "create", "update", "patch", "delete", "replace"]
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "patch"]
 - apiGroups: ["batch"]
   resources: ["jobs"]
   verbs: ["get", "list", "create", "delete"]

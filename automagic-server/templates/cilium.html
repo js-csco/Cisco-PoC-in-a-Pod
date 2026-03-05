@@ -95,17 +95,24 @@
       Cisco Secure Access to reach any service.
     </p>
 
-    <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px 18px; margin-bottom:20px; font-size:0.88em; color:#5d4037;">
-      <strong>Policy: <code>piap-zero-trust</code></strong> — applied to all workload pods (nginx, splunk, kanboard, rdp-server, ssh-server, dashy, sse-check)
+    <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px 18px; margin-bottom:12px; font-size:0.88em; color:#5d4037;">
+      <strong>Policy: <code>piap-zero-trust</code></strong> — all piap workload pods (nginx, splunk, rdp-server, ssh-server, dashy, sse-check)
       <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
-        <li>Ingress: only from the Cisco Resource Connector (this server's LAN IP — auto-detected)</li>
+        <li>Ingress: only from the Resource Connector (<code>NODE_IP/32</code>, auto-detected via Downward API)</li>
         <li>Egress: unrestricted (responses &amp; outbound traffic still flow)</li>
       </ul>
     </div>
 
+    <div style="background:#e3f2fd; border:1px solid #90caf9; border-radius:8px; padding:10px 16px; margin-bottom:12px; font-size:0.85em; color:#0d47a1;">
+      ℹ️ <strong>How it works:</strong> Restricted services are also switched to <code>externalTrafficPolicy: Local</code>,
+      which disables NodePort SNAT and preserves real client IPs at the pod level.
+      Without this, Cilium would see all NodePort traffic (including direct LAN) as <code>NODE_IP</code> —
+      indistinguishable from connector traffic.
+    </div>
+
     <div style="background:#fce4ec; border:1px solid #ef9a9a; border-radius:8px; padding:10px 16px; margin-bottom:20px; font-size:0.85em; color:#b71c1c;">
-      ⚠️ <strong>Note:</strong> Direct LAN access to workload pods will be blocked after applying this policy.
-      The <em>Automagic</em> dashboard remains reachable at all times.
+      ⚠️ <strong>Note:</strong> Direct LAN access to piap workload pods will be blocked.
+      Hubble UI and the <em>Automagic</em> dashboard remain reachable at all times.
     </div>
 
     <button type="submit" name="action" value="zero_trust"
