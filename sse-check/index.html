@@ -281,7 +281,7 @@
         <div class="flow-box">
           <i class="fa-solid fa-plug" style="color: var(--indigo);"></i>
           <div class="fn">Connector</div>
-          <div class="fs">Pod · CONNECTOR_IP</div>
+          <div class="fs">Pod · SERVER_IP</div>
         </div>
       </div>
 
@@ -304,7 +304,7 @@
     <div class="flow-note">
       <div class="flow-note-item">
         <i class="fa-solid fa-circle-check" style="color: var(--green); flex-shrink:0;"></i>
-        <span><strong>Via ZTNA</strong> — this server sees <code>CONNECTOR_IP</code> as your source IP, not your real IP</span>
+        <span><strong>Via ZTNA</strong> — this server sees <code>SERVER_IP</code> as your source IP, not your real IP</span>
       </div>
       <div class="flow-note-item">
         <i class="fa-solid fa-triangle-exclamation" style="color: var(--orange); flex-shrink:0;"></i>
@@ -370,15 +370,15 @@
   <div class="card">
     <div class="card-title">HOW ACCESS IS DETECTED</div>
     <p style="font-size:0.88em; color:#555; line-height:1.7; margin:0;">
-      The Resource Connector runs on this server as a pod with IP <code>CONNECTOR_IP</code>.
+      The Resource Connector runs on this server as a pod with IP <code>SERVER_IP</code>.
       When you access via Cisco Secure Access, your traffic travels through the
       <strong>Secure Access cloud</strong> and exits through the on-premises connector —
-      so this application only ever sees <strong>CONNECTOR_IP</strong> as the source, never your real IP.
+      so this application only ever sees <strong>SERVER_IP</strong> as the source, never your real IP.
       Accessing directly over the LAN or internet exposes your actual IP instead.
     </p>
     <div class="explain-row">
       <div class="explain-panel panel-ztna">
-        <strong>✅ Via ZTNA — source IP: CONNECTOR_IP</strong>
+        <strong>✅ Via ZTNA — source IP: SERVER_IP</strong>
         Traffic arrived through the Cisco Resource Connector. Your real IP is hidden —
         Zero Trust policies are enforced end-to-end.
       </div>
@@ -405,7 +405,7 @@
     window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
   document.getElementById('valTime').textContent = new Date().toLocaleString();
 
-  const connectorIp = 'CONNECTOR_IP';
+  const connectorIp = 'SERVER_IP';
 
   const banner = document.getElementById('banner');
   const bIcon  = document.getElementById('bIcon');

@@ -437,8 +437,8 @@ if [ -f "$REPO_ROOT/k8s/sse-check-deployment.yaml" ]; then
 fi
 
 if [ -f "$REPO_ROOT/sse-check/index.html" ]; then
-    echo "  Updating sse-check page with connector IP..."
-    sed -i "s/CONNECTOR_IP/$CONNECTOR_IP/g" "$REPO_ROOT/sse-check/index.html"
+    echo "  Updating sse-check page with server IP..."
+    sed -i "s/SERVER_IP/$SERVER_IP/g" "$REPO_ROOT/sse-check/index.html"
 fi
 
 if [ -d "$REPO_ROOT/automagic-server/templates" ]; then
