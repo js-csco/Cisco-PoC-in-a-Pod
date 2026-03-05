@@ -1,3 +1,4 @@
+import os
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
@@ -8,34 +9,39 @@ PLURAL = "ciliumnetworkpolicies"
 
 POLICY_NAMES = ["piap-zero-trust"]
 
-# Zero trust policy: restricts all workload pods (everything except automagic)
-# to only accept ingress from the Cisco Resource Connector Docker container.
-# The Cisco setup_connector.sh always assigns 240.0.0.0/29 to Docker's bridge
-# network — this CIDR is fixed and identical on every machine this runs on.
-POLICY_ZERO_TRUST = {
-    "apiVersion": "cilium.io/v2",
-    "kind": "CiliumNetworkPolicy",
-    "metadata": {
-        "name": "piap-zero-trust",
-        "namespace": NAMESPACE,
-    },
-    "spec": {
-        "endpointSelector": {
-            "matchExpressions": [
-                {
-                    "key": "io.kompose.service",
-                    "operator": "NotIn",
-                    "values": ["automagic"],
-                }
-            ]
+# The Resource Connector runs as a Docker container on the same VM as k3s.
+# When it routes traffic to pods, Docker NATs it to the node's LAN IP.
+# Pods therefore see NODE_IP (the VM's LAN IP) as the connector source —
+# not the docker-internal 240.x address.
+# NODE_IP is injected automatically via the Kubernetes Downward API.
+def _build_zero_trust_policy():
+    node_ip = os.environ.get("NODE_IP", "")
+    if not node_ip:
+        raise RuntimeError("NODE_IP environment variable is not set.")
+    return {
+        "apiVersion": "cilium.io/v2",
+        "kind": "CiliumNetworkPolicy",
+        "metadata": {
+            "name": "piap-zero-trust",
+            "namespace": NAMESPACE,
         },
-        "ingress": [
-            {
-                "fromCIDR": ["240.0.0.0/29"]
-            }
-        ],
-    },
-}
+        "spec": {
+            "endpointSelector": {
+                "matchExpressions": [
+                    {
+                        "key": "io.kompose.service",
+                        "operator": "NotIn",
+                        "values": ["automagic"],
+                    }
+                ]
+            },
+            "ingress": [
+                {
+                    "fromCIDR": [f"{node_ip}/32"]
+                }
+            ],
+        },
+    }
 
 
 def _get_api():
@@ -47,16 +53,17 @@ def _get_api():
 
 
 def apply_zero_trust():
-    """Apply Zero Trust policy: workload pods only accept traffic from the connector Docker bridge."""
+    """Apply Zero Trust policy: workload pods only accept traffic from the Resource Connector (NODE_IP)."""
     api = _get_api()
+    policy = _build_zero_trust_policy()
+    name = policy["metadata"]["name"]
     results = []
-    name = POLICY_ZERO_TRUST["metadata"]["name"]
     try:
-        api.create_namespaced_custom_object(GROUP, VERSION, NAMESPACE, PLURAL, POLICY_ZERO_TRUST)
+        api.create_namespaced_custom_object(GROUP, VERSION, NAMESPACE, PLURAL, policy)
         results.append(f"Created policy: {name}")
     except ApiException as e:
         if e.status == 409:
-            api.replace_namespaced_custom_object(GROUP, VERSION, NAMESPACE, PLURAL, name, POLICY_ZERO_TRUST)
+            api.replace_namespaced_custom_object(GROUP, VERSION, NAMESPACE, PLURAL, name, policy)
             results.append(f"Updated policy: {name}")
         else:
             raise
