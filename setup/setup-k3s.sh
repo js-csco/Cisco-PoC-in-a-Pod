@@ -231,6 +231,18 @@ fi
 echo "  ✓ Resource Connector running as Docker container (managed by daemontools)"
 echo ""
 
+# Install the internet masquerade rule immediately after the connector starts.
+# The Docker bridge is configured with ip-masq=false so connector → k8s traffic
+# keeps its 240.0.0.x source for Cilium policy matching.  The connector still
+# needs to reach Cisco's cloud (registration + keepalives), which requires
+# masquerade because 240.0.0.x is non-internet-routable.  Installing this rule
+# now prevents any gap between connector launch and the end of setup.
+# (Step 19.1 later installs the systemd service that persists this across reboots.)
+iptables -t nat -C POSTROUTING -s 240.0.0.0/29 ! -d 10.0.0.0/8 -j MASQUERADE 2>/dev/null \
+  || iptables -t nat -A POSTROUTING -s 240.0.0.0/29 ! -d 10.0.0.0/8 -j MASQUERADE
+echo "  ✓ Connector internet masquerade rule active"
+echo ""
+
 # ============================================================
 #  Phase 2: K3s + CNI stack
 # ============================================================
