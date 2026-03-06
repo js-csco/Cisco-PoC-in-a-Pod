@@ -354,9 +354,13 @@ def cilium():
         action = request.form.get('action')
         try:
             if action == 'allow_all':
-                apply_allow_all()
+                results = apply_allow_all()
             elif action == 'zero_trust':
-                apply_zero_trust()
+                results = apply_zero_trust()
+            else:
+                results = []
+            for msg in results:
+                flash(f"✅ {msg}")
         except Exception as e:
             flash(f"⚠️ Error applying Cilium policy: {e}")
         return redirect(url_for('cilium'))

@@ -36,37 +36,48 @@ def _get_core_api():
     return client.CoreV1Api()
 
 
-def _get_connector_source_cidr():
+DOCKER_BRIDGE_CIDR = "240.0.0.0/29"
+
+
+def _get_cilium_host_cidr():
     """
-    Return the CIDR that connector traffic appears to come from inside pods.
+    Return the cilium_host IP/32 — the IP that connector traffic masquerades to
+    as seen by pods.
 
-    The Connector runs as a Docker container on the host.  Docker masquerades
-    its traffic to the host's primary NIC IP before it reaches the NodePort.
-    Pods therefore see the host's InternalIP as the source — the same IP that
-    `hostname -I | awk '{print $1}'` (SERVER_IP) returns during setup, and
-    confirmed by the SSE check page showing 10.0.0.180 for connector traffic.
+    The Connector runs as a Docker container.  Its traffic is masqueraded by
+    Docker's iptables to the node's cilium_host virtual interface IP before
+    Cilium's BPF NodePort handler delivers it to the pod.  Pods therefore see
+    cilium_host as the source (confirmed by SSE check and Hubble: 10.0.0.180).
 
-    Note: network.cilium.io/ipv4-cilium-host is Cilium's *virtual* gateway
-    interface — a different IP from the physical NIC — and is NOT what pods
-    see as the connector source.  We read InternalIP from node.status.addresses
-    instead.
+    The IP is stored in the k8s Node annotation:
+      network.cilium.io/ipv4-cilium-host
 
-    Falls back to '240.0.0.0/29' (Docker bridge) if the node cannot be read.
+    Falls back to DOCKER_BRIDGE_CIDR if the annotation is absent.
     """
     node_name = os.environ.get("NODE_NAME")
     if not node_name:
-        return "240.0.0.0/29"
+        return DOCKER_BRIDGE_CIDR
     try:
         node = _get_core_api().read_node(node_name)
-        for addr in (node.status.addresses or []):
-            if addr.type == "InternalIP":
-                return f"{addr.address}/32"
+        ip = (node.metadata.annotations or {}).get("network.cilium.io/ipv4-cilium-host")
+        if ip:
+            return f"{ip}/32"
     except Exception:
         pass
-    return "240.0.0.0/29"
+    return DOCKER_BRIDGE_CIDR
 
 
 def _build_zero_trust_policy(connector_cidr):
+    # Allow from every CIDR/entity that connector traffic might be classified as:
+    #   1. fromCIDR cilium_host/32  — exact match when Cilium uses post-masquerade IP
+    #   2. fromCIDR 240.0.0.0/29   — Docker bridge, in case Cilium uses pre-masquerade IP
+    #   3. fromEntities host        — covers cases where cilium_host traffic gets "host" identity
+    # LAN clients (e.g. 10.10.2.2) match none of these — they keep their real IPs and
+    # have "world" identity, so they remain blocked.
+    cidrs = [connector_cidr]
+    if connector_cidr != DOCKER_BRIDGE_CIDR:
+        cidrs.append(DOCKER_BRIDGE_CIDR)
+
     return {
         "apiVersion": "cilium.io/v2",
         "kind": "CiliumNetworkPolicy",
@@ -81,7 +92,10 @@ def _build_zero_trust_policy(connector_cidr):
                     }
                 ]
             },
-            "ingress": [{"fromCIDR": [connector_cidr]}],
+            "ingress": [
+                {"fromCIDR": cidrs},
+                {"fromEntities": ["host"]},
+            ],
         },
     }
 
@@ -134,11 +148,13 @@ def apply_zero_trust():
     """
     Apply Zero Trust:
       1. Switch restricted piap services to externalTrafficPolicy: Local so Cilium
-         preserves real client IPs — connector traffic masquerades to the host's
-         InternalIP, LAN clients keep their real IPs (e.g. 10.10.2.x).
-      2. Apply CiliumNetworkPolicy allowing ingress only from the host InternalIP/32.
+         preserves real client IPs — connector traffic masquerades to cilium_host,
+         LAN clients keep their real IPs (e.g. 10.10.2.x).
+      2. Apply CiliumNetworkPolicy allowing ingress from cilium_host CIDR,
+         Docker bridge CIDR, and host entity — covering all possible Cilium
+         identity classifications for connector traffic.
     """
-    connector_cidr = _get_connector_source_cidr()
+    connector_cidr = _get_cilium_host_cidr()
     api = _get_api()
     results = []
 

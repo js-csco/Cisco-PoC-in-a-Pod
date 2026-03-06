@@ -125,7 +125,7 @@
         <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:12px 16px; font-size:0.88em; color:#5d4037;">
           <strong>Policy: <code>piap-zero-trust</code></strong>
           <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
-            <li>Ingress: only from the Resource Connector Docker bridge (<code>240.0.0.0/29</code>)</li>
+            <li>Ingress: only from the Resource Connector (cilium_host IP, Docker bridge, and host entity)</li>
             <li>Egress: unrestricted (responses &amp; outbound traffic still flow)</li>
             <li>Services switched to <code>externalTrafficPolicy: Local</code> to preserve real client IPs</li>
           </ul>
@@ -137,12 +137,10 @@
 
         {% if not policy_error %}
           <button type="submit" name="action" value="zero_trust"
-                  {% if zero_trust_active %}disabled{% endif %}
-                  style="margin-top:auto; background-color:{% if not zero_trust_active %}#d9534f{% else %}#aaa{% endif %};
+                  style="margin-top:auto; background-color:#d9534f;
                          color:#fff; border:none; padding:10px 24px; border-radius:6px;
-                         font-weight:500; cursor:{% if not zero_trust_active %}pointer{% else %}default{% endif %};
-                         font-size:0.95rem; width:100%;">
-            🔒 Switch to Zero Trust
+                         font-weight:500; cursor:pointer; font-size:0.95rem; width:100%;">
+            🔒 {% if zero_trust_active %}Reapply Zero Trust{% else %}Switch to Zero Trust{% endif %}
           </button>
         {% endif %}
       </div>
