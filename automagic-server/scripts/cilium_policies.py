@@ -68,7 +68,18 @@ def _get_cilium_host_cidr():
     return "240.0.0.0/29"
 
 
+DOCKER_BRIDGE_CIDR = "240.0.0.0/29"
+
+
 def _build_zero_trust_policy(connector_cidr):
+    # Always allow from the Docker bridge where the Connector container lives.
+    # Cilium's eBPF dataplane bypasses iptables masquerade, so connector traffic
+    # arrives at pods with its original Docker bridge source IP (240.0.0.x), not
+    # the masqueraded cilium_host IP.  Including both covers all cases.
+    allowed_cidrs = [DOCKER_BRIDGE_CIDR]
+    if connector_cidr != DOCKER_BRIDGE_CIDR:
+        allowed_cidrs.append(connector_cidr)
+
     return {
         "apiVersion": "cilium.io/v2",
         "kind": "CiliumNetworkPolicy",
@@ -83,7 +94,7 @@ def _build_zero_trust_policy(connector_cidr):
                     }
                 ]
             },
-            "ingress": [{"fromCIDR": [connector_cidr]}],
+            "ingress": [{"fromCIDR": allowed_cidrs}],
         },
     }
 
