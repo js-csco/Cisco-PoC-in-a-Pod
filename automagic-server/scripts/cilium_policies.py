@@ -43,23 +43,25 @@ def _get_connector_source_cidr():
     """
     Return /32 CIDR of the IP that connector traffic appears from inside pods.
 
-    Hubble confirms source IP = 10.0.0.180 = the node's primary NIC (SERVER_IP).
-    Docker masquerades connector traffic to this IP before it reaches NodePort.
+    Hubble confirms source IP = the node's cilium_host interface IP.
+    Docker masquerades connector traffic (240.0.0.x on docker0) to this IP.
 
-    We read InternalIP from node.status.addresses — the same IP that
-    `hostname -I | awk '{print $1}'` (SERVER_IP) returns during setup.
+    The CiliumNode CRD (spec.addresses[type=CiliumInternalIP]) holds the
+    cilium_host IP — this differs from the k8s Node InternalIP (the LAN/
+    management NIC, e.g. 10.10.5.63 vs the cilium_host 10.0.0.180).
 
-    The network.cilium.io/ipv4-cilium-host annotation is NOT used — on this
-    cluster it is unset, causing the previous fallback to 240.0.0.0/29 (wrong).
+    The network.cilium.io/ipv4-cilium-host node annotation is NOT used —
+    it is unset on this cluster, so we read the CiliumNode object directly.
     """
     node_name = os.environ.get("NODE_NAME")
     if not node_name:
         return DOCKER_BRIDGE_CIDR
     try:
-        node = _get_core_api().read_node(node_name)
-        for addr in (node.status.addresses or []):
-            if addr.type == "InternalIP":
-                return f"{addr.address}/32"
+        api = _get_api()
+        cilium_node = api.get_cluster_custom_object(GROUP, VERSION, "ciliumnodes", node_name)
+        for addr in cilium_node.get("spec", {}).get("addresses", []):
+            if addr.get("type") == "CiliumInternalIP":
+                return f"{addr['ip']}/32"
     except Exception:
         pass
     return DOCKER_BRIDGE_CIDR
