@@ -36,50 +36,37 @@ def _get_core_api():
     return client.CoreV1Api()
 
 
-def _get_cilium_host_cidr():
+def _get_connector_source_cidr():
     """
     Return the CIDR that connector traffic appears to come from inside pods.
 
-    Why this is needed:
-      With externalTrafficPolicy: Local, Cilium skips its NodePort SNAT so real
-      source IPs reach the pod.  Connector traffic enters from Docker bridge
-      240.0.0.0/29, but the host's iptables MASQUERADE rule rewrites the source
-      to the outgoing interface's IP — which is cilium_host (the virtual interface
-      Cilium creates to route traffic into pods, e.g. 10.0.0.180/32).  LAN clients
-      arrive with their real IP (e.g. 10.10.5.x), so allowing only the cilium_host
-      /32 correctly gates on connector vs. direct LAN access.
+    The Connector runs as a Docker container on the host.  Docker masquerades
+    its traffic to the host's primary NIC IP before it reaches the NodePort.
+    Pods therefore see the host's InternalIP as the source — the same IP that
+    `hostname -I | awk '{print $1}'` (SERVER_IP) returns during setup, and
+    confirmed by the SSE check page showing 10.0.0.180 for connector traffic.
 
-    The cilium_host IP is stored in the k8s Node annotation:
-      network.cilium.io/ipv4-cilium-host
+    Note: network.cilium.io/ipv4-cilium-host is Cilium's *virtual* gateway
+    interface — a different IP from the physical NIC — and is NOT what pods
+    see as the connector source.  We read InternalIP from node.status.addresses
+    instead.
 
-    Falls back to '240.0.0.0/29' (the Docker bridge CIDR) if NODE_NAME env var is
-    not set or the annotation is absent.
+    Falls back to '240.0.0.0/29' (Docker bridge) if the node cannot be read.
     """
     node_name = os.environ.get("NODE_NAME")
     if not node_name:
         return "240.0.0.0/29"
     try:
         node = _get_core_api().read_node(node_name)
-        ip = (node.metadata.annotations or {}).get("network.cilium.io/ipv4-cilium-host")
-        if ip:
-            return f"{ip}/32"
+        for addr in (node.status.addresses or []):
+            if addr.type == "InternalIP":
+                return f"{addr.address}/32"
     except Exception:
         pass
     return "240.0.0.0/29"
 
 
-DOCKER_BRIDGE_CIDR = "240.0.0.0/29"
-
-
 def _build_zero_trust_policy(connector_cidr):
-    # Always allow from the Docker bridge where the Connector container lives.
-    # Cilium's eBPF dataplane bypasses iptables masquerade, so connector traffic
-    # arrives at pods with its original Docker bridge source IP (240.0.0.x), not
-    # the masqueraded cilium_host IP.  Including both covers all cases.
-    allowed_cidrs = [DOCKER_BRIDGE_CIDR]
-    if connector_cidr != DOCKER_BRIDGE_CIDR:
-        allowed_cidrs.append(connector_cidr)
-
     return {
         "apiVersion": "cilium.io/v2",
         "kind": "CiliumNetworkPolicy",
@@ -94,7 +81,7 @@ def _build_zero_trust_policy(connector_cidr):
                     }
                 ]
             },
-            "ingress": [{"fromCIDR": allowed_cidrs}],
+            "ingress": [{"fromCIDR": [connector_cidr]}],
         },
     }
 
@@ -147,11 +134,11 @@ def apply_zero_trust():
     """
     Apply Zero Trust:
       1. Switch restricted piap services to externalTrafficPolicy: Local so Cilium
-         preserves real client IPs — connector traffic masquerades to cilium_host IP,
-         LAN clients keep their real IPs (e.g. 10.10.5.x).
-      2. Apply CiliumNetworkPolicy allowing ingress only from the cilium_host CIDR.
+         preserves real client IPs — connector traffic masquerades to the host's
+         InternalIP, LAN clients keep their real IPs (e.g. 10.10.2.x).
+      2. Apply CiliumNetworkPolicy allowing ingress only from the host InternalIP/32.
     """
-    connector_cidr = _get_cilium_host_cidr()
+    connector_cidr = _get_connector_source_cidr()
     api = _get_api()
     results = []
 
