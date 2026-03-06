@@ -4,6 +4,16 @@
 
 {% block content %}
 
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul style="list-style:none; padding:0; margin-bottom:1.5rem;">
+      {% for message in messages %}
+        <li style="background:#fce4ec; color:#b71c1c; padding:8px 12px; border-radius:6px; margin-bottom:6px;">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
 <form method="POST" style="display:flex; flex-direction:column; gap:3rem;">
   <h1>Cilium Network Policy</h1>
 
