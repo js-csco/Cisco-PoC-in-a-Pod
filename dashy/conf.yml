@@ -41,10 +41,15 @@ sections:
         statusCheck: false
   - name: Containers
     items:
-      - title: Web Server
-        description: nginx on port 80
+      - title: Automagic Server
+        description: Automate your Cisco Configuration
         icon: fas fa-server
-        url: http://SERVER_IP:30400
+        url: http://SERVER_IP:30200
+        statusCheck: true
+      - title: SSE Check
+        description: Verify your access path — ZTNA or direct
+        icon: fas fa-check-circle
+        url: http://SERVER_IP:30550
         statusCheck: true
       - title: SSH Server
         description: SSH on port 2222, user remote_user & password ssh_access
@@ -54,19 +59,10 @@ sections:
         description: (Empty) RDP on port 3389, user remote_user & password rdp_access
         icon: fas fa-server
         statusCheck: false
-      - title: Automagic Server
-        description: Automate your Cisco Configuration
-        icon: fas fa-server
-        url: http://SERVER_IP:30200
-      - title: Hubble UI 
+      - title: Hubble UI
         description: Cilium Hubble UI to observe flows
         icon: fas fa-server
         url: http://SERVER_IP:30800
-        statusCheck: true
-      - title: SSE Check
-        description: Verify your access path — ZTNA or direct
-        icon: fas fa-check-circle
-        url: http://SERVER_IP:30550
         statusCheck: true
       - title: Splunk
         description: Aggregate Telemetry and Logs
