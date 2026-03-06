@@ -39,29 +39,27 @@ def _get_core_api():
 DOCKER_BRIDGE_CIDR = "240.0.0.0/29"
 
 
-def _get_cilium_host_cidr():
+def _get_connector_source_cidr():
     """
-    Return the cilium_host IP/32 — the IP that connector traffic masquerades to
-    as seen by pods.
+    Return /32 CIDR of the IP that connector traffic appears from inside pods.
 
-    The Connector runs as a Docker container.  Its traffic is masqueraded by
-    Docker's iptables to the node's cilium_host virtual interface IP before
-    Cilium's BPF NodePort handler delivers it to the pod.  Pods therefore see
-    cilium_host as the source (confirmed by SSE check and Hubble: 10.0.0.180).
+    Hubble confirms source IP = 10.0.0.180 = the node's primary NIC (SERVER_IP).
+    Docker masquerades connector traffic to this IP before it reaches NodePort.
 
-    The IP is stored in the k8s Node annotation:
-      network.cilium.io/ipv4-cilium-host
+    We read InternalIP from node.status.addresses — the same IP that
+    `hostname -I | awk '{print $1}'` (SERVER_IP) returns during setup.
 
-    Falls back to DOCKER_BRIDGE_CIDR if the annotation is absent.
+    The network.cilium.io/ipv4-cilium-host annotation is NOT used — on this
+    cluster it is unset, causing the previous fallback to 240.0.0.0/29 (wrong).
     """
     node_name = os.environ.get("NODE_NAME")
     if not node_name:
         return DOCKER_BRIDGE_CIDR
     try:
         node = _get_core_api().read_node(node_name)
-        ip = (node.metadata.annotations or {}).get("network.cilium.io/ipv4-cilium-host")
-        if ip:
-            return f"{ip}/32"
+        for addr in (node.status.addresses or []):
+            if addr.type == "InternalIP":
+                return f"{addr.address}/32"
     except Exception:
         pass
     return DOCKER_BRIDGE_CIDR
@@ -154,7 +152,7 @@ def apply_zero_trust():
          Docker bridge CIDR, and host entity — covering all possible Cilium
          identity classifications for connector traffic.
     """
-    connector_cidr = _get_cilium_host_cidr()
+    connector_cidr = _get_connector_source_cidr()
     api = _get_api()
     results = []
 
