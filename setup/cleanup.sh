@@ -111,16 +111,8 @@ fi
 echo ""
 
 echo "Step 5: Cleaning up iptables rules..."
-# Remove piap DNAT rules from PREROUTING
-iptables -t nat -S PREROUTING 2>/dev/null \
-  | grep -- "-i docker0 -p tcp.*-j DNAT" \
-  | sed 's/^-A PREROUTING/-D PREROUTING/' \
-  | while IFS= read -r rule; do iptables -t nat $rule 2>/dev/null || true; done || true
-# Remove piap FORWARD rules (tagged with comment piap/)
-iptables -S FORWARD 2>/dev/null \
-  | grep -- "--comment piap/" \
-  | sed 's/^-A FORWARD/-D FORWARD/' \
-  | while IFS= read -r rule; do iptables $rule 2>/dev/null || true; done || true
+# Remove the connector internet masquerade rule (240.0.0.0/29 → internet).
+iptables -t nat -D POSTROUTING -s 240.0.0.0/29 ! -d 10.0.0.0/8 -j MASQUERADE 2>/dev/null || true
 echo "  ✓ piap iptables rules removed"
 
 # Remove Cilium iptables rules
@@ -170,13 +162,10 @@ echo "  ✓ CNI configuration removed"
 echo ""
 
 echo "Step 9: Cleaning up systemd services..."
-systemctl stop piap-iptables-refresh.timer 2>/dev/null || true
-systemctl disable piap-iptables-refresh.timer 2>/dev/null || true
-systemctl stop piap-iptables-refresh.service 2>/dev/null || true
-rm -f /etc/systemd/system/piap-iptables-refresh.timer
-rm -f /etc/systemd/system/piap-iptables-refresh.service
-rm -rf /opt/piap
-echo "  ✓ piap iptables-refresh timer/service removed"
+systemctl stop piap-connector-masquerade.service 2>/dev/null || true
+systemctl disable piap-connector-masquerade.service 2>/dev/null || true
+rm -f /etc/systemd/system/piap-connector-masquerade.service
+echo "  ✓ piap connector masquerade service removed"
 systemctl stop k3s 2>/dev/null || true
 systemctl disable k3s 2>/dev/null || true
 rm -f /etc/systemd/system/k3s.service 2>/dev/null || true

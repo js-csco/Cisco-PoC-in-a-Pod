@@ -1,5 +1,3 @@
-import os
-
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
@@ -14,6 +12,12 @@ POLICY_NAMES = ["piap-zero-trust"]
 _PIAP_RESTRICTED_SERVICES = [
     "nginx", "splunk", "rdp-server", "ssh-server", "dashy", "sse-check", "kubectl-mcp",
 ]
+
+# Docker bridge subnet assigned via daemon.json bip=240.0.0.1/29.
+# Docker's ip-masq=false means the connector's 240.0.0.x source IP is preserved
+# all the way to the pod — Cilium's TC hook on docker0 handles NodePort traffic
+# directly in eBPF without going through POSTROUTING MASQUERADE.
+DOCKER_BRIDGE_CIDR = "240.0.0.0/29"
 
 
 # ---------------------------------------------------------------------------
@@ -36,48 +40,9 @@ def _get_core_api():
     return client.CoreV1Api()
 
 
-DOCKER_BRIDGE_CIDR = "240.0.0.0/29"
-
-
-def _get_connector_source_cidr():
-    """
-    Return /32 CIDR of the IP that connector traffic appears from inside pods.
-
-    Hubble confirms source IP = the node's cilium_host interface IP.
-    Docker masquerades connector traffic (240.0.0.x on docker0) to this IP.
-
-    The CiliumNode CRD (spec.addresses[type=CiliumInternalIP]) holds the
-    cilium_host IP — this differs from the k8s Node InternalIP (the LAN/
-    management NIC, e.g. 10.10.5.63 vs the cilium_host 10.0.0.180).
-
-    The network.cilium.io/ipv4-cilium-host node annotation is NOT used —
-    it is unset on this cluster, so we read the CiliumNode object directly.
-    """
-    node_name = os.environ.get("NODE_NAME")
-    if not node_name:
-        return DOCKER_BRIDGE_CIDR
-    try:
-        api = _get_api()
-        cilium_node = api.get_cluster_custom_object(GROUP, VERSION, "ciliumnodes", node_name)
-        for addr in cilium_node.get("spec", {}).get("addresses", []):
-            if addr.get("type") == "CiliumInternalIP":
-                return f"{addr['ip']}/32"
-    except Exception:
-        pass
-    return DOCKER_BRIDGE_CIDR
-
-
-def _build_zero_trust_policy(connector_cidr):
-    # Allow from every CIDR/entity that connector traffic might be classified as:
-    #   1. fromCIDR cilium_host/32  — exact match when Cilium uses post-masquerade IP
-    #   2. fromCIDR 240.0.0.0/29   — Docker bridge, in case Cilium uses pre-masquerade IP
-    #   3. fromEntities host        — covers cases where cilium_host traffic gets "host" identity
-    # LAN clients (e.g. 10.10.2.2) match none of these — they keep their real IPs and
-    # have "world" identity, so they remain blocked.
-    cidrs = [connector_cidr]
-    if connector_cidr != DOCKER_BRIDGE_CIDR:
-        cidrs.append(DOCKER_BRIDGE_CIDR)
-
+def _build_zero_trust_policy():
+    # Connector traffic arrives with source 240.0.0.x — no masquerade.
+    # LAN clients (e.g. 10.10.2.2) have "world" identity and are blocked.
     return {
         "apiVersion": "cilium.io/v2",
         "kind": "CiliumNetworkPolicy",
@@ -93,8 +58,7 @@ def _build_zero_trust_policy(connector_cidr):
                 ]
             },
             "ingress": [
-                {"fromCIDR": cidrs},
-                {"fromEntities": ["host"]},
+                {"fromCIDR": [DOCKER_BRIDGE_CIDR]},
             ],
         },
     }
@@ -148,13 +112,11 @@ def apply_zero_trust():
     """
     Apply Zero Trust:
       1. Switch restricted piap services to externalTrafficPolicy: Local so Cilium
-         preserves real client IPs — connector traffic masquerades to cilium_host,
-         LAN clients keep their real IPs (e.g. 10.10.2.x).
-      2. Apply CiliumNetworkPolicy allowing ingress from cilium_host CIDR,
-         Docker bridge CIDR, and host entity — covering all possible Cilium
-         identity classifications for connector traffic.
+         preserves real client IPs — 240.0.0.x is the connector, LAN clients keep
+         their real IPs (e.g. 10.10.2.x) and are blocked by the policy.
+      2. Apply CiliumNetworkPolicy allowing ingress only from 240.0.0.0/29
+         (the Docker bridge subnet configured in daemon.json bip).
     """
-    connector_cidr = _get_connector_source_cidr()
     api = _get_api()
     results = []
 
@@ -162,8 +124,8 @@ def apply_zero_trust():
         if _patch_service_traffic_policy(svc, "Local"):
             results.append(f"Service {svc}: externalTrafficPolicy=Local")
 
-    results.append(_apply_policy(api, _build_zero_trust_policy(connector_cidr)))
-    results.append(f"Connector CIDR: {connector_cidr}")
+    results.append(_apply_policy(api, _build_zero_trust_policy()))
+    results.append(f"Connector CIDR: {DOCKER_BRIDGE_CIDR}")
     return results
 
 

@@ -133,7 +133,17 @@ getent group docker &>/dev/null || groupadd docker
 #   • The systemd cgroup driver requires cgroup v2; use cgroupfs on 4.4 kernels.
 echo "  Applying Linux 4.4 kernel compatibility settings and restarting Docker..."
 
-# 1. Switch to cgroupfs cgroup driver.
+# 1. Switch to cgroupfs cgroup driver and configure the Docker bridge.
+#
+# bip=240.0.0.1/29  — assigns a dedicated, non-internet-routable /29 subnet to
+#                     docker0 so the connector gets a stable 240.0.0.x address.
+#                     Cilium's fromCIDR: 240.0.0.0/29 policy matches this directly.
+# ip-masq=false     — disables Docker's blanket POSTROUTING MASQUERADE rule.
+#                     Connector → k8s NodePort traffic keeps its 240.0.0.x source,
+#                     so Cilium can enforce identity-based policy without guessing
+#                     the cilium_host IP.  Internet-bound traffic (connector →
+#                     Cisco cloud) is handled by a single targeted masquerade rule
+#                     installed in Step 19.1.
 if [ -f /etc/docker/daemon.json ]; then
     python3 -c "
 import json
@@ -145,10 +155,12 @@ opts = cfg.get('exec-opts', [])
 opts = [o for o in opts if 'cgroupdriver' not in o]
 opts.append('native.cgroupdriver=cgroupfs')
 cfg['exec-opts'] = opts
+cfg['bip'] = '240.0.0.1/29'
+cfg['ip-masq'] = False
 json.dump(cfg, open('/etc/docker/daemon.json', 'w'), indent=2)
 " 2>/dev/null || true
 else
-    echo '{"exec-opts": ["native.cgroupdriver=cgroupfs"]}' > /etc/docker/daemon.json
+    echo '{"exec-opts": ["native.cgroupdriver=cgroupfs"], "bip": "240.0.0.1/29", "ip-masq": false}' > /etc/docker/daemon.json
 fi
 
 # 2. Reload unit files, then bring everything to a known-stopped state.
@@ -298,7 +310,7 @@ cilium install --version 1.16.5 \
   --set routingMode=native \
   --set autoDirectNodeRoutes=true \
   --set ipv4NativeRoutingCIDR=10.0.0.0/8 \
-  --set bpf.masquerade=false \
+  --set bpf.masquerade=true \
   --set enableIPv4Masquerade=true \
   --set kubeProxyReplacement=true \
   --set k8sServiceHost=$SERVER_IP \
@@ -482,131 +494,44 @@ kubectl wait --for=condition=Ready pods --all -n piap --timeout=120s || true
 kubectl get pods -n piap
 echo ""
 
-# Step 19.1: Install and start the iptables-refresh controller.
+# Step 19.1: Install the connector internet masquerade rule.
 #
-# Background: Cilium's kube-proxy replacement handles NodePort via eBPF TC hooks.
-# Step 12.1 tells Cilium to also watch docker0 (in addition to the primary NIC)
-# so that the connector (240.0.0.x) can reach K8s NodePorts.  However, Cilium
-# reads the devices list at startup — if docker0 doesn't exist yet when Cilium
-# initialises (because the connector container starts later), Cilium silently
-# skips it and the TC hook is never attached.  This is a startup-ordering issue,
-# not a kernel limitation, and it affects any kernel version.
+# Docker is configured with ip-masq=false (daemon.json) so its default blanket
+# POSTROUTING MASQUERADE rule is absent.  Cilium's TC hook on docker0 handles
+# connector → K8s NodePort traffic directly in eBPF, preserving the 240.0.0.x
+# source IP so the fromCIDR: 240.0.0.0/29 policy can match it.
 #
-# iptables DNAT rules are the reliable fallback: they are installed after the
-# connector and all pods are running, so pod IPs are known and docker0 exists.
-# If Cilium did attach its TC hook to docker0, it runs BEFORE iptables in the
-# kernel stack, so these rules become a harmless no-op in that case.
-#
-# Pod IPs change whenever a pod restarts.  The controller below runs every 30 s
-# and re-syncs the iptables DNAT rules with the current pod IPs, so a pod crash
-# never leaves a stale rule pointing at a dead IP.
-echo "Step 19.1: Installing iptables-refresh controller..."
+# The connector still needs outbound internet access (Cisco cloud registration
+# and keepalives).  240.0.0.x is non-internet-routable, so we install ONE
+# targeted rule: masquerade only traffic leaving to non-local destinations.
+# K8s traffic (10.0.0.0/8) is explicitly excluded, so the source IP is always
+# preserved for pod-bound connections.
+echo "Step 19.1: Installing connector internet masquerade rule..."
 
-mkdir -p /opt/piap
+# Apply immediately (idempotent: -C checks first, -A appends only if absent).
+iptables -t nat -C POSTROUTING -s 240.0.0.0/29 ! -d 10.0.0.0/8 -j MASQUERADE 2>/dev/null \
+  || iptables -t nat -A POSTROUTING -s 240.0.0.0/29 ! -d 10.0.0.0/8 -j MASQUERADE
 
-# Write the refresh script.  It is idempotent: it reads the current pod IPs
-# from kubectl and atomically replaces any stale DNAT rules per NodePort.
-cat > /opt/piap/refresh-iptables.sh << 'REFRESH_EOF'
-#!/bin/bash
-# Refresh iptables DNAT rules so the Cisco connector (docker0 / 240.0.0.x)
-# can reach K8s NodePort services when pod IPs change after pod restarts.
-#
-# Cilium is configured (Step 12.1) to attach TC hooks to docker0, but it reads
-# the devices list at startup — if docker0 doesn't exist yet at that point,
-# the hook is never attached.  These iptables rules are the reliable fallback.
-# If Cilium's TC hook IS attached, it runs before iptables in the kernel stack
-# and these rules are never triggered.
-set -euo pipefail
-export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-KUBECTL=/usr/local/bin/kubectl
-
-while IFS=$'\t' read -r SVC_NAME NODE_PORT TARGET_PORT SELECTOR; do
-    { [ -z "${NODE_PORT:-}" ] || [ "$NODE_PORT" = "null" ]; } && continue
-    { [ -z "${TARGET_PORT:-}" ] || [ "$TARGET_PORT" = "null" ]; } && continue
-    { [ -z "${SELECTOR:-}" ] || [ "$SELECTOR" = "null" ]; } && continue
-
-    POD_IP=$($KUBECTL get pods -n piap -l "${SELECTOR}" \
-        -o jsonpath='{.items[0].status.podIP}' 2>/dev/null || true)
-
-    [ -z "$POD_IP" ] && continue
-
-    # Remove any stale DNAT rule for this NodePort (pod IP may have changed).
-    iptables -t nat -S PREROUTING 2>/dev/null \
-      | grep -- "-i docker0 -p tcp --dport ${NODE_PORT} -j DNAT" \
-      | sed 's/^-A PREROUTING/-D PREROUTING/' \
-      | while IFS= read -r old_rule; do
-            iptables -t nat $old_rule 2>/dev/null || true
-        done || true
-
-    iptables -t nat -I PREROUTING -i docker0 -p tcp --dport "$NODE_PORT" \
-        -j DNAT --to-destination "${POD_IP}:${TARGET_PORT}"
-
-    # Remove stale FORWARD accept for this service (identified by comment tag).
-    iptables -S FORWARD 2>/dev/null \
-      | grep -- "--comment piap/${SVC_NAME}" \
-      | sed 's/^-A FORWARD/-D FORWARD/' \
-      | while IFS= read -r old_rule; do
-            iptables $old_rule 2>/dev/null || true
-        done || true
-
-    iptables -I FORWARD -i docker0 -d "$POD_IP" -p tcp --dport "$TARGET_PORT" \
-        -m comment --comment "piap/${SVC_NAME}" -j ACCEPT
-
-    echo "  docker0:${NODE_PORT} → ${SVC_NAME} (${POD_IP}:${TARGET_PORT})"
-done < <($KUBECTL get svc -n piap -o json | python3 -c "
-import json, sys
-data = json.load(sys.stdin)
-for svc in data['items']:
-    if svc['spec'].get('type') != 'NodePort':
-        continue
-    name = svc['metadata']['name']
-    selector = svc['spec'].get('selector', {})
-    selector_str = ','.join(f'{k}={v}' for k, v in selector.items())
-    if not selector_str:
-        continue
-    for p in svc['spec']['ports']:
-        np = p.get('nodePort')
-        tp = p.get('targetPort')
-        if np and tp:
-            print(f'{name}\t{np}\t{tp}\t{selector_str}')
-")
-REFRESH_EOF
-chmod +x /opt/piap/refresh-iptables.sh
-
-# Systemd service — runs the script once per invocation (oneshot).
-cat > /etc/systemd/system/piap-iptables-refresh.service << 'SERVICE_EOF'
+# Persist across reboots via a minimal systemd oneshot service.
+cat > /etc/systemd/system/piap-connector-masquerade.service << 'MASQ_EOF'
 [Unit]
-Description=Refresh piap iptables DNAT rules for K8s NodePorts
-After=k3s.service
+Description=Connector internet masquerade rule (240.0.0.0/29 to internet)
+After=network.target docker.service
+Wants=docker.service
 
 [Service]
 Type=oneshot
-ExecStart=/opt/piap/refresh-iptables.sh
-StandardOutput=journal
-StandardError=journal
-SERVICE_EOF
-
-# Systemd timer — triggers the service every 30 s, starting 60 s after boot
-# (giving K3s and pods time to become ready first).
-cat > /etc/systemd/system/piap-iptables-refresh.timer << 'TIMER_EOF'
-[Unit]
-Description=Refresh piap iptables DNAT rules every 30 seconds
-
-[Timer]
-OnBootSec=60s
-OnUnitActiveSec=30s
+RemainAfterExit=yes
+ExecStart=/bin/sh -c 'iptables -t nat -C POSTROUTING -s 240.0.0.0/29 ! -d 10.0.0.0/8 -j MASQUERADE 2>/dev/null || iptables -t nat -A POSTROUTING -s 240.0.0.0/29 ! -d 10.0.0.0/8 -j MASQUERADE'
+ExecStop=/bin/sh -c 'iptables -t nat -D POSTROUTING -s 240.0.0.0/29 ! -d 10.0.0.0/8 -j MASQUERADE 2>/dev/null || true'
 
 [Install]
-WantedBy=timers.target
-TIMER_EOF
+WantedBy=multi-user.target
+MASQ_EOF
 
 systemctl daemon-reload
-systemctl enable --now piap-iptables-refresh.timer
-
-# Run once immediately so rules are active without waiting 30 s.
-echo "  Running initial rule sync..."
-/opt/piap/refresh-iptables.sh
-echo "  ✓ iptables-refresh controller installed and active (every 30 s)"
+systemctl enable --now piap-connector-masquerade.service
+echo "  ✓ Connector internet masquerade rule installed (static, boot-persistent)"
 echo ""
 
 # Step 20: Show access information
