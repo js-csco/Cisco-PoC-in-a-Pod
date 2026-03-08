@@ -8,6 +8,7 @@ metadata:
   labels:
     io.kompose.service: ssh-server
   name: ssh-server
+  namespace: piap
 spec:
   type: NodePort
   selector:
@@ -17,7 +18,5 @@ spec:
       port: 2222
       targetPort: 2222
       nodePort: 30022
-  selector:
-    io.kompose.service: ssh-server
 status:
   loadBalancer: {}

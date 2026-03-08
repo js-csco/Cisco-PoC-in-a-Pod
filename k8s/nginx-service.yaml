@@ -8,6 +8,7 @@ metadata:
   labels:
     io.kompose.service: nginx
   name: nginx
+  namespace: piap
 spec:
   type: NodePort
   selector:

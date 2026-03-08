@@ -7,6 +7,7 @@ metadata:
   labels:
     io.kompose.service: automagic
   name: automagic
+  namespace: piap
 spec:
   type: NodePort
   selector:

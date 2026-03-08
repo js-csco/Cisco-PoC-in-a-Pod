@@ -8,6 +8,7 @@ metadata:
   labels:
     io.kompose.service: rdp-server
   name: rdp-server
+  namespace: piap
 spec:
   type: NodePort
   selector:
