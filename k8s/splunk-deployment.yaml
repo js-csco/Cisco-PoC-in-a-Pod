@@ -6,7 +6,7 @@ metadata:
   namespace: piap
 type: Opaque
 stringData:
-  password: "piap-demo-2024"
+  password: "piap"
   hec_token: "piap-hec-token"
 ---
 apiVersion: v1
