@@ -299,11 +299,9 @@
   <div class="card">
     <div class="card-title">HOW ACCESS IS DETECTED</div>
     <p style="font-size:0.88em; color:#555; line-height:1.7; margin:0;">
-      The Resource Connector runs on this server as a pod with IP <code>CONNECTOR_IP</code>.
-      When you access via Cisco Secure Access, your traffic travels through the
-      <strong>Secure Access cloud</strong> and exits through the on-premises connector —
-      so this application only ever sees <strong>CONNECTOR_IP</strong> as the source, never your real IP.
-      Accessing directly over the LAN or internet exposes your actual IP instead.
+      Via <strong>Cisco Secure Access</strong>: traffic exits through the on-premises connector pod
+      (<code>CONNECTOR_IP</code>) — the app sees that IP, not yours.<br>
+      Via <strong>direct access</strong>: the app sees your real IP.
     </p>
   </div>
 
@@ -312,52 +310,58 @@
 <footer>Cisco Secure Access · PoC in a Pod · SSE Check · Zero Trust Demo</footer>
 
 <script>
-(function () {
-  const ip = document.getElementById('serverIp').textContent.trim();
-
+document.addEventListener('DOMContentLoaded', function () {
+  // Always populate these fields — they don't need server-side data
   document.getElementById('valProtocol').textContent =
     window.location.protocol.replace(':', '').toUpperCase();
   document.getElementById('valPort').textContent =
     window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
   document.getElementById('valTime').textContent = new Date().toLocaleString();
 
-  const connectorIp = 'CONNECTOR_IP';
+  var banner = document.getElementById('banner');
+  var bIcon  = document.getElementById('bIcon');
+  var bTag   = document.getElementById('bTag');
+  var bTitle = document.getElementById('bTitle');
+  var bBody  = document.getElementById('bBody');
+  var method = document.getElementById('accessMethod');
 
-  const banner = document.getElementById('banner');
-  const bIcon  = document.getElementById('bIcon');
-  const bTag   = document.getElementById('bTag');
-  const bTitle = document.getElementById('bTitle');
-  const bBody  = document.getElementById('bBody');
-  const method = document.getElementById('accessMethod');
+  try {
+    var ipEl = document.getElementById('serverIp');
+    var ip   = ipEl ? ipEl.textContent.trim() : '';
+    var connectorIp = 'CONNECTOR_IP';
 
-  if (!ip || ip === 'n/a') {
-    bIcon.textContent  = '🔍';
-    bTag.textContent   = 'IP UNAVAILABLE';
-    bTitle.textContent = 'Could not determine access method';
-    bBody.textContent  = 'Server-side IP injection requires nginx SSI to be enabled.';
-    method.textContent = 'Unknown';
+    if (!ip || ip === 'n/a') {
+      bIcon.textContent  = '🔍';
+      bTag.textContent   = 'IP UNAVAILABLE';
+      bTitle.textContent = 'Could not determine access method';
+      bBody.textContent  = 'Server-side IP injection requires nginx SSI to be enabled.';
+      method.textContent = 'Unknown';
+      banner.className   = 'banner direct';
 
-  } else if (ip === connectorIp) {
-    banner.className   = 'banner ztna';
-    bIcon.textContent  = '✅';
-    bTag.textContent   = 'ZERO TRUST ACCESS VERIFIED';
-    bTitle.textContent = 'You are accessing this server through Cisco Secure Access';
-    bBody.textContent  =
-      'The server sees ' + ip + ' — the Cisco Resource Connector IP. '
-      + 'Your traffic is tunnelled through ZTNA and your real IP is never exposed to the application.';
-    method.textContent = 'ZTNA (Cisco Secure Access)';
+    } else if (ip === connectorIp) {
+      banner.className   = 'banner ztna';
+      bIcon.textContent  = '✅';
+      bTag.textContent   = 'ZERO TRUST ACCESS VERIFIED';
+      bTitle.textContent = 'You are accessing via Cisco Secure Access';
+      bBody.textContent  = 'The server sees ' + ip + ' — the Cisco Resource Connector IP. Your real IP is never exposed to this application.';
+      method.textContent = 'ZTNA (Cisco Secure Access)';
 
-  } else {
+    } else {
+      banner.className   = 'banner direct';
+      bIcon.textContent  = '⚠️';
+      bTag.textContent   = 'DIRECT ACCESS — NO ZTNA';
+      bTitle.textContent = 'You are NOT going through Cisco Secure Access';
+      bBody.textContent  = 'The server sees ' + ip + ' — your real IP. Traffic is not tunnelled through ZTNA.';
+      method.textContent = 'Direct (no ZTNA)';
+    }
+  } catch (e) {
     banner.className   = 'banner direct';
-    bIcon.textContent  = '⚠️';
-    bTag.textContent   = 'DIRECT ACCESS — NO ZTNA';
-    bTitle.textContent = 'You are NOT accessing this server through Cisco Secure Access';
-    bBody.textContent  =
-      'The server sees ' + ip + ' — not the connector IP. '
-      + 'You are reaching this server directly, bypassing Zero Trust controls.';
-    method.textContent = 'Direct (no ZTNA)';
+    bIcon.textContent  = '🔍';
+    bTag.textContent   = 'DETECTION ERROR';
+    bTitle.textContent = 'Could not determine access method';
+    bBody.textContent  = 'JS error: ' + e.message;
   }
-})();
+});
 </script>
 
 </body>
