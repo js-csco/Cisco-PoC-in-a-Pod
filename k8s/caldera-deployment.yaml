@@ -21,7 +21,6 @@ data:
         admin: admin
     plugins:
       - access
-      - atomic
       - debrief
       - fieldmanual
       - manx
