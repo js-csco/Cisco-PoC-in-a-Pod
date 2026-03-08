@@ -273,8 +273,8 @@
       </div>
 
       <div>
-        <label>HOSTNAME</label>
-        <div class="val" id="valHostname">—</div>
+        <label>EXPECTED CONNECTOR IP</label>
+        <div class="val ip" id="valConnectorIp">CONNECTOR_IP</div>
       </div>
 
       <div>
@@ -299,10 +299,10 @@
   <div class="card">
     <div class="card-title">HOW ACCESS IS DETECTED</div>
     <p style="font-size:0.88em; color:#555; line-height:1.7; margin:0;">
-      The Resource Connector runs on this server as a pod with IP <code>SERVER_IP</code>.
+      The Resource Connector runs on this server as a pod with IP <code>CONNECTOR_IP</code>.
       When you access via Cisco Secure Access, your traffic travels through the
       <strong>Secure Access cloud</strong> and exits through the on-premises connector —
-      so this application only ever sees <strong>SERVER_IP</strong> as the source, never your real IP.
+      so this application only ever sees <strong>CONNECTOR_IP</strong> as the source, never your real IP.
       Accessing directly over the LAN or internet exposes your actual IP instead.
     </p>
   </div>
@@ -315,14 +315,13 @@
 (function () {
   const ip = document.getElementById('serverIp').textContent.trim();
 
-  document.getElementById('valHostname').textContent = window.location.hostname || '—';
   document.getElementById('valProtocol').textContent =
     window.location.protocol.replace(':', '').toUpperCase();
   document.getElementById('valPort').textContent =
     window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
   document.getElementById('valTime').textContent = new Date().toLocaleString();
 
-  const connectorIp = 'SERVER_IP';
+  const connectorIp = 'CONNECTOR_IP';
 
   const banner = document.getElementById('banner');
   const bIcon  = document.getElementById('bIcon');
