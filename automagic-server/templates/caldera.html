@@ -15,9 +15,23 @@
 {% endwith %}
 
 <h1 style="color:#111; margin-bottom:0.4rem;">MITRE Caldera — Adversary Emulation</h1>
-<p style="color:#666; margin-top:0; margin-bottom:2.5rem; font-size:0.95em; line-height:1.6;">
+<p style="color:#666; margin-top:0; margin-bottom:1.5rem; font-size:0.95em; line-height:1.6;">
   Three red-team attack scenarios against the victim pod — detected in real time by Tetragon eBPF below.
 </p>
+
+<!-- ABOUT -->
+<section style="background:#f8f9fa; padding:20px; border-radius:8px; border-left:4px solid #c0392b; margin-bottom:2.5rem;">
+  <p style="color:#555; font-size:0.95em; margin:0 0 10px 0; line-height:1.6;">
+    <strong>MITRE Caldera</strong> is an open-source adversary emulation platform built on the
+    <a href="https://attack.mitre.org" target="_blank" style="color:#c0392b; text-decoration:none;">MITRE ATT&amp;CK</a>
+    framework. It simulates real-world attacker behaviour using modular <em>abilities</em> chained into
+    <em>operations</em>, without needing actual malware.
+  </p>
+  <p style="color:#555; font-size:0.95em; margin:0; line-height:1.6;">
+    In this demo, Caldera runs three pre-built attack chains — Recon, Credential Hunting, and Persistence —
+    against a victim pod in the cluster. Every action is caught in real time by Tetragon eBPF kernel-level monitoring.
+  </p>
+</section>
 
 <!-- ═══════════════════════════════════════════════════════ CURRENT STATUS -->
 <section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
