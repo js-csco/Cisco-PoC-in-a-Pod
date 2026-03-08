@@ -469,48 +469,59 @@ def tetragon_events():
                 "action": process_kprobe.get("action", ""),
                 "func_name": process_kprobe.get("function_name", ""),
             })
+        pod_filter = request.args.get('pod', '').strip()
+        if pod_filter:
+            events = [e for e in events if e.get('pod', '').startswith(pod_filter)]
         return jsonify({"events": events[-50:], "total": len(events)})
     except Exception as e:
         return jsonify({"events": [], "error": str(e)})
 
 @app.route('/caldera', methods=['GET', 'POST'])
 def caldera():
-    from scripts.caldera import is_available, get_agents, get_adversaries, get_operations, run_operation
-    from flask import jsonify
+    from scripts.caldera import (is_available, get_agents, get_operations,
+                                  setup_demo_adversaries, get_demo_adversaries)
 
     caldera_available = is_available()
-    agents, adversaries, operations = [], [], []
+    agents, operations, demo_scenarios = [], [], []
     if caldera_available:
         try:
             agents = get_agents()
         except Exception:
             pass
         try:
-            adversaries = get_adversaries()
+            operations = get_operations()
         except Exception:
             pass
         try:
-            operations = get_operations()
+            demo_scenarios = get_demo_adversaries()
         except Exception:
             pass
 
     if request.method == 'POST':
         action = request.form.get('action')
-        if action == 'run_operation':
+        if action == 'setup_demo':
+            try:
+                msgs = setup_demo_adversaries()
+                for m in msgs:
+                    flash(f"✅ {m}")
+            except Exception as e:
+                flash(f"⚠️ Setup failed: {e}")
+        elif action == 'run_operation':
+            from scripts.caldera import run_operation
             adversary_id = request.form.get('adversary_id', '').strip()
-            op_name = request.form.get('op_name', 'PoC Demo Attack').strip()
+            op_name = request.form.get('op_name', 'PoC Attack').strip()
             try:
                 op = run_operation(op_name, adversary_id)
-                flash(f"⚔️ Operation '{op.get('name', op_name)}' launched — watch Tetragon for detections!")
+                flash(f"⚔️ '{op_name}' launched — watch Tetragon below for detections!")
             except Exception as e:
-                flash(f"⚠️ Failed to launch operation: {e}")
+                flash(f"⚠️ Failed to launch: {e}")
         return redirect(url_for('caldera'))
 
     return render_template('caldera.html',
                            caldera_available=caldera_available,
                            agents=agents,
-                           adversaries=adversaries,
-                           operations=operations)
+                           operations=operations,
+                           demo_scenarios=demo_scenarios)
 
 
 @app.route('/caldera/status')
