@@ -76,19 +76,6 @@
 </section>
 {% endif %}
 
-<!-- ABOUT -->
-<section style="background:#f8f9fa; padding:20px; border-radius:8px; border-left:4px solid #0066ff; margin-bottom:2.5rem;">
-  <p style="color:#555; font-size:0.95em; margin:0 0 10px 0; line-height:1.6;">
-    <strong>Splunk</strong> receives structured JSON events from the cluster via a <strong>Fluent Bit DaemonSet</strong>
-    running on every node. Fluent Bit tails the container log files for each selected source and forwards them
-    to the Splunk <strong>HTTP Event Collector (HEC)</strong> on port 8088.
-  </p>
-  <p style="color:#555; font-size:0.95em; margin:0; line-height:1.6;">
-    Three log sources are available: <strong>Tetragon</strong> (kernel-level ATT&amp;CK events),
-    <strong>Hubble</strong> (L3/L4 network flows), and <strong>Cilium</strong> (policy enforcement logs).
-    Toggle them below — the change is applied live without redeploying Splunk.
-  </p>
-</section>
 
 <!-- ═══════════════════════════════════════════════════════ CURRENT STATUS -->
 <section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
