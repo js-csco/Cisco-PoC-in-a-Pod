@@ -73,11 +73,10 @@ spec:
               memory: "2Gi"
               cpu: "1000m"
           readinessProbe:
-            httpGet:
-              path: /
+            tcpSocket:
               port: 8888
-            initialDelaySeconds: 120
-            periodSeconds: 15
+            initialDelaySeconds: 60
+            periodSeconds: 10
             failureThreshold: 30
       restartPolicy: Always
       volumes:
