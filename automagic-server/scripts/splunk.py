@@ -1,5 +1,6 @@
 """
-Splunk helper — availability checks, HEC health, and Fluent Bit management.
+Splunk helper — availability checks, HEC health, Fluent Bit management,
+and on-demand deployment from the dashboard.
 """
 import os
 import datetime
@@ -67,6 +68,170 @@ def get_enabled_sources():
         }
     except ApiException:
         return {"tetragon": True, "hubble": True, "cilium": True}
+
+
+def deploy_splunk(license_content: str = "") -> bool:
+    """
+    Create (or idempotently re-apply) the Splunk Secret, Deployment, and Service.
+
+    If license_content is provided it is stored as a Secret and mounted into the
+    container at /licenses/enterprise.lic; SPLUNK_LICENSE_URI is set accordingly
+    so Splunk loads the Enterprise license on startup.
+
+    Without a license the container starts a 60-day Enterprise trial, after which
+    it degrades to Splunk Free (500 MB/day, authentication disabled — the admin
+    password is then effectively ignored).
+
+    # TODO: Revisit Splunk licensing before using this in production or long-lived
+    # demos.  As of 2025/2026, Splunk has tightened its developer/free license
+    # program — a "developer license" may now require registration and approval at
+    # https://dev.splunk.com/ rather than being self-service.  Check the current
+    # options; the 60-day trial may be the only frictionless path for a PoC, but
+    # it will expire and break authentication after two months.
+
+    Returns True if an Enterprise license was provided, False for trial mode.
+    """
+    core = _core()
+    apps_api = _apps()
+    has_license = bool(license_content.strip())
+
+    # ── 1. splunk-creds Secret (password + HEC token) ────────────────────────
+    creds_secret = client.V1Secret(
+        metadata=client.V1ObjectMeta(name="splunk-creds", namespace=NAMESPACE),
+        string_data={"password": "piap", "hec_token": HEC_TOKEN},
+    )
+    try:
+        core.create_namespaced_secret(NAMESPACE, creds_secret)
+    except ApiException as e:
+        if e.status == 409:
+            core.patch_namespaced_secret("splunk-creds", NAMESPACE, creds_secret)
+        else:
+            raise
+
+    # ── 2. Optional Enterprise license Secret ────────────────────────────────
+    if has_license:
+        lic_secret = client.V1Secret(
+            metadata=client.V1ObjectMeta(name="splunk-license", namespace=NAMESPACE),
+            string_data={"enterprise.lic": license_content.strip()},
+        )
+        try:
+            core.create_namespaced_secret(NAMESPACE, lic_secret)
+        except ApiException as e:
+            if e.status == 409:
+                core.patch_namespaced_secret("splunk-license", NAMESPACE, lic_secret)
+            else:
+                raise
+
+    # ── 3. Build Deployment ───────────────────────────────────────────────────
+    env = [
+        client.V1EnvVar(name="SPLUNK_START_ARGS", value="--accept-license --no-prompt"),
+        client.V1EnvVar(
+            name="SPLUNK_PASSWORD",
+            value_from=client.V1EnvVarSource(
+                secret_key_ref=client.V1SecretKeySelector(name="splunk-creds", key="password")
+            ),
+        ),
+        client.V1EnvVar(
+            name="SPLUNK_HEC_TOKEN",
+            value_from=client.V1EnvVarSource(
+                secret_key_ref=client.V1SecretKeySelector(name="splunk-creds", key="hec_token")
+            ),
+        ),
+        client.V1EnvVar(name="SPLUNK_ANSIBLE_ENV",        value="local"),
+        client.V1EnvVar(name="SPLUNK_ANSIBLE_PRE_TASKS",  value="null"),
+        client.V1EnvVar(name="SPLUNK_ANSIBLE_POST_TASKS", value="null"),
+        client.V1EnvVar(name="TZ",                        value="Europe/Berlin"),
+        client.V1EnvVar(name="SPLUNK_HOME_OWNERSHIP_ENFORCEMENT", value="false"),
+        client.V1EnvVar(name="SPLUNK_ENABLE_KVSTORE",     value="true"),
+        client.V1EnvVar(name="SPLUNK_ROLE",               value="splunk_standalone"),
+    ]
+    if has_license:
+        env.append(client.V1EnvVar(name="SPLUNK_LICENSE_URI", value="/licenses/enterprise.lic"))
+
+    volume_mounts = [client.V1VolumeMount(name="splunk-data", mount_path="/opt/splunk/var")]
+    volumes = [
+        client.V1Volume(
+            name="splunk-data",
+            host_path=client.V1HostPathVolumeSource(path="/opt/splunk-data", type="DirectoryOrCreate"),
+        )
+    ]
+    if has_license:
+        volume_mounts.append(client.V1VolumeMount(name="splunk-license", mount_path="/licenses"))
+        volumes.append(client.V1Volume(
+            name="splunk-license",
+            secret=client.V1SecretVolumeSource(secret_name="splunk-license"),
+        ))
+
+    container = client.V1Container(
+        name="splunk",
+        image="splunk/splunk:latest",
+        env=env,
+        ports=[
+            client.V1ContainerPort(name="web",     container_port=8000),
+            client.V1ContainerPort(name="hec",     container_port=8088),
+            client.V1ContainerPort(name="splunkd", container_port=8089),
+            client.V1ContainerPort(name="kvstore", container_port=8191),
+        ],
+        volume_mounts=volume_mounts,
+        resources=client.V1ResourceRequirements(
+            requests={"memory": "2Gi", "cpu": "1000m"},
+            limits={"memory": "4Gi", "cpu": "2000m"},
+        ),
+        liveness_probe=client.V1Probe(
+            http_get=client.V1HTTPGetAction(path="/en-US/account/login", port=8000),
+            initial_delay_seconds=300, period_seconds=30, timeout_seconds=10, failure_threshold=5,
+        ),
+        readiness_probe=client.V1Probe(
+            http_get=client.V1HTTPGetAction(path="/en-US/account/login", port=8000),
+            initial_delay_seconds=240, period_seconds=10, timeout_seconds=5, failure_threshold=10,
+        ),
+        startup_probe=client.V1Probe(
+            http_get=client.V1HTTPGetAction(path="/en-US/account/login", port=8000),
+            initial_delay_seconds=60, period_seconds=10, timeout_seconds=5, failure_threshold=30,
+        ),
+    )
+
+    deployment = client.V1Deployment(
+        metadata=client.V1ObjectMeta(name="splunk", namespace=NAMESPACE, labels={"app": "splunk"}),
+        spec=client.V1DeploymentSpec(
+            replicas=1,
+            selector=client.V1LabelSelector(match_labels={"app": "splunk"}),
+            strategy=client.V1DeploymentStrategy(type="Recreate"),
+            template=client.V1PodTemplateSpec(
+                metadata=client.V1ObjectMeta(labels={"app": "splunk"}),
+                spec=client.V1PodSpec(containers=[container], volumes=volumes),
+            ),
+        ),
+    )
+    try:
+        apps_api.create_namespaced_deployment(NAMESPACE, deployment)
+    except ApiException as e:
+        if e.status == 409:
+            apps_api.patch_namespaced_deployment("splunk", NAMESPACE, deployment)
+        else:
+            raise
+
+    # ── 4. Service (idempotent — skip patch if it already exists) ────────────
+    service = client.V1Service(
+        metadata=client.V1ObjectMeta(name="splunk", namespace=NAMESPACE, labels={"app": "splunk"}),
+        spec=client.V1ServiceSpec(
+            type="NodePort",
+            selector={"app": "splunk"},
+            ports=[
+                client.V1ServicePort(name="web",     port=8000, target_port=8000, node_port=30500),
+                client.V1ServicePort(name="hec",     port=8088, target_port=8088, node_port=30501),
+                client.V1ServicePort(name="splunkd", port=8089, target_port=8089, node_port=30502),
+                client.V1ServicePort(name="kvstore", port=8191, target_port=8191),
+            ],
+        ),
+    )
+    try:
+        core.create_namespaced_service(NAMESPACE, service)
+    except ApiException as e:
+        if e.status != 409:
+            raise
+
+    return has_license
 
 
 def configure_log_forwarding(sources: dict):

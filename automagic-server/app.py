@@ -550,18 +550,34 @@ def splunk():
         get_enabled_sources, configure_log_forwarding,
     )
 
-    if request.method == 'POST' and request.form.get('action') == 'configure_logs':
-        sources = {
-            'tetragon': 'log_tetragon' in request.form,
-            'hubble':   'log_hubble'   in request.form,
-            'cilium':   'log_cilium'   in request.form,
-        }
-        try:
-            configure_log_forwarding(sources)
-            flash("Log forwarding updated — Fluent Bit pods restarting.")
-        except Exception as e:
-            flash(f"Failed to update log forwarding: {e}")
-        return redirect(url_for('splunk'))
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        if action == 'deploy_splunk':
+            from scripts.splunk import deploy_splunk
+            license_content = request.form.get('license_content', '').strip()
+            try:
+                has_license = deploy_splunk(license_content)
+                if has_license:
+                    flash("✅ Splunk deployed with Enterprise license — allow ~5 min for startup.")
+                else:
+                    flash("✅ Splunk deployed (60-day Enterprise trial) — allow ~5 min for startup.")
+            except Exception as e:
+                flash(f"⚠️ Deployment failed: {e}")
+            return redirect(url_for('splunk'))
+
+        if action == 'configure_logs':
+            sources = {
+                'tetragon': 'log_tetragon' in request.form,
+                'hubble':   'log_hubble'   in request.form,
+                'cilium':   'log_cilium'   in request.form,
+            }
+            try:
+                configure_log_forwarding(sources)
+                flash("Log forwarding updated — Fluent Bit pods restarting.")
+            except Exception as e:
+                flash(f"Failed to update log forwarding: {e}")
+            return redirect(url_for('splunk'))
 
     splunk_available = is_available()
     forwarder_desired, forwarder_ready = get_forwarder_status()

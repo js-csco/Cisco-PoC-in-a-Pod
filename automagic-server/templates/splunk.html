@@ -19,6 +19,63 @@
   Collects Tetragon eBPF events, Hubble network flows, and Cilium logs via Fluent Bit and the Splunk HEC.
 </p>
 
+{% if not splunk_available %}
+<!-- ═══════════════════════════════════════════════════════ DEPLOY SPLUNK -->
+<section style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:24px; margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#f9a825; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DEPLOY SPLUNK SERVICES</h3>
+  </div>
+
+  <p style="color:#555; font-size:0.9em; margin:0 0 6px 0; line-height:1.6;">
+    Splunk is not yet running. Click <strong>Deploy</strong> to create the container, publish the Web UI,
+    and configure the HTTP Event Collector (HEC) so Fluent Bit can forward logs.
+    Startup takes approximately <strong>5 minutes</strong>.
+  </p>
+
+  <!-- License note -->
+  <div style="background:#fff3e0; border:1px solid #ffcc80; border-radius:6px; padding:10px 14px; margin-bottom:16px; font-size:0.83em; color:#666; line-height:1.6;">
+    <strong>License:</strong>
+    Without a license file the container starts a <strong>60-day Enterprise trial</strong>, then falls back to
+    Splunk Free (500 MB/day, authentication disabled — the <code>admin / piap</code> password stops working).
+    For a standing lab, paste your <strong>Enterprise or Developer .lic file</strong> below.
+    <br>
+    <!--
+      TODO: Revisit Splunk licensing — as of 2025/2026, Splunk has restricted its free developer
+      license program.  A developer license may now require registration and approval at
+      https://dev.splunk.com/ rather than being instantly self-service.  Check the current options;
+      the 60-day trial may be the only frictionless path for a short-lived PoC.
+    -->
+    <span style="color:#e65100;">
+      ⚠️ Developer licenses may now require sign-up at
+      <a href="https://dev.splunk.com/" target="_blank" style="color:#e65100;">dev.splunk.com</a>
+      — the 60-day trial is fine for short demos.
+    </span>
+  </div>
+
+  <form method="POST">
+    <label style="display:block; font-size:0.85em; font-weight:600; color:#555; margin-bottom:6px;">
+      Enterprise / Developer License <span style="font-weight:400; color:#999;">(optional — paste .lic file contents)</span>
+    </label>
+    <textarea name="license_content" rows="5"
+              placeholder="<?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>&#10;<license>...</license>&#10;&#10;Leave empty to start the 60-day Enterprise trial."
+              style="width:100%; box-sizing:border-box; font-family:monospace; font-size:0.82em;
+                     border:1px solid #e0e0e0; border-radius:6px; padding:10px; resize:vertical;
+                     color:#333; background:#fff;"></textarea>
+    <div style="margin-top:14px;">
+      <button type="submit" name="action" value="deploy_splunk"
+              style="background-color:#f9a825; color:#333; border:none; padding:11px 28px;
+                     border-radius:8px; font-weight:700; cursor:pointer; font-size:0.95em;">
+        Deploy Splunk Services
+      </button>
+      <span style="margin-left:14px; font-size:0.82em; color:#999;">
+        Deploys Splunk + Web UI (30500) + HEC (30501) + Splunkd API (30502)
+      </span>
+    </div>
+  </form>
+</section>
+{% endif %}
+
 <!-- ABOUT -->
 <section style="background:#f8f9fa; padding:20px; border-radius:8px; border-left:4px solid #0066ff; margin-bottom:2.5rem;">
   <p style="color:#555; font-size:0.95em; margin:0 0 10px 0; line-height:1.6;">
@@ -60,7 +117,7 @@
           <span style="font-weight:600; color:#b71c1c; font-size:0.9em;">Offline — not yet deployed</span>
         </div>
         <p style="margin:10px 0 0; font-size:0.8em; color:#888;">
-          Apply <code>splunk-deployment.yaml</code> to start Splunk (~5 min boot).
+          Use the <strong>Deploy</strong> panel above to start Splunk (~5 min boot).
         </p>
       {% endif %}
     </div>
