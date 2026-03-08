@@ -543,9 +543,37 @@ def caldera_status():
 def mcp_servers():
     return render_template('mcp-servers.html')
 
-@app.route('/splunk')
+@app.route('/splunk', methods=['GET', 'POST'])
 def splunk():
-    return render_template('splunk.html')
+    from scripts.splunk import (
+        is_available, hec_is_healthy, get_forwarder_status,
+        get_enabled_sources, configure_log_forwarding,
+    )
+
+    if request.method == 'POST' and request.form.get('action') == 'configure_logs':
+        sources = {
+            'tetragon': 'log_tetragon' in request.form,
+            'hubble':   'log_hubble'   in request.form,
+            'cilium':   'log_cilium'   in request.form,
+        }
+        try:
+            configure_log_forwarding(sources)
+            flash("Log forwarding updated — Fluent Bit pods restarting.")
+        except Exception as e:
+            flash(f"Failed to update log forwarding: {e}")
+        return redirect(url_for('splunk'))
+
+    splunk_available = is_available()
+    forwarder_desired, forwarder_ready = get_forwarder_status()
+    return render_template(
+        'splunk.html',
+        splunk_available=splunk_available,
+        hec_healthy=hec_is_healthy() if splunk_available else False,
+        forwarder_desired=forwarder_desired,
+        forwarder_ready=forwarder_ready,
+        enabled_sources=get_enabled_sources(),
+        server_ip=request.host.split(':')[0],
+    )
 
 @app.route('/thousandeyes')
 def thousandeyes():

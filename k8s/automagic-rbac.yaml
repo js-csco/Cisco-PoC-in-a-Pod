@@ -20,6 +20,14 @@ rules:
 - apiGroups: ["batch"]
   resources: ["jobs"]
   verbs: ["get", "list", "create", "delete"]
+# Fluent Bit config management: patch ConfigMap to toggle log sources
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "update", "patch"]
+# Fluent Bit rollout: patch DaemonSet to restart pods after config change
+- apiGroups: ["apps"]
+  resources: ["daemonsets"]
+  verbs: ["get", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

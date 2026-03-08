@@ -1,92 +1,215 @@
 {% extends "base.html" %}
 {% set active_page = 'splunk' %}
-{% block title %}Splunk - Cisco PoC in a Pod{% endblock %}
+{% block title %}Splunk — PoC in a Pod{% endblock %}
 
 {% block content %}
+
 {% with messages = get_flashed_messages() %}
   {% if messages %}
-    <ul class="messages" style="list-style:none; padding:0; margin-bottom:1.5rem;">
+    <ul style="list-style:none; padding:0; margin-bottom:1.5rem;">
       {% for message in messages %}
-        <li style="background:#e8f0fe; color:#333; padding:8px 12px; border-radius:6px; margin-bottom:6px;">{{ message }}</li>
+        <li style="background:#e8f0fe; color:#333; padding:8px 12px; border-radius:6px; margin-bottom:6px; font-size:0.9em;">{{ message }}</li>
       {% endfor %}
     </ul>
   {% endif %}
 {% endwith %}
 
-<form method="POST" style="display:flex; flex-direction:column; gap:2.5rem;">
-    <h1>Splunk</h1>
+<h1 style="color:#111; margin-bottom:0.4rem;">Splunk — Security Analytics</h1>
+<p style="color:#666; margin-top:0; margin-bottom:1.5rem; font-size:0.95em; line-height:1.6;">
+  Collects Tetragon eBPF events, Hubble network flows, and Cilium logs via Fluent Bit and the Splunk HEC.
+</p>
 
-    <!-- ABOUT -->
-    <section style="background:#f8f9fa; padding:20px; border-radius:8px; border-left:4px solid #0066ff;">
-      <p style="color:#555; font-size:0.95em; margin:0 0 12px 0; line-height:1.6;">
-        Splunk collects and analyzes logs from your infrastructure, providing real-time insights into security events, network flows, and system behavior.
-      </p>
-      <p style="color:#555; font-size:0.95em; margin:0; line-height:1.6;">
-        <strong>Access:</strong> <a href="http://SERVER_IP:30500" target="_blank" style="color:#0066ff;">http://SERVER_IP:30500</a> 
-        (username: <code style="background:#e9ecef; padding:2px 6px; border-radius:3px;">admin</code>)
-      </p>
-    </section>
+<!-- ABOUT -->
+<section style="background:#f8f9fa; padding:20px; border-radius:8px; border-left:4px solid #0066ff; margin-bottom:2.5rem;">
+  <p style="color:#555; font-size:0.95em; margin:0 0 10px 0; line-height:1.6;">
+    <strong>Splunk</strong> receives structured JSON events from the cluster via a <strong>Fluent Bit DaemonSet</strong>
+    running on every node. Fluent Bit tails the container log files for each selected source and forwards them
+    to the Splunk <strong>HTTP Event Collector (HEC)</strong> on port 8088.
+  </p>
+  <p style="color:#555; font-size:0.95em; margin:0; line-height:1.6;">
+    Three log sources are available: <strong>Tetragon</strong> (kernel-level ATT&amp;CK events),
+    <strong>Hubble</strong> (L3/L4 network flows), and <strong>Cilium</strong> (policy enforcement logs).
+    Toggle them below — the change is applied live without redeploying Splunk.
+  </p>
+</section>
 
-    <!-- REQUIRED APPS -->
-    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:15px;">
-        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-        <h3 style="color:#111; margin:0; font-size:1.1rem;">Install Required Apps</h3>
-      </div>
+<!-- ═══════════════════════════════════════════════════════ CURRENT STATUS -->
+<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CURRENT STATUS</h3>
+  </div>
 
-      <p style="color:#666; font-size:0.9em; margin-bottom:20px;">
-        Install these apps from Splunkbase (via Splunk UI → Apps → Find More Apps):
-      </p>
+  <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;">
 
-      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:15px; margin-bottom:15px;">
-        <div style="border:1px solid #e0e0e0; border-radius:6px; padding:15px;">
-          <div style="font-weight:500; color:#111; margin-bottom:5px;">Cisco Security Cloud</div>
-          <a href="https://splunkbase.splunk.com/app/7404" target="_blank" 
-             style="color:#0066ff; font-size:0.85em;">splunkbase.splunk.com/app/7404 →</a>
+    <!-- Splunk UI -->
+    <div style="border:1px solid #e0e0e0; border-radius:10px; padding:16px 20px;">
+      <div style="font-size:0.72em; font-weight:700; color:#999; letter-spacing:0.6px; margin-bottom:8px;">SPLUNK WEB UI</div>
+      {% if splunk_available %}
+        <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:8px; padding:8px 14px;">
+          <span>✅</span>
+          <span style="font-weight:600; color:#2e7d32; font-size:0.9em;">Online</span>
         </div>
-
-        <div style="border:1px solid #e0e0e0; border-radius:6px; padding:15px;">
-          <div style="font-weight:500; color:#111; margin-bottom:5px;">Splunk MCP Server</div>
-          <a href="https://splunkbase.splunk.com/app/7931" target="_blank" 
-             style="color:#0066ff; font-size:0.85em;">splunkbase.splunk.com/app/7931 →</a>
+        <p style="margin:10px 0 0; font-size:0.8em; color:#888;">
+          <a href="http://{{ server_ip }}:30500" target="_blank" style="color:#0066ff;">Open Splunk UI ↗</a>
+          &nbsp;·&nbsp; <code>admin / piap-demo-2024</code>
+        </p>
+      {% else %}
+        <div style="display:inline-flex; align-items:center; gap:8px; background:#fce4ec; border:1px solid #ef9a9a; border-radius:8px; padding:8px 14px;">
+          <span>⭕</span>
+          <span style="font-weight:600; color:#b71c1c; font-size:0.9em;">Offline — not yet deployed</span>
         </div>
+        <p style="margin:10px 0 0; font-size:0.8em; color:#888;">
+          Apply <code>splunk-deployment.yaml</code> to start Splunk (~5 min boot).
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- HEC -->
+    <div style="border:1px solid #e0e0e0; border-radius:10px; padding:16px 20px;">
+      <div style="font-size:0.72em; font-weight:700; color:#999; letter-spacing:0.6px; margin-bottom:8px;">HTTP EVENT COLLECTOR</div>
+      {% if hec_healthy %}
+        <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:8px; padding:8px 14px;">
+          <span>✅</span>
+          <span style="font-weight:600; color:#2e7d32; font-size:0.9em;">Healthy — accepting events</span>
+        </div>
+      {% elif splunk_available %}
+        <div style="display:inline-flex; align-items:center; gap:8px; background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:8px 14px;">
+          <span>⚠️</span>
+          <span style="font-weight:600; color:#f57f17; font-size:0.9em;">Splunk up but HEC not ready</span>
+        </div>
+      {% else %}
+        <div style="display:inline-flex; align-items:center; gap:8px; background:#fce4ec; border:1px solid #ef9a9a; border-radius:8px; padding:8px 14px;">
+          <span>⭕</span>
+          <span style="font-weight:600; color:#b71c1c; font-size:0.9em;">Unavailable</span>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Fluent Bit -->
+    <div style="border:1px solid #e0e0e0; border-radius:10px; padding:16px 20px;">
+      <div style="font-size:0.72em; font-weight:700; color:#999; letter-spacing:0.6px; margin-bottom:8px;">FLUENT BIT FORWARDER</div>
+      {% if forwarder_desired is not none %}
+        {% if forwarder_ready == forwarder_desired and forwarder_desired > 0 %}
+          <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:8px; padding:8px 14px;">
+            <span>✅</span>
+            <span style="font-weight:600; color:#2e7d32; font-size:0.9em;">{{ forwarder_ready }}/{{ forwarder_desired }} pods ready</span>
+          </div>
+        {% else %}
+          <div style="display:inline-flex; align-items:center; gap:8px; background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:8px 14px;">
+            <span>⚠️</span>
+            <span style="font-weight:600; color:#f57f17; font-size:0.9em;">{{ forwarder_ready }}/{{ forwarder_desired }} pods ready</span>
+          </div>
+        {% endif %}
+      {% else %}
+        <div style="display:inline-flex; align-items:center; gap:8px; background:#fce4ec; border:1px solid #ef9a9a; border-radius:8px; padding:8px 14px;">
+          <span>⭕</span>
+          <span style="font-weight:600; color:#b71c1c; font-size:0.9em;">Not deployed</span>
+        </div>
+        <p style="margin:10px 0 0; font-size:0.8em; color:#888;">Apply <code>fluent-bit-daemonset.yaml</code>.</p>
+      {% endif %}
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ LOG FORWARDING -->
+<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+    <div style="width:6px; height:20px; background-color:#28a745; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">LOG FORWARDING</h3>
+  </div>
+  <p style="color:#666; font-size:0.88em; margin:0 0 18px 0;">
+    Toggle which log sources Fluent Bit forwards to Splunk. Clicking <strong>Apply</strong> patches
+    the ConfigMap and restarts the DaemonSet pods (~5 s).
+  </p>
+
+  <!-- Source explanations -->
+  <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:20px;">
+
+    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:14px 16px; background:#fff;">
+      <div style="font-weight:600; color:#111; margin-bottom:4px; font-size:0.9em;">Tetragon</div>
+      <div style="font-size:0.8em; color:#666; line-height:1.5;">
+        Kernel-level ATT&amp;CK events from the <code>export-stdout</code> sidecar.
+        JSON with process context, syscall details, and MITRE technique IDs.
       </div>
-    </section>
+    </div>
 
-    <!-- LOG FORWARDING -->
-    <section>
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:15px;">
-        <div style="width:6px; height:20px; background-color:#28a745; border-radius:2px;"></div>
-        <h3 style="color:#111; margin:0; font-size:1.1rem;">Forward Logs to Splunk</h3>
+    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:14px 16px; background:#fff;">
+      <div style="font-weight:600; color:#111; margin-bottom:4px; font-size:0.9em;">Hubble</div>
+      <div style="font-size:0.8em; color:#666; line-height:1.5;">
+        L3/L4 network flow logs from the Hubble relay.
+        Shows source/destination pod, port, verdict (forwarded / dropped).
       </div>
+    </div>
 
-      <p style="color:#666; font-size:0.9em; margin-bottom:15px;">
-        Configure log forwarding from your infrastructure components:
-      </p>
-
-      <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
-        <label style="display:flex; align-items:center; gap:8px; padding:10px 15px; border:1px solid #e0e0e0; border-radius:6px; cursor:pointer; background:#fff;">
-          <input type="checkbox" name="log_cilium" checked style="cursor:pointer;">
-          <span style="color:#333; font-size:0.9em;">Cilium</span>
-        </label>
-        
-        <label style="display:flex; align-items:center; gap:8px; padding:10px 15px; border:1px solid #e0e0e0; border-radius:6px; cursor:pointer; background:#fff;">
-          <input type="checkbox" name="log_hubble" checked style="cursor:pointer;">
-          <span style="color:#333; font-size:0.9em;">Hubble</span>
-        </label>
-        
-        <label style="display:flex; align-items:center; gap:8px; padding:10px 15px; border:1px solid #e0e0e0; border-radius:6px; cursor:pointer; background:#fff;">
-          <input type="checkbox" name="log_tetragon" checked style="cursor:pointer;">
-          <span style="color:#333; font-size:0.9em;">Tetragon</span>
-        </label>
+    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:14px 16px; background:#fff;">
+      <div style="font-weight:600; color:#111; margin-bottom:4px; font-size:0.9em;">Cilium</div>
+      <div style="font-size:0.8em; color:#666; line-height:1.5;">
+        Cilium agent INFO/WARN logs. Policy enforcement decisions,
+        endpoint state changes, and BPF map events.
       </div>
+    </div>
 
-      <button type="submit" name="action" value="configure_logs"
-              style="background-color:#28a745; color:#fff; border:none; padding:10px 20px;
-                     border-radius:6px; font-weight:500; cursor:pointer;">
-        Apply Configuration
-      </button>
-    </section>
+  </div>
 
-</form>
+  <form method="POST" style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+
+    <label style="display:flex; align-items:center; gap:8px; padding:10px 16px; border:1px solid #e0e0e0; border-radius:8px; cursor:pointer; background:#fff;">
+      <input type="checkbox" name="log_tetragon"
+             {% if enabled_sources.tetragon %}checked{% endif %}
+             style="cursor:pointer; width:16px; height:16px;">
+      <span style="font-size:0.9em; color:#333;">Tetragon</span>
+    </label>
+
+    <label style="display:flex; align-items:center; gap:8px; padding:10px 16px; border:1px solid #e0e0e0; border-radius:8px; cursor:pointer; background:#fff;">
+      <input type="checkbox" name="log_hubble"
+             {% if enabled_sources.hubble %}checked{% endif %}
+             style="cursor:pointer; width:16px; height:16px;">
+      <span style="font-size:0.9em; color:#333;">Hubble</span>
+    </label>
+
+    <label style="display:flex; align-items:center; gap:8px; padding:10px 16px; border:1px solid #e0e0e0; border-radius:8px; cursor:pointer; background:#fff;">
+      <input type="checkbox" name="log_cilium"
+             {% if enabled_sources.cilium %}checked{% endif %}
+             style="cursor:pointer; width:16px; height:16px;">
+      <span style="font-size:0.9em; color:#333;">Cilium</span>
+    </label>
+
+    <button type="submit" name="action" value="configure_logs"
+            style="background-color:#28a745; color:#fff; border:none; padding:10px 22px;
+                   border-radius:8px; font-weight:600; cursor:pointer; font-size:0.9em;">
+      Apply
+    </button>
+
+  </form>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ REQUIRED APPS -->
+<section style="margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+    <div style="width:6px; height:20px; background-color:#6c757d; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SPLUNKBASE APPS</h3>
+  </div>
+  <p style="color:#666; font-size:0.88em; margin:0 0 16px 0;">
+    Install via Splunk UI → Apps → Find More Apps (requires a free Splunk.com login).
+  </p>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px;">
+    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:14px 16px; background:#fff;">
+      <div style="font-weight:600; color:#111; margin-bottom:4px; font-size:0.9em;">Cisco Security Cloud</div>
+      <div style="font-size:0.8em; color:#666; margin-bottom:8px;">Dashboards and searches for Cisco XDR / Umbrella / Secure events.</div>
+      <a href="https://splunkbase.splunk.com/app/7404" target="_blank"
+         style="color:#0066ff; font-size:0.82em;">splunkbase.splunk.com/app/7404 ↗</a>
+    </div>
+
+    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:14px 16px; background:#fff;">
+      <div style="font-weight:600; color:#111; margin-bottom:4px; font-size:0.9em;">Splunk MCP Server</div>
+      <div style="font-size:0.8em; color:#666; margin-bottom:8px;">Expose Splunk search as an MCP tool for Claude and other AI agents.</div>
+      <a href="https://splunkbase.splunk.com/app/7931" target="_blank"
+         style="color:#0066ff; font-size:0.82em;">splunkbase.splunk.com/app/7931 ↗</a>
+    </div>
+  </div>
+</section>
+
 {% endblock %}
