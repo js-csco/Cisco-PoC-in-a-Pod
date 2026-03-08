@@ -473,6 +473,61 @@ def tetragon_events():
     except Exception as e:
         return jsonify({"events": [], "error": str(e)})
 
+@app.route('/caldera', methods=['GET', 'POST'])
+def caldera():
+    from scripts.caldera import is_available, get_agents, get_adversaries, get_operations, run_operation
+    from flask import jsonify
+
+    caldera_available = is_available()
+    agents, adversaries, operations = [], [], []
+    if caldera_available:
+        try:
+            agents = get_agents()
+        except Exception:
+            pass
+        try:
+            adversaries = get_adversaries()
+        except Exception:
+            pass
+        try:
+            operations = get_operations()
+        except Exception:
+            pass
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'run_operation':
+            adversary_id = request.form.get('adversary_id', '').strip()
+            op_name = request.form.get('op_name', 'PoC Demo Attack').strip()
+            try:
+                op = run_operation(op_name, adversary_id)
+                flash(f"⚔️ Operation '{op.get('name', op_name)}' launched — watch Tetragon for detections!")
+            except Exception as e:
+                flash(f"⚠️ Failed to launch operation: {e}")
+        return redirect(url_for('caldera'))
+
+    return render_template('caldera.html',
+                           caldera_available=caldera_available,
+                           agents=agents,
+                           adversaries=adversaries,
+                           operations=operations)
+
+
+@app.route('/caldera/status')
+def caldera_status():
+    from flask import jsonify
+    from scripts.caldera import is_available, get_agents, get_operations
+    if not is_available():
+        return jsonify({"error": "Caldera offline"})
+    try:
+        return jsonify({
+            "agents": get_agents(),
+            "operations": get_operations(),
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
 @app.route('/mcp-servers')
 def mcp_servers():
     return render_template('mcp-servers.html')

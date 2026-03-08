@@ -64,6 +64,11 @@ sections:
         icon: fas fa-server
         url: http://SERVER_IP:30800
         statusCheck: true
+      - title: Caldera C2
+        description: MITRE Caldera adversary emulation — red team attack launcher
+        icon: fas fa-skull-crossbones
+        url: http://SERVER_IP:30600
+        statusCheck: true
       - title: Splunk
         description: Aggregate Telemetry and Logs
         icon: fas fa-server
