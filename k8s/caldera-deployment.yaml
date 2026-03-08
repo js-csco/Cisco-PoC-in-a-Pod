@@ -72,12 +72,6 @@ spec:
             limits:
               memory: "2Gi"
               cpu: "1000m"
-          readinessProbe:
-            tcpSocket:
-              port: 8888
-            initialDelaySeconds: 60
-            periodSeconds: 10
-            failureThreshold: 30
       restartPolicy: Always
       volumes:
         - name: caldera-config
