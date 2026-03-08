@@ -274,7 +274,7 @@
 
       <div>
         <label>EXPECTED CONNECTOR IP</label>
-        <div class="val ip" id="valConnectorIp">CONNECTOR_IP</div>
+        <div class="val ip" id="valConnectorIp"><!--# echo var="connector_ip" default="unknown" --></div>
       </div>
 
       <div>
@@ -300,7 +300,7 @@
     <div class="card-title">HOW ACCESS IS DETECTED</div>
     <p style="font-size:0.88em; color:#555; line-height:1.7; margin:0;">
       Via <strong>Cisco Secure Access</strong>: traffic exits through the on-premises connector pod
-      (<code>CONNECTOR_IP</code>) — the app sees that IP, not yours.<br>
+      (<code><!--# echo var="connector_ip" default="unknown" --></code>) — the app sees that IP, not yours.<br>
       Via <strong>direct access</strong>: the app sees your real IP.
     </p>
   </div>
@@ -328,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function () {
   try {
     var ipEl = document.getElementById('serverIp');
     var ip   = ipEl ? ipEl.textContent.trim() : '';
-    var connectorIp = 'CONNECTOR_IP';
+    var connectorIp = '<!--# echo var="connector_ip" default="unknown" -->';
 
     if (!ip || ip === 'n/a') {
       bIcon.textContent  = '🔍';

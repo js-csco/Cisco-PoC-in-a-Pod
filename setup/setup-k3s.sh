@@ -457,13 +457,9 @@ if [ -f "$REPO_ROOT/k8s/nginx-deployment.yaml" ]; then
 fi
 
 if [ -f "$REPO_ROOT/k8s/sse-check-deployment.yaml" ]; then
-    echo "  Updating sse-check deployment with sse-check path..."
+    echo "  Updating sse-check deployment with sse-check path and connector IP..."
     sed -i "s|SSE_CHECK_PATH|$REPO_ROOT/sse-check|g" "$REPO_ROOT/k8s/sse-check-deployment.yaml"
-fi
-
-if [ -f "$REPO_ROOT/sse-check/index.html" ]; then
-    echo "  Updating sse-check page with connector IP..."
-    sed -i "s/CONNECTOR_IP/$CONNECTOR_IP/g" "$REPO_ROOT/sse-check/index.html"
+    sed -i "s/CONNECTOR_IP/$CONNECTOR_IP/g" "$REPO_ROOT/k8s/sse-check-deployment.yaml"
 fi
 
 if [ -d "$REPO_ROOT/automagic-server/templates" ]; then
