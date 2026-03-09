@@ -101,6 +101,20 @@
       flex-shrink: 0;
     }
 
+    .nav-section {
+      padding: 16px 20px 4px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: #b0b4bb;
+    }
+
+    .nav-section:not(:first-child) {
+      border-top: 1px solid #ebebeb;
+      margin-top: 4px;
+    }
+
     /* === CONTENT AREA === */
     .content {
       flex: 1;
@@ -154,34 +168,42 @@
   <div class="main">
     <nav class="sidebar">
         <a href="{{ url_for('overview') }}" class="menu-item {% if active_page == 'overview' %}active{% endif %}">
-        <span class="fa-solid fa-house"></span> Overview
+          <span class="fa-solid fa-house"></span> Overview
         </a>
+
+        <div class="nav-section">Core</div>
         <a href="{{ url_for('duo') }}" class="menu-item {% if active_page == 'duo' %}active{% endif %}">
-        <span class="fa-solid fa-user"></span> Duo & Identity Intelligence
+          <span class="fa-solid fa-user"></span> Duo & Identity Intelligence
         </a>
         <a href="{{ url_for('secure_access') }}" class="menu-item {% if active_page == 'secure_access' %}active{% endif %}">
-        <span class="fa-solid fa-cloud"></span> Secure Access
+          <span class="fa-solid fa-cloud"></span> Secure Access
         </a>
         <a href="{{ url_for('cilium') }}" class="menu-item {% if active_page == 'cilium' %}active{% endif %}">
-        <span class="fa-solid fa-network-wired"></span> Cilium
+          <span class="fa-solid fa-network-wired"></span> Cilium
         </a>
         <a href="{{ url_for('tetragon') }}" class="menu-item {% if active_page == 'tetragon' %}active{% endif %}">
-        <span class="fa-solid fa-shield-halved"></span> Tetragon
+          <span class="fa-solid fa-shield-halved"></span> Tetragon
         </a>
-        <a href="{{ url_for('caldera') }}" class="menu-item {% if active_page == 'caldera' %}active{% endif %}">
-        <span class="fa-solid fa-skull-crossbones"></span> Caldera
-        </a>
+
+        <div class="nav-section">Advanced</div>
         <a href="{{ url_for('splunk') }}" class="menu-item {% if active_page == 'splunk' %}active{% endif %}">
-        <span class="fa-solid fa-compass"></span> Splunk
+          <span class="fa-solid fa-compass"></span> Splunk
         </a>
         <a href="{{ url_for('thousandeyes') }}" class="menu-item {% if active_page == 'thousandeyes' %}active{% endif %}">
-        <span class="fa-solid fa-eye"></span> ThousandEyes
+          <span class="fa-solid fa-eye"></span> ThousandEyes
         </a>
         <a href="{{ url_for('mcp_servers') }}" class="menu-item {% if active_page == 'mcp_servers' %}active{% endif %}">
-        <span class="fa-solid fa-robot"></span> MCP Servers
+          <span class="fa-solid fa-robot"></span> MCP Servers
         </a>
+
+        <div class="nav-section">Red Team</div>
+        <a href="{{ url_for('caldera') }}" class="menu-item {% if active_page == 'caldera' %}active{% endif %}">
+          <span class="fa-solid fa-skull-crossbones"></span> Caldera
+        </a>
+
+        <div class="nav-section">Help</div>
         <a href="{{ url_for('help_page') }}" class="menu-item {% if active_page == 'help' %}active{% endif %}">
-        <span class="fa-solid fa-circle-info"></span> Help
+          <span class="fa-solid fa-circle-info"></span> Help
         </a>
     </nav>
 
