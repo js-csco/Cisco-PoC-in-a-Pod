@@ -5,13 +5,14 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: caldera-config
-  namespace: caldera
+  namespace: piap
 data:
   local.yml: |
     host: 0.0.0.0
     port: 8888
-    app.contact.http: http://127.0.0.1:8888
+    app.contact.http: http://caldera.piap.svc.cluster.local:8888
     app.contact.html: /beacon
+    app.contact.websocket: 127.0.0.1:7012
     api_key_red: ADMIN123
     api_key_blue: BLUEADMIN123
     users:
@@ -37,7 +38,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: caldera
-  namespace: caldera
+  namespace: piap
   labels:
     app: caldera
     io.kompose.service: caldera
@@ -81,7 +82,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: caldera
-  namespace: caldera
+  namespace: piap
   labels:
     app: caldera
     io.kompose.service: caldera
