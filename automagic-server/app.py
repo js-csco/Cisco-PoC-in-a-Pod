@@ -591,10 +591,10 @@ def splunk():
 
         if action == 'install_app':
             from scripts.splunk import install_splunkbase_app
-            app_id   = request.form.get('app_id', '').strip()
-            sb_user  = request.form.get('splunkbase_username', '').strip()
-            sb_pass  = request.form.get('splunkbase_password', '').strip()
-            app_name = request.form.get('app_display', app_id)
+            app_id  = request.form.get('app_id', '').strip()
+            sb_user = request.form.get('splunkbase_username', '').strip()
+            sb_pass = request.form.get('splunkbase_password', '').strip()
+            app_name = next((a['display'] for a in SPLUNKBASE_APPS if str(a['id']) == app_id), app_id)
             if not app_id or not sb_user or not sb_pass:
                 flash("⚠️ App ID, Splunk.com username, and password are all required.")
             else:
