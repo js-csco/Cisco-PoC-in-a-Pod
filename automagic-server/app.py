@@ -478,28 +478,19 @@ def tetragon_events():
 
 @app.route('/caldera', methods=['GET', 'POST'])
 def caldera():
-    from scripts.caldera import (is_available, get_agents, get_operations,
+    from scripts.caldera import (is_available, is_deployed, get_agents, get_operations,
                                   setup_demo_adversaries, get_demo_adversaries)
-
-    caldera_available = is_available()
-    agents, operations, demo_scenarios = [], [], []
-    if caldera_available:
-        try:
-            agents = get_agents()
-        except Exception:
-            pass
-        try:
-            operations = get_operations()
-        except Exception:
-            pass
-        try:
-            demo_scenarios = get_demo_adversaries()
-        except Exception:
-            pass
 
     if request.method == 'POST':
         action = request.form.get('action')
-        if action == 'setup_demo':
+        if action == 'deploy_caldera':
+            from scripts.caldera import deploy_caldera
+            try:
+                deploy_caldera()
+                flash("✅ Caldera deployed — allow ~60 s for the C2 server to start.")
+            except Exception as e:
+                flash(f"⚠️ Deployment failed: {e}")
+        elif action == 'setup_demo':
             try:
                 msgs = setup_demo_adversaries()
                 for m in msgs:
@@ -517,7 +508,25 @@ def caldera():
                 flash(f"⚠️ Failed to launch: {e}")
         return redirect(url_for('caldera'))
 
+    caldera_deployed = is_deployed()
+    caldera_available = is_available()
+    agents, operations, demo_scenarios = [], [], []
+    if caldera_available:
+        try:
+            agents = get_agents()
+        except Exception:
+            pass
+        try:
+            operations = get_operations()
+        except Exception:
+            pass
+        try:
+            demo_scenarios = get_demo_adversaries()
+        except Exception:
+            pass
+
     return render_template('caldera.html',
+                           caldera_deployed=caldera_deployed,
                            caldera_available=caldera_available,
                            agents=agents,
                            operations=operations,

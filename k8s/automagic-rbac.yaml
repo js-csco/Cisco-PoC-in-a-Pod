@@ -23,7 +23,7 @@ rules:
 # Fluent Bit config management: patch ConfigMap to toggle log sources
 - apiGroups: [""]
   resources: ["configmaps"]
-  verbs: ["get", "update", "patch"]
+  verbs: ["get", "create", "update", "patch"]
 # Fluent Bit rollout: patch DaemonSet to restart pods after config change
 - apiGroups: ["apps"]
   resources: ["daemonsets"]

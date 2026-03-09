@@ -489,6 +489,9 @@ for manifest in "$REPO_ROOT/k8s/"*.yaml; do
                 echo "  Skipping $(basename $manifest) (Splunk not configured)"
             fi
             ;;
+        *caldera*)
+            echo "  Skipping $(basename $manifest) — deploy from the Automagic dashboard"
+            ;;
         *)
             kubectl apply -f "$manifest" -n piap
             ;;
