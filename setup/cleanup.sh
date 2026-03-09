@@ -145,7 +145,6 @@ echo ""
 
 echo "Step 6: Removing application symlinks..."
 rm -f /automagic-server && echo "  ✓ /automagic-server removed" || true
-rm -f /kanboard && echo "  ✓ /kanboard removed" || true
 rm -f /dashy && echo "  ✓ /dashy removed" || true
 rm -f /web && echo "  ✓ /web removed" || true
 echo ""

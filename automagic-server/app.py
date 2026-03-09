@@ -91,12 +91,7 @@ def secure_access():
             # Link to Dashboard!
             return redirect("https://dashboard.sse.cisco.com/org/8219751/secure/securityprofiles")
 
-        # Goto Kanboard
-        if action == "gotokanboard":
-            # Link to Kanboard on VM IP port 8090
-            return redirect("https://www.cisco.com")
-
-        try:
+try:
             token = ensure_valid_token(api_key, api_secret)
 
             # Action: AUTHENTICATE
