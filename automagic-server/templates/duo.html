@@ -28,24 +28,6 @@
     </p>
   </section>
 
-    <!-- GET DUO -->
-    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">GET DUO</h3>
-      </div>
-
-      <p style="color:#666; font-size:0.95em; margin-top:0; margin-bottom:20px;">
-        Don't have a Duo account yet? Sign up for a free trial to get started.
-      </p>
-
-      <a href="https://signup.duo.com" target="_blank"
-         style="display:inline-block; background-color:#0066ff; color:#fff; text-decoration:none;
-                padding:10px 20px; border-radius:6px; font-weight:500;">
-        Sign Up for Duo
-      </a>
-    </section>
-
     <!-- AUTHENTICATION -->
     <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
@@ -57,17 +39,30 @@
         Connect to Cisco Duo Admin API with your API hostname, integration key, and secret key.
       </p>
 
-      <input type="text" id="api_hostname" name="api_hostname" placeholder="API Hostname (e.g., api-xxxxx.duosecurity.com)" 
-             value="{{ session.get('duo_api_hostname', '') }}"
-             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+      {% if not session.get('duo_authenticated') %}
+        <input type="text" id="api_hostname" name="api_hostname" placeholder="API Hostname (e.g., api-xxxxx.duosecurity.com)"
+               value="{{ session.get('duo_api_hostname', '') }}"
+               style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
 
-      <input type="password" id="integration_key" name="integration_key" placeholder="Integration Key" 
-             value="{{ session.get('duo_integration_key', '') }}"
-             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+        <input type="password" id="integration_key" name="integration_key" placeholder="Integration Key"
+               value="{{ session.get('duo_integration_key', '') }}"
+               style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
 
-      <input type="password" id="secret_key" name="secret_key" placeholder="Secret Key" 
-             value="{{ session.get('duo_secret_key', '') }}"
-             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+        <input type="password" id="secret_key" name="secret_key" placeholder="Secret Key"
+               value="{{ session.get('duo_secret_key', '') }}"
+               style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+
+        <button type="submit" name="action" value="auth"
+                style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                       border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
+          🔐 Authenticate
+        </button>
+      {% else %}
+        <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:10px 16px;">
+          <span style="font-size:1.2rem;">✅</span>
+          <span style="font-weight:600; color:#2e7d32;">Authenticated</span>
+        </div>
+      {% endif %}
     </section>
 
     <!-- USER & GROUP CREATION -->

@@ -232,23 +232,31 @@ def duo():
         integration_key = request.form.get('integration_key')
         secret_key = request.form.get('secret_key')
         action = request.form.get('action')
-        
-        # Store credentials in session for future use
+
+        # Store credentials in session whenever explicitly submitted
         if api_hostname and integration_key and secret_key:
             session['duo_api_hostname'] = api_hostname
             session['duo_integration_key'] = integration_key
             session['duo_secret_key'] = secret_key
-        
-        # Validate credentials are provided (either from form or session)
+
+        # Fall back to session-stored credentials
         api_hostname = api_hostname or session.get('duo_api_hostname')
         integration_key = integration_key or session.get('duo_integration_key')
         secret_key = secret_key or session.get('duo_secret_key')
-        
+
         if not all([api_hostname, integration_key, secret_key]):
             flash("⚠️ Please provide all Duo credentials (API hostname, integration key, and secret key)")
             return redirect(url_for('duo'))
-        
+
         try:
+            # Action: AUTHENTICATE
+            if action == 'auth':
+                from scripts.duo.duo_automation import check_credentials
+                check_credentials(api_hostname, integration_key, secret_key)
+                session['duo_authenticated'] = True
+                flash("✅ Authentication successful!")
+                return redirect(url_for('duo'))
+
             # Action: SETUP DUO (Complete setup with up to 3 users)
             if action == 'setup_duo':
                 # Collect up to 3 users; skip rows where either field is blank
@@ -294,50 +302,6 @@ def duo():
                     for error in result['errors']:
                         flash(f"⚠️ {error}")
             
-            # Action: GET INTEGRATIONS (list all integrations)
-            elif action == 'get_integrations':
-                from scripts.duo.duo_automation import list_integrations
-                
-                integrations = list_integrations(
-                    api_hostname=api_hostname,
-                    integration_key=integration_key,
-                    secret_key=secret_key
-                )
-                
-                if integrations:
-                    flash(f"📋 Found {len(integrations)} integration(s):")
-                    for integration in integrations:
-                        name = integration.get('name', 'N/A')
-                        int_type = integration.get('type', 'N/A')
-                        int_key = integration.get('integration_key', 'N/A')
-                        flash(f"• {name} | Type: {int_type} | Key: {int_key}")
-                else:
-                    flash("ℹ️ No integrations found")
-            
-            # Action: CREATE INTEGRATIONS
-            elif action == 'create_integrations':
-                from scripts.duo.duo_automation import create_integration
-                
-                # Create Generic SAML Integration
-                saml_result = create_integration(
-                    api_hostname=api_hostname,
-                    integration_key=integration_key,
-                    secret_key=secret_key,
-                    name='PoC Secure Access - SAML and Identity',
-                    integration_type='sso-generic'
-                )
-                
-                if saml_result['success']:
-                    flash(f"✅ Generic SAML integration created successfully")
-                    flash(f"   Name: PoC Secure Access - SAML and Identity")
-                    flash(f"   Type: sso-generic")
-                    flash(f"🔑 Integration Key: {saml_result['integration_key']}")
-                    flash(f"🔐 Secret Key: {saml_result['secret_key']}")
-                    flash(f"🆔 Integration ID: {saml_result['integration_id']}")
-                    flash(f"✅ Integration assigned to 'PoC Users' group")
-                else:
-                    flash(f"⚠️ Error creating integration: {saml_result['error']}")
-        
         except Exception as e:
             flash(f"⚠️ Error: {str(e)}")
         
