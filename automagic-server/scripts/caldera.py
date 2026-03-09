@@ -123,10 +123,6 @@ def is_deployed():
     try:
         _apps().read_namespaced_deployment("caldera", NAMESPACE)
         return True
-    except ApiException as e:
-        if e.status == 404:
-            return False
-        raise
     except Exception:
         return False
 

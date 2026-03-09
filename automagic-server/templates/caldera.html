@@ -34,21 +34,25 @@
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ DEPLOY PANEL -->
-{% if not caldera_deployed %}
+{% if not caldera_available %}
 <section style="background:#fff8e1; border:1px solid #ffe082; border-radius:10px; padding:24px 28px; margin-bottom:2.5rem;">
   <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
     <div style="width:6px; height:20px; background-color:#f9a825; border-radius:2px;"></div>
     <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DEPLOY CALDERA</h3>
   </div>
   <p style="color:#555; font-size:0.9em; line-height:1.6; margin:0 0 18px;">
-    Caldera is not running yet. Click below to deploy the C2 server and victim pod into the cluster.
-    Startup takes ~60 s — the page will show <strong>Online</strong> once the API is reachable.
+    {% if caldera_deployed %}
+      Caldera is deployed but not yet reachable — still starting up (~60 s). You can re-deploy below if the pod is stuck.
+    {% else %}
+      Caldera is not running yet. Click below to deploy the C2 server and victim pod into the cluster.
+      Startup takes ~60 s — the page will show <strong>Online</strong> once the API is reachable.
+    {% endif %}
   </p>
   <form method="POST">
     <button type="submit" name="action" value="deploy_caldera"
             style="background:#c0392b; color:#fff; border:none; padding:11px 28px;
                    border-radius:8px; font-weight:700; cursor:pointer; font-size:0.95em;">
-      Deploy Caldera
+      {{ 'Re-deploy Caldera' if caldera_deployed else 'Deploy Caldera' }}
     </button>
     <span style="margin-left:14px; font-size:0.82em; color:#999;">
       Deploys Caldera C2 (30600) + Ubuntu victim pod with sandcat agent
