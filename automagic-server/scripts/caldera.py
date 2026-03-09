@@ -177,7 +177,7 @@ def deploy_caldera():
     local_yml = (
         "host: 0.0.0.0\n"
         "port: 8888\n"
-        "app.contact.http: http://caldera.caldera.svc.cluster.local:8888\n"
+        "app.contact.http: http://127.0.0.1:8888\n"
         "app.contact.html: /beacon\n"
         "api_key_red: ADMIN123\n"
         "api_key_blue: BLUEADMIN123\n"
