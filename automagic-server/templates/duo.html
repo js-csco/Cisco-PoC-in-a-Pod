@@ -197,6 +197,78 @@
       </div>
     </section>
 
+    <!-- DUO POLICIES -->
+    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DUO POLICIES</h3>
+      </div>
+
+      <p style="margin-top:0; margin-bottom:24px; color:#555; font-size:0.95em;">
+        Configure Duo enrollment and authentication policies to enforce strong, phishing-resistant MFA
+        across your PoC environment. These settings must be applied manually in the <strong>Duo Admin Panel</strong>.
+      </p>
+
+      <!-- Enrollment Policy -->
+      <div style="margin-bottom:28px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+          <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">1. Enrollment Policy</h3>
+        </div>
+
+        <p style="color:#555; font-size:0.92em; margin:0 0 14px 0;">
+          In the <strong>Duo Admin Panel</strong>, navigate to <em>Policies → User Enrollment Policies</em> and apply the following settings:
+        </p>
+
+        <ol style="color:#555; font-size:0.92em; margin:0; padding-left:20px; line-height:1.9;">
+          <li>
+            <strong>Policy Enablement:</strong> Check the box next to
+            <em>"Enable the enrollment and account management policies on this page"</em>.
+          </li>
+          <li>
+            Under <strong>Global Enrollment Policy</strong>, configure:
+            <ul style="margin:4px 0 4px 0; padding-left:18px; line-height:1.9;">
+              <li><strong>Require Password:</strong> enable the checkbox.</li>
+              <li>
+                <strong>Authenticators:</strong> allow only the following:
+                <ul style="margin:4px 0; padding-left:18px; line-height:1.7;">
+                  <li>Passkey (Current Device)</li>
+                  <li>Passkey (Mobile Device) <em>or</em> Security Key</li>
+                  <li>Duo Mobile</li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ol>
+      </div>
+
+      <!-- Global Policy -->
+      <div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+          <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">2. Global Policy — Authentication Methods</h3>
+        </div>
+
+        <p style="color:#555; font-size:0.92em; margin:0 0 14px 0;">
+          In the <strong>Duo Admin Panel</strong>, navigate to <em>Policies → Policies</em> and edit the
+          <strong>Global Policy</strong>:
+        </p>
+
+        <ol style="color:#555; font-size:0.92em; margin:0; padding-left:20px; line-height:1.9;">
+          <li>
+            Under <strong>Authentication Methods</strong>, select only
+            <em>"Recommended Authenticators for Second Factor and Passwordless in SSO"</em>.
+            This allows all recommended authenticators while excluding weaker methods.
+          </li>
+        </ol>
+
+        <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px 18px; margin-top:16px; font-size:0.88em; color:#6d4c00;">
+          <strong>Note:</strong> Duo Admin API support for policy configuration is being evaluated.
+          This step is currently manual only.
+        </div>
+      </div>
+    </section>
+
     <!-- IDENTITY INTELLIGENCE -->
     <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
