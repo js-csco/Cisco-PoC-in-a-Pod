@@ -557,6 +557,7 @@ def splunk():
     from scripts.splunk import (
         is_available, hec_is_healthy, get_forwarder_status,
         get_enabled_sources, configure_log_forwarding,
+        SPLUNKBASE_APPS, get_splunkbase_app_status,
     )
 
     if request.method == 'POST':
@@ -588,8 +589,25 @@ def splunk():
                 flash(f"Failed to update log forwarding: {e}")
             return redirect(url_for('splunk'))
 
+        if action == 'install_app':
+            from scripts.splunk import install_splunkbase_app
+            app_id   = request.form.get('app_id', '').strip()
+            sb_user  = request.form.get('splunkbase_username', '').strip()
+            sb_pass  = request.form.get('splunkbase_password', '').strip()
+            app_name = request.form.get('app_display', app_id)
+            if not app_id or not sb_user or not sb_pass:
+                flash("⚠️ App ID, Splunk.com username, and password are all required.")
+            else:
+                try:
+                    install_splunkbase_app(int(app_id), sb_user, sb_pass)
+                    flash(f"✅ {app_name} installed — restart Splunk to activate.")
+                except Exception as e:
+                    flash(f"⚠️ Install failed: {e}")
+            return redirect(url_for('splunk'))
+
     splunk_available = is_available()
     forwarder_desired, forwarder_ready = get_forwarder_status()
+    app_status = get_splunkbase_app_status() if splunk_available else {}
     return render_template(
         'splunk.html',
         splunk_available=splunk_available,
@@ -598,6 +616,8 @@ def splunk():
         forwarder_ready=forwarder_ready,
         enabled_sources=get_enabled_sources(),
         server_ip=request.host.split(':')[0],
+        splunkbase_apps=SPLUNKBASE_APPS,
+        app_status=app_status,
     )
 
 @app.route('/thousandeyes')

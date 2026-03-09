@@ -229,30 +229,59 @@
   </form>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════ REQUIRED APPS -->
-<section style="margin-bottom:2.5rem;">
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+<!-- ═══════════════════════════════════════════════════════ SPLUNKBASE APPS -->
+<section style="margin-bottom:2.5rem;{% if not splunk_available %} opacity:0.45; pointer-events:none;{% endif %}">
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
     <div style="width:6px; height:20px; background-color:#6c757d; border-radius:2px;"></div>
     <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SPLUNKBASE APPS</h3>
+    {% if not splunk_available %}
+      <span style="font-size:0.78em; color:#999; background:#f5f5f5; border:1px solid #e0e0e0; border-radius:4px; padding:2px 8px;">Splunk not running</span>
+    {% endif %}
   </div>
   <p style="color:#666; font-size:0.88em; margin:0 0 16px 0;">
-    Install via Splunk UI → Apps → Find More Apps (requires a free Splunk.com login).
+    Install directly from Splunkbase. Requires a free
+    <a href="https://splunk.com" target="_blank" style="color:#0066ff;">Splunk.com</a> account.
   </p>
 
-  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px;">
-    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:14px 16px; background:#fff;">
-      <div style="font-weight:600; color:#111; margin-bottom:4px; font-size:0.9em;">Cisco Security Cloud</div>
-      <div style="font-size:0.8em; color:#666; margin-bottom:8px;">Dashboards and searches for Cisco XDR / Umbrella / Secure events.</div>
-      <a href="https://splunkbase.splunk.com/app/7404" target="_blank"
-         style="color:#0066ff; font-size:0.82em;">splunkbase.splunk.com/app/7404 ↗</a>
-    </div>
+  <!-- App cards -->
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px; margin-bottom:20px;">
+    {% for app in splunkbase_apps %}
+    {% set installed = app_status.get(app.folder_name, false) %}
+    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:16px; background:#fff; display:flex; flex-direction:column; gap:8px;">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div style="font-weight:600; color:#111; font-size:0.9em;">{{ app.display }}</div>
+        {% if splunk_available %}
+          {% if installed %}
+            <span style="font-size:0.75em; background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">Installed</span>
+          {% else %}
+            <span style="font-size:0.75em; background:#fce4ec; color:#b71c1c; border:1px solid #ef9a9a; border-radius:4px; padding:2px 8px;">Not installed</span>
+          {% endif %}
+        {% else %}
+          <span style="font-size:0.75em; background:#f5f5f5; color:#999; border:1px solid #e0e0e0; border-radius:4px; padding:2px 8px;">Unknown</span>
+        {% endif %}
+      </div>
+      <div style="font-size:0.8em; color:#666; line-height:1.5;">{{ app.description }}</div>
+      <a href="{{ app.url }}" target="_blank" style="color:#0066ff; font-size:0.8em;">splunkbase.splunk.com/app/{{ app.id }} ↗</a>
 
-    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:14px 16px; background:#fff;">
-      <div style="font-weight:600; color:#111; margin-bottom:4px; font-size:0.9em;">Splunk MCP Server</div>
-      <div style="font-size:0.8em; color:#666; margin-bottom:8px;">Expose Splunk search as an MCP tool for Claude and other AI agents.</div>
-      <a href="https://splunkbase.splunk.com/app/7931" target="_blank"
-         style="color:#0066ff; font-size:0.82em;">splunkbase.splunk.com/app/7931 ↗</a>
+      <form method="POST" style="margin-top:4px;">
+        <input type="hidden" name="action"      value="install_app">
+        <input type="hidden" name="app_id"      value="{{ app.id }}">
+        <input type="hidden" name="app_display"  value="{{ app.display }}">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <input type="text"     name="splunkbase_username" placeholder="Splunk.com username"
+                 style="flex:1; min-width:120px; padding:7px 10px; border:1px solid #e0e0e0; border-radius:6px; font-size:0.82em; color:#333;">
+          <input type="password" name="splunkbase_password" placeholder="Password"
+                 style="flex:1; min-width:100px; padding:7px 10px; border:1px solid #e0e0e0; border-radius:6px; font-size:0.82em; color:#333;">
+        </div>
+        <button type="submit"
+                style="margin-top:8px; background-color:#0066ff; color:#fff; border:none;
+                       padding:8px 18px; border-radius:6px; font-weight:600;
+                       cursor:pointer; font-size:0.85em;">
+          {% if installed %}Reinstall{% else %}Install{% endif %}
+        </button>
+      </form>
     </div>
+    {% endfor %}
   </div>
 </section>
 

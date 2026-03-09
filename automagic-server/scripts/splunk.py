@@ -1,16 +1,36 @@
 """
 Splunk helper — availability checks, HEC health, Fluent Bit management,
-and on-demand deployment from the dashboard.
+on-demand deployment, and Splunkbase app installation from the dashboard.
 """
 import os
 import datetime
+import subprocess
 import requests
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
 SPLUNK_URL     = os.environ.get("SPLUNK_URL",      "http://splunk.piap.svc.cluster.local:8000")
 SPLUNK_HEC_URL = os.environ.get("SPLUNK_HEC_URL",  "http://splunk.piap.svc.cluster.local:8088")
+SPLUNK_API_URL = os.environ.get("SPLUNK_API_URL",  "http://splunk.piap.svc.cluster.local:8089")
 HEC_TOKEN      = os.environ.get("SPLUNK_HEC_TOKEN", "piap-hec-token")
+
+# Splunkbase apps managed by this dashboard
+SPLUNKBASE_APPS = [
+    {
+        "id":          7404,
+        "folder_name": "cisco_security_cloud",
+        "display":     "Cisco Security Cloud",
+        "description": "Dashboards and searches for Cisco XDR / Umbrella / Secure events.",
+        "url":         "https://splunkbase.splunk.com/app/7404",
+    },
+    {
+        "id":          7931,
+        "folder_name": "splunk_mcp_server",
+        "display":     "Splunk MCP Server",
+        "description": "Expose Splunk search as an MCP tool for Claude and other AI agents.",
+        "url":         "https://splunkbase.splunk.com/app/7931",
+    },
+]
 
 NAMESPACE            = "piap"
 FLUENT_BIT_DAEMONSET = "fluent-bit"
@@ -275,3 +295,54 @@ def configure_log_forwarding(sources: dict):
             "kubectl.kubernetes.io/restartedAt": now
         }}}}}
     )
+
+
+def get_splunkbase_app_status() -> dict:
+    """
+    Return install status for each Splunkbase app managed by this dashboard.
+    Returns {folder_name: bool} — True if installed, False otherwise.
+    """
+    status = {app["folder_name"]: False for app in SPLUNKBASE_APPS}
+    try:
+        for app in SPLUNKBASE_APPS:
+            r = requests.get(
+                f"{SPLUNK_API_URL}/services/apps/local/{app['folder_name']}",
+                auth=("admin", "piap"),
+                timeout=5,
+            )
+            status[app["folder_name"]] = (r.status_code == 200)
+    except Exception:
+        pass
+    return status
+
+
+def install_splunkbase_app(app_id: int, splunkbase_username: str, splunkbase_password: str) -> str:
+    """
+    Install a Splunkbase app by numeric ID using the Splunk CLI inside the pod.
+    Returns stdout on success, raises RuntimeError on failure.
+    """
+    # Resolve the pod name
+    pod_result = subprocess.run(
+        ["kubectl", "get", "pods", "-n", NAMESPACE, "-l", "app=splunk",
+         "-o", "jsonpath={.items[0].metadata.name}"],
+        capture_output=True, text=True, timeout=15,
+    )
+    pod_name = pod_result.stdout.strip()
+    if not pod_name:
+        raise RuntimeError("Splunk pod not found — is Splunk deployed?")
+
+    result = subprocess.run(
+        [
+            "kubectl", "exec", "-n", NAMESPACE, pod_name, "--",
+            "/opt/splunk/bin/splunk", "install", "app",
+            f"https://splunkbase.splunk.com/app/{app_id}/release/latest/download",
+            "-auth", "admin:piap",
+            "-splunkbase_username", splunkbase_username,
+            "-splunkbase_password", splunkbase_password,
+            "-update", "true",
+        ],
+        capture_output=True, text=True, timeout=120,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip() or result.stdout.strip())
+    return result.stdout.strip()
