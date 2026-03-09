@@ -4,11 +4,32 @@
 {% block title %}Overview — Cisco PoC in a Pod{% endblock %}
 
 {% block content %}
-<h1 style="color:#111; margin-bottom:0.4rem;">Overview</h1>
-<p style="color:#666; margin-top:0; margin-bottom:2.5rem; font-size:0.95em; line-height:1.6;">
-  A self-contained Kubernetes demo environment showcasing Cisco's
-  <strong>Zero Trust Application Access</strong> portfolio — fully integrated and ready to run.
-</p>
+<div style="display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:2.5rem;">
+  <div>
+    <h1 style="color:#111; margin-bottom:0.4rem;">Overview</h1>
+    <p style="color:#666; margin-top:0; margin-bottom:0; font-size:0.95em; line-height:1.6;">
+      A self-contained Kubernetes demo environment showcasing Cisco's
+      <strong>Zero Trust Application Access</strong> portfolio — fully integrated and ready to run.
+    </p>
+  </div>
+  <!-- Cisco logo (inline SVG — bridge bars + wordmark) -->
+  <svg viewBox="0 0 152 68" xmlns="http://www.w3.org/2000/svg"
+       style="width:110px; height:auto; flex-shrink:0; margin-top:4px;"
+       aria-label="Cisco">
+    <!-- Bridge bars: symmetric arc, 8 bars, tallest in the middle -->
+    <rect x="0"   y="26" width="13" height="18" rx="2.5" fill="#049fd9"/>
+    <rect x="17"  y="16" width="13" height="28" rx="2.5" fill="#049fd9"/>
+    <rect x="34"  y="7"  width="13" height="37" rx="2.5" fill="#049fd9"/>
+    <rect x="51"  y="1"  width="13" height="43" rx="2.5" fill="#049fd9"/>
+    <rect x="68"  y="1"  width="13" height="43" rx="2.5" fill="#049fd9"/>
+    <rect x="85"  y="7"  width="13" height="37" rx="2.5" fill="#049fd9"/>
+    <rect x="102" y="16" width="13" height="28" rx="2.5" fill="#049fd9"/>
+    <rect x="119" y="26" width="13" height="18" rx="2.5" fill="#049fd9"/>
+    <!-- Wordmark -->
+    <text x="1" y="64" font-family="Arial, Helvetica, sans-serif"
+          font-size="21" font-weight="400" letter-spacing="1.5" fill="#049fd9">cisco</text>
+  </svg>
+</div>
 
 <!-- WHAT IS POC IN A POD -->
 <section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
