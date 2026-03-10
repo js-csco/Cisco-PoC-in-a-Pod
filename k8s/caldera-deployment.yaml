@@ -12,7 +12,7 @@ data:
     port: 8888
     app.contact.http: http://caldera.piap.svc.cluster.local:8888
     app.contact.html: /beacon
-    app.contact.websocket: 127.0.0.1:7012
+    app.contact.websocket: 0.0.0.0:7012
     api_key_red: ADMIN123
     api_key_blue: BLUEADMIN123
     users:
@@ -65,6 +65,8 @@ spec:
             - name: caldera-config
               mountPath: /usr/src/app/conf/local.yml
               subPath: local.yml
+            - name: caldera-data
+              mountPath: /usr/src/app/data
           resources:
             requests:
               memory: "512Mi"
@@ -77,6 +79,10 @@ spec:
         - name: caldera-config
           configMap:
             name: caldera-config
+        - name: caldera-data
+          hostPath:
+            path: /opt/caldera-data
+            type: DirectoryOrCreate
 ---
 apiVersion: v1
 kind: Service
