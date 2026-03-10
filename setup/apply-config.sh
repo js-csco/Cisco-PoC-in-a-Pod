@@ -63,8 +63,10 @@ echo "  Connector IP: $CONNECTOR_IP"
 echo ""
 echo "Step 4: Patching sse-check-config ConfigMap with connector IP..."
 if kubectl get configmap sse-check-config -n piap &>/dev/null; then
-    kubectl patch configmap sse-check-config -n piap --type merge -p \
-        "{\"data\":{\"default.conf\":\"server {\\n    listen 80;\\n    root /usr/share/nginx/html;\\n    index index.html;\\n    ssi on;\\n    ssi_silent_errors on;\\n    set \\$connector_ip \\\"$CONNECTOR_IP\\\";\\n}\\n\"}}"
+    # Use kubectl create --dry-run | apply to avoid JSON escape issues with $connector_ip
+    kubectl create configmap sse-check-config -n piap \
+        --from-literal=default.conf="$(printf 'server {\n    listen 80;\n    root /usr/share/nginx/html;\n    index index.html;\n    ssi on;\n    ssi_silent_errors on;\n    set $connector_ip "%s";\n}\n' "$CONNECTOR_IP")" \
+        --dry-run=client -o yaml | kubectl apply -f -
     kubectl rollout restart deployment/sse-check -n piap
     echo "  ✓ sse-check connector IP set to $CONNECTOR_IP"
 else

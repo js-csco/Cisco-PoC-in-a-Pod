@@ -496,8 +496,9 @@ echo "  ✓ Applications deployed to namespace 'piap'"
 
 # Patch the sse-check ConfigMap with the real connector IP now that the CM exists.
 echo "  Patching sse-check-config with connector IP: $CONNECTOR_IP"
-kubectl patch configmap sse-check-config -n piap --type merge -p \
-    "{\"data\":{\"default.conf\":\"server {\\n    listen 80;\\n    root /usr/share/nginx/html;\\n    index index.html;\\n    ssi on;\\n    ssi_silent_errors on;\\n    set \\$connector_ip \\\"$CONNECTOR_IP\\\";\\n}\\n\"}}"
+kubectl create configmap sse-check-config -n piap \
+    --from-literal=default.conf="$(printf 'server {\n    listen 80;\n    root /usr/share/nginx/html;\n    index index.html;\n    ssi on;\n    ssi_silent_errors on;\n    set $connector_ip "%s";\n}\n' "$CONNECTOR_IP")" \
+    --dry-run=client -o yaml | kubectl apply -f -
 kubectl rollout restart deployment/sse-check -n piap
 echo "  ✓ sse-check connector IP updated"
 echo ""
