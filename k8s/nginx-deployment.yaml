@@ -55,6 +55,6 @@ spec:
             name: nginx-config
         - name: nginx-www
           hostPath:
-            path: WEB_PATH
+            path: /web
             type: Directory
 status: {}

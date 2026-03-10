@@ -53,6 +53,6 @@ spec:
             name: testcases-config
         - name: testcases-www
           hostPath:
-            path: TESTCASES_PATH
+            path: /testcases
             type: Directory
 status: {}

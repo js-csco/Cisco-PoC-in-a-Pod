@@ -73,6 +73,8 @@ echo "Step 1: Creating symlinks and preparing system..."
 ln -sf "$REPO_ROOT/automagic-server" /automagic-server && echo "  ✓ /automagic-server"
 ln -sf "$REPO_ROOT/dashy" /dashy && echo "  ✓ /dashy"
 ln -sf "$REPO_ROOT/web" /web && echo "  ✓ /web"
+ln -sf "$REPO_ROOT/sse-check" /sse-check && echo "  ✓ /sse-check"
+ln -sf "$REPO_ROOT/testcases" /testcases && echo "  ✓ /testcases"
 
 echo "  Removing system containerd package (Docker brings its own)..."
 apt-get remove -y containerd 2>/dev/null || true
@@ -451,16 +453,9 @@ if [ -f "$REPO_ROOT/web/index.html" ]; then
     sed -i "s/CONNECTOR_IP/$CONNECTOR_IP/g" "$REPO_ROOT/web/index.html"
 fi
 
-if [ -f "$REPO_ROOT/k8s/nginx-deployment.yaml" ]; then
-    echo "  Updating nginx deployment with web path..."
-    sed -i "s|WEB_PATH|$REPO_ROOT/web|g" "$REPO_ROOT/k8s/nginx-deployment.yaml"
-fi
-
-if [ -f "$REPO_ROOT/k8s/sse-check-deployment.yaml" ]; then
-    echo "  Updating sse-check deployment with sse-check path and connector IP..."
-    sed -i "s|SSE_CHECK_PATH|$REPO_ROOT/sse-check|g" "$REPO_ROOT/k8s/sse-check-deployment.yaml"
-    sed -i "s/CONNECTOR_IP/$CONNECTOR_IP/g" "$REPO_ROOT/k8s/sse-check-deployment.yaml"
-fi
+# nginx and sse-check use stable /web and /sse-check symlinks — no path replacement needed.
+# Patch the sse-check ConfigMap live with the real connector IP after deployment.
+echo "  Connector IP will be patched into sse-check ConfigMap after deploy."
 
 if [ -d "$REPO_ROOT/automagic-server/templates" ]; then
     echo "  Updating automagic templates with server IP..."
@@ -498,6 +493,13 @@ for manifest in "$REPO_ROOT/k8s/"*.yaml; do
     esac
 done
 echo "  ✓ Applications deployed to namespace 'piap'"
+
+# Patch the sse-check ConfigMap with the real connector IP now that the CM exists.
+echo "  Patching sse-check-config with connector IP: $CONNECTOR_IP"
+kubectl patch configmap sse-check-config -n piap --type merge -p \
+    "{\"data\":{\"default.conf\":\"server {\\n    listen 80;\\n    root /usr/share/nginx/html;\\n    index index.html;\\n    ssi on;\\n    ssi_silent_errors on;\\n    set \\$connector_ip \\\"$CONNECTOR_IP\\\";\\n}\\n\"}}"
+kubectl rollout restart deployment/sse-check -n piap
+echo "  ✓ sse-check connector IP updated"
 echo ""
 
 # Step 19: Wait for pods to be ready

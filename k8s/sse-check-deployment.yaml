@@ -12,7 +12,7 @@ data:
         index index.html;
         ssi on;
         ssi_silent_errors on;
-        set $connector_ip "CONNECTOR_IP";
+        set $connector_ip "127.0.0.1";
     }
 ---
 apiVersion: apps/v1
@@ -56,6 +56,6 @@ spec:
             name: sse-check-config
         - name: sse-check-www
           hostPath:
-            path: SSE_CHECK_PATH
+            path: /sse-check
             type: Directory
 status: {}
