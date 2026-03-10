@@ -91,7 +91,7 @@ def secure_access():
             # Link to Dashboard!
             return redirect("https://dashboard.sse.cisco.com/org/8219751/secure/securityprofiles")
 
-try:
+        try:
             token = ensure_valid_token(api_key, api_secret)
 
             # Action: AUTHENTICATE
