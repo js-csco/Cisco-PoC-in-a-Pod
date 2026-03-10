@@ -273,6 +273,19 @@
     }
     .tc-notes textarea:focus { outline: none; border-color: var(--blue); }
 
+    /* ── Section header (within a tab) ── */
+    .tc-section-header {
+      font-size: 0.78em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #6b7280;
+      margin: 28px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .tc-section-header:first-child { margin-top: 0; }
+
     footer {
       text-align: center;
       color: #aaa;
@@ -352,95 +365,173 @@ const TABS = [
     id: 'secureaccess',
     label: 'Secure Access',
     icon: 'fa-cloud',
-    subtitle: 'ZTNA private access, browser-based and client-based access, and internet security.',
-    cases: [
+    subtitle: 'Client-based and browser-based private access, internet security, DLP, and AI guardrails.',
+    sections: [
       {
-        id: 'sa-1',
-        title: 'ZTNA — SSE Check Shows Verified',
-        desc: 'Accessing SSE Check via Cisco Secure Access shows the green "ZTNA Verified" banner.',
-        steps: [
-          'Ensure Cisco Secure Client (ZTA module) is connected.',
-          'Open a browser and navigate to the SSE Check private resource URL configured in Secure Access.',
-          'Confirm the banner reads <strong>Zero Trust Access Verified</strong> (green).',
-          'The server IP shown should match the Connector pod IP — not your real IP.',
+        title: 'Client Based Zero Trust Access',
+        cases: [
+          {
+            id: 'sa-ztna-1',
+            title: 'SSE Check — Zero Trust Verified',
+            desc: 'With Secure Client (ZTA) connected, navigate to the SSE Check private resource URL and confirm the green "Zero Trust Access Verified" banner appears and the server IP matches the Connector pod IP.',
+            steps: [
+              'Ensure Cisco Secure Client (ZTA module) is connected.',
+              'Open a browser and navigate to the SSE Check private resource URL configured in Secure Access.',
+              'Confirm the banner reads <strong>Zero Trust Access Verified</strong> (green).',
+              'Verify the server IP shown matches the Connector pod IP — not your real client IP.',
+            ],
+          },
+          {
+            id: 'sa-5',
+            title: 'Private Access — RDP via Client',
+            desc: 'Connect to the RDP Server using a native RDP client through Cisco Secure Access.',
+            steps: [
+              'Ensure Cisco Secure Client (ZTA module) is connected.',
+              'Open your RDP client (e.g., Microsoft Remote Desktop or Remmina).',
+              'Enter the server address: <code>&lt;VM-IP&gt;:30389</code>',
+              'Log in with username <code>abc</code> and password <code>abc</code>.',
+              'Confirm the remote desktop session opens successfully.',
+            ],
+          },
+          {
+            id: 'sa-6',
+            title: 'Private Access — SSH via Client',
+            desc: 'Connect to the SSH Server using a native SSH client through Cisco Secure Access.',
+            steps: [
+              'Ensure Cisco Secure Client (ZTA module) is connected.',
+              'Open a terminal and run: <code>ssh remote_user@&lt;VM-IP&gt; -p 30022</code>',
+              'Enter password: <code>ssh_access</code>',
+              'Confirm the SSH session opens and you reach the remote shell.',
+              'Run <code>whoami</code> to verify you are logged in as <code>remote_user</code>.',
+            ],
+          },
         ],
       },
       {
-        id: 'sa-2',
-        title: 'ZTNA — Direct Access Blocked',
-        desc: 'Accessing SSE Check directly (not through Secure Access) shows no ZTNA.',
-        steps: [
-          'Disconnect Cisco Secure Client or use a device not enrolled in ZTNA.',
-          'Attempt to open the SSE Check URL directly (e.g., via the node IP and port 30550).',
-          'Confirm the banner shows <strong>Direct Access — No ZTNA</strong> (orange) or access is refused entirely.',
+        title: 'Internet Access',
+        cases: [
+          {
+            id: 'sa-ia-1',
+            title: 'Cisco Secure Access Protection Check',
+            desc: 'Open the Cisco Secure Access policy test URL and verify traffic is being proxied.',
+            steps: [
+              'Ensure Cisco Secure Client is connected.',
+              'Open a browser and navigate to <code>https://policy.test.sse.cisco.com/</code>',
+              'Confirm the <strong>Protected by Cisco Secure Access</strong> page is displayed.',
+            ],
+          },
+          {
+            id: 'sa-ia-2',
+            title: 'Gen AI Apps — Warn Interstitial',
+            desc: 'Access a Gen AI site and verify the warn interstitial page from Cisco Secure Access appears. (Policy: Warn — Gen AI category)',
+            steps: [
+              'Ensure Cisco Secure Client is connected.',
+              'Open a browser and navigate to a Gen AI site (e.g., <code>chatgpt.com</code>).',
+              'Verify the Cisco Secure Access warn interstitial page appears, requiring acknowledgement before continuing.',
+            ],
+          },
+          {
+            id: 'sa-ia-3',
+            title: 'News Sites — Browser Isolation',
+            desc: 'Navigate to a news website and verify the page opens in Remote Browser Isolation mode. (Policy: Isolate — News Websites category)',
+            steps: [
+              'Ensure Cisco Secure Client is connected.',
+              'Open a browser and navigate to a news website (e.g., <code>bbc.com</code>).',
+              'Verify the page opens in browser isolation mode (look for the RBI indicator or behavior).',
+            ],
+          },
+          {
+            id: 'sa-ia-4',
+            title: 'Adult / Alcohol Content — Blocked',
+            desc: 'Attempt to access an adult or alcohol-related site and verify the Cisco Secure Access block page is displayed. (Policy: Block — Content category)',
+            steps: [
+              'Ensure Cisco Secure Client is connected.',
+              'Open a browser and attempt to access a site in the Adult or Alcohol content category.',
+              'Confirm the Cisco Secure Access block page is displayed.',
+            ],
+          },
+          {
+            id: 'sa-ia-5',
+            title: 'DeepSeek App — Blocked',
+            desc: 'Navigate to DeepSeek and verify the Cisco Secure Access block page is displayed. (Policy: Block — DeepSeek application)',
+            steps: [
+              'Ensure Cisco Secure Client is connected.',
+              'Open a browser and navigate to <code>deepseek.com</code>.',
+              'Confirm the Cisco Secure Access block page is displayed.',
+            ],
+          },
+          {
+            id: 'sa-ia-6',
+            title: 'General Internet — Allowed',
+            desc: 'Access a standard business website and verify the page loads normally with no block or warn page. (Policy: Allow All — catch-all rule)',
+            steps: [
+              'Ensure Cisco Secure Client is connected.',
+              'Open a browser and navigate to a standard business website (e.g., <code>cisco.com</code>).',
+              'Confirm the page loads normally with no block, warn, or isolation page.',
+            ],
+          },
         ],
       },
       {
-        id: 'sa-3',
-        title: 'Private Access — RDP via Browser',
-        desc: 'Remote desktop session opens in the Secure Access browser-based client.',
-        steps: [
-          'In Cisco Secure Access, go to <strong>Connect → End User Portal</strong>.',
-          'Find the RDP private resource and click to open.',
-          'Confirm the RDP desktop session loads in the browser.',
-          'Verify you can interact with the remote desktop.',
+        title: 'Data Loss Prevention',
+        cases: [
+          {
+            id: 'sa-dlp-1',
+            title: 'PCI Data — Upload Blocked',
+            desc: 'Attempt to upload or paste content containing credit card numbers and verify DLP blocks the upload. (Policy: Real-Time DLP — Built-in PCI Classification)',
+            steps: [
+              'Ensure Cisco Secure Client is connected.',
+              'Navigate to a web form or file upload page.',
+              'Attempt to paste or upload content containing credit card numbers.',
+              'Verify DLP detects PCI data and blocks the upload with a block notification.',
+            ],
+          },
+          {
+            id: 'sa-dlp-2',
+            title: 'PII Data — Upload Blocked',
+            desc: 'Attempt to upload or paste content containing PII and verify DLP blocks the upload. (Policy: Real-Time DLP — Built-in PII Classification)',
+            steps: [
+              'Ensure Cisco Secure Client is connected.',
+              'Navigate to a web form or file upload page.',
+              'Attempt to paste or upload content containing PII (e.g., SSN, full name + address).',
+              'Verify DLP detects PII data and blocks the upload with a block notification.',
+            ],
+          },
         ],
       },
       {
-        id: 'sa-4',
-        title: 'Private Access — SSH via Browser',
-        desc: 'SSH terminal session opens in the Secure Access browser-based client.',
-        steps: [
-          'In the Secure Access End User Portal, find the SSH private resource.',
-          'Click to open the SSH session.',
-          'Confirm a terminal session opens in the browser.',
-          'Run a simple command (e.g., <code>whoami</code>) to verify connectivity.',
-        ],
-      },
-      {
-        id: 'sa-5',
-        title: 'Private Access — RDP via Client',
-        desc: 'Connect to the RDP Server using a native RDP client through Cisco Secure Access.',
-        steps: [
-          'Ensure Cisco Secure Client (ZTA module) is connected.',
-          'Open your RDP client (e.g., Microsoft Remote Desktop or Remmina).',
-          'Enter the server address: <code>&lt;VM-IP&gt;:30389</code>',
-          'Log in with username <code>abc</code> and password <code>abc</code>.',
-          'Confirm the remote desktop session opens successfully.',
-        ],
-      },
-      {
-        id: 'sa-6',
-        title: 'Private Access — SSH via Client',
-        desc: 'Connect to the SSH Server using a native SSH client through Cisco Secure Access.',
-        steps: [
-          'Ensure Cisco Secure Client (ZTA module) is connected.',
-          'Open a terminal and run: <code>ssh remote_user@&lt;VM-IP&gt; -p 30022</code>',
-          'Enter password: <code>ssh_access</code>',
-          'Confirm the SSH session opens and you reach the remote shell.',
-          'Run <code>whoami</code> to verify you are logged in as <code>remote_user</code>.',
-        ],
-      },
-      {
-        id: 'sa-7',
-        title: 'Internet Security — URL Blocked',
-        desc: 'Navigating to a blocked URL shows the Secure Access block page.',
-        steps: [
-          'Connect via Cisco Secure Client.',
-          'Open a browser and navigate to a URL in a blocked category (e.g., a known test malware URL or gambling site).',
-          'Confirm the Cisco Secure Access block/deny page is displayed.',
-          'Check <strong>Secure Access → Monitor → Activity Search</strong> to confirm the block event is logged.',
-        ],
-      },
-      {
-        id: 'sa-8',
-        title: 'Internet Security — DNS Security',
-        desc: 'DNS query to a known malicious domain is blocked.',
-        steps: [
-          'Connect via Cisco Secure Client.',
-          'Attempt to resolve or browse to a known malicious domain (use a test domain safe for testing).',
-          'Confirm the request is blocked — browser shows an error or block page.',
-          'Check DNS activity in <strong>Secure Access → Monitor → Activity Search</strong>.',
+        title: 'AI Guardrails',
+        cases: [
+          {
+            id: 'sa-ai-1',
+            title: 'Security Guardrail — Prompt Blocked',
+            desc: 'Send a security-sensitive prompt to an AI app and verify Cisco Secure Access blocks it. (Policy: AI Guardrails — Security Guardrail)',
+            steps: [
+              'Ensure Cisco Secure Client is connected and access an AI app (e.g., ChatGPT).',
+              'Send a prompt with security-sensitive content (e.g., a request for malware or exploit code).',
+              'Verify Cisco Secure Access blocks the prompt and shows a block notification.',
+            ],
+          },
+          {
+            id: 'sa-ai-2',
+            title: 'Safety Guardrail — Prompt Blocked',
+            desc: 'Send a prompt with unsafe or harmful content to an AI app and verify it is blocked. (Policy: AI Guardrails — Safety Guardrail)',
+            steps: [
+              'Ensure Cisco Secure Client is connected and access an AI app.',
+              'Send a prompt with unsafe or harmful content.',
+              'Verify the prompt is blocked before reaching the AI service.',
+            ],
+          },
+          {
+            id: 'sa-ai-3',
+            title: 'Privacy Guardrail — Prompt Blocked',
+            desc: 'Send a prompt containing personal or private data to an AI app and verify it is blocked. (Policy: AI Guardrails — Privacy Guardrail)',
+            steps: [
+              'Ensure Cisco Secure Client is connected and access an AI app.',
+              'Send a prompt containing personal or private data (e.g., names, emails, credentials).',
+              'Verify the prompt is blocked before reaching the AI service.',
+            ],
+          },
         ],
       },
     ],
@@ -591,11 +682,18 @@ function renderAll() {
   updateOverall();
 }
 
+// Returns all test cases for a tab, regardless of flat or sectioned structure
+function tabCases(tab) {
+  if (tab.sections) return tab.sections.flatMap(s => s.cases);
+  return tab.cases || [];
+}
+
 function renderNav() {
   const nav = document.getElementById('tabNav');
   nav.innerHTML = TABS.map(tab => {
-    const total  = tab.cases.length;
-    const passed = tab.cases.filter(tc => getState(tc.id, 'status') === 'pass').length;
+    const cases  = tabCases(tab);
+    const total  = cases.length;
+    const passed = cases.filter(tc => getState(tc.id, 'status') === 'pass').length;
     return `
       <button class="tab-btn ${tab.id === activeTab ? 'active' : ''}"
               onclick="switchTab('${tab.id}')">
@@ -604,6 +702,17 @@ function renderNav() {
         <span class="tab-count">${passed}/${total}</span>
       </button>`;
   }).join('');
+}
+
+function renderTabCases(tab) {
+  if (tab.sections) {
+    let num = 1;
+    return tab.sections.map(section => {
+      const cards = section.cases.map(tc => renderCard(tc, num++)).join('');
+      return `<div class="tc-section-header">${section.title}</div>${cards}`;
+    }).join('');
+  }
+  return tab.cases.map((tc, i) => renderCard(tc, i + 1)).join('');
 }
 
 function renderContent() {
@@ -618,21 +727,23 @@ function renderContent() {
         </div>
         <div class="progress-label" id="lbl-${tab.id}">${tabLabel(tab)}</div>
       </div>
-      ${tab.cases.map((tc, i) => renderCard(tc, i + 1)).join('')}
+      ${renderTabCases(tab)}
     </div>
   `).join('');
 }
 
 function tabProgress(tab) {
-  const passed = tab.cases.filter(tc => getState(tc.id, 'status') === 'pass').length;
-  return tab.cases.length ? Math.round((passed / tab.cases.length) * 100) : 0;
+  const cases  = tabCases(tab);
+  const passed = cases.filter(tc => getState(tc.id, 'status') === 'pass').length;
+  return cases.length ? Math.round((passed / cases.length) * 100) : 0;
 }
 
 function tabLabel(tab) {
-  const passed  = tab.cases.filter(tc => getState(tc.id, 'status') === 'pass').length;
-  const failed  = tab.cases.filter(tc => getState(tc.id, 'status') === 'fail').length;
-  const skipped = tab.cases.filter(tc => getState(tc.id, 'status') === 'skip').length;
-  const pending = tab.cases.length - passed - failed - skipped;
+  const cases   = tabCases(tab);
+  const passed  = cases.filter(tc => getState(tc.id, 'status') === 'pass').length;
+  const failed  = cases.filter(tc => getState(tc.id, 'status') === 'fail').length;
+  const skipped = cases.filter(tc => getState(tc.id, 'status') === 'skip').length;
+  const pending = cases.length - passed - failed - skipped;
   const parts = [];
   if (passed)  parts.push(`<span>${passed} passed</span>`);
   if (failed)  parts.push(`<span style="color:var(--red)">${failed} failed</span>`);
@@ -688,7 +799,7 @@ function setStatus(tcId, status) {
   badge.textContent   = label;
   // Refresh tab counts + progress
   renderNav();
-  const tab = TABS.find(t => t.cases.some(tc => tc.id === tcId));
+  const tab = TABS.find(t => tabCases(t).some(tc => tc.id === tcId));
   if (tab) {
     const bar = document.getElementById('bar-' + tab.id);
     const lbl = document.getElementById('lbl-' + tab.id);
@@ -708,7 +819,7 @@ function saveNotes(tcId, value) {
 }
 
 function updateOverall() {
-  const allCases = TABS.flatMap(t => t.cases);
+  const allCases = TABS.flatMap(t => tabCases(t));
   const total    = allCases.length;
   const passed   = allCases.filter(tc => getState(tc.id, 'status') === 'pass').length;
   const failed   = allCases.filter(tc => getState(tc.id, 'status') === 'fail').length;
