@@ -598,5 +598,7 @@ def help_page():
 
 
 if __name__ == "__main__":
-    # Run Flask on port 9100 and listen on all interfaces
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    # Run Flask on port 8080 and listen on all interfaces.
+    # debug=False disables the Werkzeug file-reloader which would call os.execv()
+    # on every file-system change (hostPath mount) and cause the container to exit.
+    app.run(host="0.0.0.0", port=8080, debug=False)

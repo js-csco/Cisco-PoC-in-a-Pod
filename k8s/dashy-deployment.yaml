@@ -33,6 +33,19 @@ spec:
           ports:
             - containerPort: 8080
               protocol: TCP
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
           volumeMounts:
             - mountPath: /app/user-data/conf.yml
               name: dashy-config

