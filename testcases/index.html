@@ -336,23 +336,13 @@ const TABS = [
           'Confirm the dashboard opens and loads user data.',
         ],
       },
-      {
-        id: 'duo-6',
-        title: 'Identity Intelligence — User Activity Visible',
-        desc: 'User activity and risk scores are visible in the Identity Intelligence dashboard.',
-        steps: [
-          'In Identity Intelligence, navigate to the Users section.',
-          'Find the test user and confirm recent activity is logged.',
-          'Review the risk score and verify it reflects recent authentication events.',
-        ],
-      },
     ],
   },
   {
     id: 'secureaccess',
     label: 'Secure Access',
     icon: 'fa-cloud',
-    subtitle: 'ZTNA private access, browser-based access, and internet security.',
+    subtitle: 'ZTNA private access, browser-based and client-based access, and internet security.',
     cases: [
       {
         id: 'sa-1',
@@ -399,6 +389,30 @@ const TABS = [
       },
       {
         id: 'sa-5',
+        title: 'Private Access — RDP via Client',
+        desc: 'Connect to the RDP Server using a native RDP client through Cisco Secure Access.',
+        steps: [
+          'Ensure Cisco Secure Client (ZTA module) is connected.',
+          'Open your RDP client (e.g., Microsoft Remote Desktop or Remmina).',
+          'Enter the server address: <code>&lt;VM-IP&gt;:30389</code>',
+          'Log in with username <code>abc</code> and password <code>abc</code>.',
+          'Confirm the remote desktop session opens successfully.',
+        ],
+      },
+      {
+        id: 'sa-6',
+        title: 'Private Access — SSH via Client',
+        desc: 'Connect to the SSH Server using a native SSH client through Cisco Secure Access.',
+        steps: [
+          'Ensure Cisco Secure Client (ZTA module) is connected.',
+          'Open a terminal and run: <code>ssh remote_user@&lt;VM-IP&gt; -p 30022</code>',
+          'Enter password: <code>ssh_access</code>',
+          'Confirm the SSH session opens and you reach the remote shell.',
+          'Run <code>whoami</code> to verify you are logged in as <code>remote_user</code>.',
+        ],
+      },
+      {
+        id: 'sa-7',
         title: 'Internet Security — URL Blocked',
         desc: 'Navigating to a blocked URL shows the Secure Access block page.',
         steps: [
@@ -409,7 +423,7 @@ const TABS = [
         ],
       },
       {
-        id: 'sa-6',
+        id: 'sa-8',
         title: 'Internet Security — DNS Security',
         desc: 'DNS query to a known malicious domain is blocked.',
         steps: [
@@ -439,28 +453,6 @@ const TABS = [
         ],
       },
       {
-        id: 'cil-2',
-        title: 'Denied Traffic — Unauthorized Pod to SSE Check',
-        desc: 'A pod without an explicit allow policy cannot reach SSE Check.',
-        steps: [
-          'Launch a test pod: <code>kubectl run test --image=alpine -n piap --rm -it -- sh</code>',
-          'From inside the pod, run: <code>wget -T 3 http://sse-check:9550</code>',
-          'Confirm the connection times out or is refused.',
-          'Verify the flow appears as <strong>dropped</strong> in Hubble UI.',
-        ],
-      },
-      {
-        id: 'cil-3',
-        title: 'Hubble UI — Flow Visibility',
-        desc: 'Hubble UI shows network flows between pods in real time.',
-        steps: [
-          'Run: <code>kubectl port-forward -n kube-system svc/hubble-ui 12000:80</code>',
-          'Open <strong>http://localhost:12000</strong> in a browser.',
-          'Select the <strong>piap</strong> namespace.',
-          'Confirm pods and flows are visible in the service map.',
-        ],
-      },
-      {
         id: 'cil-4',
         title: 'Network Policies Active',
         desc: 'Cilium Network Policies are present and enforced in the piap namespace.',
@@ -487,37 +479,6 @@ const TABS = [
           'Exec into any pod: <code>kubectl exec -n piap deploy/sse-check -- ls /tmp</code>',
           'Open Splunk and search: <code>index=tetragon process_exec</code>',
           'Confirm an event appears with the correct pod name and process path.',
-        ],
-      },
-      {
-        id: 'tet-2',
-        title: 'File Access Event Logged',
-        desc: 'Reading a monitored file path generates a Tetragon file event in Splunk.',
-        steps: [
-          'Exec into a pod and read a file: <code>kubectl exec -n piap deploy/sse-check -- cat /etc/passwd</code>',
-          'Open Splunk and search: <code>index=tetragon process_kprobe</code>',
-          'Confirm an event for the file read is logged with filename and pod details.',
-        ],
-      },
-      {
-        id: 'tet-3',
-        title: 'Outbound Network Connection Logged',
-        desc: 'An outbound TCP connection from a pod is tracked by Tetragon.',
-        steps: [
-          'Exec into a pod and make an outbound connection: <code>kubectl exec -n piap deploy/sse-check -- wget -T 3 http://example.com</code>',
-          'Open Splunk and search: <code>index=tetragon tcp_connect</code>',
-          'Confirm the connection event is logged with destination IP and pod name.',
-        ],
-      },
-      {
-        id: 'tet-4',
-        title: 'Caldera Attack Scenario — Events in Splunk',
-        desc: 'Running a Caldera adversary simulation generates a stream of Tetragon events.',
-        steps: [
-          'Open the Caldera server and run a basic adversary operation against a pod.',
-          'Open Splunk and search: <code>index=tetragon</code> — filter by the target pod namespace.',
-          'Confirm multiple event types appear: process execution, network connections, and file access.',
-          'Review the event timeline to understand the attack sequence.',
         ],
       },
     ],
