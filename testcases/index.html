@@ -62,6 +62,54 @@
     }
     #resetBtn:hover { background: rgba(255,255,255,0.22); }
 
+    /* ── Invite Modal ── */
+    #inviteModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    #inviteModal.active { display: flex; }
+    .modal-box {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      padding: 2rem 2.2rem 1.8rem;
+      max-width: 520px;
+      width: 90%;
+      position: relative;
+      color: #333;
+    }
+    .modal-box h2 {
+      margin: 0 0 1rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #111;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .modal-box p { margin: 0 0 0.8rem; font-size: 0.93rem; line-height: 1.55; }
+    .modal-box ul {
+      margin: 0.4rem 0 0 1.2rem;
+      padding: 0;
+      font-size: 0.93rem;
+      line-height: 1.75;
+    }
+    .modal-box ul li ul { list-style-type: circle; margin-top: 0.2rem; }
+    .modal-close {
+      position: absolute;
+      top: 12px; right: 14px;
+      background: none; border: none;
+      font-size: 1.3rem; color: #999;
+      cursor: pointer; padding: 2px 6px;
+      border-radius: 4px; transition: background 0.12s;
+    }
+    .modal-close:hover { background: #f0f0f0; color: #333; }
+
     /* ── Tab bar ── */
     nav {
       background: #fff;
@@ -306,8 +354,28 @@
   <div class="header-right">
     <div id="overallBadge">0 / 0 passed</div>
     <button id="resetBtn" onclick="resetAll()">↺ Reset All</button>
+    <button id="inviteBtn" onclick="document.getElementById('inviteModal').classList.add('active')" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 14px;border-radius:6px;font-size:0.82em;font-weight:500;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.22)'" onmouseout="this.style.background='rgba(255,255,255,0.12)'">
+      👤 Invite your Cisco SE
+    </button>
   </div>
 </header>
+
+<!-- Invite Cisco SE Modal -->
+<div id="inviteModal" onclick="if(event.target===this)this.classList.remove('active')">
+  <div class="modal-box">
+    <button class="modal-close" onclick="document.getElementById('inviteModal').classList.remove('active')" title="Close">&times;</button>
+    <h2>👤 Invite your Cisco SE</h2>
+    <p>If you want to invite your Cisco SE to have remote access to the test cases, please do the following:</p>
+    <ul>
+      <li>Create Duo user in Group <strong>"PoC Users"</strong></li>
+      <li>Allow browser based access to PoC Playbook
+        <ul>
+          <li>Cisco Secure Access › Resources › Private Resources › Edit PoC Playbook › Allow Browser based Access &amp; change protocol to HTTP</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</div>
 
 <nav id="tabNav"></nav>
 

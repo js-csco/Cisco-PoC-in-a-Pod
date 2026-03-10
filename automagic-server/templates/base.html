@@ -54,112 +54,6 @@
       font-weight: 600;
     }
 
-    /* === NAVBAR ACTIONS === */
-    .navbar-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .btn-invite {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      background-color: #0066ff;
-      color: #fff;
-      border: none;
-      padding: 7px 16px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.15s;
-      white-space: nowrap;
-    }
-
-    .btn-invite:hover {
-      background-color: #0052cc;
-    }
-
-    /* === MODAL === */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.45);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-overlay.active {
-      display: flex;
-    }
-
-    .modal-box {
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-      padding: 2rem 2.2rem 1.8rem;
-      max-width: 520px;
-      width: 90%;
-      position: relative;
-    }
-
-    .modal-box h2 {
-      margin: 0 0 1rem;
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: #111;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .modal-box p {
-      margin: 0 0 1rem;
-      color: #444;
-      font-size: 0.93rem;
-      line-height: 1.55;
-    }
-
-    .modal-box ul {
-      margin: 0.5rem 0 1.2rem 1.2rem;
-      padding: 0;
-      color: #333;
-      font-size: 0.93rem;
-      line-height: 1.7;
-    }
-
-    .modal-box ul li {
-      margin-bottom: 0.3rem;
-    }
-
-    .modal-box ul li ul {
-      margin-top: 0.2rem;
-      list-style-type: circle;
-    }
-
-    .modal-close {
-      position: absolute;
-      top: 14px;
-      right: 16px;
-      background: none;
-      border: none;
-      font-size: 1.3rem;
-      color: #888;
-      cursor: pointer;
-      line-height: 1;
-      padding: 2px 6px;
-      border-radius: 4px;
-      transition: background 0.12s;
-    }
-
-    .modal-close:hover {
-      background: #f0f0f0;
-      color: #333;
-    }
-
     /* === LAYOUT === */
     .main {
       display: flex;
@@ -261,29 +155,7 @@
       <img src="https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png" alt="Cisco Logo">
       <span class="navbar-title">Cisco PoC in a Pod</span>
     </div>
-    <div class="navbar-actions">
-      <button class="btn-invite" onclick="document.getElementById('inviteModal').classList.add('active')">
-        <i class="fa-solid fa-user-plus"></i> Invite your Cisco SE
-      </button>
-    </div>
   </header>
-
-  <!-- Invite Cisco SE Modal -->
-  <div id="inviteModal" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
-    <div class="modal-box">
-      <button class="modal-close" onclick="document.getElementById('inviteModal').classList.remove('active')" title="Close">&times;</button>
-      <h2><i class="fa-solid fa-user-plus" style="color:#0066ff;"></i> Invite your Cisco SE</h2>
-      <p>If you want to invite your Cisco SE to have remote access to the test cases, please do the following:</p>
-      <ul>
-        <li>Create Duo user in Group <strong>"PoC Users"</strong></li>
-        <li>Allow browser based access to PoC Playbook
-          <ul>
-            <li>Cisco Secure Access &rsaquo; Resources &rsaquo; Private Resources &rsaquo; Edit PoC Playbook &rsaquo; Allow Browser based Access &amp; change protocol to HTTP</li>
-          </ul>
-        </li>
-      </ul>
-    </div>
-  </div>
 
   <!-- Sidebar + Main -->
   <div class="main">
