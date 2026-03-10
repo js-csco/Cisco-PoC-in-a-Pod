@@ -28,7 +28,7 @@ spec:
         app: dashy
     spec:
       containers:
-        - image: ghcr.io/lissy93/dashy:latest
+        - image: ghcr.io/lissy93/dashy:3.1.1
           name: dashy
           ports:
             - containerPort: 8080
@@ -36,16 +36,17 @@ spec:
           resources:
             requests:
               cpu: "50m"
-              memory: "128Mi"
+              memory: "256Mi"
             limits:
               cpu: "200m"
-              memory: "256Mi"
+              memory: "512Mi"
           livenessProbe:
             httpGet:
               path: /
               port: 8080
-            initialDelaySeconds: 15
+            initialDelaySeconds: 60
             periodSeconds: 20
+            failureThreshold: 5
           volumeMounts:
             - mountPath: /app/user-data/conf.yml
               name: dashy-config
