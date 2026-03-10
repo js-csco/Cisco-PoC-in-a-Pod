@@ -259,22 +259,48 @@ else
 fi
 echo ""
 
-# Step 5.1: Configure Docker Hub registry mirror
+# Step 5.1: Configure Docker Hub registry authentication
 # Prevents unauthenticated pull rate-limit errors (429) on Docker Hub images
 # (nginx:alpine, ubuntu:22.04, busybox, python:3.11-slim, etc.)
-echo "Step 5.1: Configuring Docker Hub registry mirror..."
+echo "Step 5.1: Configuring Docker Hub registry authentication..."
+echo ""
+echo "Docker Hub credentials are required to avoid pull rate limits."
+echo "If you don't have an account, create a free one at https://hub.docker.com"
+echo "(Leave empty to use a mirror instead — less reliable)"
+echo ""
+read -p "Docker Hub Username (or Enter to skip): " DOCKERHUB_USER
+if [ -n "$DOCKERHUB_USER" ]; then
+    read -s -p "Docker Hub Password or Access Token: " DOCKERHUB_PASSWORD
+    echo ""
+fi
+
 mkdir -p /etc/rancher/k3s
-cat > /etc/rancher/k3s/registries.yaml <<'EOF'
+if [ -n "$DOCKERHUB_USER" ] && [ -n "$DOCKERHUB_PASSWORD" ]; then
+    cat > /etc/rancher/k3s/registries.yaml <<EOF
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://mirror.gcr.io"
+configs:
+  "registry-1.docker.io":
+    auth:
+      username: ${DOCKERHUB_USER}
+      password: ${DOCKERHUB_PASSWORD}
+EOF
+    echo "  ✓ Docker Hub credentials configured (with mirror.gcr.io as fallback)"
+else
+    cat > /etc/rancher/k3s/registries.yaml <<'EOF'
 mirrors:
   docker.io:
     endpoint:
       - "https://mirror.gcr.io"
 EOF
+    echo "  ✓ Docker Hub mirror configured (mirror.gcr.io) — no credentials"
+fi
 # k3s reads registries.yaml at startup; restart to apply before any image pulls.
 systemctl restart k3s
 echo "  Waiting for k3s API server after restart..."
 sleep 5
-echo "  ✓ Docker Hub mirror configured (mirror.gcr.io)"
 echo ""
 
 # Step 6: Configure kubectl access
