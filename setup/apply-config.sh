@@ -22,6 +22,23 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 SERVER_IP=$(hostname -I | awk '{print $1}')
 echo "Server IP: $SERVER_IP"
 
+# ── 0. Configure k3s Docker Hub registry mirror ─────────────────────────────
+echo ""
+echo "Step 0: Configuring k3s Docker Hub registry mirror..."
+REGISTRIES_FILE="/etc/rancher/k3s/registries.yaml"
+if [ ! -f "$REGISTRIES_FILE" ]; then
+    cat > "$REGISTRIES_FILE" <<'EOF'
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://mirror.gcr.io"
+EOF
+    systemctl restart k3s 2>/dev/null || true
+    echo "  ✓ Docker Hub mirror configured (mirror.gcr.io) — k3s restarted"
+else
+    echo "  ✓ registries.yaml already exists, skipping"
+fi
+
 # ── 1. Ensure symlinks exist ────────────────────────────────────────────────
 echo ""
 echo "Step 1: Ensuring symlinks..."

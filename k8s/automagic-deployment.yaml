@@ -28,23 +28,23 @@ spec:
         app: automagic
     spec:
       containers:
-        - args:
-            - bash
-            - -c
-            - pip3 install --no-cache-dir --break-system-packages flask requests duo-client kubernetes && python3 /app/app.py
-          env:
+        - env:
             - name: TZ
               value: Europe/Berlin
             - name: NODE_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-          image: python:3.11-slim
+          image: ghcr.io/js-csco/piap-k3s-automagic:latest
           name: automagic
           ports:
             - containerPort: 8080
               protocol: TCP
-          resources: {}
+          resources:
+            requests:
+              ephemeral-storage: "128Mi"
+            limits:
+              ephemeral-storage: "256Mi"
           volumeMounts:
             - mountPath: /app
               name: code
