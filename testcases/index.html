@@ -541,16 +541,71 @@ const TABS = [
     label: 'Cilium',
     icon: 'fa-network-wired',
     subtitle: 'eBPF network policy enforcement and microsegmentation.',
-    cases: [
+    sections: [
       {
-        id: 'cil-3',
-        title: 'Hubble UI — Flow Visibility',
-        desc: 'Open the Hubble UI on port 30800 (link on Dashy) and open namespace <strong>piap</strong>. Observe flows in the environment — everything should be allowed, hence <strong>forwarded</strong>. Go to Columns and check all boxes to get more visibility.',
-        steps: [
-          'Open the Hubble UI via the link on Dashy (port 30800).',
-          'Select the <strong>piap</strong> namespace from the namespace dropdown.',
-          'Observe the live network flows — all traffic should appear as <strong>forwarded</strong>.',
-          'Click <strong>Columns</strong> and enable all checkboxes to maximise flow visibility.',
+        title: 'Flow Visibility',
+        cases: [
+          {
+            id: 'cil-3',
+            title: 'Hubble UI — Flow Visibility',
+            desc: 'Open the Hubble UI on port 30800 (link on Dashy) and open namespace <strong>piap</strong>. Observe flows in the environment — everything should be allowed, hence <strong>forwarded</strong>. Go to Columns and check all boxes to get more visibility.',
+            steps: [
+              'Open the Hubble UI via the link on Dashy (port 30800).',
+              'Select the <strong>piap</strong> namespace from the namespace dropdown.',
+              'Observe the live network flows — all traffic should appear as <strong>forwarded</strong>.',
+              'Click <strong>Columns</strong> and enable all checkboxes to maximise flow visibility.',
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Zero Trust Access',
+        cases: [
+          {
+            id: 'cil-zt-1',
+            title: 'Allow All Traffic — LAN Access & Hubble Flows',
+            desc: 'With <strong>Allow All</strong> mode active in Automagic &rsaquo; Cilium, access a pod service directly from your local computer on the same LAN. Observe in Hubble how the traffic source appears as <strong>world</strong>, showing unrestricted inbound access from outside the cluster.',
+            steps: [
+              'In <strong>Automagic &rsaquo; Cilium</strong>, confirm the policy is set to <strong>Allow All Traffic</strong> (no Cilium network policies applied).',
+              'From your local computer on the LAN, open a browser and navigate to a pod service (e.g. the web app on port 30080).',
+              'Open <strong>Hubble UI</strong> (port 30800) and select the <strong>piap</strong> namespace.',
+              'Observe the flow — the source identity should be listed as <strong>world</strong>, confirming the request came from outside the cluster with no restrictions.',
+            ],
+          },
+          {
+            id: 'cil-zt-2',
+            title: 'Zero Trust Application Access — SSE-Only Enforcement',
+            desc: 'Switch Cilium to <strong>Zero Trust Access</strong> mode in Automagic. Only requests arriving via the SSE client (with a valid identity) should now reach the pods. Attempts from the LAN without SSE should be dropped.',
+            steps: [
+              'In <strong>Automagic &rsaquo; Cilium</strong>, click <strong>Zero Trust Application Access</strong> to apply the Cilium identity-aware network policies.',
+              'Wait for the status indicator to confirm the policies are active.',
+              'From your <strong>SSE-connected user &amp; device</strong>, access the pod service — it should succeed.',
+              'From a device on the LAN <em>without</em> the SSE client, attempt to reach the same service — it should be blocked.',
+              'In <strong>Hubble UI</strong>, observe that only flows from the SSE identity are <strong>forwarded</strong>; direct LAN attempts appear as <strong>dropped</strong>.',
+            ],
+          },
+          {
+            id: 'cil-zt-3',
+            title: 'Microsegmentation — Lateral Movement Blocked',
+            desc: 'Log in to the RDP server through your SSE client, then attempt to reach the SSH server from within that RDP session. Cilium microsegmentation should prevent pod-to-pod lateral movement even between internal workloads.',
+            steps: [
+              'Using your <strong>SSE-connected client</strong>, open an RDP session to the RDP server (credentials: <code>abc</code> / <code>abc</code>).',
+              'Once inside the RDP session, open a terminal and try to <strong>ping</strong> the SSH server\'s cluster IP.',
+              'Also attempt an SSH login to the SSH server: <code>ssh remote_user@&lt;ssh-server-ip&gt;</code> (password: <code>ssh_access</code>).',
+              'Both attempts should <strong>fail</strong> — Cilium microsegmentation blocks east-west traffic that is not explicitly permitted between these pods.',
+            ],
+          },
+          {
+            id: 'cil-zt-4',
+            title: 'Hubble — Observe Dropped Connections',
+            desc: 'After the lateral movement attempts, review Hubble to confirm that the blocked pod-to-pod traffic is visible as <strong>dropped</strong> flows, providing full audit visibility of denied east-west communication.',
+            steps: [
+              'Open <strong>Hubble UI</strong> (port 30800) and select the <strong>piap</strong> namespace.',
+              'In the <strong>Verdict</strong> filter, select <strong>Dropped</strong> to show only blocked flows.',
+              'Identify the flows from the RDP pod toward the SSH pod — they should appear as <strong>dropped</strong> with the policy deny reason.',
+              'Click <strong>Columns</strong> and enable all checkboxes for maximum detail on each dropped flow.',
+            ],
+          },
         ],
       },
     ],
