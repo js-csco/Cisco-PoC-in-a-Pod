@@ -97,26 +97,31 @@
 
     <!-- Victim agent -->
     <div style="border:1px solid #e0e0e0; border-radius:10px; padding:16px 20px;">
-      <div style="font-size:0.72em; font-weight:700; color:#999; letter-spacing:0.6px; margin-bottom:8px;">VICTIM POD AGENT</div>
-      {% if agents %}
-        <div style="display:inline-flex; align-items:center; gap:8px; background:#fce4ec; border:1px solid #ef9a9a; border-radius:8px; padding:8px 14px;">
-          <span>🎯</span>
-          <span style="font-weight:600; color:#b71c1c; font-size:0.9em;">{{ agents | length }} agent(s) connected</span>
-        </div>
-        <div style="margin-top:10px; display:flex; flex-direction:column; gap:4px;">
-          {% for agent in agents %}
-            <div style="font-size:0.8em; color:#555; background:#f9f9f9; border-radius:6px; padding:4px 10px;">
-              <code>{{ agent.get('paw', '?') }}</code> · {{ agent.get('host', '?') }} · group: <strong>{{ agent.get('group', '?') }}</strong>
-            </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div style="display:inline-flex; align-items:center; gap:8px; background:#f5f5f5; border:1px solid #ccc; border-radius:8px; padding:8px 14px;">
-          <span>⭕</span>
-          <span style="font-weight:600; color:#555; font-size:0.9em;">No agents connected yet</span>
-        </div>
-        <p style="margin:8px 0 0; font-size:0.8em; color:#888;">Victim pod downloads and starts the agent automatically after Caldera is ready.</p>
-      {% endif %}
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <div style="font-size:0.72em; font-weight:700; color:#999; letter-spacing:0.6px;">VICTIM POD AGENT</div>
+        <span id="agent-dot" style="width:8px; height:8px; border-radius:50%; background:#ccc; display:inline-block;" title="Auto-refreshes every 5s"></span>
+      </div>
+      <div id="agent-wrap">
+        {% if agents %}
+          <div style="display:inline-flex; align-items:center; gap:8px; background:#fce4ec; border:1px solid #ef9a9a; border-radius:8px; padding:8px 14px;">
+            <span>🎯</span>
+            <span style="font-weight:600; color:#b71c1c; font-size:0.9em;">{{ agents | length }} agent(s) alive</span>
+          </div>
+          <div style="margin-top:10px; display:flex; flex-direction:column; gap:4px;">
+            {% for agent in agents %}
+              <div style="font-size:0.8em; color:#555; background:#f9f9f9; border-radius:6px; padding:4px 10px;">
+                <code>{{ agent.get('paw', '?') }}</code> · {{ agent.get('host', '?') }} · group: <strong>{{ agent.get('group', '?') }}</strong>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="display:inline-flex; align-items:center; gap:8px; background:#f5f5f5; border:1px solid #ccc; border-radius:8px; padding:8px 14px;">
+            <span>⭕</span>
+            <span style="font-weight:600; color:#555; font-size:0.9em;">No agents connected yet</span>
+          </div>
+          <p style="margin:8px 0 0; font-size:0.8em; color:#888;">Victim pod downloads and starts the agent automatically after Caldera is ready.</p>
+        {% endif %}
+      </div>
     </div>
 
   </div>
@@ -274,6 +279,46 @@
 </section>
 
 <script>
+// ── Agent auto-refresh ────────────────────────────────────────────────────────
+(function () {
+  var agentDot  = document.getElementById('agent-dot');
+  var agentWrap = document.getElementById('agent-wrap');
+
+  function renderAgents(agents) {
+    var alive = agents.filter(function(a){ return a.trusted; });
+    var dead  = agents.filter(function(a){ return !a.trusted; });
+
+    if (alive.length > 0) {
+      var rows = alive.map(function(a) {
+        return '<div style="font-size:0.8em;color:#555;background:#f9f9f9;border-radius:6px;padding:4px 10px;">' +
+          '<code>'+(a.paw||'?')+'</code> · '+(a.host||'?')+' · group: <strong>'+(a.group||'?')+'</strong></div>';
+      }).join('');
+      agentWrap.innerHTML =
+        '<div style="display:inline-flex;align-items:center;gap:8px;background:#fce4ec;border:1px solid #ef9a9a;border-radius:8px;padding:8px 14px;">' +
+        '<span>🎯</span><span style="font-weight:600;color:#b71c1c;font-size:0.9em;">'+alive.length+' agent(s) alive</span></div>' +
+        '<div style="margin-top:10px;display:flex;flex-direction:column;gap:4px;">'+rows+'</div>';
+    } else if (dead.length > 0) {
+      var rows = dead.map(function(a) {
+        return '<div style="font-size:0.8em;color:#999;background:#f9f9f9;border-radius:6px;padding:4px 10px;">' +
+          '<code>'+(a.paw||'?')+'</code> · '+(a.host||'?')+' · <span style="color:#e57373;">reconnecting…</span></div>';
+      }).join('');
+      agentWrap.innerHTML =
+        '<div style="display:inline-flex;align-items:center;gap:8px;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:8px 14px;">' +
+        '<span>⏳</span><span style="font-weight:600;color:#f57f17;font-size:0.9em;">'+dead.length+' agent(s) — reconnecting</span></div>' +
+        '<div style="margin-top:10px;display:flex;flex-direction:column;gap:4px;">'+rows+'</div>';
+    } else {
+      agentWrap.innerHTML =
+        '<div style="display:inline-flex;align-items:center;gap:8px;background:#f5f5f5;border:1px solid #ccc;border-radius:8px;padding:8px 14px;">' +
+        '<span>⭕</span><span style="font-weight:600;color:#555;font-size:0.9em;">No agents connected yet</span></div>' +
+        '<p style="margin:8px 0 0;font-size:0.8em;color:#888;">Victim pod downloads and starts the agent automatically after Caldera is ready.</p>';
+    }
+  }
+
+  // Hook into the existing /caldera/status poll (runs below) — exposed as window._calderaAgentRender
+  window._calderaAgentRender = renderAgents;
+  window._calderaAgentDot    = agentDot;
+})();
+
 // ── Operations auto-refresh ───────────────────────────────────────────────────
 (function () {
   var dot  = document.getElementById('ops-dot');
@@ -309,9 +354,20 @@
       .then(function(r){ return r.json(); })
       .then(function(d){
         dot.style.background = '#2ea44f';
-        if (!d.error) renderOps(d.operations||[]);
+        if (!d.error) {
+          renderOps(d.operations||[]);
+          if (window._calderaAgentRender) {
+            window._calderaAgentRender(d.agents||[]);
+            window._calderaAgentDot.style.background = '#2ea44f';
+          }
+        } else {
+          if (window._calderaAgentDot) window._calderaAgentDot.style.background = '#f85149';
+        }
       })
-      .catch(function(){ dot.style.background = '#f85149'; });
+      .catch(function(){
+        dot.style.background = '#f85149';
+        if (window._calderaAgentDot) window._calderaAgentDot.style.background = '#f85149';
+      });
   }
   setInterval(pollOps, 5000);
 })();

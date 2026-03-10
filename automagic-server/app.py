@@ -495,12 +495,20 @@ def caldera():
 @app.route('/caldera/status')
 def caldera_status():
     from flask import jsonify
-    from scripts.caldera import is_available, get_agents, get_operations
+    from scripts.caldera import is_available, get_operations
+    import requests as _requests, os as _os
     if not is_available():
         return jsonify({"error": "Caldera offline"})
     try:
+        caldera_url = _os.environ.get("CALDERA_URL", "http://caldera.piap.svc.cluster.local:8888")
+        api_key = _os.environ.get("CALDERA_API_KEY", "ADMIN123")
+        r = _requests.get(f"{caldera_url}/api/v2/agents",
+                          headers={"KEY": api_key, "Content-Type": "application/json"},
+                          timeout=5)
+        r.raise_for_status()
+        all_agents = r.json()
         return jsonify({
-            "agents": get_agents(),
+            "agents": all_agents,
             "operations": get_operations(),
         })
     except Exception as e:
