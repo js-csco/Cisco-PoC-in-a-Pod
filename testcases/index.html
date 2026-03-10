@@ -336,6 +336,16 @@ const TABS = [
           'Confirm the dashboard opens and loads user data.',
         ],
       },
+      {
+        id: 'duo-6',
+        title: 'Identity Intelligence — User Activity Visible',
+        desc: 'User activity and risk scores are visible in the Identity Intelligence dashboard.',
+        steps: [
+          'In Identity Intelligence, navigate to the Users section.',
+          'Find the test user and confirm recent activity is logged.',
+          'Review the risk score and verify it reflects recent authentication events.',
+        ],
+      },
     ],
   },
   {
@@ -453,6 +463,28 @@ const TABS = [
         ],
       },
       {
+        id: 'cil-2',
+        title: 'Denied Traffic — Unauthorized Pod to SSE Check',
+        desc: 'A pod without an explicit allow policy cannot reach SSE Check.',
+        steps: [
+          'Launch a test pod: <code>kubectl run test --image=alpine -n piap --rm -it -- sh</code>',
+          'From inside the pod, run: <code>wget -T 3 http://sse-check:9550</code>',
+          'Confirm the connection times out or is refused.',
+          'Verify the flow appears as <strong>dropped</strong> in Hubble UI.',
+        ],
+      },
+      {
+        id: 'cil-3',
+        title: 'Hubble UI — Flow Visibility',
+        desc: 'Hubble UI shows network flows between pods in real time.',
+        steps: [
+          'Run: <code>kubectl port-forward -n kube-system svc/hubble-ui 12000:80</code>',
+          'Open <strong>http://localhost:12000</strong> in a browser.',
+          'Select the <strong>piap</strong> namespace.',
+          'Confirm pods and flows are visible in the service map.',
+        ],
+      },
+      {
         id: 'cil-4',
         title: 'Network Policies Active',
         desc: 'Cilium Network Policies are present and enforced in the piap namespace.',
@@ -479,6 +511,37 @@ const TABS = [
           'Exec into any pod: <code>kubectl exec -n piap deploy/sse-check -- ls /tmp</code>',
           'Open Splunk and search: <code>index=tetragon process_exec</code>',
           'Confirm an event appears with the correct pod name and process path.',
+        ],
+      },
+      {
+        id: 'tet-2',
+        title: 'File Access Event Logged',
+        desc: 'Reading a monitored file path generates a Tetragon file event in Splunk.',
+        steps: [
+          'Exec into a pod and read a file: <code>kubectl exec -n piap deploy/sse-check -- cat /etc/passwd</code>',
+          'Open Splunk and search: <code>index=tetragon process_kprobe</code>',
+          'Confirm an event for the file read is logged with filename and pod details.',
+        ],
+      },
+      {
+        id: 'tet-3',
+        title: 'Outbound Network Connection Logged',
+        desc: 'An outbound TCP connection from a pod is tracked by Tetragon.',
+        steps: [
+          'Exec into a pod and make an outbound connection: <code>kubectl exec -n piap deploy/sse-check -- wget -T 3 http://example.com</code>',
+          'Open Splunk and search: <code>index=tetragon tcp_connect</code>',
+          'Confirm the connection event is logged with destination IP and pod name.',
+        ],
+      },
+      {
+        id: 'tet-4',
+        title: 'Caldera Attack Scenario — Events in Splunk',
+        desc: 'Running a Caldera adversary simulation generates a stream of Tetragon events.',
+        steps: [
+          'Open the Caldera server and run a basic adversary operation against a pod.',
+          'Open Splunk and search: <code>index=tetragon</code> — filter by the target pod namespace.',
+          'Confirm multiple event types appear: process execution, network connections, and file access.',
+          'Review the event timeline to understand the attack sequence.',
         ],
       },
     ],
