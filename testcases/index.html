@@ -543,47 +543,14 @@ const TABS = [
     subtitle: 'eBPF network policy enforcement and microsegmentation.',
     cases: [
       {
-        id: 'cil-1',
-        title: 'Allowed Traffic — Connector to SSE Check',
-        desc: 'The Connector pod can reach the SSE Check pod on port 9550 (policy allows it).',
-        steps: [
-          'Access the Automagic Server → Cilium page and confirm policies are deployed.',
-          'Run: <code>kubectl exec -n piap deploy/connector -- curl -s http://sse-check:9550</code>',
-          'Confirm a 200 response is returned.',
-          'Verify the flow appears as <strong>allowed</strong> in Hubble UI.',
-        ],
-      },
-      {
-        id: 'cil-2',
-        title: 'Denied Traffic — Unauthorized Pod to SSE Check',
-        desc: 'A pod without an explicit allow policy cannot reach SSE Check.',
-        steps: [
-          'Launch a test pod: <code>kubectl run test --image=alpine -n piap --rm -it -- sh</code>',
-          'From inside the pod, run: <code>wget -T 3 http://sse-check:9550</code>',
-          'Confirm the connection times out or is refused.',
-          'Verify the flow appears as <strong>dropped</strong> in Hubble UI.',
-        ],
-      },
-      {
         id: 'cil-3',
         title: 'Hubble UI — Flow Visibility',
-        desc: 'Hubble UI shows network flows between pods in real time.',
+        desc: 'Open the Hubble UI on port 30800 (link on Dashy) and open namespace <strong>piap</strong>. Observe flows in the environment — everything should be allowed, hence <strong>forwarded</strong>. Go to Columns and check all boxes to get more visibility.',
         steps: [
-          'Run: <code>kubectl port-forward -n kube-system svc/hubble-ui 12000:80</code>',
-          'Open <strong>http://localhost:12000</strong> in a browser.',
-          'Select the <strong>piap</strong> namespace.',
-          'Confirm pods and flows are visible in the service map.',
-        ],
-      },
-      {
-        id: 'cil-4',
-        title: 'Network Policies Active',
-        desc: 'Cilium Network Policies are present and enforced in the piap namespace.',
-        steps: [
-          'Run: <code>kubectl get cnp -n piap</code>',
-          'Confirm at least one CiliumNetworkPolicy is listed.',
-          'Run: <code>kubectl get ciliumendpoints -n piap</code>',
-          'Confirm all pods have an associated Cilium endpoint with an identity.',
+          'Open the Hubble UI via the link on Dashy (port 30800).',
+          'Select the <strong>piap</strong> namespace from the namespace dropdown.',
+          'Observe the live network flows — all traffic should appear as <strong>forwarded</strong>.',
+          'Click <strong>Columns</strong> and enable all checkboxes to maximise flow visibility.',
         ],
       },
     ],
