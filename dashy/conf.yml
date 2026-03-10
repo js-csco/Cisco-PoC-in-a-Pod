@@ -74,6 +74,11 @@ sections:
         icon: fas fa-server
         url: http://SERVER_IP:30500
         statusCheck: true
+      - title: PoC Playbook
+        description: Guided test case runner for validating the full PoC
+        icon: fas fa-book
+        url: http://SERVER_IP:30250
+        statusCheck: true
   - name: MCP Servers
     items:
       - title: Kubectl MCP
@@ -81,13 +86,6 @@ sections:
         icon: fas fa-dharmachakra
         url: http://SERVER_IP:30050/mcp
         statusCheck: true
-  - name: Test Guide
-    items:
-      - title: Kanboard Guide
-        description: Pre-defined test cases & guides
-        url: http://SERVER_IP:30300
-        icon: fas fa-book
-        statusCheck: false
   - name: Links
     items:
       - title: QUIC Checker

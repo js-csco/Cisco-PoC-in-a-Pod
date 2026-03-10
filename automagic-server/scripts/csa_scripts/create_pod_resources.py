@@ -93,7 +93,7 @@ def create_private_resources(token, vm_ip, resource_group_id):
     resources = [
         {"name": "Dashy Overview", "port": 30100, "protocol": "http/https"},
         {"name": "Automagic Server", "port": 30200, "protocol": "http/https"},
-        {"name": "Kanboard Test Guide", "port": 30300, "protocol": "http/https"},
+        {"name": "PoC Playbook", "port": 30250, "protocol": "http/https"},
         {"name": "OpenSSH Server", "port": 30022, "protocol": "ssh"},
         {"name": "Web Server", "port": 30400, "protocol": "http/https"},
         {"name": "Splunk Dashboard", "port": 30500, "protocol": "Any"},
