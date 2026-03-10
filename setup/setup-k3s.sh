@@ -259,6 +259,24 @@ else
 fi
 echo ""
 
+# Step 5.1: Configure Docker Hub registry mirror
+# Prevents unauthenticated pull rate-limit errors (429) on Docker Hub images
+# (nginx:alpine, ubuntu:22.04, busybox, python:3.11-slim, etc.)
+echo "Step 5.1: Configuring Docker Hub registry mirror..."
+mkdir -p /etc/rancher/k3s
+cat > /etc/rancher/k3s/registries.yaml <<'EOF'
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://mirror.gcr.io"
+EOF
+# k3s reads registries.yaml at startup; restart to apply before any image pulls.
+systemctl restart k3s
+echo "  Waiting for k3s API server after restart..."
+sleep 5
+echo "  ✓ Docker Hub mirror configured (mirror.gcr.io)"
+echo ""
+
 # Step 6: Configure kubectl access
 echo "Step 6: Configuring kubectl access..."
 export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
@@ -461,6 +479,15 @@ if [ -d "$REPO_ROOT/automagic-server/templates" ]; then
     echo "  Updating automagic templates with server IP..."
     find "$REPO_ROOT/automagic-server/templates" -name "*.html" -exec sed -i "s/SERVER_IP/$SERVER_IP/g" {} \;
 fi
+echo ""
+
+# Step 17.1: Build automagic image and import into k3s containerd
+# The automagic deployment uses ghcr.io/js-csco/piap-k3s-automagic:latest which is
+# built by CI. On a fresh install without that image, build it locally instead.
+echo "Step 17.1: Building automagic image..."
+docker build -t ghcr.io/js-csco/piap-k3s-automagic:latest "$REPO_ROOT/automagic-server/"
+docker save ghcr.io/js-csco/piap-k3s-automagic:latest | k3s ctr images import -
+echo "  ✓ automagic image built and imported into k3s"
 echo ""
 
 # Step 18: Deploy Kubernetes applications
