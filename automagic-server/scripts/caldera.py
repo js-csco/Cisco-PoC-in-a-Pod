@@ -361,7 +361,9 @@ def deploy_caldera():
 def get_agents():
     r = requests.get(f"{CALDERA_URL}/api/v2/agents", headers=_headers(), timeout=5)
     r.raise_for_status()
-    return r.json()
+    # Only return agents that are currently alive (trusted=True means the agent
+    # is still beaconing; Caldera sets trusted=False for dead/stale agents).
+    return [a for a in r.json() if a.get("trusted", False)]
 
 
 def get_adversaries():
