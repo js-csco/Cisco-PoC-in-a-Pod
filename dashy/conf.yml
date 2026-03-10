@@ -65,7 +65,7 @@ sections:
         url: http://SERVER_IP:30800
         statusCheck: true
       - title: Caldera C2
-        description: MITRE Caldera adversary emulation — red team attack launcher
+        description: MITRE Caldera adversary emulation — red team attack launcher, user admin & password admin
         icon: fas fa-skull-crossbones
         url: http://SERVER_IP:30600
         statusCheck: true
