@@ -327,39 +327,6 @@ const TABS = [
         ],
       },
       {
-        id: 'duo-2',
-        title: 'MFA Prompt on Secure Access Login',
-        desc: 'Duo MFA challenge appears when a test user signs into Cisco Secure Access.',
-        steps: [
-          'Open a private browser window and go to the Secure Access user portal.',
-          'Enter the test user credentials.',
-          'Confirm Duo MFA challenge appears (push notification, passkey prompt, or QR code).',
-          'Approve the request and confirm login succeeds.',
-        ],
-      },
-      {
-        id: 'duo-3',
-        title: 'Passwordless Authentication',
-        desc: 'User authenticates with Duo Mobile or passkey — no password required.',
-        steps: [
-          'Initiate login with the test user at the Secure Access portal.',
-          'Select the passwordless option (passkey or Duo Mobile).',
-          'Complete authentication without entering a password.',
-          'Confirm access is granted.',
-        ],
-      },
-      {
-        id: 'duo-4',
-        title: 'Duo Passport — Session Continuity',
-        desc: 'After initial MFA, a second app does not re-prompt for authentication within the same session.',
-        steps: [
-          'Log in to Secure Access with MFA (completing the full Duo challenge).',
-          'Navigate to a second application in the Secure Access portal.',
-          'Confirm no additional MFA challenge appears.',
-          'Duo Passport is working if access is granted immediately.',
-        ],
-      },
-      {
         id: 'duo-5',
         title: 'Identity Intelligence — Dashboard Access',
         desc: 'Cisco Identity Intelligence dashboard launches successfully.',
