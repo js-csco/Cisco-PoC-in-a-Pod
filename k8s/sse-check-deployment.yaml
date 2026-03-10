@@ -1,4 +1,10 @@
 # sse-check — Alpine nginx serving the SSE Check page with SSI
+#
+# IMPORTANT: connector_ip below is a placeholder.
+# setup/setup-k3s.sh and setup/apply-config.sh both patch this ConfigMap
+# live with the real connector IP after deployment via kubectl patch.
+# Never change this placeholder to a hardcoded IP — it will be overwritten
+# by the setup/apply-config.sh script anyway.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -12,7 +18,7 @@ data:
         index index.html;
         ssi on;
         ssi_silent_errors on;
-        set $connector_ip "127.0.0.1";
+        set $connector_ip "CONNECTOR_IP";
     }
 ---
 apiVersion: apps/v1
