@@ -35,8 +35,20 @@ mirrors:
 EOF
     systemctl restart k3s 2>/dev/null || true
     echo "  ✓ Docker Hub mirror configured (mirror.gcr.io) — k3s restarted"
+elif ! grep -q "mirror.gcr.io" "$REGISTRIES_FILE"; then
+    # File exists (e.g. has credentials) but mirrors section is missing — prepend it
+    EXISTING=$(cat "$REGISTRIES_FILE")
+    cat > "$REGISTRIES_FILE" <<EOF
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://mirror.gcr.io"
+$EXISTING
+EOF
+    systemctl restart k3s 2>/dev/null || true
+    echo "  ✓ mirrors section added to existing registries.yaml — k3s restarted"
 else
-    echo "  ✓ registries.yaml already exists, skipping"
+    echo "  ✓ registries.yaml already has mirror configured, skipping"
 fi
 
 # ── 1. Ensure symlinks exist ────────────────────────────────────────────────
