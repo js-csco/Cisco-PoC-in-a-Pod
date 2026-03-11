@@ -72,7 +72,6 @@ fi
 echo "Step 1: Creating symlinks and preparing system..."
 ln -sf "$REPO_ROOT/automagic-server" /automagic-server && echo "  ✓ /automagic-server"
 ln -sf "$REPO_ROOT/dashy" /dashy && echo "  ✓ /dashy"
-ln -sf "$REPO_ROOT/web" /web && echo "  ✓ /web"
 ln -sf "$REPO_ROOT/sse-check" /sse-check && echo "  ✓ /sse-check"
 ln -sf "$REPO_ROOT/testcases" /testcases && echo "  ✓ /testcases"
 
@@ -491,13 +490,7 @@ fi
 CONNECTOR_IP=${CONNECTOR_IP:-$SERVER_IP}
 echo "  Connector source IP (as seen by apps): $CONNECTOR_IP"
 
-if [ -f "$REPO_ROOT/web/index.html" ]; then
-    echo "  Updating web files with server IP..."
-    sed -i "s/SERVER_IP/$SERVER_IP/g" "$REPO_ROOT/web/index.html"
-    sed -i "s/CONNECTOR_IP/$CONNECTOR_IP/g" "$REPO_ROOT/web/index.html"
-fi
-
-# nginx and sse-check use stable /web and /sse-check symlinks — no path replacement needed.
+# sse-check uses a stable /sse-check symlink — no path replacement needed.
 # Patch the sse-check ConfigMap live with the real connector IP after deployment.
 echo "  Connector IP will be patched into sse-check ConfigMap after deploy."
 

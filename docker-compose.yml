@@ -57,20 +57,6 @@ services:
     networks:
       - cisco-pod-network
 
-  nginx:
-    image: lscr.io/linuxserver/nginx:latest
-    container_name: nginx-web
-    ports:
-      - "9180:80"
-    environment:
-      - TZ=Europe/Berlin
-    volumes:
-      - ./web/nginx.conf:/config/nginx/nginx.conf
-      - ./web/index.html:/config/www/index.html
-    restart: unless-stopped
-    networks:
-      - cisco-pod-network
-
 networks:
   cisco-pod-network:
     driver: bridge

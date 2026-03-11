@@ -43,7 +43,6 @@ fi
 echo ""
 echo "Step 1: Ensuring symlinks..."
 ln -sfn "$REPO_ROOT/dashy"            /dashy           && echo "  ✓ /dashy"
-ln -sfn "$REPO_ROOT/web"              /web             && echo "  ✓ /web"
 ln -sfn "$REPO_ROOT/sse-check"        /sse-check       && echo "  ✓ /sse-check"
 ln -sfn "$REPO_ROOT/testcases"        /testcases       && echo "  ✓ /testcases"
 ln -sfn "$REPO_ROOT/automagic-server" /automagic-server && echo "  ✓ /automagic-server"
