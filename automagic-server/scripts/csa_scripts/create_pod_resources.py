@@ -98,10 +98,11 @@ def create_private_resources(token, vm_ip, resource_group_id):
         {"name": "Web Server", "port": 30400, "protocol": "http/https"},
         {"name": "Splunk Dashboard", "port": 30500, "protocol": "Any"},
         {"name": "Splunk MCP", "port": 30501, "protocol": "Any"},
-        {"name": "RDP Server", "port": 30390, "protocol": "rdp"},
+        {"name": "RDP Server", "port": 30389, "protocol": "rdp"},
         {"name": "Kubectl MCP Server", "port": 30050, "protocol": "Any"},
         {"name": "Hubble UI", "port": 30800, "protocol": "http/https"},
         {"name": "SSE Check", "port": 30550, "protocol": "http/https"},
+        {"name": "Caldera C2", "port": 30600, "protocol": "http/https"},
     ]
 
 
