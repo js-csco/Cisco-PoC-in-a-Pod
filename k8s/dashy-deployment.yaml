@@ -28,7 +28,7 @@ spec:
         app: dashy
     spec:
       containers:
-        - image: ghcr.io/lissy93/dashy:3.1.1
+        - image: ghcr.io/lissy93/dashy:3.1.7
           name: dashy
           ports:
             - containerPort: 8080
