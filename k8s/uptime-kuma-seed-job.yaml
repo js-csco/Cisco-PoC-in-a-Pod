@@ -25,6 +25,8 @@ data:
             "url": "http://dashy.piap.svc.cluster.local:9100",
             "interval": 60,
             "maxretries": 3,
+            "notificationIDList": [],
+            "accepted_statuscodes": ["200-299"],
         },
         {
             "name": "Automagic",
@@ -32,6 +34,8 @@ data:
             "url": "http://automagic.piap.svc.cluster.local:9200",
             "interval": 60,
             "maxretries": 3,
+            "notificationIDList": [],
+            "accepted_statuscodes": ["200-299"],
         },
         {
             "name": "SSH Server",
@@ -40,6 +44,7 @@ data:
             "port": 2222,
             "interval": 60,
             "maxretries": 3,
+            "notificationIDList": [],
         },
         {
             "name": "RDP Server",
@@ -48,6 +53,7 @@ data:
             "port": 3389,
             "interval": 60,
             "maxretries": 3,
+            "notificationIDList": [],
         },
         {
             "name": "Kubectl MCP",
@@ -55,6 +61,8 @@ data:
             "url": "http://kubectl-mcp.piap.svc.cluster.local:8080/healthz",
             "interval": 60,
             "maxretries": 3,
+            "notificationIDList": [],
+            "accepted_statuscodes": ["200-299"],
         },
         {
             "name": "SSE Check",
@@ -62,6 +70,8 @@ data:
             "url": "http://sse-check.piap.svc.cluster.local:9550",
             "interval": 60,
             "maxretries": 3,
+            "notificationIDList": [],
+            "accepted_statuscodes": ["200-299"],
         },
         {
             "name": "PoC Playbook",
@@ -69,6 +79,8 @@ data:
             "url": "http://playbook.piap.svc.cluster.local:9250",
             "interval": 60,
             "maxretries": 3,
+            "notificationIDList": [],
+            "accepted_statuscodes": ["200-299"],
         },
         {
             "name": "Caldera C2",
@@ -76,6 +88,8 @@ data:
             "url": "http://caldera.piap.svc.cluster.local:8888",
             "interval": 120,
             "maxretries": 3,
+            "notificationIDList": [],
+            "accepted_statuscodes": ["200-299"],
         },
     ]
 
@@ -147,10 +161,20 @@ data:
 
         # Get existing monitors to avoid duplicates
         existing = set()
+        monitor_list = {}
+
+        @sio.on("monitorList")
+        def on_monitor_list(data):
+            nonlocal monitor_list
+            if isinstance(data, dict):
+                monitor_list.update(data)
+
         try:
-            response = sio.call("getMonitorList", timeout=10)
-            if isinstance(response, dict):
-                for mid, mon in response.items():
+            sio.call("getMonitorList", timeout=10)
+            # Give time for the monitorList event to arrive
+            time.sleep(2)
+            for mid, mon in monitor_list.items():
+                if isinstance(mon, dict):
                     existing.add(mon.get("name"))
             print(f"Existing monitors: {existing}")
         except Exception as e:
