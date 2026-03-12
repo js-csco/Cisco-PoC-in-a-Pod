@@ -42,7 +42,6 @@ The script is interactive and takes ~10-20 minutes. Have these ready:
 
 | Port | Service | What it does |
 |------|---------|-------------|
-| 30100 | Dashy | Service overview dashboard |
 | 30200 | Automagic | Central demo dashboard + CSA automation |
 | 30300 | Uptime Kuma | Status monitoring (login: admin / piap) |
 | 30022 | SSH Server | SSH target workload |

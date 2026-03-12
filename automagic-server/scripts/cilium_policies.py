@@ -10,7 +10,7 @@ POLICY_NAMES = ["piap-zero-trust"]
 
 # piap services to lock down. automagic is excluded — always reachable from LAN.
 _PIAP_RESTRICTED_SERVICES = [
-    "splunk", "rdp-server", "ssh-server", "dashy", "sse-check", "kubectl-mcp",
+    "splunk", "rdp-server", "ssh-server", "sse-check", "kubectl-mcp",
 ]
 
 # Docker bridge subnet assigned via daemon.json bip=240.0.0.1/29.
