@@ -138,6 +138,7 @@ def metadata():
             return f"Metadata validation errors: {', '.join(errors)}", 500
         resp = make_response(sp_metadata, 200)
         resp.headers["Content-Type"] = "text/xml"
+        resp.headers["Content-Disposition"] = "attachment; filename=saml-sp-metadata.xml"
         return resp
     except Exception as e:
         return f"Failed to generate SP metadata: {e}", 500

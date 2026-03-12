@@ -40,9 +40,9 @@
         Go to <strong>Automagic &rarr; Duo</strong> to set up the SAML integration,
         or set the environment variables directly.
       </p>
+      <a href="/metadata" download="saml-sp-metadata.xml" class="btn btn-primary" style="margin-top:1.5rem;">Download SP Metadata</a>
       <div class="hint">
-        SP Metadata URL: <a href="/metadata" style="color:#0066ff;">/metadata</a><br>
-        Use this when creating the application in Duo Admin.
+        Upload this XML file when creating the application in Duo Admin.
       </div>
 
     {% elif user %}
@@ -77,7 +77,7 @@
       </p>
       <a href="/login" class="btn btn-primary">Sign in with Duo SSO</a>
       <div class="hint">
-        SP Metadata: <a href="/metadata" style="color:#0066ff;">/metadata</a>
+        <a href="/metadata" download="saml-sp-metadata.xml" style="color:#0066ff;">Download SP Metadata</a>
       </div>
     {% endif %}
   </div>
