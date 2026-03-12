@@ -88,8 +88,17 @@
 
       <span style="color:#ccc; font-size:1.3rem; display:flex; align-items:center; flex-shrink:0;">→</span>
 
-      <!-- Combined Cisco Cloud Services box -->
-      <div style="flex-shrink:0; display:flex; align-items:center;">
+      <!-- Cisco Cloud + Internet above -->
+      <div style="flex-shrink:0;">
+        <!-- Internet box above Cisco Cloud -->
+        <div style="background:#fff; border:2px solid #22c55e; border-radius:8px; padding:8px 14px; margin-bottom:6px; display:flex; align-items:center; justify-content:center; gap:10px;">
+          <span class="fa-solid fa-globe" style="font-size:1rem; color:#22c55e; flex-shrink:0;"></span>
+          <div style="font-size:0.75em; font-weight:600; color:#333;">Internet</div>
+          <div style="font-size:0.62em; color:#666;">SaaS Apps · Web Browsing</div>
+        </div>
+        <div style="text-align:center; color:#ccc; font-size:1rem; line-height:1; margin-bottom:4px;">↑</div>
+
+        <!-- Combined Cisco Cloud Services box -->
         <div style="border:2px solid #049fd9; border-radius:10px; overflow:hidden; background:#fff;">
           <div style="background:#049fd9; padding:5px 14px; text-align:center;">
             <span style="color:#fff; font-weight:700; font-size:0.72em; letter-spacing:0.5px;">CISCO CLOUD</span>
@@ -119,17 +128,8 @@
 
       <span style="color:#ccc; font-size:1.3rem; display:flex; align-items:center; flex-shrink:0;">→</span>
 
-      <!-- k3s cluster + Internet above -->
-      <div style="flex:1; min-width:330px;">
-
-        <!-- Internet box above k3s -->
-        <div style="background:#fff; border:2px solid #22c55e; border-radius:8px; padding:8px 14px; margin-bottom:6px; display:flex; align-items:center; justify-content:center; gap:10px;">
-          <span class="fa-solid fa-globe" style="font-size:1rem; color:#22c55e; flex-shrink:0;"></span>
-          <div style="font-size:0.75em; font-weight:600; color:#333;">Internet</div>
-          <div style="font-size:0.62em; color:#666;">SaaS Apps · Web Browsing</div>
-        </div>
-        <div style="text-align:center; color:#ccc; font-size:1rem; line-height:1; margin-bottom:4px;">↑</div>
-
+      <!-- k3s cluster -->
+      <div style="flex:1; min-width:330px; display:flex; align-items:center;">
         <!-- k3s cluster -->
         <div style="border:2px dashed #0066ff; border-radius:10px; padding:12px 14px;">
           <div style="font-size:0.7em; font-weight:700; color:#0066ff; letter-spacing:0.6px; margin-bottom:10px;">k3s CLUSTER</div>
