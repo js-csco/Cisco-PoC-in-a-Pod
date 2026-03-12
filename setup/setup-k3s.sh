@@ -509,6 +509,19 @@ docker save ghcr.io/js-csco/piap-k3s-automagic:latest | k3s ctr images import -
 echo "  ✓ automagic image built and imported into k3s"
 echo ""
 
+# Step 17.2: Pre-pull images that k3s containerd may struggle to fetch
+# GHCR images and Docker Hub images can hit rate limits or mirror issues.
+# Pulling via Docker (which has its own credential chain) and importing
+# into k3s containerd is more reliable than letting k3s pull directly.
+echo "Step 17.2: Pre-pulling container images via Docker..."
+for img in "ghcr.io/lissy93/dashy:3.1.1" "louislam/uptime-kuma:1"; do
+    echo "  Pulling $img ..."
+    docker pull "$img" && docker save "$img" | k3s ctr images import - \
+        && echo "  ✓ $img imported into k3s" \
+        || echo "  ⚠ Failed to pull $img — k3s will retry on its own"
+done
+echo ""
+
 # Step 18: Deploy Kubernetes applications
 echo "Step 18: Deploying applications to Kubernetes..."
 
