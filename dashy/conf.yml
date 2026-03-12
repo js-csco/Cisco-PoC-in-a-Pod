@@ -4,7 +4,7 @@ pageInfo:
   logo: https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png
   navLinks:
   - title: Help - Mail to joschwei@cisco.com
-    url: mailto:joschwei@cisco.com
+    path: mailto:joschwei@cisco.com
 
 appConfig:
   theme: lissy
