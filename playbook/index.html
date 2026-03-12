@@ -1140,7 +1140,7 @@ function renderCustomTab(tab) {
   return `
     <div class="tab-panel ${tab.id === activeTab ? 'active' : ''}" id="panel-${tab.id}">
       <div class="tab-header">
-        <h2>${tab.label} <span class="custom-badge">YOUR TESTS</span></h2>
+        <h2>${tab.label}</h2>
         <p>${tab.subtitle}</p>
         ${hasTests ? `
         <div class="progress-bar-wrap">
