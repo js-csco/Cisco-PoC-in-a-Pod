@@ -129,12 +129,15 @@
       <span style="color:#ccc; font-size:1.3rem; display:flex; align-items:center; flex-shrink:0;">→</span>
 
       <!-- LOCALLY HOSTED — outer dashed box -->
-      <div style="flex:1; min-width:420px; border:2px dashed #0066ff; border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:8px;">
+      <div style="flex:1; min-width:420px; border:2px dashed #0066ff; border-radius:12px; overflow:hidden; display:flex; flex-direction:column;">
 
-        <!-- Label -->
-        <div style="position:relative; width:0; height:0;">
-          <div style="position:absolute; top:-28px; left:0; font-size:0.7em; font-weight:700; color:#0066ff; letter-spacing:0.6px; white-space:nowrap;">LOCALLY HOSTED</div>
+        <!-- Header bar — same style as CISCO CLOUD -->
+        <div style="background:#0066ff; padding:5px 14px; text-align:center;">
+          <span style="color:#fff; font-weight:700; font-size:0.72em; letter-spacing:0.5px;">LOCALLY HOSTED</span>
         </div>
+
+        <!-- Content row -->
+        <div style="display:flex; align-items:center; gap:8px; padding:12px 14px;">
 
         <!-- Resource Connector box (same style as User Device) -->
         <div style="flex-shrink:0; display:flex; align-items:center;">
@@ -186,6 +189,7 @@
           </div>
         </div>
 
+        </div>
       </div>
     </div>
   </div>
