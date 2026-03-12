@@ -9,7 +9,7 @@
 <div style="margin-bottom:2.5rem;">
   <h1 style="color:#111; margin-bottom:0.4rem;">Links</h1>
   <p style="color:#666; margin-top:0; margin-bottom:0; font-size:0.95em; line-height:1.6;">
-    Quick access to all services running in the PoC environment. Each card links directly to the service.
+    Quick access to all services running in the PoC environment.
   </p>
 </div>
 
@@ -20,14 +20,51 @@
   .link-card .card-title { font-weight:600; color:#111; font-size:0.88em; }
   .link-card .card-subtitle { font-size:0.72em; color:#999; }
   .link-card .card-desc { color:#666; font-size:0.82em; line-height:1.55; margin:0; }
+  .section-header { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .section-bar { width:6px; height:20px; border-radius:2px; }
+  .section-title { color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px; }
+  .card-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:12px; margin-bottom:2.5rem; }
 </style>
 
 <section>
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-    <div style="width:6px; height:20px; background-color:#049fd9; border-radius:2px;"></div>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CISCO CLOUD SERVICES</h3>
+
+  <!-- POC IN A POD TOOLS -->
+  <div class="section-header">
+    <div class="section-bar" style="background-color:#0066ff;"></div>
+    <h3 class="section-title">POC IN A POD TOOLS</h3>
   </div>
-  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:12px; margin-bottom:2.5rem;">
+  <div class="card-grid">
+
+    <a href="http://{{ host_ip }}:30200" target="_blank" class="link-card">
+      <div class="card-header">
+        <span class="fa-solid fa-wand-magic-sparkles" style="color:#0066ff; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div class="card-title">Automagic</div>
+          <div class="card-subtitle">Pod · Port 30200 · Config Server</div>
+        </div>
+      </div>
+      <p class="card-desc">Guided configuration and management for the entire PoC environment.</p>
+    </a>
+
+    <a href="http://{{ host_ip }}:30250" target="_blank" class="link-card">
+      <div class="card-header">
+        <span class="fa-solid fa-clipboard-check" style="color:#0066ff; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div class="card-title">PoC Playbook</div>
+          <div class="card-subtitle">Pod · Port 30250 · Validation</div>
+        </div>
+      </div>
+      <p class="card-desc">Guided playbook for validating the full PoC with pass/fail tracking.</p>
+    </a>
+
+  </div>
+
+  <!-- CISCO SERVICES -->
+  <div class="section-header">
+    <div class="section-bar" style="background-color:#049fd9;"></div>
+    <h3 class="section-title">CISCO SERVICES</h3>
+  </div>
+  <div class="card-grid">
 
     <a href="{{ url_for('secure_access') }}" class="link-card">
       <div class="card-header">
@@ -37,14 +74,14 @@
           <div class="card-subtitle">Cloud · ZTNA Gateway</div>
         </div>
       </div>
-      <p class="card-desc">Zero Trust Network Access with on-prem Connector tunneling traffic from the cloud gateway to private resources.</p>
+      <p class="card-desc">Zero Trust Network Access with on-prem Connector tunneling traffic to private resources.</p>
     </a>
 
     <a href="{{ url_for('duo') }}" class="link-card">
       <div class="card-header">
         <span class="fa-solid fa-user-shield" style="color:#7c4dff; font-size:1.1rem; flex-shrink:0;"></span>
         <div>
-          <div class="card-title">Duo</div>
+          <div class="card-title">Duo & Identity Intelligence</div>
           <div class="card-subtitle">Cloud · Identity & MFA</div>
         </div>
       </div>
@@ -61,14 +98,6 @@
       </div>
       <p class="card-desc">End-to-end network path visibility for the ZTNA access path from user to application.</p>
     </a>
-
-  </div>
-
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CLUSTER INFRASTRUCTURE</h3>
-  </div>
-  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:12px; margin-bottom:2.5rem;">
 
     <a href="{{ url_for('cilium') }}" class="link-card">
       <div class="card-header">
@@ -105,11 +134,12 @@
 
   </div>
 
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DEMO APPLICATIONS</h3>
+  <!-- APPLICATIONS -->
+  <div class="section-header">
+    <div class="section-bar" style="background-color:#0066ff;"></div>
+    <h3 class="section-title">APPLICATIONS</h3>
   </div>
-  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:12px; margin-bottom:2.5rem;">
+  <div class="card-grid">
 
     <a href="http://{{ host_ip }}:30550" target="_blank" class="link-card">
       <div class="card-header">
@@ -122,17 +152,6 @@
       <p class="card-desc">Demo web application behind Zero Trust policies. Accessible only through Cisco Secure Access.</p>
     </a>
 
-    <a href="http://{{ host_ip }}:30389" target="_blank" class="link-card">
-      <div class="card-header">
-        <span class="fa-solid fa-desktop" style="color:#555; font-size:1.1rem; flex-shrink:0;"></span>
-        <div>
-          <div class="card-title">RDP Server</div>
-          <div class="card-subtitle">Pod · Port 30389 · Remote Desktop</div>
-        </div>
-      </div>
-      <p class="card-desc">Remote desktop server exposed as a private resource. Demonstrates browser-based agentless RDP access via Secure Access.</p>
-    </a>
-
     <a href="http://{{ host_ip }}:30022" target="_blank" class="link-card">
       <div class="card-header">
         <span class="fa-solid fa-terminal" style="color:#555; font-size:1.1rem; flex-shrink:0;"></span>
@@ -141,37 +160,18 @@
           <div class="card-subtitle">Pod · Port 30022 · Secure Shell</div>
         </div>
       </div>
-      <p class="card-desc">SSH server exposed as a private resource. Demonstrates browser-based agentless SSH access via Secure Access.</p>
+      <p class="card-desc">SSH server exposed as a private resource. Browser-based agentless access via Secure Access.</p>
     </a>
 
-  </div>
-
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">TOOLS</h3>
-  </div>
-  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:12px;">
-
-    <a href="http://{{ host_ip }}:30200" target="_blank" class="link-card">
+    <a href="http://{{ host_ip }}:30389" target="_blank" class="link-card">
       <div class="card-header">
-        <span class="fa-solid fa-wand-magic-sparkles" style="color:#0066ff; font-size:1.1rem; flex-shrink:0;"></span>
+        <span class="fa-solid fa-desktop" style="color:#555; font-size:1.1rem; flex-shrink:0;"></span>
         <div>
-          <div class="card-title">Automagic</div>
-          <div class="card-subtitle">Pod · Port 30200 · Config Server</div>
+          <div class="card-title">RDP Server</div>
+          <div class="card-subtitle">Pod · Port 30389 · Remote Desktop</div>
         </div>
       </div>
-      <p class="card-desc">This server — guided configuration and management for the entire PoC environment.</p>
-    </a>
-
-    <a href="http://{{ host_ip }}:30250" target="_blank" class="link-card">
-      <div class="card-header">
-        <span class="fa-solid fa-clipboard-check" style="color:#0066ff; font-size:1.1rem; flex-shrink:0;"></span>
-        <div>
-          <div class="card-title">PoC Playbook</div>
-          <div class="card-subtitle">Pod · Port 30250 · Validation</div>
-        </div>
-      </div>
-      <p class="card-desc">Guided playbook for validating the full PoC with pass/fail tracking.</p>
+      <p class="card-desc">Remote desktop server exposed as a private resource. Browser-based agentless access via Secure Access.</p>
     </a>
 
     <a href="http://{{ host_ip }}:30300" target="_blank" class="link-card">
@@ -185,28 +185,6 @@
       <p class="card-desc">Uptime monitoring dashboard. Tracks availability and response times for all services.</p>
     </a>
 
-    <a href="http://{{ host_ip }}:30100" target="_blank" class="link-card">
-      <div class="card-header">
-        <span class="fa-solid fa-table-cells-large" style="color:#0066ff; font-size:1.1rem; flex-shrink:0;"></span>
-        <div>
-          <div class="card-title">Dashy</div>
-          <div class="card-subtitle">Pod · Port 30100 · Dashboard</div>
-        </div>
-      </div>
-      <p class="card-desc">Self-hosted link dashboard with tiles for all services in the environment.</p>
-    </a>
-
-    <a href="http://{{ host_ip }}:30600" target="_blank" class="link-card">
-      <div class="card-header">
-        <span class="fa-solid fa-skull-crossbones" style="color:#cc3333; font-size:1.1rem; flex-shrink:0;"></span>
-        <div>
-          <div class="card-title">Caldera C2</div>
-          <div class="card-subtitle">Pod · Port 30600 · Red Team</div>
-        </div>
-      </div>
-      <p class="card-desc">MITRE Caldera automated adversary emulation for validating detection and enforcement.</p>
-    </a>
-
     <a href="http://{{ host_ip }}:30050" target="_blank" class="link-card">
       <div class="card-header">
         <span class="fa-solid fa-robot" style="color:#0066ff; font-size:1.1rem; flex-shrink:0;"></span>
@@ -218,7 +196,83 @@
       <p class="card-desc">Model Context Protocol server providing kubectl and cluster management to AI assistants.</p>
     </a>
 
+    <a href="http://{{ host_ip }}:30600" target="_blank" class="link-card">
+      <div class="card-header">
+        <span class="fa-solid fa-skull-crossbones" style="color:#cc3333; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div class="card-title">Caldera</div>
+          <div class="card-subtitle">Pod · Port 30600 · Red Team</div>
+        </div>
+      </div>
+      <p class="card-desc">MITRE Caldera automated adversary emulation for validating detection and enforcement.</p>
+    </a>
+
   </div>
+
+  <!-- TOOLS -->
+  <div class="section-header">
+    <div class="section-bar" style="background-color:#22c55e;"></div>
+    <h3 class="section-title">TOOLS</h3>
+  </div>
+  <div class="card-grid">
+
+    <a href="https://http3.is/" target="_blank" rel="noopener" class="link-card">
+      <div class="card-header">
+        <span class="fa-solid fa-globe" style="color:#22c55e; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div class="card-title">QUIC Checker</div>
+          <div class="card-subtitle">External · HTTP/3 Detection</div>
+        </div>
+      </div>
+      <p class="card-desc">Checks if your browser is using QUIC (HTTP/3) protocol.</p>
+    </a>
+
+    <a href="https://policy.test.sse.cisco.com/" target="_blank" rel="noopener" class="link-card">
+      <div class="card-header">
+        <span class="fa-solid fa-globe" style="color:#22c55e; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div class="card-title">SSE Policy Checker</div>
+          <div class="card-subtitle">External · Policy Validation</div>
+        </div>
+      </div>
+      <p class="card-desc">Checks your SSE policy configuration and enforcement status.</p>
+    </a>
+
+    <a href="https://ifconfig.co/" target="_blank" rel="noopener" class="link-card">
+      <div class="card-header">
+        <span class="fa-solid fa-globe" style="color:#22c55e; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div class="card-title">IP Checker</div>
+          <div class="card-subtitle">External · Egress IP</div>
+        </div>
+      </div>
+      <p class="card-desc">Shows your egress IP address — useful for verifying traffic is routed through Secure Access.</p>
+    </a>
+
+    <a href="https://mediatest.ciscospark.com/" target="_blank" rel="noopener" class="link-card">
+      <div class="card-header">
+        <span class="fa-solid fa-globe" style="color:#22c55e; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div class="card-title">Speed Test</div>
+          <div class="card-subtitle">External · Bandwidth Test</div>
+        </div>
+      </div>
+      <p class="card-desc">Measures internet speed — useful for benchmarking with and without SSE tunnel.</p>
+    </a>
+
+    <a href="https://packetlosstest.com/" target="_blank" rel="noopener" class="link-card">
+      <div class="card-header">
+        <span class="fa-solid fa-globe" style="color:#22c55e; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div class="card-title">Packet Loss Test</div>
+          <div class="card-subtitle">External · Network Quality</div>
+        </div>
+      </div>
+      <p class="card-desc">Tests packet loss on your connection — helps diagnose SSE tunnel performance issues.</p>
+    </a>
+
+  </div>
+
 </section>
 
 {% endblock %}
