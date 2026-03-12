@@ -28,39 +28,69 @@
 
     /* ── Header ── */
     header {
-      background: linear-gradient(90deg, var(--dark), var(--cyan));
+      background: linear-gradient(135deg, #000 0%, #1a1a2e 50%, var(--dark) 100%);
       color: #fff;
-      padding: 16px 32px;
+      padding: 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 60px,
+        rgba(255,255,255,0.02) 60px,
+        rgba(255,255,255,0.02) 61px
+      );
+      pointer-events: none;
+    }
+    .header-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      padding: 18px 32px 16px;
+      position: relative;
+      z-index: 1;
     }
-    .header-left { display: flex; align-items: center; gap: 20px; }
-    .header-left .t   { font-size: 1.2em; font-weight: 600; }
-    .header-left .sub { font-size: 0.82em; opacity: 0.8; margin-top: 2px; }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-logo { height: 24px; opacity: 0.9; }
+    .header-divider {
+      width: 1px;
+      height: 28px;
+      background: rgba(255,255,255,0.2);
+    }
+    .header-left .t   { font-size: 1.15em; font-weight: 700; letter-spacing: 0.3px; }
+    .header-left .sub { font-size: 0.78em; opacity: 0.6; margin-top: 2px; font-weight: 400; }
     .header-right { display: flex; align-items: center; gap: 10px; }
+    .header-accent {
+      height: 3px;
+      background: linear-gradient(90deg, var(--cyan), var(--blue), var(--purple));
+    }
     #overallBadge {
-      background: rgba(255,255,255,0.15);
-      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
       border-radius: 20px;
       padding: 5px 14px;
-      font-size: 0.82em;
+      font-size: 0.8em;
       font-weight: 600;
       white-space: nowrap;
     }
     #resetBtn {
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
       color: #fff;
       padding: 6px 14px;
       border-radius: 6px;
-      font-size: 0.82em;
+      font-size: 0.8em;
       font-weight: 500;
       cursor: pointer;
       transition: background 0.15s;
     }
-    #resetBtn:hover { background: rgba(255,255,255,0.22); }
+    #resetBtn:hover { background: rgba(255,255,255,0.18); }
 
     /* ── Invite Modal ── */
     #inviteModal {
@@ -477,19 +507,24 @@
 <body>
 
 <header>
-  <div class="header-left">
-    <div>
-      <div class="t">Cisco PoC Playbook</div>
-      <div class="sub">Guided test cases for Zero Trust Application Access</div>
+  <div class="header-bar">
+    <div class="header-left">
+      <img class="header-logo" src="https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png" alt="Cisco">
+      <div class="header-divider"></div>
+      <div>
+        <div class="t">PoC Playbook</div>
+        <div class="sub">Guided test cases for Zero Trust Application Access</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div id="overallBadge">0 / 0 passed</div>
+      <button id="resetBtn" onclick="resetAll()">↺ Reset All</button>
+      <button id="inviteBtn" onclick="document.getElementById('inviteModal').classList.add('active')" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:6px 14px;border-radius:6px;font-size:0.8em;font-weight:500;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+        👤 Invite your Cisco SE
+      </button>
     </div>
   </div>
-  <div class="header-right">
-    <div id="overallBadge">0 / 0 passed</div>
-    <button id="resetBtn" onclick="resetAll()">↺ Reset All</button>
-    <button id="inviteBtn" onclick="document.getElementById('inviteModal').classList.add('active')" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 14px;border-radius:6px;font-size:0.82em;font-weight:500;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.22)'" onmouseout="this.style.background='rgba(255,255,255,0.12)'">
-      👤 Invite your Cisco SE
-    </button>
-  </div>
+  <div class="header-accent"></div>
 </header>
 
 <!-- Invite Cisco SE Modal -->
