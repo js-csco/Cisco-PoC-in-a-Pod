@@ -11,6 +11,7 @@ from flask import (
     url_for, make_response
 )
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
+from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
 app = Flask(__name__)
@@ -20,9 +21,9 @@ app.secret_key = os.environ.get("SECRET_KEY", "saml-demo-secret-key")
 # SAML config is built dynamically from env vars so the admin can configure
 # it through the Automagic UI without touching files.
 # ---------------------------------------------------------------------------
-def _saml_settings():
+def _saml_settings(sp_host_override=None):
     """Build python3-saml settings dict from environment variables."""
-    sp_host = os.environ.get("SP_HOST", "http://localhost:9400")
+    sp_host = sp_host_override or os.environ.get("SP_HOST") or "http://localhost:9400"
 
     return {
         "strict": False,
@@ -128,13 +129,18 @@ def logout():
 @app.route("/metadata")
 def metadata():
     """SP metadata — use this URL when configuring Duo."""
-    settings = _saml_settings()
-    sp_metadata = OneLogin_Saml2_Auth(
-        _prepare_request(), settings
-    ).get_settings().get_sp_metadata()
-    resp = make_response(sp_metadata, 200)
-    resp.headers["Content-Type"] = "text/xml"
-    return resp
+    try:
+        sp_host = f"http://{request.host}"
+        settings = OneLogin_Saml2_Settings(_saml_settings(sp_host_override=sp_host), sp_validation_only=True)
+        sp_metadata = settings.get_sp_metadata()
+        errors = settings.validate_metadata(sp_metadata)
+        if errors:
+            return f"Metadata validation errors: {', '.join(errors)}", 500
+        resp = make_response(sp_metadata, 200)
+        resp.headers["Content-Type"] = "text/xml"
+        return resp
+    except Exception as e:
+        return f"Failed to generate SP metadata: {e}", 500
 
 
 @app.route("/health")
