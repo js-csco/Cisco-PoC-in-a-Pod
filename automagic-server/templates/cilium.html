@@ -136,8 +136,8 @@
           </ul>
         </div>
 
-        <div style="background:#fce4ec; border:1px solid #ef9a9a; border-radius:8px; padding:10px 16px; font-size:0.85em; color:#b71c1c;">
-          ⚠️ Direct LAN access to piap workload pods will be blocked. Hubble UI and the <em>Automagic</em> dashboard remain reachable.
+        <div style="background:#e3f2fd; border:1px solid #90caf9; border-radius:8px; padding:10px 16px; font-size:0.85em; color:#1565c0;">
+          ℹ️ Hubble UI and the <em>Automagic</em> dashboard remain reachable.
         </div>
 
         {% if not policy_error %}
@@ -160,159 +160,162 @@
       <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">TRAFFIC FLOW</h3>
     </div>
     <p style="margin-top:0; margin-bottom:16px; color:#555; font-size:0.9em; line-height:1.6;">
-      How Cilium distinguishes Connector traffic (allowed) from direct LAN access (blocked).
+      See how traffic reaches pods under each mode. The left column matches <strong>Allow All</strong>, the right matches <strong>Zero Trust</strong>.
     </p>
 
-    <div style="background:#f8f9fa; border:1px solid #e2e4e8; border-radius:10px; padding:1.5rem; overflow-x:auto;">
-      <!-- Summary banner -->
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; margin-bottom:16px; border-radius:8px; overflow:hidden;">
-        <div style="background:#16a34a; padding:10px 16px; display:flex; align-items:center; gap:8px;">
-          <span class="fa-solid fa-circle-check" style="color:#fff; font-size:1.1rem;"></span>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+
+      <!-- LEFT: Allow All mode -->
+      <div style="background:#f8faf8; border:2px solid #4caf50; border-radius:10px; overflow:hidden;">
+        <div style="background:#4caf50; padding:12px 16px; display:flex; align-items:center; gap:8px;">
+          <span class="fa-solid fa-lock-open" style="color:#fff; font-size:1rem;"></span>
           <div>
-            <div style="color:#fff; font-weight:700; font-size:0.85em;">Secure Access Traffic</div>
-            <div style="color:rgba(255,255,255,0.8); font-size:0.7em;">Allowed through Resource Connector</div>
+            <div style="color:#fff; font-weight:700; font-size:0.9em;">Allow All Traffic</div>
+            <div style="color:rgba(255,255,255,0.85); font-size:0.72em;">No Cilium policies — everything reaches pods</div>
           </div>
         </div>
-        <div style="background:#dc2626; padding:10px 16px; display:flex; align-items:center; gap:8px;">
-          <span class="fa-solid fa-ban" style="color:#fff; font-size:1.1rem;"></span>
-          <div>
-            <div style="color:#fff; font-weight:700; font-size:0.85em;">Direct LAN Traffic</div>
-            <div style="color:rgba(255,255,255,0.8); font-size:0.7em;">Blocked by Cilium network policy</div>
+        <div style="padding:1.2rem; display:flex; flex-direction:column; gap:6px;">
+
+          <!-- LAN user -->
+          <div style="background:#fff; border:2px solid #4caf50; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
+            <span class="fa-solid fa-laptop" style="color:#4caf50; font-size:1rem; flex-shrink:0;"></span>
+            <div>
+              <div style="font-size:0.82em; font-weight:600; color:#111;">Any device on the LAN</div>
+              <div style="font-size:0.65em; color:#888;">Direct access · no authentication required</div>
+            </div>
+          </div>
+
+          <div style="text-align:center; color:#4caf50; font-size:0.8em; font-weight:600;">↓</div>
+
+          <!-- NodePort -->
+          <div style="background:#fff; border:1px solid #c8e6c9; border-radius:6px; padding:8px 12px;">
+            <div style="font-size:0.75em; font-weight:600; color:#333;">NodePort</div>
+            <div style="font-size:0.65em; color:#888;">No policy evaluation — Cilium defaults to allow</div>
+          </div>
+
+          <div style="text-align:center; color:#4caf50; font-size:0.8em; font-weight:600;">↓</div>
+
+          <!-- Pod -->
+          <div style="background:#dcfce7; border:2px solid #4caf50; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
+            <span class="fa-solid fa-cube" style="color:#4caf50; font-size:1rem; flex-shrink:0;"></span>
+            <div>
+              <div style="font-size:0.82em; font-weight:600; color:#2e7d32;">Pod</div>
+              <div style="font-size:0.68em; color:#4caf50; font-weight:700;">ALLOWED ✅</div>
+            </div>
+          </div>
+
+          <div style="height:1px; background:#e0e0e0; margin:8px 0;"></div>
+
+          <!-- SSE user also works -->
+          <div style="background:#fff; border:2px solid #4caf50; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
+            <span class="fa-solid fa-shield-halved" style="color:#049fd9; font-size:1rem; flex-shrink:0;"></span>
+            <div>
+              <div style="font-size:0.82em; font-weight:600; color:#111;">Secure Access user</div>
+              <div style="font-size:0.65em; color:#888;">Also works — connector traffic is allowed too</div>
+            </div>
+          </div>
+
+          <div style="text-align:center; color:#4caf50; font-size:0.8em; font-weight:600;">↓</div>
+
+          <div style="background:#dcfce7; border:2px solid #4caf50; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
+            <span class="fa-solid fa-cube" style="color:#4caf50; font-size:1rem; flex-shrink:0;"></span>
+            <div>
+              <div style="font-size:0.82em; font-weight:600; color:#2e7d32;">Pod</div>
+              <div style="font-size:0.68em; color:#4caf50; font-weight:700;">ALLOWED ✅</div>
+            </div>
+          </div>
+
+          <!-- Summary -->
+          <div style="background:#e8f5e9; border:1px solid #c8e6c9; border-radius:6px; padding:10px 12px; margin-top:6px; font-size:0.78em; color:#2e7d32; display:flex; align-items:flex-start; gap:8px;">
+            <span class="fa-solid fa-circle-info" style="flex-shrink:0; margin-top:2px;"></span>
+            <span>Everyone can reach every pod — LAN users, Secure Access users, and pod-to-pod traffic. No restrictions.</span>
           </div>
         </div>
       </div>
 
-      <div style="min-width:560px;">
+      <!-- RIGHT: Zero Trust mode -->
+      <div style="background:#fefcf8; border:2px solid #d9534f; border-radius:10px; overflow:hidden;">
+        <div style="background:#d9534f; padding:12px 16px; display:flex; align-items:center; gap:8px;">
+          <span class="fa-solid fa-lock" style="color:#fff; font-size:1rem;"></span>
+          <div>
+            <div style="color:#fff; font-weight:700; font-size:0.9em;">Zero Trust Application Access</div>
+            <div style="color:rgba(255,255,255,0.85); font-size:0.72em;">Only Resource Connector traffic reaches pods</div>
+          </div>
+        </div>
+        <div style="padding:1.2rem; display:flex; flex-direction:column; gap:6px;">
 
-        <!-- Two-column paths -->
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
-
-          <!-- PATH A: SSE (green) -->
-          <div style="background:#f0fdf4; border:2px solid #4ade80; border-radius:8px; padding:12px;">
-            <div style="font-size:0.68em; font-weight:700; color:#16a34a; letter-spacing:0.7px; margin-bottom:10px;">PATH A — SSE CONNECTED ✅</div>
-            <div style="display:flex; flex-direction:column; gap:5px; align-items:stretch;">
-
-              <div style="background:#fff; border:2px solid #16a34a; border-radius:6px; padding:6px 10px; display:flex; align-items:center; gap:8px;">
-                <span class="fa-solid fa-laptop" style="color:#16a34a; font-size:0.95rem; flex-shrink:0;"></span>
-                <div>
-                  <div style="font-size:0.78em; font-weight:600; color:#111;">SSE Laptop</div>
-                  <div style="font-size:0.65em; color:#999;">Cisco Secure Access enrolled</div>
-                </div>
-              </div>
-
-              <div style="text-align:center; color:#16a34a; font-size:0.75em; font-weight:600;">↓ authenticated tunnel</div>
-
-              <div style="background:#fff; border:2px solid #049fd9; border-radius:6px; padding:6px 10px; display:flex; align-items:center; gap:8px;">
-                <span class="fa-solid fa-cloud" style="color:#049fd9; font-size:0.95rem; flex-shrink:0;"></span>
-                <div>
-                  <div style="font-size:0.78em; font-weight:600; color:#111;">Secure Access Cloud</div>
-                  <div style="font-size:0.65em; color:#999;">ZTNA Gateway</div>
-                </div>
-              </div>
-
-              <div style="text-align:center; color:#16a34a; font-size:0.75em; font-weight:600;">↓ connector tunnel</div>
-
-              <div style="background:#fff; border:2px solid #7c4dff; border-radius:6px; padding:6px 10px; display:flex; align-items:center; gap:8px;">
-                <span class="fa-solid fa-plug" style="color:#7c4dff; font-size:0.95rem; flex-shrink:0;"></span>
-                <div>
-                  <div style="font-size:0.78em; font-weight:600; color:#111;">Connector</div>
-                  <div style="font-size:0.65em; color:#999;">Docker · 240.0.0.x on docker0</div>
-                </div>
-              </div>
-
-              <div style="background:#ede9fe; border:1px dashed #7c4dff; border-radius:5px; padding:5px 10px;">
-                <div style="font-size:0.7em; font-weight:700; color:#5b21b6;">Cilium eBPF · SNAT</div>
-                <div style="font-size:0.65em; color:#7c3aed;">240.0.0.x → <strong>10.0.0.180</strong> (cilium_host)</div>
-                <div style="font-size:0.65em; color:#7c3aed;">identity: <code>host</code></div>
-              </div>
-
-              <div style="text-align:center; color:#16a34a; font-size:0.75em; font-weight:600;">↓</div>
-
-              <div style="background:#dcfce7; border:2px solid #16a34a; border-radius:6px; padding:6px 10px; display:flex; align-items:center; gap:8px;">
-                <span class="fa-solid fa-network-wired" style="color:#16a34a; font-size:0.95rem; flex-shrink:0;"></span>
-                <div>
-                  <div style="font-size:0.78em; font-weight:600; color:#16a34a;">Cilium Policy</div>
-                  <div style="font-size:0.65em; color:#16a34a;"><code>fromEntities: host</code> ✅</div>
-                </div>
-              </div>
-
-              <div style="text-align:center; color:#16a34a; font-size:0.75em; font-weight:600;">↓</div>
-
-              <div style="background:#fff; border:2px solid #16a34a; border-radius:6px; padding:6px 10px; display:flex; align-items:center; gap:8px;">
-                <span class="fa-solid fa-cube" style="color:#16a34a; font-size:0.95rem; flex-shrink:0;"></span>
-                <div>
-                  <div style="font-size:0.78em; font-weight:600; color:#111;">Pod (SSE Check, SSH …)</div>
-                  <div style="font-size:0.65em; color:#16a34a; font-weight:600;">FORWARDED ✅</div>
-                </div>
-              </div>
-
+          <!-- Secure Access user (allowed) -->
+          <div style="background:#f0fdf4; border:2px solid #16a34a; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
+            <span class="fa-solid fa-shield-halved" style="color:#049fd9; font-size:1rem; flex-shrink:0;"></span>
+            <div>
+              <div style="font-size:0.82em; font-weight:600; color:#111;">Secure Access user</div>
+              <div style="font-size:0.65em; color:#888;">Authenticated via Cisco Secure Access</div>
             </div>
           </div>
 
-          <!-- PATH B: LAN (red) -->
-          <div style="background:#fff8f8; border:2px solid #f87171; border-radius:8px; padding:12px;">
-            <div style="font-size:0.68em; font-weight:700; color:#dc2626; letter-spacing:0.7px; margin-bottom:10px;">PATH B — LAN DIRECT ❌</div>
-            <div style="display:flex; flex-direction:column; gap:5px; align-items:stretch;">
+          <div style="text-align:center; color:#16a34a; font-size:0.75em; font-weight:600;">↓ tunnel → cloud → connector</div>
 
-              <div style="background:#fff; border:2px solid #dc2626; border-radius:6px; padding:6px 10px; display:flex; align-items:center; gap:8px;">
-                <span class="fa-solid fa-laptop" style="color:#dc2626; font-size:0.95rem; flex-shrink:0;"></span>
-                <div>
-                  <div style="font-size:0.78em; font-weight:600; color:#111;">LAN Laptop</div>
-                  <div style="font-size:0.65em; color:#999;">Direct access · 10.10.2.2</div>
-                </div>
-              </div>
+          <!-- eBPF / Connector -->
+          <div style="background:#ede9fe; border:1px dashed #7c4dff; border-radius:6px; padding:8px 12px;">
+            <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;">
+              <span class="fa-solid fa-plug" style="color:#7c4dff; font-size:0.85rem; flex-shrink:0;"></span>
+              <div style="font-size:0.75em; font-weight:700; color:#5b21b6;">Resource Connector + Cilium eBPF</div>
+            </div>
+            <div style="font-size:0.65em; color:#7c3aed;">src IP rewritten → <code>cilium_host</code> · identity: <code>host</code></div>
+          </div>
 
-              <div style="text-align:center; color:#dc2626; font-size:0.75em; font-weight:600;">↓ bypasses ZTNA</div>
+          <div style="text-align:center; color:#16a34a; font-size:0.75em; font-weight:600;">↓ <code>host</code> entity → policy match</div>
 
-              <div style="background:#fff; border:1px solid #ddd; border-radius:6px; padding:6px 10px; opacity:0.6;">
-                <div style="font-size:0.7em; font-weight:700; color:#aaa; font-style:italic;">no cloud — no tunnel</div>
-              </div>
-
-              <div style="text-align:center; color:#dc2626; font-size:0.75em; font-weight:600;">↓ hits NodePort directly</div>
-
-              <div style="background:#fff; border:1px solid #ddd; border-radius:6px; padding:6px 10px;">
-                <div style="font-size:0.7em; font-weight:700; color:#555;">NodePort (direct)</div>
-                <div style="font-size:0.65em; color:#999;">src IP preserved: <strong>10.10.2.2</strong></div>
-                <div style="font-size:0.65em; color:#999;">identity: <code>world</code></div>
-              </div>
-
-              <div style="text-align:center; color:#dc2626; font-size:0.75em; font-weight:600;">↓</div>
-
-              <div style="background:#fee2e2; border:2px solid #dc2626; border-radius:6px; padding:6px 10px; display:flex; align-items:center; gap:8px;">
-                <span class="fa-solid fa-network-wired" style="color:#dc2626; font-size:0.95rem; flex-shrink:0;"></span>
-                <div>
-                  <div style="font-size:0.78em; font-weight:600; color:#dc2626;">Cilium Policy</div>
-                  <div style="font-size:0.65em; color:#dc2626;"><code>world</code> identity → no match ❌</div>
-                </div>
-              </div>
-
-              <div style="text-align:center; color:#dc2626; font-size:0.75em; font-weight:600;">↓</div>
-
-              <div style="background:#fee2e2; border:2px solid #dc2626; border-radius:6px; padding:6px 10px; display:flex; align-items:center; gap:8px;">
-                <span class="fa-solid fa-ban" style="color:#dc2626; font-size:0.95rem; flex-shrink:0;"></span>
-                <div>
-                  <div style="font-size:0.78em; font-weight:600; color:#dc2626;">Pod (SSE Check, SSH …)</div>
-                  <div style="font-size:0.65em; color:#dc2626; font-weight:600;">DROPPED ❌</div>
-                </div>
-              </div>
-
+          <!-- Pod allowed -->
+          <div style="background:#dcfce7; border:2px solid #16a34a; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
+            <span class="fa-solid fa-cube" style="color:#16a34a; font-size:1rem; flex-shrink:0;"></span>
+            <div>
+              <div style="font-size:0.82em; font-weight:600; color:#2e7d32;">Pod</div>
+              <div style="font-size:0.68em; color:#16a34a; font-weight:700;">ALLOWED ✅</div>
             </div>
           </div>
 
-        </div>
+          <div style="height:1px; background:#e0e0e0; margin:8px 0;"></div>
 
-        <!-- Key insight -->
-        <div style="background:#fff; border:1px solid #e0e0e0; border-radius:6px; padding:10px 14px; font-size:0.78em; color:#555; display:flex; align-items:flex-start; gap:10px;">
-          <span class="fa-solid fa-lightbulb" style="color:#f59e0b; flex-shrink:0; margin-top:2px;"></span>
-          <span>
-            <strong>Key:</strong> <code>externalTrafficPolicy: Local</code> preserves source IPs on NodePorts.
-            Cilium's eBPF SNAT rewrites the connector's Docker IP (<code>240.0.0.x</code>) to
-            <code>cilium_host</code> (<code>10.0.0.180</code>) — classified as <strong>host</strong> entity and allowed.
-            LAN traffic keeps its real IP (<code>10.10.2.x</code>) — classified as <strong>world</strong> entity and dropped.
-          </span>
-        </div>
+          <!-- LAN user (blocked) -->
+          <div style="background:#fff; border:2px solid #dc2626; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
+            <span class="fa-solid fa-laptop" style="color:#dc2626; font-size:1rem; flex-shrink:0;"></span>
+            <div>
+              <div style="font-size:0.82em; font-weight:600; color:#111;">Direct LAN user</div>
+              <div style="font-size:0.65em; color:#888;">No Secure Access · hits NodePort directly</div>
+            </div>
+          </div>
 
+          <div style="text-align:center; color:#dc2626; font-size:0.75em; font-weight:600;">↓ <code>world</code> entity → no policy match</div>
+
+          <!-- Pod blocked -->
+          <div style="background:#fee2e2; border:2px solid #dc2626; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
+            <span class="fa-solid fa-ban" style="color:#dc2626; font-size:1rem; flex-shrink:0;"></span>
+            <div>
+              <div style="font-size:0.82em; font-weight:600; color:#dc2626;">Pod</div>
+              <div style="font-size:0.68em; color:#dc2626; font-weight:700;">DROPPED ❌</div>
+            </div>
+          </div>
+
+          <!-- Summary -->
+          <div style="background:#fff3e0; border:1px solid #ffe082; border-radius:6px; padding:10px 12px; margin-top:6px; font-size:0.78em; color:#5d4037; display:flex; align-items:flex-start; gap:8px;">
+            <span class="fa-solid fa-circle-info" style="flex-shrink:0; margin-top:2px;"></span>
+            <span>Only users going through Cisco Secure Access can reach workload pods. Direct LAN access is blocked by Cilium at the kernel level.</span>
+          </div>
+        </div>
       </div>
+
+    </div>
+
+    <!-- Key insight -->
+    <div style="background:#fff; border:1px solid #e0e0e0; border-radius:6px; padding:10px 14px; margin-top:16px; font-size:0.78em; color:#555; display:flex; align-items:flex-start; gap:10px;">
+      <span class="fa-solid fa-lightbulb" style="color:#f59e0b; flex-shrink:0; margin-top:2px;"></span>
+      <span>
+        <strong>How it works:</strong> <code>externalTrafficPolicy: Local</code> preserves source IPs on NodePorts.
+        Cilium's eBPF SNAT rewrites the connector's Docker IP (<code>240.0.0.x</code>) to
+        <code>cilium_host</code> (<code>10.0.0.180</code>) — classified as <strong>host</strong> entity and allowed.
+        LAN traffic keeps its real IP (<code>10.10.2.x</code>) — classified as <strong>world</strong> entity and dropped.
+      </span>
     </div>
   </section>
 
