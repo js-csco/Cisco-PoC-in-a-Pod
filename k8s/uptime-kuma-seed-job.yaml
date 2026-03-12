@@ -94,7 +94,7 @@ data:
             "accepted_statuscodes": ["200-299"],
         },
         {
-            "name": "SAML Demo",
+            "name": "SAML App",
             "type": "http",
             "url": "http://saml-app.piap.svc.cluster.local:9400/health",
             "interval": 60,
@@ -169,6 +169,29 @@ data:
             print(f"ERROR: Login failed: {e}")
             sio.disconnect()
             sys.exit(1)
+
+        # Set dark mode theme
+        try:
+            response = sio.call("setSettings", {
+                "primaryBaseURL": "",
+                "theme": "dark",
+            }, timeout=10)
+            if response.get("ok"):
+                print("Theme set to dark mode")
+            else:
+                print(f"Failed to set theme: {response}")
+        except Exception as e:
+            print(f"Error setting theme: {e}")
+
+        # Disable authentication for easy access
+        try:
+            response = sio.call("disableAuth", timeout=10)
+            if response.get("ok"):
+                print("Authentication disabled")
+            else:
+                print(f"Failed to disable auth: {response}")
+        except Exception as e:
+            print(f"Error disabling auth: {e}")
 
         # Get existing monitors to avoid duplicates
         existing = set()
