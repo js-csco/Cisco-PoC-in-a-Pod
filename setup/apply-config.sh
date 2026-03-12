@@ -56,7 +56,7 @@ echo ""
 echo "Step 1: Ensuring symlinks..."
 ln -sfn "$REPO_ROOT/dashy"            /dashy           && echo "  ✓ /dashy"
 ln -sfn "$REPO_ROOT/sse-check"        /sse-check       && echo "  ✓ /sse-check"
-ln -sfn "$REPO_ROOT/testcases"        /testcases       && echo "  ✓ /testcases"
+ln -sfn "$REPO_ROOT/playbook"         /playbook        && echo "  ✓ /playbook"
 ln -sfn "$REPO_ROOT/automagic-server" /automagic-server && echo "  ✓ /automagic-server"
 
 # ── 2. Patch dashy conf.yml ─────────────────────────────────────────────────

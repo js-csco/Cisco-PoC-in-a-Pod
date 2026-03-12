@@ -28,39 +28,69 @@
 
     /* ── Header ── */
     header {
-      background: linear-gradient(90deg, var(--dark), var(--cyan));
+      background: linear-gradient(135deg, #000 0%, #1a1a2e 50%, var(--dark) 100%);
       color: #fff;
-      padding: 16px 32px;
+      padding: 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 60px,
+        rgba(255,255,255,0.02) 60px,
+        rgba(255,255,255,0.02) 61px
+      );
+      pointer-events: none;
+    }
+    .header-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      padding: 18px 32px 16px;
+      position: relative;
+      z-index: 1;
     }
-    .header-left { display: flex; align-items: center; gap: 20px; }
-    .header-left .t   { font-size: 1.2em; font-weight: 600; }
-    .header-left .sub { font-size: 0.82em; opacity: 0.8; margin-top: 2px; }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-logo { height: 24px; opacity: 0.9; }
+    .header-divider {
+      width: 1px;
+      height: 28px;
+      background: rgba(255,255,255,0.2);
+    }
+    .header-left .t   { font-size: 1.15em; font-weight: 700; letter-spacing: 0.3px; }
+    .header-left .sub { font-size: 0.78em; opacity: 0.6; margin-top: 2px; font-weight: 400; }
     .header-right { display: flex; align-items: center; gap: 10px; }
+    .header-accent {
+      height: 3px;
+      background: linear-gradient(90deg, var(--cyan), var(--blue), var(--purple));
+    }
     #overallBadge {
-      background: rgba(255,255,255,0.15);
-      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
       border-radius: 20px;
       padding: 5px 14px;
-      font-size: 0.82em;
+      font-size: 0.8em;
       font-weight: 600;
       white-space: nowrap;
     }
     #resetBtn {
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
       color: #fff;
       padding: 6px 14px;
       border-radius: 6px;
-      font-size: 0.82em;
+      font-size: 0.8em;
       font-weight: 500;
       cursor: pointer;
       transition: background 0.15s;
     }
-    #resetBtn:hover { background: rgba(255,255,255,0.22); }
+    #resetBtn:hover { background: rgba(255,255,255,0.18); }
 
     /* ── Invite Modal ── */
     #inviteModal {
@@ -193,7 +223,7 @@
     }
     .progress-label span { font-weight: 700; color: #374151; }
 
-    /* ── Test case card ── */
+    /* ── Playbook card ── */
     .tc-card {
       background: #fff;
       border: 1px solid #e5e7eb;
@@ -334,6 +364,138 @@
     }
     .tc-section-header:first-child { margin-top: 0; }
 
+    /* ── Custom test cards (purple accent) ── */
+    .tc-card.custom-card { border-left-color: var(--purple); background: #faf8ff; }
+    .tc-card.custom-card .tc-num { background: #ede9fe; color: var(--purple); }
+    .tc-card.custom-card[data-status="pass"]  { border-left-color: var(--green); }
+    .tc-card.custom-card[data-status="fail"]  { border-left-color: var(--red); }
+    .tc-card.custom-card[data-status="skip"]  { border-left-color: var(--orange); }
+    .tc-card.custom-card[data-status="pass"]  .tc-num { background: #dcfce7; color: var(--green); }
+    .tc-card.custom-card[data-status="fail"]  .tc-num { background: #fee2e2; color: var(--red); }
+    .tc-card.custom-card[data-status="skip"]  .tc-num { background: #ffedd5; color: var(--orange); }
+
+    .custom-badge {
+      display: inline-block;
+      background: #ede9fe;
+      color: var(--purple);
+      font-size: 0.68em;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .btn-add-custom {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #ede9fe;
+      color: var(--purple);
+      border: 2px dashed #c4b5fd;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 0.88em;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.15s, border-color 0.15s;
+      margin-top: 14px;
+    }
+    .btn-add-custom:hover { background: #ddd6fe; border-color: var(--purple); }
+
+    .btn-delete-custom {
+      background: #fee2e2;
+      color: var(--red);
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.78em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-delete-custom:hover { opacity: 0.75; }
+
+    /* ── Custom test add form ── */
+    #customForm {
+      display: none;
+      background: #faf8ff;
+      border: 2px solid #c4b5fd;
+      border-radius: 8px;
+      padding: 18px;
+      margin-top: 14px;
+    }
+    #customForm.open { display: block; }
+    #customForm input, #customForm textarea {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.88em;
+      color: #333;
+      font-family: inherit;
+      margin-bottom: 10px;
+    }
+    #customForm input:focus, #customForm textarea:focus { outline: none; border-color: var(--purple); }
+    #customForm label {
+      font-size: 0.78em;
+      font-weight: 600;
+      color: #555;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .form-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .btn-save-custom {
+      background: var(--purple);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 20px;
+      font-size: 0.85em;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-save-custom:hover { opacity: 0.85; }
+    .btn-cancel-custom {
+      background: #f3f4f6;
+      color: #6b7280;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 20px;
+      font-size: 0.85em;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ── What's Next cards ── */
+    .next-card {
+      background: #fff;
+      border: 1px solid #e2e4e8;
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      transition: box-shadow 0.15s;
+    }
+    .next-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .next-icon {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+    .next-card h3 { font-size: 0.95em; color: #111; margin-bottom: 6px; }
+    .next-card p { font-size: 0.85em; color: #555; line-height: 1.6; margin: 0; }
+    .next-card ul { font-size: 0.83em; color: #555; line-height: 1.8; margin: 8px 0 0 18px; padding: 0; }
+
     footer {
       text-align: center;
       color: #aaa;
@@ -345,19 +507,24 @@
 <body>
 
 <header>
-  <div class="header-left">
-    <div>
-      <div class="t">Cisco PoC Playbook</div>
-      <div class="sub">Guided test cases for Zero Trust Application Access</div>
+  <div class="header-bar">
+    <div class="header-left">
+      <img class="header-logo" src="https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png" alt="Cisco">
+      <div class="header-divider"></div>
+      <div>
+        <div class="t">PoC Playbook</div>
+        <div class="sub">Guided playbook for Zero Trust Application Access</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div id="overallBadge">0 / 0 passed</div>
+      <button id="resetBtn" onclick="resetAll()">↺ Reset All</button>
+      <button id="inviteBtn" onclick="document.getElementById('inviteModal').classList.add('active')" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:6px 14px;border-radius:6px;font-size:0.8em;font-weight:500;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+        👤 Invite your Cisco SE
+      </button>
     </div>
   </div>
-  <div class="header-right">
-    <div id="overallBadge">0 / 0 passed</div>
-    <button id="resetBtn" onclick="resetAll()">↺ Reset All</button>
-    <button id="inviteBtn" onclick="document.getElementById('inviteModal').classList.add('active')" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 14px;border-radius:6px;font-size:0.82em;font-weight:500;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.22)'" onmouseout="this.style.background='rgba(255,255,255,0.12)'">
-      👤 Invite your Cisco SE
-    </button>
-  </div>
+  <div class="header-accent"></div>
 </header>
 
 <!-- Invite Cisco SE Modal -->
@@ -365,7 +532,7 @@
   <div class="modal-box">
     <button class="modal-close" onclick="document.getElementById('inviteModal').classList.remove('active')" title="Close">&times;</button>
     <h2>👤 Invite your Cisco SE</h2>
-    <p>If you want to invite your Cisco SE to have remote access to the test cases, please do the following:</p>
+    <p>If you want to invite your Cisco SE to have remote access to the PoC Playbook, please do the following:</p>
     <ul>
       <li>Create Duo user in Group <strong>"PoC Users"</strong></li>
       <li>Allow browser based access to PoC Playbook
@@ -387,7 +554,7 @@
 
 <script>
 // ─────────────────────────────────────────────
-// Test case definitions
+// Playbook definitions
 // ─────────────────────────────────────────────
 const TABS = [
   {
@@ -724,12 +891,73 @@ const TABS = [
       },
     ],
   },
+  {
+    id: 'custom',
+    label: 'Custom Tests',
+    icon: 'fa-flask',
+    subtitle: 'Define your own tests specific to your environment and requirements.',
+    isCustomTab: true,
+    cases: [],
+  },
+  {
+    id: 'next',
+    label: "What's Next",
+    icon: 'fa-road',
+    subtitle: 'Advanced use cases to expand your Zero Trust deployment beyond the PoC.',
+    isInfoTab: true,
+    cases: [],
+    content: [
+      {
+        icon: 'fa-network-wired',
+        color: '#0066ff',
+        bg: '#eff6ff',
+        title: 'Connect Your Networks / Firewalls / Branches',
+        desc: 'Extend Zero Trust access beyond this single VM. Connect your production network segments, firewall zones, and branch offices to Cisco Secure Access.',
+        items: [
+          'Deploy additional Resource Connectors in each network segment or branch',
+          'Configure IP-based private resources for entire subnets (e.g., 10.0.0.0/24)',
+          'Set up site-to-site IPsec or GRE tunnels from firewalls to Secure Access',
+          'Use Cisco SD-WAN integration for branch connectivity',
+          'Apply network-level access policies per site, subnet, or VLAN',
+        ],
+      },
+      {
+        icon: 'fa-users',
+        color: '#7c4dff',
+        bg: '#ede9fe',
+        title: 'Connect More Users',
+        desc: 'Onboard your full user base with Duo and Cisco Secure Client for organization-wide Zero Trust access.',
+        items: [
+          'Integrate Duo with your Identity Provider (Azure AD, Okta, Google Workspace)',
+          'Roll out Cisco Secure Client via MDM/GPO to all managed devices',
+          'Configure device posture checks (OS version, disk encryption, firewall status)',
+          'Set up Duo Passwordless for a frictionless login experience',
+          'Define per-group access policies (Engineering, Finance, Contractors, etc.)',
+        ],
+      },
+      {
+        icon: 'fa-window-restore',
+        color: '#049fd9',
+        bg: '#e0f7fa',
+        title: 'Connect Your Applications',
+        desc: 'Protect your real applications — SaaS, internal web apps, APIs, and legacy systems — behind Zero Trust policies.',
+        items: [
+          'Register internal web applications as private resources (e.g., Jira, GitLab, ERP)',
+          'Enable browser-based agentless access for contractors and unmanaged devices',
+          'Configure per-app DLP policies to prevent data leakage from sensitive apps',
+          'Set up SaaS application controls and shadow IT discovery',
+          'Apply AI Guardrails to control how users interact with AI services',
+        ],
+      },
+    ],
+  },
 ];
 
 // ─────────────────────────────────────────────
 // State helpers
 // ─────────────────────────────────────────────
 const STORE_KEY = 'poc_playbook_v1';
+const CUSTOM_KEY = 'poc_custom_tests_v1';
 
 function loadState() {
   try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
@@ -753,8 +981,72 @@ function getState(tcId, field) {
 }
 
 function resetAll() {
-  if (!confirm('Reset all test case results and notes?')) return;
+  if (!confirm('Reset all results and notes?')) return;
   localStorage.removeItem(STORE_KEY);
+  renderAll();
+}
+
+// ─────────────────────────────────────────────
+// Custom test helpers
+// ─────────────────────────────────────────────
+function loadCustomTests() {
+  try { return JSON.parse(localStorage.getItem(CUSTOM_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveCustomTests(tests) {
+  localStorage.setItem(CUSTOM_KEY, JSON.stringify(tests));
+}
+
+function addCustomTest(title, desc, steps) {
+  const tests = loadCustomTests();
+  const id = 'custom-' + Date.now();
+  tests.push({ id, title, desc, steps });
+  saveCustomTests(tests);
+  return id;
+}
+
+function deleteCustomTest(id) {
+  if (!confirm('Delete this custom test?')) return;
+  let tests = loadCustomTests();
+  tests = tests.filter(t => t.id !== id);
+  saveCustomTests(tests);
+  // Also remove state for this test
+  const s = loadState();
+  delete s[id];
+  saveState(s);
+  renderAll();
+}
+
+function getCustomTab() {
+  return TABS.find(t => t.id === 'custom');
+}
+
+function syncCustomTests() {
+  const tab = getCustomTab();
+  if (tab) tab.cases = loadCustomTests();
+}
+
+function showCustomForm() {
+  document.getElementById('customForm').classList.add('open');
+  document.getElementById('cfTitle').focus();
+}
+
+function hideCustomForm() {
+  document.getElementById('customForm').classList.remove('open');
+  document.getElementById('cfTitle').value = '';
+  document.getElementById('cfDesc').value = '';
+  document.getElementById('cfSteps').value = '';
+}
+
+function submitCustomTest() {
+  const title = document.getElementById('cfTitle').value.trim();
+  const desc = document.getElementById('cfDesc').value.trim();
+  const stepsRaw = document.getElementById('cfSteps').value.trim();
+  if (!title) { alert('Please enter a test title.'); return; }
+  const steps = stepsRaw ? stepsRaw.split('\n').filter(s => s.trim()) : [];
+  addCustomTest(title, desc, steps);
+  hideCustomForm();
   renderAll();
 }
 
@@ -764,12 +1056,13 @@ function resetAll() {
 let activeTab = TABS[0].id;
 
 function renderAll() {
+  syncCustomTests();
   renderNav();
   renderContent();
   updateOverall();
 }
 
-// Returns all test cases for a tab, regardless of flat or sectioned structure
+// Returns all tests for a tab, regardless of flat or sectioned structure
 function tabCases(tab) {
   if (tab.sections) return tab.sections.flatMap(s => s.cases);
   return tab.cases || [];
@@ -778,6 +1071,14 @@ function tabCases(tab) {
 function renderNav() {
   const nav = document.getElementById('tabNav');
   nav.innerHTML = TABS.map(tab => {
+    if (tab.isInfoTab) {
+      return `
+        <button class="tab-btn ${tab.id === activeTab ? 'active' : ''}"
+                onclick="switchTab('${tab.id}')">
+          <i class="fa-solid ${tab.icon}"></i>
+          ${tab.label}
+        </button>`;
+    }
     const cases  = tabCases(tab);
     const total  = cases.length;
     const passed = cases.filter(tc => getState(tc.id, 'status') === 'pass').length;
@@ -804,7 +1105,10 @@ function renderTabCases(tab) {
 
 function renderContent() {
   const container = document.getElementById('tabContent');
-  container.innerHTML = TABS.map(tab => `
+  container.innerHTML = TABS.map(tab => {
+    if (tab.isInfoTab) return renderInfoTab(tab);
+    if (tab.isCustomTab) return renderCustomTab(tab);
+    return `
     <div class="tab-panel ${tab.id === activeTab ? 'active' : ''}" id="panel-${tab.id}">
       <div class="tab-header">
         <h2>${tab.label}</h2>
@@ -815,8 +1119,105 @@ function renderContent() {
         <div class="progress-label" id="lbl-${tab.id}">${tabLabel(tab)}</div>
       </div>
       ${renderTabCases(tab)}
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+}
+
+function renderCustomTab(tab) {
+  const cases = tabCases(tab);
+  const hasTests = cases.length > 0;
+  let cardsHtml = '';
+  if (hasTests) {
+    cardsHtml = cases.map((tc, i) => renderCustomCard(tc, i + 1)).join('');
+  } else {
+    cardsHtml = `
+      <div style="text-align:center; padding:40px 20px; color:#999;">
+        <i class="fa-solid fa-flask" style="font-size:2rem; color:#c4b5fd; margin-bottom:12px; display:block;"></i>
+        <div style="font-size:0.95em; font-weight:600; color:#666; margin-bottom:4px;">No custom tests yet</div>
+        <div style="font-size:0.83em;">Click the button below to add your first custom test.</div>
+      </div>`;
+  }
+  return `
+    <div class="tab-panel ${tab.id === activeTab ? 'active' : ''}" id="panel-${tab.id}">
+      <div class="tab-header">
+        <h2>${tab.label} <span class="custom-badge">YOUR TESTS</span></h2>
+        <p>${tab.subtitle}</p>
+        ${hasTests ? `
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="bar-${tab.id}" style="width:${tabProgress(tab)}%; background:var(--purple);"></div>
+        </div>
+        <div class="progress-label" id="lbl-${tab.id}">${tabLabel(tab)}</div>` : ''}
+      </div>
+      ${cardsHtml}
+      <button class="btn-add-custom" onclick="showCustomForm()">
+        <i class="fa-solid fa-plus"></i> Add Custom Test
+      </button>
+      <div id="customForm">
+        <label for="cfTitle">Test Title *</label>
+        <input type="text" id="cfTitle" placeholder="e.g., VPN Failover Test">
+        <label for="cfDesc">Description</label>
+        <textarea id="cfDesc" rows="2" placeholder="What should this test verify?"></textarea>
+        <label for="cfSteps">Steps (one per line)</label>
+        <textarea id="cfSteps" rows="4" placeholder="Step 1&#10;Step 2&#10;Step 3"></textarea>
+        <div class="form-actions">
+          <button class="btn-save-custom" onclick="submitCustomTest()">Add Test Case</button>
+          <button class="btn-cancel-custom" onclick="hideCustomForm()">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderCustomCard(tc, num) {
+  const status = getState(tc.id, 'status') || 'pending';
+  const notes  = getState(tc.id, 'notes')  || '';
+  const statusLabel = { pending: 'PENDING', pass: 'PASS', fail: 'FAIL', skip: 'SKIP' }[status];
+  const stepsHtml = tc.steps && tc.steps.length
+    ? `<div class="tc-steps"><ol>${tc.steps.map(s => `<li>${s}</li>`).join('')}</ol></div>` : '';
+  return `
+    <div class="tc-card custom-card" data-status="${status}" id="card-${tc.id}">
+      <div class="tc-top">
+        <div class="tc-num">${num}</div>
+        <div class="tc-body">
+          <div class="tc-title">${tc.title} <span class="custom-badge">CUSTOM</span></div>
+          <div class="tc-desc">${tc.desc || ''}</div>
+        </div>
+        <div class="tc-status-badge" id="badge-${tc.id}">${statusLabel}</div>
+      </div>
+      ${stepsHtml}
+      <div class="tc-actions">
+        <button class="btn-pass"     onclick="setStatus('${tc.id}', 'pass')">✓ Pass</button>
+        <button class="btn-fail"     onclick="setStatus('${tc.id}', 'fail')">✗ Fail</button>
+        <button class="btn-skip"     onclick="setStatus('${tc.id}', 'skip')">— Skip</button>
+        <button class="btn-reset-tc" onclick="setStatus('${tc.id}', 'pending')">↺</button>
+        <button class="btn-notes"    onclick="toggleNotes('${tc.id}')">Notes</button>
+        <button class="btn-delete-custom" onclick="deleteCustomTest('${tc.id}')">🗑 Delete</button>
+      </div>
+      <div class="tc-notes" id="notes-${tc.id}">
+        <textarea placeholder="Add notes…" oninput="saveNotes('${tc.id}', this.value)">${notes}</textarea>
+      </div>
+    </div>`;
+}
+
+function renderInfoTab(tab) {
+  const cardsHtml = tab.content.map(card => `
+    <div class="next-card">
+      <div class="next-icon" style="background:${card.bg}; color:${card.color};">
+        <i class="fa-solid ${card.icon}"></i>
+      </div>
+      <div style="flex:1;">
+        <h3>${card.title}</h3>
+        <p>${card.desc}</p>
+        <ul>${card.items.map(item => `<li>${item}</li>`).join('')}</ul>
+      </div>
+    </div>`).join('');
+  return `
+    <div class="tab-panel ${tab.id === activeTab ? 'active' : ''}" id="panel-${tab.id}">
+      <div class="tab-header">
+        <h2>${tab.label}</h2>
+        <p>${tab.subtitle}</p>
+      </div>
+      ${cardsHtml}
+    </div>`;
 }
 
 function tabProgress(tab) {
@@ -906,7 +1307,7 @@ function saveNotes(tcId, value) {
 }
 
 function updateOverall() {
-  const allCases = TABS.flatMap(t => tabCases(t));
+  const allCases = TABS.filter(t => !t.isInfoTab).flatMap(t => tabCases(t));
   const total    = allCases.length;
   const passed   = allCases.filter(tc => getState(tc.id, 'status') === 'pass').length;
   const failed   = allCases.filter(tc => getState(tc.id, 'status') === 'fail').length;

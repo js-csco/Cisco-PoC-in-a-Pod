@@ -75,22 +75,29 @@
   <div style="background:#f8f9fa; border:1px solid #e2e4e8; border-radius:10px; padding:1.5rem; overflow-x:auto;">
     <div style="font-size:0.7em; font-weight:700; color:#aaa; letter-spacing:0.7px; margin-bottom:14px;">ACCESS FLOW</div>
 
-    <div style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap; min-width:580px;">
+    <div style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap; min-width:620px;">
 
-      <!-- User -->
+      <!-- User + Secure Client -->
       <div style="text-align:center; flex-shrink:0;">
         <div style="background:#fff; border:2px solid #0066ff; border-radius:8px; padding:10px 14px;">
           <span class="fa-solid fa-laptop" style="font-size:1.3rem; color:#0066ff; display:block; margin-bottom:4px;"></span>
-          <div style="font-size:0.75em; font-weight:600; color:#333; line-height:1.2;">User</div>
-          <div style="font-size:0.68em; color:#999;">Device</div>
+          <div style="font-size:0.75em; font-weight:600; color:#333; line-height:1.2;">User Device</div>
+          <div style="font-size:0.65em; color:#049fd9; font-weight:600;">Cisco Secure Client</div>
         </div>
       </div>
 
-      <!-- Duo label + arrow -->
-      <div style="display:flex; flex-direction:column; align-items:center; gap:1px; flex-shrink:0;">
-        <span style="font-size:0.68em; color:#7c4dff; font-weight:600; white-space:nowrap;">Duo MFA</span>
-        <span style="color:#ccc; font-size:1.3rem; line-height:1;">→</span>
+      <span style="color:#ccc; font-size:1.3rem; flex-shrink:0;">→</span>
+
+      <!-- Duo as IdP/SSO -->
+      <div style="text-align:center; flex-shrink:0;">
+        <div style="background:#fff; border:2px solid #7c4dff; border-radius:8px; padding:10px 14px;">
+          <span class="fa-solid fa-user-shield" style="font-size:1.3rem; color:#7c4dff; display:block; margin-bottom:4px;"></span>
+          <div style="font-size:0.75em; font-weight:600; color:#333; line-height:1.2;">Cisco Duo</div>
+          <div style="font-size:0.65em; color:#7c4dff;">IdP · SSO · MFA</div>
+        </div>
       </div>
+
+      <span style="color:#ccc; font-size:1.3rem; flex-shrink:0;">→</span>
 
       <!-- Secure Access cloud -->
       <div style="text-align:center; flex-shrink:0;">
@@ -272,10 +279,10 @@
         <span class="fa-solid fa-clipboard-check" style="color:#0066ff; font-size:1.1rem; flex-shrink:0;"></span>
         <div>
           <div style="font-weight:600; color:#111; font-size:0.88em;">PoC Playbook</div>
-          <div style="font-size:0.72em; color:#999;">Pod · Port 30250 · Test Cases</div>
+          <div style="font-size:0.72em; color:#999;">Pod · Port 30250 · Playbook</div>
         </div>
       </div>
-      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">Guided test case runner for validating the full PoC — covering Duo, Secure Access, Cilium, and Tetragon with pass/fail tracking.</p>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">Guided playbook for validating the full PoC — covering Duo, Secure Access, Cilium, and Tetragon with pass/fail tracking.</p>
     </div>
 
     <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">

@@ -164,7 +164,23 @@
     </p>
 
     <div style="background:#f8f9fa; border:1px solid #e2e4e8; border-radius:10px; padding:1.5rem; overflow-x:auto;">
-      <div style="font-size:0.7em; font-weight:700; color:#aaa; letter-spacing:0.7px; margin-bottom:16px;">ACCESS PATHS</div>
+      <!-- Summary banner -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; margin-bottom:16px; border-radius:8px; overflow:hidden;">
+        <div style="background:#16a34a; padding:10px 16px; display:flex; align-items:center; gap:8px;">
+          <span class="fa-solid fa-circle-check" style="color:#fff; font-size:1.1rem;"></span>
+          <div>
+            <div style="color:#fff; font-weight:700; font-size:0.85em;">Secure Access Traffic</div>
+            <div style="color:rgba(255,255,255,0.8); font-size:0.7em;">Allowed through Resource Connector</div>
+          </div>
+        </div>
+        <div style="background:#dc2626; padding:10px 16px; display:flex; align-items:center; gap:8px;">
+          <span class="fa-solid fa-ban" style="color:#fff; font-size:1.1rem;"></span>
+          <div>
+            <div style="color:#fff; font-weight:700; font-size:0.85em;">Direct LAN Traffic</div>
+            <div style="color:rgba(255,255,255,0.8); font-size:0.7em;">Blocked by Cilium network policy</div>
+          </div>
+        </div>
+      </div>
 
       <div style="min-width:560px;">
 
