@@ -45,6 +45,7 @@ data:
             "interval": 60,
             "maxretries": 3,
             "notificationIDList": [],
+            "accepted_statuscodes": ["200-299"],
         },
         {
             "name": "RDP Server",
@@ -54,6 +55,16 @@ data:
             "interval": 60,
             "maxretries": 3,
             "notificationIDList": [],
+            "accepted_statuscodes": ["200-299"],
+        },
+        {
+            "name": "Splunk",
+            "type": "http",
+            "url": "http://splunk.piap.svc.cluster.local:8000",
+            "interval": 60,
+            "maxretries": 3,
+            "notificationIDList": [],
+            "accepted_statuscodes": ["200-299"],
         },
         {
             "name": "Kubectl MCP",
