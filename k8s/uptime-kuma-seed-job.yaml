@@ -94,7 +94,7 @@ data:
             "accepted_statuscodes": ["200-299"],
         },
         {
-            "name": "SAML Demo",
+            "name": "SAML App",
             "type": "http",
             "url": "http://saml-app.piap.svc.cluster.local:9400/health",
             "interval": 60,

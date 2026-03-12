@@ -102,7 +102,7 @@ def create_private_resources(token, vm_ip, resource_group_id):
         {"name": "SSE Check", "port": 30550, "protocol": "http/https"},
         {"name": "Caldera C2", "port": 30600, "protocol": "http/https"},
         {"name": "Uptime Kuma", "port": 30300, "protocol": "http/https"},
-        {"name": "SAML Demo", "port": 30400, "protocol": "http/https"},
+        {"name": "SAML App", "port": 30400, "protocol": "http/https"},
     ]
 
 
