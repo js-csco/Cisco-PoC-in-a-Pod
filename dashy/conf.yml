@@ -21,12 +21,12 @@ sections:
       - title: Disclaimer
         description: Please read before using this PoC. Run at your own risk.
         icon: fas fa-exclamation-triangle
-        url: https://github.com/js-csco/piap-kind/blob/main/readme.md
+        url: https://github.com/js-csco/piap-k3s/blob/main/readme.md
         statusCheck: false
       - title: PIAP GitHub Repository
         description: Official PIAP Repository
         icon: fas fa-code-branch
-        url: https://github.com/js-csco/piap-kind.git
+        url: https://github.com/js-csco/piap-k3s.git
         statusCheck: false
   - name: Secure Access Docs
     items:
