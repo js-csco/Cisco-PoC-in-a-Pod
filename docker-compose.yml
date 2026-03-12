@@ -2,17 +2,6 @@ version: '3'
 
 services:
 
-  dashy:
-    image: ghcr.io/lissy93/dashy:latest
-    container_name: dashy
-    ports:
-      - "9000:8080"
-    volumes:
-      - ./dashy/dashy-conf.yml:/app/user-data/conf.yml
-    restart: unless-stopped
-    networks:
-      - cisco-pod-network
-
   automagic:
     image: python:3.11-slim
     container_name: automagic

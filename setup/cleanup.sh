@@ -145,7 +145,6 @@ echo ""
 
 echo "Step 6: Removing application symlinks..."
 rm -f /automagic-server && echo "  ✓ /automagic-server removed" || true
-rm -f /dashy && echo "  ✓ /dashy removed" || true
 echo ""
 
 echo "Step 7: Cleaning up Cilium BPF filesystem..."
@@ -254,9 +253,9 @@ echo "================================================"
 echo ""
 echo "Restoring config files modified by setup (SERVER_IP substitution)..."
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-git -C "$REPO_ROOT" checkout -- dashy/conf.yml web/index.html automagic-server/templates/ 2>/dev/null \
+git -C "$REPO_ROOT" checkout -- web/index.html automagic-server/templates/ 2>/dev/null \
     && echo "  ✓ Config files restored from git" \
-    || echo "  ⚠ Could not restore config files — restore manually: git checkout dashy/conf.yml web/index.html automagic-server/templates/"
+    || echo "  ⚠ Could not restore config files — restore manually: git checkout web/index.html automagic-server/templates/"
 echo ""
 
 echo "================================================"
