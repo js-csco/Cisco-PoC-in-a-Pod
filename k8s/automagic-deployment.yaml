@@ -36,6 +36,7 @@ spec:
                 fieldRef:
                   fieldPath: spec.nodeName
           image: ghcr.io/js-csco/piap-k3s-automagic:latest
+          imagePullPolicy: IfNotPresent
           name: automagic
           ports:
             - containerPort: 8080
