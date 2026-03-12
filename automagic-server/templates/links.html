@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% set active_page = 'links' %}
+
+{% block title %}Links — Cisco PoC in a Pod{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:2.5rem;">
+  <h1 style="color:#111; margin-bottom:0.4rem;">Links</h1>
+  <p style="color:#666; margin-top:0; margin-bottom:0; font-size:0.95em; line-height:1.6;">
+    Quick access to all services running in the PoC environment.
+  </p>
+</div>
+
+<section>
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CISCO CLOUD SERVICES</h3>
+  </div>
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:12px; margin-bottom:2.5rem;">
+
+    <a href="{{ url_for('secure_access') }}" style="text-decoration:none; color:inherit;">
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; transition:box-shadow .15s;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-cloud" style="color:#049fd9; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">Cisco Secure Access</div>
+          <div style="font-size:0.72em; color:#999;">Cloud · ZTNA Gateway</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">Provides Zero Trust Network Access. The on-prem Connector in the cluster tunnels traffic from the cloud gateway to private resources — no inbound firewall rules needed.</p>
+    </div>
+    </a>
+
+    <a href="{{ url_for('duo') }}" style="text-decoration:none; color:inherit;">
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; transition:box-shadow .15s;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-user-shield" style="color:#7c4dff; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">Duo</div>
+          <div style="font-size:0.72em; color:#999;">Cloud · Identity & MFA</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">Multi-factor authentication and Identity Intelligence. Provides passwordless MFA, device trust verification, and risk-based authentication policies integrated with Secure Access.</p>
+    </div>
+    </a>
+
+    <a href="{{ url_for('thousandeyes') }}" style="text-decoration:none; color:inherit;">
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; transition:box-shadow .15s;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-eye" style="color:#00a0b0; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">ThousandEyes</div>
+          <div style="font-size:0.72em; color:#999;">Cloud · Network Monitoring</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">End-to-end network path visibility. Monitors connectivity and performance for the ZTNA access path from user to application.</p>
+    </div>
+    </a>
+
+  </div>
+
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CLUSTER INFRASTRUCTURE</h3>
+  </div>
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:12px; margin-bottom:2.5rem;">
+
+    <a href="{{ url_for('cilium') }}" style="text-decoration:none; color:inherit;">
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; transition:box-shadow .15s;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-network-wired" style="color:#0066ff; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">Cilium</div>
+          <div style="font-size:0.72em; color:#999;">k3s DaemonSet · CNI / Network Policy</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">eBPF-based CNI providing Layer 4/7 network policies and microsegmentation. Enforces which pods can communicate and on which ports — without iptables overhead.</p>
+    </div>
+    </a>
+
+    <a href="{{ url_for('tetragon') }}" style="text-decoration:none; color:inherit;">
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; transition:box-shadow .15s;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-shield-halved" style="color:#e08000; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">Tetragon</div>
+          <div style="font-size:0.72em; color:#999;">k3s DaemonSet · Runtime Security</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">eBPF-based runtime security. Monitors process execution, file access, network calls, and syscall activity across all pods in real time. Events are exported to Splunk.</p>
+    </div>
+    </a>
+
+    <a href="{{ url_for('splunk') }}" style="text-decoration:none; color:inherit;">
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; transition:box-shadow .15s;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-compass" style="color:#ff6600; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">Splunk</div>
+          <div style="font-size:0.72em; color:#999;">Pod · Port 30500 · SIEM</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">Log aggregation and SIEM. Ingests security events from Tetragon, Cilium, and application logs for full visibility, dashboards, and alerting.</p>
+    </div>
+    </a>
+
+  </div>
+
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DEMO APPLICATIONS & TOOLS</h3>
+  </div>
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:12px;">
+
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-globe" style="color:#0066ff; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">SSE Check</div>
+          <div style="font-size:0.72em; color:#999;">Pod · Port 30550 · Demo App</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">A demo web application serving as the private resource behind Zero Trust. Accessible only through Cisco Secure Access policies — not directly from the internet.</p>
+    </div>
+
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-desktop" style="color:#555; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">RDP / SSH Servers</div>
+          <div style="font-size:0.72em; color:#999;">Pods · Port 30389 / 30022</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">Remote desktop and SSH servers exposed as private resources. Demonstrates Cisco Secure Access protecting non-web protocols via browser-based agentless access.</p>
+    </div>
+
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-clipboard-check" style="color:#0066ff; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">PoC Playbook</div>
+          <div style="font-size:0.72em; color:#999;">Pod · Port 30250 · Playbook</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">Guided playbook for validating the full PoC — covering Duo, Secure Access, Cilium, and Tetragon with pass/fail tracking.</p>
+    </div>
+
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-heart-pulse" style="color:#5cdd8b; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">Uptime Kuma</div>
+          <div style="font-size:0.72em; color:#999;">Pod · Port 30300 · Status Monitoring</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">Uptime monitoring dashboard. Tracks availability and response times for all services in the cluster with pre-configured health checks.</p>
+    </div>
+
+    <a href="{{ url_for('caldera') }}" style="text-decoration:none; color:inherit;">
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; transition:box-shadow .15s;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-skull-crossbones" style="color:#cc3333; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">Caldera C2</div>
+          <div style="font-size:0.72em; color:#999;">Pod · Port 30888 · Red Team</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">MITRE Caldera automated adversary emulation. Runs attack scenarios against the cluster for validating detection and enforcement.</p>
+    </div>
+    </a>
+
+    <a href="{{ url_for('mcp_servers') }}" style="text-decoration:none; color:inherit;">
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; transition:box-shadow .15s;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-robot" style="color:#0066ff; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">MCP Servers</div>
+          <div style="font-size:0.72em; color:#999;">Pod · Port 30080 · AI Tooling</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">Model Context Protocol servers providing kubectl and cluster management capabilities to AI assistants.</p>
+    </div>
+    </a>
+
+  </div>
+</section>
+
+{% endblock %}

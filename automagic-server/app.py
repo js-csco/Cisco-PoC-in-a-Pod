@@ -31,6 +31,11 @@ app = Flask(__name__)
 def overview():
     return render_template('overview.html')
 
+############# App.Route Links ##############
+@app.route('/links')
+def links():
+    return render_template('links.html')
+
 # Auth
 
 app.secret_key = "supersecret"
