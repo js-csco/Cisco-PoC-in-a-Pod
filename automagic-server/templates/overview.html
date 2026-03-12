@@ -71,101 +71,104 @@
   </p>
 
   <!-- Architecture Diagram -->
-  <div style="max-width:780px; margin:0 auto 2rem auto;">
+  <div style="margin:0 auto 2rem auto;">
   <div style="background:#f8f9fa; border:1px solid #e2e4e8; border-radius:10px; padding:1.5rem; overflow-x:auto;">
     <div style="font-size:0.7em; font-weight:700; color:#aaa; letter-spacing:0.7px; margin-bottom:14px;">ACCESS FLOW</div>
 
-    <div style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap; min-width:620px;">
+    <div style="display:flex; align-items:stretch; gap:6px; flex-wrap:nowrap; min-width:700px;">
 
       <!-- User + Secure Client -->
-      <div style="text-align:center; flex-shrink:0;">
-        <div style="background:#fff; border:2px solid #0066ff; border-radius:8px; padding:10px 14px;">
+      <div style="display:flex; align-items:center; flex-shrink:0;">
+        <div style="background:#fff; border:2px solid #0066ff; border-radius:8px; padding:10px 14px; text-align:center;">
           <span class="fa-solid fa-laptop" style="font-size:1.3rem; color:#0066ff; display:block; margin-bottom:4px;"></span>
           <div style="font-size:0.75em; font-weight:600; color:#333; line-height:1.2;">User Device</div>
           <div style="font-size:0.65em; color:#049fd9; font-weight:600;">Cisco Secure Client</div>
         </div>
       </div>
 
-      <span style="color:#ccc; font-size:1.3rem; flex-shrink:0;">→</span>
+      <span style="color:#ccc; font-size:1.3rem; display:flex; align-items:center; flex-shrink:0;">→</span>
 
-      <!-- Duo as IdP/SSO -->
-      <div style="text-align:center; flex-shrink:0;">
-        <div style="background:#fff; border:2px solid #7c4dff; border-radius:8px; padding:10px 14px;">
-          <span class="fa-solid fa-user-shield" style="font-size:1.3rem; color:#7c4dff; display:block; margin-bottom:4px;"></span>
-          <div style="font-size:0.75em; font-weight:600; color:#333; line-height:1.2;">Cisco Duo</div>
-          <div style="font-size:0.65em; color:#7c4dff;">IdP · SSO · MFA</div>
+      <!-- Combined Cisco Cloud Services box -->
+      <div style="flex-shrink:0; display:flex; align-items:center;">
+        <div style="border:2px solid #049fd9; border-radius:10px; overflow:hidden; background:#fff;">
+          <div style="background:#049fd9; padding:5px 14px; text-align:center;">
+            <span style="color:#fff; font-weight:700; font-size:0.72em; letter-spacing:0.5px;">CISCO CLOUD</span>
+          </div>
+          <div style="display:flex; min-height:80px;">
+            <!-- Duo section -->
+            <div style="padding:10px 14px; text-align:center; border-right:1px solid #e2e4e8; flex:1; min-width:130px;">
+              <span class="fa-solid fa-user-shield" style="font-size:1.1rem; color:#7c4dff; display:block; margin-bottom:4px;"></span>
+              <div style="font-size:0.75em; font-weight:600; color:#333;">Cisco Duo</div>
+              <div style="font-size:0.62em; color:#7c4dff; line-height:1.4; margin-top:3px;">IdP · SSO · MFA<br>Identity Intelligence</div>
+            </div>
+            <!-- Secure Access section -->
+            <div style="padding:10px 14px; text-align:center; border-right:1px solid #e2e4e8; flex:1; min-width:130px;">
+              <span class="fa-solid fa-cloud" style="font-size:1.1rem; color:#049fd9; display:block; margin-bottom:4px;"></span>
+              <div style="font-size:0.75em; font-weight:600; color:#333;">Cisco Secure Access</div>
+              <div style="font-size:0.62em; color:#049fd9; line-height:1.4; margin-top:3px;">ZTA · Internet Security<br>DLP</div>
+            </div>
+            <!-- ThousandEyes section -->
+            <div style="padding:10px 14px; text-align:center; flex:1; min-width:130px;">
+              <span class="fa-solid fa-eye" style="font-size:1.1rem; color:#00a0b0; display:block; margin-bottom:4px;"></span>
+              <div style="font-size:0.75em; font-weight:600; color:#333;">Cisco ThousandEyes</div>
+              <div style="font-size:0.62em; color:#00a0b0; line-height:1.4; margin-top:3px;">Path Monitoring<br>User Experience</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <span style="color:#ccc; font-size:1.3rem; flex-shrink:0;">→</span>
+      <span style="color:#ccc; font-size:1.3rem; display:flex; align-items:center; flex-shrink:0;">→</span>
 
-      <!-- Secure Access cloud -->
-      <div style="text-align:center; flex-shrink:0;">
-        <div style="background:#fff; border:2px solid #049fd9; border-radius:8px; padding:10px 14px;">
-          <span class="fa-solid fa-cloud" style="font-size:1.3rem; color:#049fd9; display:block; margin-bottom:4px;"></span>
-          <div style="font-size:0.75em; font-weight:600; color:#333; line-height:1.2;">Secure Access</div>
-          <div style="font-size:0.68em; color:#999;">ZTNA Cloud</div>
+      <!-- k3s cluster + Internet above -->
+      <div style="flex:1; min-width:330px;">
+
+        <!-- Internet box above k3s -->
+        <div style="background:#fff; border:2px solid #22c55e; border-radius:8px; padding:8px 14px; margin-bottom:6px; display:flex; align-items:center; justify-content:center; gap:10px;">
+          <span class="fa-solid fa-globe" style="font-size:1rem; color:#22c55e; flex-shrink:0;"></span>
+          <div style="font-size:0.75em; font-weight:600; color:#333;">Internet</div>
+          <div style="font-size:0.62em; color:#666;">SaaS Apps · Web Browsing</div>
         </div>
-      </div>
+        <div style="text-align:center; color:#ccc; font-size:1rem; line-height:1; margin-bottom:4px;">↑</div>
 
-      <span style="color:#ccc; font-size:1.3rem; flex-shrink:0;">→</span>
+        <!-- k3s cluster -->
+        <div style="border:2px dashed #0066ff; border-radius:10px; padding:12px 14px;">
+          <div style="font-size:0.7em; font-weight:700; color:#0066ff; letter-spacing:0.6px; margin-bottom:10px;">k3s CLUSTER</div>
 
-      <!-- k3s cluster -->
-      <div style="border:2px dashed #0066ff; border-radius:10px; padding:12px 14px; flex:1; min-width:330px;">
-        <div style="font-size:0.7em; font-weight:700; color:#0066ff; letter-spacing:0.6px; margin-bottom:10px;">k3s CLUSTER</div>
+          <!-- Cilium fabric -->
+          <div style="background:#e8f1ff; border:2px solid #0066ff; border-radius:8px; overflow:hidden; margin-bottom:10px;">
+            <div style="display:flex; gap:8px; padding:10px 10px 8px 10px; flex-wrap:wrap; align-items:stretch;">
+              <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:7px 10px; text-align:center; font-size:0.75em; flex-shrink:0;">
+                <span class="fa-solid fa-plug" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
+                <span style="color:#333; font-weight:500;">Connector</span>
+              </div>
+              <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:7px 10px; text-align:center; font-size:0.75em; flex-shrink:0;">
+                <span class="fa-solid fa-globe" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
+                <span style="color:#333; font-weight:500;">SSE Check</span>
+              </div>
+              <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:7px 10px; text-align:center; font-size:0.75em; flex-shrink:0;">
+                <span class="fa-solid fa-desktop" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
+                <span style="color:#333; font-weight:500;">RDP / SSH</span>
+              </div>
+              <div style="background:#f0f4ff; border:1px dashed #aac0ff; border-radius:6px; padding:7px 8px; text-align:center; font-size:0.72em; color:#5580cc; flex-shrink:0; display:flex; align-items:center;">
+                &hellip; more
+              </div>
+            </div>
 
-        <!-- Cilium fabric: all pods sit inside the blue-tinted area, Cilium bar is the foundation -->
-        <div style="background:#e8f1ff; border:2px solid #0066ff; border-radius:8px; overflow:hidden; margin-bottom:10px;">
-
-          <!-- Pod row: all pods float on Cilium's fabric -->
-          <div style="display:flex; gap:8px; padding:10px 10px 8px 10px; flex-wrap:wrap; align-items:stretch;">
-            <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:7px 10px; text-align:center; font-size:0.75em; flex-shrink:0;">
-              <span class="fa-solid fa-plug" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
-              <span style="color:#333; font-weight:500;">Connector</span>
-            </div>
-            <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:7px 10px; text-align:center; font-size:0.75em; flex-shrink:0;">
-              <span class="fa-solid fa-globe" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
-              <span style="color:#333; font-weight:500;">SSE Check</span>
-            </div>
-            <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:7px 10px; text-align:center; font-size:0.75em; flex-shrink:0;">
-              <span class="fa-solid fa-desktop" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
-              <span style="color:#333; font-weight:500;">RDP / SSH</span>
-            </div>
-            <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:7px 10px; text-align:center; font-size:0.75em; flex-shrink:0;">
-              <span class="fa-solid fa-compass" style="color:#ff6600; display:block; margin-bottom:2px;"></span>
-              <span style="color:#333; font-weight:500;">Splunk</span>
-            </div>
-            <div style="background:#f0f4ff; border:1px dashed #aac0ff; border-radius:6px; padding:7px 8px; text-align:center; font-size:0.72em; color:#5580cc; flex-shrink:0; display:flex; align-items:center;">
-              &hellip; more
+            <!-- Cilium foundation bar -->
+            <div style="background:#0066ff; padding:6px 12px; display:flex; align-items:center; gap:8px;">
+              <span class="fa-solid fa-network-wired" style="color:#fff; font-size:0.9rem; flex-shrink:0;"></span>
+              <span style="color:#fff; font-weight:700; font-size:0.75em; letter-spacing:0.3px;">Cilium</span>
+              <span style="color:rgba(255,255,255,0.75); font-size:0.72em;">— CNI · eBPF network fabric · L4/L7 policies</span>
             </div>
           </div>
 
-          <!-- Cilium foundation bar spanning full width -->
-          <div style="background:#0066ff; padding:6px 12px; display:flex; align-items:center; gap:8px;">
-            <span class="fa-solid fa-network-wired" style="color:#fff; font-size:0.9rem; flex-shrink:0;"></span>
-            <span style="color:#fff; font-weight:700; font-size:0.75em; letter-spacing:0.3px;">Cilium</span>
-            <span style="color:rgba(255,255,255,0.75); font-size:0.72em;">— CNI · eBPF network fabric · L4/L7 policies for all pods</span>
+          <!-- Tetragon bar -->
+          <div style="background:#fff8f0; border:1px dashed #e08000; border-radius:6px; padding:7px 10px; font-size:0.75em; display:flex; align-items:center; gap:8px;">
+            <span class="fa-solid fa-shield-halved" style="color:#e08000; flex-shrink:0;"></span>
+            <span style="color:#664400; font-weight:600;">Tetragon</span>
+            <span style="color:#998060;">— runtime security monitoring across all pods</span>
           </div>
         </div>
-
-        <!-- Tetragon bar -->
-        <div style="background:#fff8f0; border:1px dashed #e08000; border-radius:6px; padding:7px 10px; font-size:0.75em; display:flex; align-items:center; gap:8px;">
-          <span class="fa-solid fa-shield-halved" style="color:#e08000; flex-shrink:0;"></span>
-          <span style="color:#664400; font-weight:600;">Tetragon</span>
-          <span style="color:#998060;">— runtime security monitoring across all pods</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Observability row -->
-    <div style="border-top:1px dashed #ddd; margin-top:14px; padding-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
-      <div style="background:#fff; border:1px solid #e0e0e0; border-radius:6px; padding:8px 14px; font-size:0.78em; color:#555; display:flex; align-items:center; gap:8px; flex:1; min-width:200px;">
-        <span class="fa-solid fa-compass" style="color:#ff6600; flex-shrink:0;"></span>
-        <span><strong>Splunk</strong> — collects events from Tetragon, Cilium, and application logs</span>
-      </div>
-      <div style="background:#fff; border:1px solid #e0e0e0; border-radius:6px; padding:8px 14px; font-size:0.78em; color:#555; display:flex; align-items:center; gap:8px; flex:1; min-width:200px;">
-        <span class="fa-solid fa-eye" style="color:#00a0b0; flex-shrink:0;"></span>
-        <span><strong>ThousandEyes</strong> — network path visibility and performance monitoring</span>
       </div>
     </div>
   </div>
