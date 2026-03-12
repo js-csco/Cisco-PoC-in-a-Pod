@@ -91,11 +91,6 @@ def secure_access():
             # Link to Dashboard!
             return redirect("https://dashboard.sse.cisco.com/org/8219751/secure/securityprofiles")
 
-        # Goto Kanboard
-        if action == "gotokanboard":
-            # Link to Kanboard on VM IP port 8090
-            return redirect("https://www.cisco.com")
-
         try:
             token = ensure_valid_token(api_key, api_secret)
 
@@ -232,23 +227,31 @@ def duo():
         integration_key = request.form.get('integration_key')
         secret_key = request.form.get('secret_key')
         action = request.form.get('action')
-        
-        # Store credentials in session for future use
+
+        # Store credentials in session whenever explicitly submitted
         if api_hostname and integration_key and secret_key:
             session['duo_api_hostname'] = api_hostname
             session['duo_integration_key'] = integration_key
             session['duo_secret_key'] = secret_key
-        
-        # Validate credentials are provided (either from form or session)
+
+        # Fall back to session-stored credentials
         api_hostname = api_hostname or session.get('duo_api_hostname')
         integration_key = integration_key or session.get('duo_integration_key')
         secret_key = secret_key or session.get('duo_secret_key')
-        
+
         if not all([api_hostname, integration_key, secret_key]):
             flash("⚠️ Please provide all Duo credentials (API hostname, integration key, and secret key)")
             return redirect(url_for('duo'))
-        
+
         try:
+            # Action: AUTHENTICATE
+            if action == 'auth':
+                from scripts.duo.duo_automation import check_credentials
+                check_credentials(api_hostname, integration_key, secret_key)
+                session['duo_authenticated'] = True
+                flash("✅ Authentication successful!")
+                return redirect(url_for('duo'))
+
             # Action: SETUP DUO (Complete setup with up to 3 users)
             if action == 'setup_duo':
                 # Collect up to 3 users; skip rows where either field is blank
@@ -294,50 +297,6 @@ def duo():
                     for error in result['errors']:
                         flash(f"⚠️ {error}")
             
-            # Action: GET INTEGRATIONS (list all integrations)
-            elif action == 'get_integrations':
-                from scripts.duo.duo_automation import list_integrations
-                
-                integrations = list_integrations(
-                    api_hostname=api_hostname,
-                    integration_key=integration_key,
-                    secret_key=secret_key
-                )
-                
-                if integrations:
-                    flash(f"📋 Found {len(integrations)} integration(s):")
-                    for integration in integrations:
-                        name = integration.get('name', 'N/A')
-                        int_type = integration.get('type', 'N/A')
-                        int_key = integration.get('integration_key', 'N/A')
-                        flash(f"• {name} | Type: {int_type} | Key: {int_key}")
-                else:
-                    flash("ℹ️ No integrations found")
-            
-            # Action: CREATE INTEGRATIONS
-            elif action == 'create_integrations':
-                from scripts.duo.duo_automation import create_integration
-                
-                # Create Generic SAML Integration
-                saml_result = create_integration(
-                    api_hostname=api_hostname,
-                    integration_key=integration_key,
-                    secret_key=secret_key,
-                    name='PoC Secure Access - SAML and Identity',
-                    integration_type='sso-generic'
-                )
-                
-                if saml_result['success']:
-                    flash(f"✅ Generic SAML integration created successfully")
-                    flash(f"   Name: PoC Secure Access - SAML and Identity")
-                    flash(f"   Type: sso-generic")
-                    flash(f"🔑 Integration Key: {saml_result['integration_key']}")
-                    flash(f"🔐 Secret Key: {saml_result['secret_key']}")
-                    flash(f"🆔 Integration ID: {saml_result['integration_id']}")
-                    flash(f"✅ Integration assigned to 'PoC Users' group")
-                else:
-                    flash(f"⚠️ Error creating integration: {saml_result['error']}")
-        
         except Exception as e:
             flash(f"⚠️ Error: {str(e)}")
         
@@ -355,14 +314,12 @@ def cilium():
         try:
             if action == 'allow_all':
                 results = apply_allow_all()
-                for r in results:
-                    flash(f"✅ {r}")
-                flash("Traffic mode set to: Allow All")
             elif action == 'zero_trust':
                 results = apply_zero_trust()
-                for r in results:
-                    flash(f"✅ {r}")
-                flash("Traffic mode set to: Zero Trust Application Access")
+            else:
+                results = []
+            for msg in results:
+                flash(f"✅ {msg}")
         except Exception as e:
             flash(f"⚠️ Error applying Cilium policy: {e}")
         return redirect(url_for('cilium'))
@@ -471,17 +428,164 @@ def tetragon_events():
                 "action": process_kprobe.get("action", ""),
                 "func_name": process_kprobe.get("function_name", ""),
             })
+        pod_filter = request.args.get('pod', '').strip()
+        if pod_filter:
+            events = [e for e in events if e.get('pod', '').startswith(pod_filter)]
         return jsonify({"events": events[-50:], "total": len(events)})
     except Exception as e:
         return jsonify({"events": [], "error": str(e)})
+
+@app.route('/caldera', methods=['GET', 'POST'])
+def caldera():
+    from scripts.caldera import (is_available, is_deployed, get_agents, get_operations,
+                                  setup_demo_adversaries, get_demo_adversaries)
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'deploy_caldera':
+            from scripts.caldera import deploy_caldera
+            try:
+                deploy_caldera()
+                flash("✅ Caldera deployed — allow ~60 s for the C2 server to start.")
+            except Exception as e:
+                flash(f"⚠️ Deployment failed: {e}")
+        elif action == 'setup_demo':
+            try:
+                msgs = setup_demo_adversaries()
+                for m in msgs:
+                    flash(f"✅ {m}")
+            except Exception as e:
+                flash(f"⚠️ Setup failed: {e}")
+        elif action == 'run_operation':
+            from scripts.caldera import run_operation
+            adversary_id = request.form.get('adversary_id', '').strip()
+            op_name = request.form.get('op_name', 'PoC Attack').strip()
+            try:
+                op = run_operation(op_name, adversary_id)
+                flash(f"⚔️ '{op_name}' launched — watch Tetragon below for detections!")
+            except Exception as e:
+                flash(f"⚠️ Failed to launch: {e}")
+        return redirect(url_for('caldera'))
+
+    caldera_deployed = is_deployed()
+    caldera_available = is_available()
+    agents, operations, demo_scenarios = [], [], []
+    if caldera_available:
+        try:
+            agents = get_agents()
+        except Exception:
+            pass
+        try:
+            operations = get_operations()
+        except Exception:
+            pass
+        try:
+            demo_scenarios = get_demo_adversaries()
+        except Exception:
+            pass
+
+    return render_template('caldera.html',
+                           caldera_deployed=caldera_deployed,
+                           caldera_available=caldera_available,
+                           agents=agents,
+                           operations=operations,
+                           demo_scenarios=demo_scenarios)
+
+
+@app.route('/caldera/status')
+def caldera_status():
+    from flask import jsonify
+    from scripts.caldera import is_available, get_operations
+    import requests as _requests, os as _os
+    if not is_available():
+        return jsonify({"error": "Caldera offline"})
+    try:
+        caldera_url = _os.environ.get("CALDERA_URL", "http://caldera.piap.svc.cluster.local:8888")
+        api_key = _os.environ.get("CALDERA_API_KEY", "ADMIN123")
+        r = _requests.get(f"{caldera_url}/api/v2/agents",
+                          headers={"KEY": api_key, "Content-Type": "application/json"},
+                          timeout=5)
+        r.raise_for_status()
+        all_agents = r.json()
+        return jsonify({
+            "agents": all_agents,
+            "operations": get_operations(),
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
 
 @app.route('/mcp-servers')
 def mcp_servers():
     return render_template('mcp-servers.html')
 
-@app.route('/splunk')
+@app.route('/splunk', methods=['GET', 'POST'])
 def splunk():
-    return render_template('splunk.html')
+    from scripts.splunk import (
+        is_available, hec_is_healthy, get_forwarder_status,
+        get_enabled_sources, configure_log_forwarding,
+        SPLUNKBASE_APPS, get_splunkbase_app_status,
+    )
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        if action == 'deploy_splunk':
+            from scripts.splunk import deploy_splunk
+            license_content = request.form.get('license_content', '').strip()
+            try:
+                has_license = deploy_splunk(license_content)
+                if has_license:
+                    flash("✅ Splunk deployed with Enterprise license — allow ~5 min for startup.")
+                else:
+                    flash("✅ Splunk deployed (60-day Enterprise trial) — allow ~5 min for startup.")
+            except Exception as e:
+                flash(f"⚠️ Deployment failed: {e}")
+            return redirect(url_for('splunk'))
+
+        if action == 'configure_logs':
+            sources = {
+                'tetragon': 'log_tetragon' in request.form,
+                'hubble':   'log_hubble'   in request.form,
+                'cilium':   'log_cilium'   in request.form,
+            }
+            try:
+                configure_log_forwarding(sources)
+                flash("Log forwarding updated — Fluent Bit pods restarting.")
+            except Exception as e:
+                flash(f"Failed to update log forwarding: {e}")
+            return redirect(url_for('splunk'))
+
+        if action == 'install_app':
+            from scripts.splunk import install_splunkbase_app
+            app_id  = request.form.get('app_id', '').strip()
+            sb_user = request.form.get('splunkbase_username', '').strip()
+            sb_pass = request.form.get('splunkbase_password', '').strip()
+            app_name = next((a['display'] for a in SPLUNKBASE_APPS if str(a['id']) == app_id), app_id)
+            if not app_id or not sb_user or not sb_pass:
+                flash("⚠️ App ID, Splunk.com username, and password are all required.")
+            else:
+                try:
+                    install_splunkbase_app(int(app_id), sb_user, sb_pass)
+                    flash(f"✅ {app_name} installed — restart Splunk to activate.")
+                except Exception as e:
+                    flash(f"⚠️ Install failed: {e}")
+            return redirect(url_for('splunk'))
+
+    splunk_available = is_available()
+    forwarder_desired, forwarder_ready = get_forwarder_status()
+    app_status = get_splunkbase_app_status() if splunk_available else {}
+    return render_template(
+        'splunk.html',
+        splunk_available=splunk_available,
+        hec_healthy=hec_is_healthy() if splunk_available else False,
+        forwarder_desired=forwarder_desired,
+        forwarder_ready=forwarder_ready,
+        enabled_sources=get_enabled_sources(),
+        server_ip=request.host.split(':')[0],
+        splunkbase_apps=SPLUNKBASE_APPS,
+        app_status=app_status,
+    )
 
 @app.route('/thousandeyes')
 def thousandeyes():
@@ -494,5 +598,7 @@ def help_page():
 
 
 if __name__ == "__main__":
-    # Run Flask on port 9100 and listen on all interfaces
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    # Run Flask on port 8080 and listen on all interfaces.
+    # debug=False disables the Werkzeug file-reloader which would call os.execv()
+    # on every file-system change (hostPath mount) and cause the container to exit.
+    app.run(host="0.0.0.0", port=8080, debug=False)

@@ -1,0 +1,220 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: uptime-kuma-seed-script
+  namespace: piap
+data:
+  seed.py: |
+    """
+    Uptime-Kuma monitor seeder.
+    Connects via Socket.IO, creates an admin user (if first run),
+    and adds HTTP/TCP monitors for all PiAP services.
+    """
+    import sys
+    import time
+    import socketio
+
+    KUMA_URL = "http://uptime-kuma.piap.svc.cluster.local:3001"
+    ADMIN_USER = "admin"
+    ADMIN_PASS = "piap"
+
+    MONITORS = [
+        {
+            "name": "Dashy",
+            "type": "http",
+            "url": "http://dashy.piap.svc.cluster.local:9100",
+            "interval": 60,
+            "maxretries": 3,
+        },
+        {
+            "name": "Automagic",
+            "type": "http",
+            "url": "http://automagic.piap.svc.cluster.local:9200",
+            "interval": 60,
+            "maxretries": 3,
+        },
+        {
+            "name": "SSH Server",
+            "type": "port",
+            "hostname": "ssh-server.piap.svc.cluster.local",
+            "port": 2222,
+            "interval": 60,
+            "maxretries": 3,
+        },
+        {
+            "name": "RDP Server",
+            "type": "port",
+            "hostname": "rdp-server.piap.svc.cluster.local",
+            "port": 3389,
+            "interval": 60,
+            "maxretries": 3,
+        },
+        {
+            "name": "Kubectl MCP",
+            "type": "http",
+            "url": "http://kubectl-mcp.piap.svc.cluster.local:8080/healthz",
+            "interval": 60,
+            "maxretries": 3,
+        },
+        {
+            "name": "SSE Check",
+            "type": "http",
+            "url": "http://sse-check.piap.svc.cluster.local:9550",
+            "interval": 60,
+            "maxretries": 3,
+        },
+        {
+            "name": "Testcases",
+            "type": "http",
+            "url": "http://testcases.piap.svc.cluster.local:9250",
+            "interval": 60,
+            "maxretries": 3,
+        },
+        {
+            "name": "Caldera C2",
+            "type": "http",
+            "url": "http://caldera.piap.svc.cluster.local:8888",
+            "interval": 120,
+            "maxretries": 3,
+        },
+    ]
+
+    def wait_for_kuma(max_retries=30, delay=10):
+        """Wait for uptime-kuma to be reachable."""
+        import urllib.request
+        for i in range(max_retries):
+            try:
+                urllib.request.urlopen(KUMA_URL, timeout=5)
+                print(f"Uptime-Kuma is reachable at {KUMA_URL}")
+                return True
+            except Exception:
+                print(f"Waiting for Uptime-Kuma... ({i+1}/{max_retries})")
+                time.sleep(delay)
+        return False
+
+    def main():
+        if not wait_for_kuma():
+            print("ERROR: Uptime-Kuma not reachable after retries. Exiting.")
+            sys.exit(1)
+
+        # Extra delay for Socket.IO to be fully ready
+        time.sleep(5)
+
+        sio = socketio.Client()
+        result = {}
+
+        @sio.event
+        def connect():
+            print("Connected to Uptime-Kuma Socket.IO")
+
+        @sio.event
+        def disconnect():
+            print("Disconnected from Uptime-Kuma")
+
+        try:
+            sio.connect(KUMA_URL, transports=["websocket"])
+        except Exception as e:
+            print(f"ERROR: Could not connect via Socket.IO: {e}")
+            sys.exit(1)
+
+        # Try to set up initial admin user (only works on first run)
+        try:
+            response = sio.call("setup", {
+                "username": ADMIN_USER,
+                "password": ADMIN_PASS,
+            }, timeout=10)
+            print(f"Setup response: {response}")
+        except Exception as e:
+            print(f"Setup skipped (likely already configured): {e}")
+
+        # Login
+        try:
+            response = sio.call("login", {
+                "username": ADMIN_USER,
+                "password": ADMIN_PASS,
+                "token": "",
+            }, timeout=10)
+            if response.get("ok"):
+                print("Logged in successfully")
+            else:
+                print(f"Login failed: {response}")
+                sio.disconnect()
+                sys.exit(1)
+        except Exception as e:
+            print(f"ERROR: Login failed: {e}")
+            sio.disconnect()
+            sys.exit(1)
+
+        # Get existing monitors to avoid duplicates
+        existing = set()
+        try:
+            response = sio.call("getMonitorList", timeout=10)
+            if isinstance(response, dict):
+                for mid, mon in response.items():
+                    existing.add(mon.get("name"))
+            print(f"Existing monitors: {existing}")
+        except Exception as e:
+            print(f"Could not fetch existing monitors: {e}")
+
+        # Add monitors
+        added = 0
+        for monitor in MONITORS:
+            if monitor["name"] in existing:
+                print(f"  Skipping '{monitor['name']}' (already exists)")
+                continue
+
+            try:
+                response = sio.call("add", monitor, timeout=10)
+                if response.get("ok"):
+                    print(f"  Added monitor: {monitor['name']}")
+                    added += 1
+                else:
+                    print(f"  Failed to add '{monitor['name']}': {response}")
+            except Exception as e:
+                print(f"  Error adding '{monitor['name']}': {e}")
+
+        print(f"\nDone! Added {added} new monitors.")
+        sio.disconnect()
+
+    if __name__ == "__main__":
+        main()
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: uptime-kuma-seed
+  namespace: piap
+  labels:
+    app: uptime-kuma-seed
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: uptime-kuma-seed
+    spec:
+      containers:
+        - name: seed
+          image: python:3.11-slim
+          command:
+            - /bin/sh
+            - -c
+            - |
+              pip install --quiet python-socketio[client] websocket-client && \
+              python /scripts/seed.py
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          volumeMounts:
+            - name: seed-script
+              mountPath: /scripts
+      restartPolicy: OnFailure
+      volumes:
+        - name: seed-script
+          configMap:
+            name: uptime-kuma-seed-script

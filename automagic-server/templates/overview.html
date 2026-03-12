@@ -4,11 +4,13 @@
 {% block title %}Overview — Cisco PoC in a Pod{% endblock %}
 
 {% block content %}
-<h1 style="color:#111; margin-bottom:0.4rem;">Overview</h1>
-<p style="color:#666; margin-top:0; margin-bottom:2.5rem; font-size:0.95em; line-height:1.6;">
-  A self-contained Kubernetes demo environment showcasing Cisco's
-  <strong>Zero Trust Application Access</strong> portfolio — fully integrated and ready to run.
-</p>
+<div style="margin-bottom:2.5rem;">
+  <h1 style="color:#111; margin-bottom:0.4rem;">Overview</h1>
+  <p style="color:#666; margin-top:0; margin-bottom:0; font-size:0.95em; line-height:1.6;">
+    A self-contained Kubernetes demo environment showcasing Cisco's
+    <strong>Zero Trust Application Access</strong> portfolio — fully integrated and ready to run.
+  </p>
+</div>
 
 <!-- WHAT IS POC IN A POD -->
 <section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
@@ -69,7 +71,8 @@
   </p>
 
   <!-- Architecture Diagram -->
-  <div style="background:#f8f9fa; border:1px solid #e2e4e8; border-radius:10px; padding:1.5rem; margin-bottom:2rem; overflow-x:auto;">
+  <div style="max-width:780px; margin:0 auto 2rem auto;">
+  <div style="background:#f8f9fa; border:1px solid #e2e4e8; border-radius:10px; padding:1.5rem; overflow-x:auto;">
     <div style="font-size:0.7em; font-weight:700; color:#aaa; letter-spacing:0.7px; margin-bottom:14px;">ACCESS FLOW</div>
 
     <div style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap; min-width:580px;">
@@ -115,7 +118,7 @@
             </div>
             <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:7px 10px; text-align:center; font-size:0.75em; flex-shrink:0;">
               <span class="fa-solid fa-globe" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
-              <span style="color:#333; font-weight:500;">Web App</span>
+              <span style="color:#333; font-weight:500;">SSE Check</span>
             </div>
             <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:7px 10px; text-align:center; font-size:0.75em; flex-shrink:0;">
               <span class="fa-solid fa-desktop" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
@@ -158,6 +161,7 @@
         <span><strong>ThousandEyes</strong> — network path visibility and performance monitoring</span>
       </div>
     </div>
+  </div>
   </div>
 
   <!-- Component Cards -->
@@ -234,11 +238,11 @@
       <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
         <span class="fa-solid fa-globe" style="color:#0066ff; font-size:1.1rem; flex-shrink:0;"></span>
         <div>
-          <div style="font-weight:600; color:#111; font-size:0.88em;">Demo Web App</div>
-          <div style="font-size:0.72em; color:#999;">Pod · Port 30400 · nginx</div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">SSE Check</div>
+          <div style="font-size:0.72em; color:#999;">Pod · Port 30550 · Demo App</div>
         </div>
       </div>
-      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">A sample nginx web application serving as the private resource behind Zero Trust. Accessible only through Cisco Secure Access policies — not directly from the internet.</p>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">A demo web application serving as the private resource behind Zero Trust. Accessible only through Cisco Secure Access policies — not directly from the internet.</p>
     </div>
 
     <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
@@ -261,6 +265,17 @@
         </div>
       </div>
       <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">Self-hosted link dashboard. Provides a single start page with tiles linking to all services in the PoC environment.</p>
+    </div>
+
+    <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="fa-solid fa-clipboard-check" style="color:#0066ff; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div style="font-weight:600; color:#111; font-size:0.88em;">PoC Playbook</div>
+          <div style="font-size:0.72em; color:#999;">Pod · Port 30250 · Test Cases</div>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.82em; line-height:1.55; margin:0;">Guided test case runner for validating the full PoC — covering Duo, Secure Access, Cilium, and Tetragon with pass/fail tracking.</p>
     </div>
 
   </div>

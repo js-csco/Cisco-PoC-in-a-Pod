@@ -4,6 +4,7 @@ pageInfo:
   logo: https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png
   navLinks:
   - title: Help - Mail to joschwei@cisco.com
+    url: mailto:joschwei@cisco.com
 
 appConfig:
   theme: lissy
@@ -41,10 +42,15 @@ sections:
         statusCheck: false
   - name: Containers
     items:
-      - title: Web Server
-        description: nginx on port 80
+      - title: Automagic Server
+        description: Automate your Cisco Configuration
         icon: fas fa-server
-        url: http://SERVER_IP:30400
+        url: http://SERVER_IP:30200
+        statusCheck: true
+      - title: SSE Check
+        description: Verify your access path — ZTNA or direct
+        icon: fas fa-check-circle
+        url: http://SERVER_IP:30550
         statusCheck: true
       - title: SSH Server
         description: SSH on port 2222, user remote_user & password ssh_access
@@ -54,19 +60,25 @@ sections:
         description: (Empty) RDP on port 3389, user remote_user & password rdp_access
         icon: fas fa-server
         statusCheck: false
-      - title: Automagic Server
-        description: Automate your Cisco Configuration
-        icon: fas fa-server
-        url: http://SERVER_IP:30200
-      - title: Hubble UI 
+      - title: Hubble UI
         description: Cilium Hubble UI to observe flows
         icon: fas fa-server
         url: http://SERVER_IP:30800
         statusCheck: true
-      - title: Splunk 
+      - title: Caldera C2
+        description: MITRE Caldera adversary emulation — red team attack launcher, user admin & password admin
+        icon: fas fa-skull-crossbones
+        url: http://SERVER_IP:30600
+        statusCheck: true
+      - title: Splunk
         description: Aggregate Telemetry and Logs
         icon: fas fa-server
         url: http://SERVER_IP:30500
+        statusCheck: true
+      - title: PoC Playbook
+        description: Guided test case runner for validating the full PoC
+        icon: fas fa-book
+        url: http://SERVER_IP:30250
         statusCheck: true
   - name: MCP Servers
     items:
@@ -75,13 +87,6 @@ sections:
         icon: fas fa-dharmachakra
         url: http://SERVER_IP:30050/mcp
         statusCheck: true
-  - name: Test Guide
-    items:
-      - title: Kanboard Guide
-        description: Pre-defined test cases & guides
-        url: http://SERVER_IP:30300
-        icon: fas fa-book
-        statusCheck: false
   - name: Links
     items:
       - title: QUIC Checker

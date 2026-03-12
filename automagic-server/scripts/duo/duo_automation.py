@@ -6,6 +6,16 @@ Creates users, groups, manages group membership, and creates integrations for Po
 import duo_client
 
 
+def check_credentials(api_hostname, integration_key, secret_key):
+    """Verify Duo Admin API credentials. Raises on failure."""
+    admin = duo_client.Admin(
+        ikey=integration_key,
+        skey=secret_key,
+        host=api_hostname,
+    )
+    admin.check()
+
+
 def setup_duo_complete(api_hostname, integration_key, secret_key, users_list):
     """
     Complete Duo setup workflow:

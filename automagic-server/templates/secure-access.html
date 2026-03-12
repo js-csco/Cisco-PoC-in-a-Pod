@@ -3,30 +3,14 @@
 {% block title %}Cisco Secure Access - Cisco PoC in a Pod{% endblock %}
 
 {% block content %}
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul class="messages" style="list-style:none; padding:0; margin-bottom:1.5rem;">
-      {% for message in messages %}
-        <li style="background:#e8f0fe; color:#333; padding:8px 12px; border-radius:6px; margin-bottom:6px;">{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-{% endwith %}
 
 <form method="POST" style="display:flex; flex-direction:column; gap:3rem;">
-  <h1>Secure Access</h1>
-
-  <!-- ABOUT -->
-  <section style="background:#f8f9fa; padding:20px; border-radius:8px; border-left:4px solid #0066ff;">
-    <p style="color:#555; font-size:0.95em; margin:0 0 10px 0; line-height:1.6;">
-      Cisco Secure Access is a converged SSE platform that unifies Zero Trust Network Access (ZTNA),
-      Secure Web Gateway (SWG), CASB, DNS-layer security, and DLP into a single cloud-delivered service.
+  <div>
+    <h1 style="color:#111; margin-bottom:0.4rem;">Secure Access</h1>
+    <p style="color:#666; margin:0; font-size:0.95em; line-height:1.6;">
+      Converged SSE platform unifying ZTNA, SWG, CASB, DNS-layer security, and DLP into a single cloud-delivered service.
     </p>
-    <p style="color:#555; font-size:0.95em; margin:0; line-height:1.6;">
-      Use the sections below to automate the initial configuration of your PoC environment directly
-      via the Cisco Secure Access APIs.
-    </p>
-  </section>
+  </div>
 
   <div style="background:#e8f0fe; border:1px solid #c5d5f8; border-radius:8px; padding:12px 16px; font-size:0.88em; color:#1a3a6b;">
     <strong>Note:</strong> User &amp; group integration with Cisco Duo is already configured via the
@@ -294,24 +278,6 @@
       <li>Install the following Modules: <strong>Core VPN</strong>, <strong>ZTA</strong>, <strong>DART</strong>, <strong>ThousandEyes</strong></li>
       <li>Enroll with Test User in ZTA Module</li>
     </ol>
-  </section>
-
-  <!-- TEST INTERNET ACCESS -->
-  <section style="padding-bottom:2.5rem;">
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">TEST INTERNET ACCESS</h3>
-    </div>
-
-    <p style="margin-top:0; margin-bottom:20px; color:#555; font-size:0.95em; line-height:1.6;">
-      Go to Kanboard and follow the Cisco Secure Access Internet Access use cases at your own pace.
-    </p>
-
-    <button type="submit" name="action" value="gotokanboard"
-            style="background-color:#555; color:#fff; border:none; padding:10px 20px;
-                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
-      Open Kanboard →
-    </button>
   </section>
 
   {{ super() }}

@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cisco PoC Playbook</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --blue:   #0066ff;
+      --dark:   #005073;
+      --cyan:   #049fd9;
+      --green:  #16a34a;
+      --red:    #dc2626;
+      --orange: #ea580c;
+      --gray:   #6b7280;
+      --purple: #7c4dff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f5f7fa;
+      color: #222;
+      font-size: 15px;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(90deg, var(--dark), var(--cyan));
+      color: #fff;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    .header-left { display: flex; align-items: center; gap: 20px; }
+    .header-left .t   { font-size: 1.2em; font-weight: 600; }
+    .header-left .sub { font-size: 0.82em; opacity: 0.8; margin-top: 2px; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    #overallBadge {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 0.82em;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    #resetBtn {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.82em;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    #resetBtn:hover { background: rgba(255,255,255,0.22); }
+
+    /* ── Invite Modal ── */
+    #inviteModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    #inviteModal.active { display: flex; }
+    .modal-box {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      padding: 2rem 2.2rem 1.8rem;
+      max-width: 520px;
+      width: 90%;
+      position: relative;
+      color: #333;
+    }
+    .modal-box h2 {
+      margin: 0 0 1rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #111;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .modal-box p { margin: 0 0 0.8rem; font-size: 0.93rem; line-height: 1.55; }
+    .modal-box ul {
+      margin: 0.4rem 0 0 1.2rem;
+      padding: 0;
+      font-size: 0.93rem;
+      line-height: 1.75;
+    }
+    .modal-box ul li ul { list-style-type: circle; margin-top: 0.2rem; }
+    .modal-close {
+      position: absolute;
+      top: 12px; right: 14px;
+      background: none; border: none;
+      font-size: 1.3rem; color: #999;
+      cursor: pointer; padding: 2px 6px;
+      border-radius: 4px; transition: background 0.12s;
+    }
+    .modal-close:hover { background: #f0f0f0; color: #333; }
+
+    /* ── Tab bar ── */
+    nav {
+      background: #fff;
+      border-bottom: 2px solid #e5e7eb;
+      padding: 0 32px;
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      padding: 14px 20px;
+      font-size: 0.88em;
+      font-weight: 600;
+      color: #6b7280;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s;
+      position: relative;
+      top: 2px;
+    }
+    .tab-btn:hover { color: var(--blue); }
+    .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .tab-count {
+      background: #e5e7eb;
+      color: #374151;
+      border-radius: 10px;
+      padding: 1px 7px;
+      font-size: 0.78em;
+      font-weight: 700;
+      transition: background 0.2s, color 0.2s;
+    }
+    .tab-btn.active .tab-count { background: #dbeafe; color: var(--blue); }
+
+    /* ── Main content ── */
+    main {
+      max-width: 820px;
+      margin: 32px auto 60px;
+      padding: 0 20px;
+    }
+
+    /* ── Tab panel ── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Tab header ── */
+    .tab-header {
+      margin-bottom: 24px;
+    }
+    .tab-header h2 {
+      font-size: 1.1rem;
+      color: #111;
+      margin-bottom: 4px;
+    }
+    .tab-header p {
+      color: #666;
+      font-size: 0.88em;
+      margin-bottom: 16px;
+    }
+    .progress-bar-wrap {
+      background: #e5e7eb;
+      border-radius: 6px;
+      height: 8px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 6px;
+      transition: width 0.3s;
+    }
+    .progress-label {
+      font-size: 0.78em;
+      color: #6b7280;
+      margin-top: 6px;
+    }
+    .progress-label span { font-weight: 700; color: #374151; }
+
+    /* ── Test case card ── */
+    .tc-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-left: 4px solid #d1d5db;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      overflow: hidden;
+      transition: border-left-color 0.2s;
+    }
+    .tc-card[data-status="pass"]  { border-left-color: var(--green); }
+    .tc-card[data-status="fail"]  { border-left-color: var(--red); }
+    .tc-card[data-status="skip"]  { border-left-color: var(--orange); }
+
+    .tc-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px 18px 12px;
+    }
+    .tc-num {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #f3f4f6;
+      color: #6b7280;
+      font-size: 0.78em;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+    .tc-card[data-status="pass"]  .tc-num { background: #dcfce7; color: var(--green); }
+    .tc-card[data-status="fail"]  .tc-num { background: #fee2e2; color: var(--red); }
+    .tc-card[data-status="skip"]  .tc-num { background: #ffedd5; color: var(--orange); }
+
+    .tc-body { flex: 1; }
+    .tc-title {
+      font-weight: 600;
+      color: #111;
+      font-size: 0.95em;
+      margin-bottom: 4px;
+    }
+    .tc-desc {
+      font-size: 0.83em;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .tc-status-badge {
+      flex-shrink: 0;
+      font-size: 0.72em;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: #f3f4f6;
+      color: #9ca3af;
+    }
+    .tc-card[data-status="pass"]  .tc-status-badge { background: #dcfce7; color: var(--green); }
+    .tc-card[data-status="fail"]  .tc-status-badge { background: #fee2e2; color: var(--red); }
+    .tc-card[data-status="skip"]  .tc-status-badge { background: #ffedd5; color: var(--orange); }
+
+    /* ── Steps ── */
+    .tc-steps {
+      padding: 0 18px 0 58px;
+      margin-bottom: 12px;
+    }
+    .tc-steps ol {
+      padding-left: 16px;
+      font-size: 0.82em;
+      color: #555;
+      line-height: 1.9;
+    }
+
+    /* ── Actions ── */
+    .tc-actions {
+      padding: 10px 18px 14px 58px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-pass, .btn-fail, .btn-skip, .btn-reset-tc, .btn-notes {
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 0.8em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn-pass  { background: #dcfce7; color: var(--green); }
+    .btn-fail  { background: #fee2e2; color: var(--red); }
+    .btn-skip  { background: #ffedd5; color: var(--orange); }
+    .btn-reset-tc { background: #f3f4f6; color: #6b7280; }
+    .btn-notes { background: #eff6ff; color: var(--blue); margin-left: auto; }
+    .btn-pass:hover, .btn-fail:hover, .btn-skip:hover,
+    .btn-reset-tc:hover, .btn-notes:hover { opacity: 0.8; }
+    .btn-pass:active, .btn-fail:active, .btn-skip:active { transform: scale(0.97); }
+
+    .tc-card[data-status="pass"]  .btn-pass,
+    .tc-card[data-status="fail"]  .btn-fail,
+    .tc-card[data-status="skip"]  .btn-skip {
+      box-shadow: 0 0 0 2px currentColor;
+    }
+
+    /* ── Notes ── */
+    .tc-notes {
+      display: none;
+      padding: 0 18px 14px 58px;
+    }
+    .tc-notes.open { display: block; }
+    .tc-notes textarea {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.82em;
+      color: #333;
+      resize: vertical;
+      min-height: 64px;
+      font-family: inherit;
+    }
+    .tc-notes textarea:focus { outline: none; border-color: var(--blue); }
+
+    /* ── Section header (within a tab) ── */
+    .tc-section-header {
+      font-size: 0.78em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #6b7280;
+      margin: 28px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .tc-section-header:first-child { margin-top: 0; }
+
+    footer {
+      text-align: center;
+      color: #aaa;
+      font-size: 0.78em;
+      padding: 12px 0 28px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div>
+      <div class="t">Cisco PoC Playbook</div>
+      <div class="sub">Guided test cases for Zero Trust Application Access</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div id="overallBadge">0 / 0 passed</div>
+    <button id="resetBtn" onclick="resetAll()">↺ Reset All</button>
+    <button id="inviteBtn" onclick="document.getElementById('inviteModal').classList.add('active')" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 14px;border-radius:6px;font-size:0.82em;font-weight:500;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.22)'" onmouseout="this.style.background='rgba(255,255,255,0.12)'">
+      👤 Invite your Cisco SE
+    </button>
+  </div>
+</header>
+
+<!-- Invite Cisco SE Modal -->
+<div id="inviteModal" onclick="if(event.target===this)this.classList.remove('active')">
+  <div class="modal-box">
+    <button class="modal-close" onclick="document.getElementById('inviteModal').classList.remove('active')" title="Close">&times;</button>
+    <h2>👤 Invite your Cisco SE</h2>
+    <p>If you want to invite your Cisco SE to have remote access to the test cases, please do the following:</p>
+    <ul>
+      <li>Create Duo user in Group <strong>"PoC Users"</strong></li>
+      <li>Allow browser based access to PoC Playbook
+        <ul>
+          <li>Cisco Secure Access › Resources › Private Resources › Edit PoC Playbook › Allow Browser based Access &amp; change protocol to HTTP</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<nav id="tabNav"></nav>
+
+<main>
+  <div id="tabContent"></div>
+</main>
+
+<footer>Cisco Secure Access · PoC in a Pod · PoC Playbook</footer>
+
+<script>
+// ─────────────────────────────────────────────
+// Test case definitions
+// ─────────────────────────────────────────────
+const TABS = [
+  {
+    id: 'duo',
+    label: 'Duo & Identity Intelligence',
+    icon: 'fa-user-shield',
+    subtitle: 'MFA, passwordless login, and identity threat detection.',
+    cases: [
+      {
+        id: 'duo-1',
+        title: 'User Enrollment',
+        desc: 'Test user completes Duo enrollment via the enrollment email.',
+        steps: [
+          'Log in to the Duo Admin Panel and confirm the test user received an enrollment email.',
+          'Open the enrollment email and click the link.',
+          'Enroll using Duo Mobile or a passkey.',
+          'Confirm the user shows as <strong>Active</strong> in Duo Admin Panel → Users.',
+        ],
+      },
+      {
+        id: 'duo-5',
+        title: 'Identity Intelligence — Dashboard Access',
+        desc: 'Cisco Identity Intelligence dashboard launches successfully.',
+        steps: [
+          'In Cisco Secure Access, go to <strong>Monitoring → Cisco Identity Intelligence</strong>.',
+          'Click <strong>Launch Identity Intelligence</strong>.',
+          'Confirm the dashboard opens and loads user data.',
+        ],
+      },
+      {
+        id: 'duo-6',
+        title: 'Identity Intelligence — User Activity Visible',
+        desc: 'User activity and risk scores are visible in the Identity Intelligence dashboard.',
+        steps: [
+          'In Identity Intelligence, navigate to the Users section.',
+          'Find the test user and confirm recent activity is logged.',
+          'Review the risk score and verify it reflects recent authentication events.',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'secureaccess',
+    label: 'Secure Access',
+    icon: 'fa-cloud',
+    subtitle: 'Client-based and browser-based private access, internet security, DLP, and AI guardrails.',
+    sections: [
+      {
+        title: 'Client Based Zero Trust Access',
+        cases: [
+          {
+            id: 'sa-ztna-1',
+            title: 'SSE Check — Zero Trust Verified',
+            desc: 'With Secure Client (ZTA) connected, navigate to the SSE Check private resource URL and confirm the green "Zero Trust Access Verified" banner appears and the server IP matches the Connector pod IP.',
+            steps: [
+              'Ensure Cisco Secure Client (ZTA module) is connected.',
+              'Open a browser and navigate to the SSE Check private resource URL configured in Secure Access.',
+              'Confirm the banner reads <strong>Zero Trust Access Verified</strong> (green).',
+              'Verify the server IP shown matches the Connector pod IP — not your real client IP.',
+            ],
+          },
+          {
+            id: 'sa-5',
+            title: 'Private Access — RDP via Client',
+            desc: 'Connect to the RDP Server using a native RDP client through Cisco Secure Access.',
+            steps: [
+              'Ensure Cisco Secure Client (ZTA module) is connected.',
+              'Open your RDP client (e.g., Microsoft Remote Desktop or Remmina).',
+              'Enter the server address: <code>&lt;VM-IP&gt;:30389</code>',
+              'Log in with username <code>abc</code> and password <code>abc</code>.',
+              'Confirm the remote desktop session opens successfully.',
+            ],
+          },
+          {
+            id: 'sa-6',
+            title: 'Private Access — SSH via Client',
+            desc: 'Connect to the SSH Server using a native SSH client through Cisco Secure Access.',
+            steps: [
+              'Ensure Cisco Secure Client (ZTA module) is connected.',
+              'Open a terminal and run: <code>ssh remote_user@&lt;VM-IP&gt; -p 30022</code>',
+              'Enter password: <code>ssh_access</code>',
+              'Confirm the SSH session opens and you reach the remote shell.',
+              'Run <code>whoami</code> to verify you are logged in as <code>remote_user</code>.',
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Internet Access',
+        cases: [
+          {
+            id: 'sa-ia-1',
+            title: 'Cisco Secure Access Protection Check',
+            desc: 'Open the Cisco Secure Access policy test URL and verify traffic is being proxied.',
+            steps: [
+              'Ensure Cisco Secure Client is connected.',
+              'Open a browser and navigate to <code>https://policy.test.sse.cisco.com/</code>',
+              'Confirm the <strong>Protected by Cisco Secure Access</strong> page is displayed.',
+            ],
+          },
+          {
+            id: 'sa-ia-2',
+            title: 'Gen AI Apps — Warn Interstitial',
+            desc: 'Access a Gen AI site and verify the warn interstitial page from Cisco Secure Access appears. (Policy: Warn — Gen AI category)',
+            steps: [
+              'Ensure Cisco Secure Client is connected.',
+              'Open a browser and navigate to a Gen AI site (e.g., <code>chatgpt.com</code>).',
+              'Verify the Cisco Secure Access warn interstitial page appears, requiring acknowledgement before continuing.',
+            ],
+          },
+          {
+            id: 'sa-ia-3',
+            title: 'News Sites — Browser Isolation',
+            desc: 'Navigate to a news website and verify the page opens in Remote Browser Isolation mode. (Policy: Isolate — News Websites category)',
+            steps: [
+              'Ensure Cisco Secure Client is connected.',
+              'Open a browser and navigate to a news website (e.g., <code>bbc.com</code>).',
+              'Verify the page opens in browser isolation mode (look for the RBI indicator or behavior).',
+            ],
+          },
+          {
+            id: 'sa-ia-4',
+            title: 'Adult / Alcohol Content — Blocked',
+            desc: 'Attempt to access an adult or alcohol-related site and verify the Cisco Secure Access block page is displayed. (Policy: Block — Content category)',
+            steps: [
+              'Ensure Cisco Secure Client is connected.',
+              'Open a browser and attempt to access a site in the Adult or Alcohol content category.',
+              'Confirm the Cisco Secure Access block page is displayed.',
+            ],
+          },
+          {
+            id: 'sa-ia-5',
+            title: 'DeepSeek App — Blocked',
+            desc: 'Navigate to DeepSeek and verify the Cisco Secure Access block page is displayed. (Policy: Block — DeepSeek application)',
+            steps: [
+              'Ensure Cisco Secure Client is connected.',
+              'Open a browser and navigate to <code>deepseek.com</code>.',
+              'Confirm the Cisco Secure Access block page is displayed.',
+            ],
+          },
+          {
+            id: 'sa-ia-6',
+            title: 'General Internet — Allowed',
+            desc: 'Access a standard business website and verify the page loads normally with no block or warn page. (Policy: Allow All — catch-all rule)',
+            steps: [
+              'Ensure Cisco Secure Client is connected.',
+              'Open a browser and navigate to a standard business website (e.g., <code>cisco.com</code>).',
+              'Confirm the page loads normally with no block, warn, or isolation page.',
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Data Loss Prevention',
+        cases: [
+          {
+            id: 'sa-dlp-1',
+            title: 'PCI Data — Upload Blocked',
+            desc: 'Attempt to upload or paste content containing credit card numbers and verify DLP blocks the upload. (Policy: Real-Time DLP — Built-in PCI Classification)',
+            steps: [
+              'Ensure Cisco Secure Client is connected.',
+              'Navigate to a web form or file upload page.',
+              'Attempt to paste or upload content containing credit card numbers.',
+              'Verify DLP detects PCI data and blocks the upload with a block notification.',
+            ],
+          },
+          {
+            id: 'sa-dlp-2',
+            title: 'PII Data — Upload Blocked',
+            desc: 'Attempt to upload or paste content containing PII and verify DLP blocks the upload. (Policy: Real-Time DLP — Built-in PII Classification)',
+            steps: [
+              'Ensure Cisco Secure Client is connected.',
+              'Navigate to a web form or file upload page.',
+              'Attempt to paste or upload content containing PII (e.g., SSN, full name + address).',
+              'Verify DLP detects PII data and blocks the upload with a block notification.',
+            ],
+          },
+        ],
+      },
+      {
+        title: 'AI Guardrails',
+        cases: [
+          {
+            id: 'sa-ai-1',
+            title: 'Security Guardrail — Prompt Blocked',
+            desc: 'Send a security-sensitive prompt to an AI app and verify Cisco Secure Access blocks it. (Policy: AI Guardrails — Security Guardrail)',
+            steps: [
+              'Ensure Cisco Secure Client is connected and access an AI app (e.g., ChatGPT).',
+              'Send a prompt with security-sensitive content (e.g., a request for malware or exploit code).',
+              'Verify Cisco Secure Access blocks the prompt and shows a block notification.',
+            ],
+          },
+          {
+            id: 'sa-ai-2',
+            title: 'Safety Guardrail — Prompt Blocked',
+            desc: 'Send a prompt with unsafe or harmful content to an AI app and verify it is blocked. (Policy: AI Guardrails — Safety Guardrail)',
+            steps: [
+              'Ensure Cisco Secure Client is connected and access an AI app.',
+              'Send a prompt with unsafe or harmful content.',
+              'Verify the prompt is blocked before reaching the AI service.',
+            ],
+          },
+          {
+            id: 'sa-ai-3',
+            title: 'Privacy Guardrail — Prompt Blocked',
+            desc: 'Send a prompt containing personal or private data to an AI app and verify it is blocked. (Policy: AI Guardrails — Privacy Guardrail)',
+            steps: [
+              'Ensure Cisco Secure Client is connected and access an AI app.',
+              'Send a prompt containing personal or private data (e.g., names, emails, credentials).',
+              'Verify the prompt is blocked before reaching the AI service.',
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'cilium',
+    label: 'Cilium',
+    icon: 'fa-network-wired',
+    subtitle: 'eBPF network policy enforcement and microsegmentation.',
+    sections: [
+      {
+        title: 'Flow Visibility',
+        cases: [
+          {
+            id: 'cil-3',
+            title: 'Hubble UI — Flow Visibility',
+            desc: 'Open the Hubble UI on port 30800 (link on Dashy) and open namespace <strong>piap</strong>. Observe flows in the environment — everything should be allowed, hence <strong>forwarded</strong>. Go to Columns and check all boxes to get more visibility.',
+            steps: [
+              'Open the Hubble UI via the link on Dashy (port 30800).',
+              'Select the <strong>piap</strong> namespace from the namespace dropdown.',
+              'Observe the live network flows — all traffic should appear as <strong>forwarded</strong>.',
+              'Click <strong>Columns</strong> and enable all checkboxes to maximise flow visibility.',
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Zero Trust Access',
+        cases: [
+          {
+            id: 'cil-zt-1',
+            title: 'Allow All Traffic — LAN Access & Hubble Flows',
+            desc: 'With <strong>Allow All</strong> mode active in Automagic &rsaquo; Cilium, access a pod service directly from your local computer on the same LAN. Observe in Hubble how the traffic source appears as <strong>world</strong>, showing unrestricted inbound access from outside the cluster.',
+            steps: [
+              'In <strong>Automagic &rsaquo; Cilium</strong>, confirm the policy is set to <strong>Allow All Traffic</strong> (no Cilium network policies applied).',
+              'From your local computer on the LAN, open a browser and navigate to a pod service (e.g. the web app on port 30080).',
+              'Open <strong>Hubble UI</strong> (port 30800) and select the <strong>piap</strong> namespace.',
+              'Observe the flow — the source identity should be listed as <strong>world</strong>, confirming the request came from outside the cluster with no restrictions.',
+            ],
+          },
+          {
+            id: 'cil-zt-2',
+            title: 'Zero Trust Application Access — SSE-Only Enforcement',
+            desc: 'Switch Cilium to <strong>Zero Trust Access</strong> mode in Automagic. Only requests arriving via the SSE client (with a valid identity) should now reach the pods. Attempts from the LAN without SSE should be dropped.',
+            steps: [
+              'In <strong>Automagic &rsaquo; Cilium</strong>, click <strong>Zero Trust Application Access</strong> to apply the Cilium identity-aware network policies.',
+              'Wait for the status indicator to confirm the policies are active.',
+              'From your <strong>SSE-connected user &amp; device</strong>, access the pod service — it should succeed.',
+              'From a device on the LAN <em>without</em> the SSE client, attempt to reach the same service — it should be blocked.',
+              'In <strong>Hubble UI</strong>, observe that only flows from the SSE identity are <strong>forwarded</strong>; direct LAN attempts appear as <strong>dropped</strong>.',
+            ],
+          },
+          {
+            id: 'cil-zt-3',
+            title: 'Microsegmentation — Lateral Movement Blocked',
+            desc: 'Log in to the RDP server through your SSE client, then attempt to reach the SSH server from within that RDP session. Cilium microsegmentation should prevent pod-to-pod lateral movement even between internal workloads.',
+            steps: [
+              'Using your <strong>SSE-connected client</strong>, open an RDP session to the RDP server (credentials: <code>abc</code> / <code>abc</code>).',
+              'Once inside the RDP session, open a terminal and try to <strong>ping</strong> the SSH server\'s cluster IP.',
+              'Also attempt an SSH login to the SSH server: <code>ssh remote_user@&lt;ssh-server-ip&gt;</code> (password: <code>ssh_access</code>).',
+              'Both attempts should <strong>fail</strong> — Cilium microsegmentation blocks east-west traffic that is not explicitly permitted between these pods.',
+            ],
+          },
+          {
+            id: 'cil-zt-4',
+            title: 'Hubble — Observe Dropped Connections',
+            desc: 'After the lateral movement attempts, review Hubble to confirm that the blocked pod-to-pod traffic is visible as <strong>dropped</strong> flows, providing full audit visibility of denied east-west communication.',
+            steps: [
+              'Open <strong>Hubble UI</strong> (port 30800) and select the <strong>piap</strong> namespace.',
+              'In the <strong>Verdict</strong> filter, select <strong>Dropped</strong> to show only blocked flows.',
+              'Identify the flows from the RDP pod toward the SSH pod — they should appear as <strong>dropped</strong> with the policy deny reason.',
+              'Click <strong>Columns</strong> and enable all checkboxes for maximum detail on each dropped flow.',
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'tetragon',
+    label: 'Tetragon',
+    icon: 'fa-shield-halved',
+    subtitle: 'eBPF runtime security — process, file, and network event detection.',
+    cases: [
+      {
+        id: 'tet-1',
+        title: 'Phase 1 — Recon: EXEC & KPROBE Events Detected',
+        desc: 'Launching the Recon simulation runs environment-discovery commands inside a pod. Tetragon should surface EXEC events for every binary launched and KPROBE alerts from the <code>detect-shell-execution</code> policy.',
+        steps: [
+          'Open <strong>Automagic &rsaquo; Tetragon</strong> and confirm the status shows <strong>4 TracingPolicies deployed</strong>. If not, click <strong>Deploy Policies</strong>.',
+          'Scroll to the <strong>Simulate Attack</strong> section and click <strong>🔍 Launch Recon Simulation</strong>.',
+          'Scroll down to the <strong>Live Event Stream</strong> and watch for incoming events.',
+          'Confirm <span style="color:#7c4dff; font-weight:700;">EXEC</span> events appear for binaries such as <code>sh</code>, <code>find</code>, <code>ls</code>, <code>uname</code>.',
+          'Confirm at least one <span style="color:#d32f2f; font-weight:700;">KPROBE</span> event appears with policy <code>detect-shell-execution</code>.',
+        ],
+      },
+      {
+        id: 'tet-2',
+        title: 'Phase 2 — Credential Hunting: Sensitive File Access Detected',
+        desc: 'The Credential Hunting simulation reads <code>/etc/shadow</code>, <code>/etc/passwd</code>, and the Kubernetes service-account token. Tetragon should fire KPROBE alerts from the <code>detect-sensitive-file-read</code> and <code>detect-k8s-secret-access</code> policies.',
+        steps: [
+          'Open <strong>Automagic &rsaquo; Tetragon</strong> and confirm 4 TracingPolicies are deployed.',
+          'Click <strong>🔑 Launch Credential Hunting Simulation</strong>.',
+          'Watch the <strong>Live Event Stream</strong> for new events.',
+          'Confirm <span style="color:#d32f2f; font-weight:700;">KPROBE</span> events appear for <code>/etc/shadow</code> and <code>/etc/passwd</code> (policy: <code>detect-sensitive-file-read</code>).',
+          'Confirm a <span style="color:#d32f2f; font-weight:700;">KPROBE</span> event appears for the Kubernetes service-account token (policy: <code>detect-k8s-secret-access</code>).',
+          'Confirm a <span style="color:#d32f2f; font-weight:700;">KPROBE</span> event appears for <code>wget</code> attempting the AWS IMDS endpoint (policy: <code>detect-network-tool</code>).',
+        ],
+      },
+      {
+        id: 'tet-3',
+        title: 'Phase 3 — Persistence Attempts: Shell Execution Detected',
+        desc: 'The Persistence simulation attempts to install an SSH backdoor, add a cron job, and create a new user. Most commands fail due to container restrictions, but Tetragon still captures every attempt.',
+        steps: [
+          'Open <strong>Automagic &rsaquo; Tetragon</strong> and confirm 4 TracingPolicies are deployed.',
+          'Click <strong>🪝 Launch Persistence Simulation</strong>.',
+          'Watch the <strong>Live Event Stream</strong> for new events.',
+          'Confirm <span style="color:#d32f2f; font-weight:700;">KPROBE</span> events appear for shell execution (policy: <code>detect-shell-execution</code>).',
+          'Confirm <span style="color:#7c4dff; font-weight:700;">EXEC</span> events appear for binaries such as <code>echo</code>, <code>mkdir</code>, <code>useradd</code>, and <code>rm</code>.',
+          'Note that the event stream shows detection even though the underlying commands are blocked by container security — demonstrating Tetragon\'s observe-only visibility.',
+        ],
+      },
+    ],
+  },
+];
+
+// ─────────────────────────────────────────────
+// State helpers
+// ─────────────────────────────────────────────
+const STORE_KEY = 'poc_playbook_v1';
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
+  catch { return {}; }
+}
+
+function saveState(state) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+}
+
+function setState(tcId, field, value) {
+  const s = loadState();
+  if (!s[tcId]) s[tcId] = {};
+  s[tcId][field] = value;
+  saveState(s);
+}
+
+function getState(tcId, field) {
+  const s = loadState();
+  return s[tcId] ? s[tcId][field] : undefined;
+}
+
+function resetAll() {
+  if (!confirm('Reset all test case results and notes?')) return;
+  localStorage.removeItem(STORE_KEY);
+  renderAll();
+}
+
+// ─────────────────────────────────────────────
+// Render
+// ─────────────────────────────────────────────
+let activeTab = TABS[0].id;
+
+function renderAll() {
+  renderNav();
+  renderContent();
+  updateOverall();
+}
+
+// Returns all test cases for a tab, regardless of flat or sectioned structure
+function tabCases(tab) {
+  if (tab.sections) return tab.sections.flatMap(s => s.cases);
+  return tab.cases || [];
+}
+
+function renderNav() {
+  const nav = document.getElementById('tabNav');
+  nav.innerHTML = TABS.map(tab => {
+    const cases  = tabCases(tab);
+    const total  = cases.length;
+    const passed = cases.filter(tc => getState(tc.id, 'status') === 'pass').length;
+    return `
+      <button class="tab-btn ${tab.id === activeTab ? 'active' : ''}"
+              onclick="switchTab('${tab.id}')">
+        <i class="fa-solid ${tab.icon}"></i>
+        ${tab.label}
+        <span class="tab-count">${passed}/${total}</span>
+      </button>`;
+  }).join('');
+}
+
+function renderTabCases(tab) {
+  if (tab.sections) {
+    let num = 1;
+    return tab.sections.map(section => {
+      const cards = section.cases.map(tc => renderCard(tc, num++)).join('');
+      return `<div class="tc-section-header">${section.title}</div>${cards}`;
+    }).join('');
+  }
+  return tab.cases.map((tc, i) => renderCard(tc, i + 1)).join('');
+}
+
+function renderContent() {
+  const container = document.getElementById('tabContent');
+  container.innerHTML = TABS.map(tab => `
+    <div class="tab-panel ${tab.id === activeTab ? 'active' : ''}" id="panel-${tab.id}">
+      <div class="tab-header">
+        <h2>${tab.label}</h2>
+        <p>${tab.subtitle}</p>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="bar-${tab.id}" style="width:${tabProgress(tab)}%"></div>
+        </div>
+        <div class="progress-label" id="lbl-${tab.id}">${tabLabel(tab)}</div>
+      </div>
+      ${renderTabCases(tab)}
+    </div>
+  `).join('');
+}
+
+function tabProgress(tab) {
+  const cases  = tabCases(tab);
+  const passed = cases.filter(tc => getState(tc.id, 'status') === 'pass').length;
+  return cases.length ? Math.round((passed / cases.length) * 100) : 0;
+}
+
+function tabLabel(tab) {
+  const cases   = tabCases(tab);
+  const passed  = cases.filter(tc => getState(tc.id, 'status') === 'pass').length;
+  const failed  = cases.filter(tc => getState(tc.id, 'status') === 'fail').length;
+  const skipped = cases.filter(tc => getState(tc.id, 'status') === 'skip').length;
+  const pending = cases.length - passed - failed - skipped;
+  const parts = [];
+  if (passed)  parts.push(`<span>${passed} passed</span>`);
+  if (failed)  parts.push(`<span style="color:var(--red)">${failed} failed</span>`);
+  if (skipped) parts.push(`<span style="color:var(--orange)">${skipped} skipped</span>`);
+  if (pending) parts.push(`<span>${pending} pending</span>`);
+  return parts.join(' · ');
+}
+
+function renderCard(tc, num) {
+  const status = getState(tc.id, 'status') || 'pending';
+  const notes  = getState(tc.id, 'notes')  || '';
+  const statusLabel = { pending: 'PENDING', pass: 'PASS', fail: 'FAIL', skip: 'SKIP' }[status];
+  const stepsHtml = tc.steps.map(s => `<li>${s}</li>`).join('');
+  return `
+    <div class="tc-card" data-status="${status}" id="card-${tc.id}">
+      <div class="tc-top">
+        <div class="tc-num">${num}</div>
+        <div class="tc-body">
+          <div class="tc-title">${tc.title}</div>
+          <div class="tc-desc">${tc.desc}</div>
+        </div>
+        <div class="tc-status-badge" id="badge-${tc.id}">${statusLabel}</div>
+      </div>
+      <div class="tc-steps"><ol>${stepsHtml}</ol></div>
+      <div class="tc-actions">
+        <button class="btn-pass"     onclick="setStatus('${tc.id}', 'pass')">✓ Pass</button>
+        <button class="btn-fail"     onclick="setStatus('${tc.id}', 'fail')">✗ Fail</button>
+        <button class="btn-skip"     onclick="setStatus('${tc.id}', 'skip')">— Skip</button>
+        <button class="btn-reset-tc" onclick="setStatus('${tc.id}', 'pending')">↺</button>
+        <button class="btn-notes"    onclick="toggleNotes('${tc.id}')">Notes</button>
+      </div>
+      <div class="tc-notes" id="notes-${tc.id}">
+        <textarea placeholder="Add notes…" oninput="saveNotes('${tc.id}', this.value)">${notes}</textarea>
+      </div>
+    </div>`;
+}
+
+// ─────────────────────────────────────────────
+// Actions
+// ─────────────────────────────────────────────
+function switchTab(id) {
+  activeTab = id;
+  renderAll();
+}
+
+function setStatus(tcId, status) {
+  setState(tcId, 'status', status);
+  // Update card DOM directly for snappy feel
+  const card  = document.getElementById('card-' + tcId);
+  const badge = document.getElementById('badge-' + tcId);
+  const label = { pending: 'PENDING', pass: 'PASS', fail: 'FAIL', skip: 'SKIP' }[status];
+  card.dataset.status = status;
+  badge.textContent   = label;
+  // Refresh tab counts + progress
+  renderNav();
+  const tab = TABS.find(t => tabCases(t).some(tc => tc.id === tcId));
+  if (tab) {
+    const bar = document.getElementById('bar-' + tab.id);
+    const lbl = document.getElementById('lbl-' + tab.id);
+    if (bar) bar.style.width = tabProgress(tab) + '%';
+    if (lbl) lbl.innerHTML  = tabLabel(tab);
+  }
+  updateOverall();
+}
+
+function toggleNotes(tcId) {
+  const el = document.getElementById('notes-' + tcId);
+  el.classList.toggle('open');
+}
+
+function saveNotes(tcId, value) {
+  setState(tcId, 'notes', value);
+}
+
+function updateOverall() {
+  const allCases = TABS.flatMap(t => tabCases(t));
+  const total    = allCases.length;
+  const passed   = allCases.filter(tc => getState(tc.id, 'status') === 'pass').length;
+  const failed   = allCases.filter(tc => getState(tc.id, 'status') === 'fail').length;
+  const badge    = document.getElementById('overallBadge');
+  badge.textContent = `${passed} / ${total} passed` + (failed ? ` · ${failed} failed` : '');
+}
+
+// ─────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────
+renderAll();
+</script>
+</body>
+</html>

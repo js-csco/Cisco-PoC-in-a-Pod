@@ -1,0 +1,176 @@
+# ── Fluent Bit log forwarder ─────────────────────────────────────────────────
+# DaemonSet that tails Tetragon, Hubble, and Cilium container logs on every
+# node and ships them to the Splunk HEC endpoint.
+# Log sources are toggled live by the automagic server (it patches this
+# ConfigMap and triggers a rollout).
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+  namespace: piap
+data:
+  # Main config — @INCLUDEs are patched by automagic to enable/disable sources
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush           5
+        Log_Level       info
+        Daemon          off
+        Parsers_File    parsers.conf
+        HTTP_Server     On
+        HTTP_Listen     0.0.0.0
+        HTTP_Port       2020
+
+    @INCLUDE input-tetragon.conf
+    @INCLUDE input-hubble.conf
+    @INCLUDE input-cilium.conf
+    @INCLUDE output-splunk.conf
+
+  # Tetragon: tail the export-stdout sidecar which emits clean JSON ATT&CK events
+  input-tetragon.conf: |
+    [INPUT]
+        Name              tail
+        Tag               tetragon
+        Path              /var/log/pods/kube-system_tetragon-*/export-stdout/*.log
+        Parser            cri
+        DB                /var/log/flb_tetragon.db
+        Mem_Buf_Limit     50MB
+        Skip_Long_Lines   On
+        Refresh_Interval  5
+
+    [FILTER]
+        Name   modify
+        Match  tetragon
+        Add    source   tetragon
+        Add    index    piap-security
+
+  # Hubble relay: flow logs from the hubble-relay pod
+  input-hubble.conf: |
+    [INPUT]
+        Name              tail
+        Tag               hubble
+        Path              /var/log/pods/kube-system_hubble-relay-*/*/*.log
+        Parser            cri
+        DB                /var/log/flb_hubble.db
+        Mem_Buf_Limit     50MB
+        Skip_Long_Lines   On
+        Refresh_Interval  5
+
+    [FILTER]
+        Name   modify
+        Match  hubble
+        Add    source   hubble
+        Add    index    piap-network
+
+  # Cilium agent: policy enforcement and networking events
+  input-cilium.conf: |
+    [INPUT]
+        Name              tail
+        Tag               cilium
+        Path              /var/log/pods/kube-system_cilium-*/cilium-agent/*.log
+        Parser            cri
+        DB                /var/log/flb_cilium.db
+        Mem_Buf_Limit     50MB
+        Skip_Long_Lines   On
+        Refresh_Interval  5
+
+    [FILTER]
+        Name   modify
+        Match  cilium
+        Add    source   cilium
+        Add    index    piap-network
+
+  # Splunk HEC output — always present
+  output-splunk.conf: |
+    [OUTPUT]
+        Name             splunk
+        Match            *
+        Host             splunk.piap.svc.cluster.local
+        Port             8088
+        Splunk_Token     piap-hec-token
+        TLS              Off
+        TLS.Verify       Off
+        Splunk_Send_Raw  Off
+
+  # CRI log format parser (containerd / k3s)
+  parsers.conf: |
+    [PARSER]
+        Name        cri
+        Format      regex
+        Regex       ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<log>.*)$
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fluent-bit
+  namespace: piap
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluent-bit
+  namespace: piap
+  labels:
+    app: fluent-bit
+spec:
+  selector:
+    matchLabels:
+      app: fluent-bit
+  template:
+    metadata:
+      labels:
+        app: fluent-bit
+    spec:
+      serviceAccountName: fluent-bit
+      tolerations:
+        - operator: Exists  # run on all nodes including control-plane
+      containers:
+        - name: fluent-bit
+          image: fluent/fluent-bit:3.2
+          ports:
+            - containerPort: 2020
+              name: http-metrics
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          volumeMounts:
+            - name: config
+              mountPath: /fluent-bit/etc/fluent-bit.conf
+              subPath: fluent-bit.conf
+            - name: config
+              mountPath: /fluent-bit/etc/input-tetragon.conf
+              subPath: input-tetragon.conf
+            - name: config
+              mountPath: /fluent-bit/etc/input-hubble.conf
+              subPath: input-hubble.conf
+            - name: config
+              mountPath: /fluent-bit/etc/input-cilium.conf
+              subPath: input-cilium.conf
+            - name: config
+              mountPath: /fluent-bit/etc/output-splunk.conf
+              subPath: output-splunk.conf
+            - name: config
+              mountPath: /fluent-bit/etc/parsers.conf
+              subPath: parsers.conf
+            - name: varlogpods
+              mountPath: /var/log/pods
+              readOnly: true
+            - name: varlogcontainers
+              mountPath: /var/log/containers
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: fluent-bit-config
+        - name: varlogpods
+          hostPath:
+            path: /var/log/pods
+        - name: varlogcontainers
+          hostPath:
+            path: /var/log/containers

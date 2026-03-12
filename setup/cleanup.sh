@@ -34,27 +34,37 @@ ACTUAL_USER=${SUDO_USER:-$USER}
 
 echo ""
 echo "Step 1: Stopping and removing Cisco Resource Connector..."
-# Stop connector if it's running
+# Stop connector if it's running (handles Docker container case)
 if [ -f "/opt/connector/install/connector.sh" ]; then
     /opt/connector/install/connector.sh stop 2>/dev/null || true
     echo "  ✓ Connector stopped"
 fi
 
-# Find and remove connector containers
-CONNECTOR_CONTAINERS=$(docker ps -a --filter "name=resource-connector" --format "{{.Names}}" 2>/dev/null || true)
-if [ -n "$CONNECTOR_CONTAINERS" ]; then
-    echo "  Removing connector containers..."
-    docker rm -f $CONNECTOR_CONTAINERS 2>/dev/null || true
-    echo "  ✓ Connector containers removed"
+# Remove daemontools service symlink (created by connector.sh launch)
+if [ -L "/etc/service/connector_svc" ] || [ -d "/etc/service/connector_svc" ]; then
+    rm -rf /etc/service/connector_svc
+    echo "  ✓ Daemontools service symlink removed"
 fi
 
-# Remove connector images
+# Remove connector images from Docker
 CONNECTOR_IMAGES=$(docker images --filter "reference=*connector*" --format "{{.ID}}" 2>/dev/null || true)
 if [ -n "$CONNECTOR_IMAGES" ]; then
     echo "  Removing connector images..."
     docker rmi -f $CONNECTOR_IMAGES 2>/dev/null || true
     echo "  ✓ Connector images removed"
 fi
+
+# Unload and remove AppArmor profile installed by setup_connector.sh
+if [ -f "/etc/apparmor.d/connector-apparmor.cfg" ]; then
+    apparmor_parser -R /etc/apparmor.d/connector-apparmor.cfg 2>/dev/null || true
+    rm -f /etc/apparmor.d/connector-apparmor.cfg
+    echo "  ✓ AppArmor profile removed"
+fi
+
+# Remove packages installed by setup_connector.sh
+echo "  Removing packages installed by setup_connector.sh..."
+apt-get remove -y daemontools daemontools-run 2>/dev/null || true
+echo "  ✓ daemontools removed"
 
 # Remove connector installation directory
 if [ -d "/opt/connector" ]; then
@@ -71,16 +81,6 @@ if command -v kubectl &> /dev/null; then
     # Delete piap namespace (this removes all resources within it)
     kubectl delete namespace piap --ignore-not-found=true 2>/dev/null || true
     echo "  ✓ Namespace 'piap' deleted"
-    
-    # Delete connector service and endpoints from default namespace
-    kubectl delete service connector -n default --ignore-not-found=true 2>/dev/null || true
-    kubectl delete endpoints connector -n default --ignore-not-found=true 2>/dev/null || true
-    echo "  ✓ Connector service and endpoints deleted"
-    
-    # Delete Cilium Network Policies
-    kubectl delete ciliumnetworkpolicy allow-to-connector -n default --ignore-not-found=true 2>/dev/null || true
-    kubectl delete ciliumnetworkpolicy allow-from-connector -n default --ignore-not-found=true 2>/dev/null || true
-    echo "  ✓ Cilium network policies deleted"
     
     # Delete Tetragon
     if command -v helm &> /dev/null; then
@@ -110,7 +110,12 @@ else
 fi
 echo ""
 
-echo "Step 5: Cleaning up Cilium iptables rules..."
+echo "Step 5: Cleaning up iptables rules..."
+# Remove the connector internet masquerade rule (240.0.0.0/29 → internet).
+iptables -t nat -D POSTROUTING -s 240.0.0.0/29 ! -d 10.0.0.0/8 -j MASQUERADE 2>/dev/null || true
+echo "  ✓ piap iptables rules removed"
+
+# Remove Cilium iptables rules
 # Remove Cilium chains
 iptables -t nat -F CILIUM_POST_nat 2>/dev/null || true
 iptables -t nat -F CILIUM_PRE_nat 2>/dev/null || true
@@ -140,9 +145,7 @@ echo ""
 
 echo "Step 6: Removing application symlinks..."
 rm -f /automagic-server && echo "  ✓ /automagic-server removed" || true
-rm -f /kanboard && echo "  ✓ /kanboard removed" || true
 rm -f /dashy && echo "  ✓ /dashy removed" || true
-rm -f /web && echo "  ✓ /web removed" || true
 echo ""
 
 echo "Step 7: Cleaning up Cilium BPF filesystem..."
@@ -157,6 +160,10 @@ echo "  ✓ CNI configuration removed"
 echo ""
 
 echo "Step 9: Cleaning up systemd services..."
+systemctl stop piap-connector-masquerade.service 2>/dev/null || true
+systemctl disable piap-connector-masquerade.service 2>/dev/null || true
+rm -f /etc/systemd/system/piap-connector-masquerade.service
+echo "  ✓ piap connector masquerade service removed"
 systemctl stop k3s 2>/dev/null || true
 systemctl disable k3s 2>/dev/null || true
 rm -f /etc/systemd/system/k3s.service 2>/dev/null || true
@@ -166,8 +173,6 @@ echo ""
 
 echo "Step 10: Removing temporary setup files..."
 rm -f /tmp/setup_connector.sh 2>/dev/null || true
-rm -f /tmp/connector-service.yaml 2>/dev/null || true
-rm -f /tmp/connector-netpol.yaml 2>/dev/null || true
 echo "  ✓ Temporary files removed"
 echo ""
 
@@ -247,17 +252,11 @@ echo "================================================"
 echo "  Configuration Files Notice"
 echo "================================================"
 echo ""
-echo "⚠️  Note: The setup script modified the following files"
-echo "    by replacing SERVER_IP placeholders:"
-echo ""
-echo "    - dashy/conf.yml"
-echo "    - web/index.html"
-echo "    - automagic-server/templates/*.html"
-echo ""
-echo "    These files were NOT restored to their original state."
-echo "    If you have these backed up (e.g., in Git), you can restore them:"
-echo ""
-echo "    git checkout dashy/conf.yml web/index.html automagic-server/templates/"
+echo "Restoring config files modified by setup (SERVER_IP substitution)..."
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+git -C "$REPO_ROOT" checkout -- dashy/conf.yml web/index.html automagic-server/templates/ 2>/dev/null \
+    && echo "  ✓ Config files restored from git" \
+    || echo "  ⚠ Could not restore config files — restore manually: git checkout dashy/conf.yml web/index.html automagic-server/templates/"
 echo ""
 
 echo "================================================"
@@ -267,13 +266,14 @@ echo ""
 echo "What was removed:"
 echo "  ✓ K3s cluster and all workloads"
 echo "  ✓ Cilium CNI and network policies"
-echo "  ✓ Cisco Resource Connector (container and files)"
+echo "  ✓ Cisco Resource Connector (Docker container, data, AppArmor profile, daemontools service)"
 echo "  ✓ All Kubernetes resources (piap namespace, secrets, services)"
 echo "  ✓ Tetragon security observability"
 echo "  ✓ All iptables rules"
 echo "  ✓ Application symlinks"
 echo "  ✓ Temporary files"
 echo "  ✓ kubectl configuration"
+echo "  ✓ daemontools packages"
 echo "  ✓ Python packages (duo-client if selected)"
 echo ""
 echo "Your system is now clean. You can:"

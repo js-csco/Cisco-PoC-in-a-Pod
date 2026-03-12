@@ -1,0 +1,104 @@
+# ── MITRE Caldera C2 server ──────────────────────────────────────────────
+# UI + agent contact on port 8888, exposed as NodePort 30600
+# API key: ADMIN123 (demo default — not production)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: caldera-config
+  namespace: piap
+data:
+  local.yml: |
+    host: 0.0.0.0
+    port: 8888
+    app.contact.http: http://caldera.piap.svc.cluster.local:8888
+    app.contact.html: /beacon
+    app.contact.websocket: 0.0.0.0:7012
+    api_key_red: ADMIN123
+    api_key_blue: BLUEADMIN123
+    users:
+      red:
+        admin: admin
+      blue:
+        admin: admin
+    plugins:
+      - access
+      - debrief
+      - fieldmanual
+      - manx
+      - response
+      - sandcat
+      - stockpile
+      - training
+    crypt_salt: piap-demo-salt
+    encryption_key: piap-demo-enc-key
+    exfil_dir: /tmp/caldera
+    reports_dir: /tmp
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: caldera
+  namespace: piap
+  labels:
+    app: caldera
+    io.kompose.service: caldera
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: caldera
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: caldera
+        io.kompose.service: caldera
+    spec:
+      containers:
+        - name: caldera
+          image: ghcr.io/mitre/caldera:5.2.0
+          ports:
+            - containerPort: 8888
+              protocol: TCP
+          volumeMounts:
+            - name: caldera-config
+              mountPath: /usr/src/app/conf/local.yml
+              subPath: local.yml
+            - name: caldera-data
+              mountPath: /usr/src/app/data
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+      restartPolicy: Always
+      volumes:
+        - name: caldera-config
+          configMap:
+            name: caldera-config
+        - name: caldera-data
+          hostPath:
+            path: /opt/caldera-data
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: caldera
+  namespace: piap
+  labels:
+    app: caldera
+    io.kompose.service: caldera
+spec:
+  type: NodePort
+  selector:
+    app: caldera
+  ports:
+    - name: http
+      port: 8888
+      targetPort: 8888
+      nodePort: 30600
+      protocol: TCP

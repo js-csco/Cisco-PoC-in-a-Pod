@@ -14,37 +14,12 @@
 {% endwith %}
 
 <form method="POST" style="display:flex; flex-direction:column; gap:3rem;">
-  <h1>Cisco Duo</h1>
-
-  <!-- ABOUT -->
-  <section style="background:#f8f9fa; padding:20px; border-radius:8px; border-left:4px solid #0066ff;">
-    <p style="color:#555; font-size:0.95em; margin:0 0 10px 0; line-height:1.6;">
-      Cisco Duo is a multi-factor authentication (MFA) and Zero Trust access platform that verifies user
-      identities and device health before granting access to applications and resources.
+  <div>
+    <h1 style="color:#111; margin-bottom:0.4rem;">Cisco Duo</h1>
+    <p style="color:#666; margin:0; font-size:0.95em; line-height:1.6;">
+      Multi-factor authentication and Zero Trust access — verify user identities and device health before granting access to applications and resources.
     </p>
-    <p style="color:#555; font-size:0.95em; margin:0; line-height:1.6;">
-      Use the sections below to connect to your Duo Admin API, create a test user, and set up
-      integrations for your PoC environment.
-    </p>
-  </section>
-
-    <!-- GET DUO -->
-    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">GET DUO</h3>
-      </div>
-
-      <p style="color:#666; font-size:0.95em; margin-top:0; margin-bottom:20px;">
-        Don't have a Duo account yet? Sign up for a free trial to get started.
-      </p>
-
-      <a href="https://signup.duo.com" target="_blank"
-         style="display:inline-block; background-color:#0066ff; color:#fff; text-decoration:none;
-                padding:10px 20px; border-radius:6px; font-weight:500;">
-        Sign Up for Duo
-      </a>
-    </section>
+  </div>
 
     <!-- AUTHENTICATION -->
     <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
@@ -57,17 +32,110 @@
         Connect to Cisco Duo Admin API with your API hostname, integration key, and secret key.
       </p>
 
-      <input type="text" id="api_hostname" name="api_hostname" placeholder="API Hostname (e.g., api-xxxxx.duosecurity.com)" 
-             value="{{ session.get('duo_api_hostname', '') }}"
-             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+      {% if not session.get('duo_authenticated') %}
+        <input type="text" id="api_hostname" name="api_hostname" placeholder="API Hostname (e.g., api-xxxxx.duosecurity.com)"
+               value="{{ session.get('duo_api_hostname', '') }}"
+               style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
 
-      <input type="password" id="integration_key" name="integration_key" placeholder="Integration Key" 
-             value="{{ session.get('duo_integration_key', '') }}"
-             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+        <input type="password" id="integration_key" name="integration_key" placeholder="Integration Key"
+               value="{{ session.get('duo_integration_key', '') }}"
+               style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
 
-      <input type="password" id="secret_key" name="secret_key" placeholder="Secret Key" 
-             value="{{ session.get('duo_secret_key', '') }}"
-             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+        <input type="password" id="secret_key" name="secret_key" placeholder="Secret Key"
+               value="{{ session.get('duo_secret_key', '') }}"
+               style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+
+        <button type="submit" name="action" value="auth"
+                style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                       border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
+          🔐 Authenticate
+        </button>
+      {% else %}
+        <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:10px 16px;">
+          <span style="font-size:1.2rem;">✅</span>
+          <span style="font-weight:600; color:#2e7d32;">Authenticated</span>
+        </div>
+      {% endif %}
+    </section>
+
+    <!-- DUO POLICIES -->
+    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DUO POLICIES</h3>
+      </div>
+
+      <p style="margin-top:0; margin-bottom:24px; color:#555; font-size:0.95em;">
+        Configure Duo enrollment and authentication policies to enforce strong, phishing-resistant MFA
+        across your PoC environment. These settings must be applied manually in the <strong>Duo Admin Panel</strong>.
+      </p>
+
+      <!-- Enrollment Policy -->
+      <div style="margin-bottom:28px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+          <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">1. Enrollment Policy</h3>
+        </div>
+
+        <p style="color:#555; font-size:0.92em; margin:0 0 14px 0;">
+          In the <strong>Duo Admin Panel</strong>, navigate to <em>Policies → User Enrollment Policies</em> and apply the following settings:
+        </p>
+
+        <ol style="color:#555; font-size:0.92em; margin:0; padding-left:20px; line-height:1.9;">
+          <li>
+            <strong>Policy Enablement:</strong> Check the box next to
+            <em>"Enable the enrollment and account management policies on this page"</em>.
+          </li>
+          <li>
+            Under <strong>Global Enrollment Policy</strong>, configure:
+            <ul style="margin:4px 0 4px 0; padding-left:18px; line-height:1.9;">
+              <li><strong>Require Password:</strong> enable the checkbox.</li>
+              <li>
+                <strong>Authenticators:</strong> allow only the following:
+                <ul style="margin:4px 0; padding-left:18px; line-height:1.7;">
+                  <li>Passkey (Current Device)</li>
+                  <li>Passkey (Mobile Device) <em>or</em> Security Key</li>
+                  <li>Duo Mobile</li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ol>
+      </div>
+
+      <!-- Global Policy -->
+      <div style="margin-bottom:28px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+          <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">2. Global Policy — Authentication Methods</h3>
+        </div>
+
+        <p style="color:#555; font-size:0.92em; margin:0 0 14px 0;">
+          In the <strong>Duo Admin Panel</strong>, navigate to <em>Policies → Policies</em> and edit the
+          <strong>Global Policy</strong>:
+        </p>
+
+        <ol style="color:#555; font-size:0.92em; margin:0; padding-left:20px; line-height:1.9;">
+          <li>
+            Under <strong>Authentication Methods</strong>, select only
+            <em>"Recommended Authenticators for Second Factor and Passwordless in SSO"</em>.
+            This allows all recommended authenticators while excluding weaker methods.
+          </li>
+        </ol>
+      </div>
+
+      <!-- Duo Passport -->
+      <div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+          <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">3. Duo Passport</h3>
+        </div>
+
+        <p style="color:#555; font-size:0.92em; margin:0 0 14px 0;">
+          In the <strong>Duo Admin Panel</strong>, navigate to <em>Policies → Passport</em> and click
+          <strong>"Set up Passport"</strong>. Select <strong>"On for all users"</strong> as recommended.
+        </p>
+      </div>
     </section>
 
     <!-- USER & GROUP CREATION -->
@@ -154,6 +222,52 @@
                 padding:10px 20px; border-radius:6px; font-weight:500;">
         Duo SSO – Cisco Secure Access Docs
       </a>
+
+      <!-- Provisioning of Users -->
+      <div style="margin-top:28px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">Provisioning of Users</h3>
+        </div>
+
+        <p style="color:#555; font-size:0.95em; margin-top:0; margin-bottom:16px;">
+          When SCIM provisioning is enabled, Duo syncs user attributes to Cisco Secure Access.
+          The table below shows the default attribute mapping used during provisioning.
+        </p>
+
+        <p style="color:#555; font-size:0.9rem; font-weight:600; margin:0 0 8px 0;">Attribute Mapping</p>
+
+        <table style="width:100%; border-collapse:collapse; font-size:0.88em;">
+          <thead>
+            <tr style="background:#f0f4ff; border-bottom:2px solid #c0d0ff;">
+              <th style="text-align:left; padding:10px 14px; color:#333; font-weight:600;">Duo User Attribute</th>
+              <th style="text-align:left; padding:10px 14px; color:#333; font-weight:600;">Application Attribute</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #e8e8e8;">
+              <td style="padding:9px 14px; color:#444; font-family:monospace;">displayName</td>
+              <td style="padding:9px 14px; color:#444; font-family:monospace;">displayName</td>
+            </tr>
+            <tr style="border-bottom:1px solid #e8e8e8; background:#fafafa;">
+              <td style="padding:9px 14px; color:#444; font-family:monospace;">emails</td>
+              <td style="padding:9px 14px; color:#444; font-family:monospace;">emails</td>
+            </tr>
+            <tr style="border-bottom:1px solid #e8e8e8;">
+              <td style="padding:9px 14px; color:#444; font-family:monospace;">name.familyName</td>
+              <td style="padding:9px 14px; color:#444; font-family:monospace;">name.familyName</td>
+            </tr>
+            <tr style="border-bottom:1px solid #e8e8e8; background:#fafafa;">
+              <td style="padding:9px 14px; color:#444; font-family:monospace;">name.givenName</td>
+              <td style="padding:9px 14px; color:#444; font-family:monospace;">name.givenName</td>
+            </tr>
+            <tr>
+              <td style="padding:9px 14px; color:#444; font-family:monospace;">userName</td>
+              <td style="padding:9px 14px; color:#444; font-family:monospace;">userName</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <!-- IDENTITY INTELLIGENCE -->
@@ -163,9 +277,28 @@
         <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">IDENTITY INTELLIGENCE</h3>
       </div>
 
-      <p style="margin-top:0; color:#999; font-size:0.95em; font-style:italic;">
-        Work in progress — coming soon.
+      <p style="margin-top:0; margin-bottom:24px; color:#555; font-size:0.95em;">
+        Identify, reduce, and respond to identity-based threats.
       </p>
+
+      <ol style="color:#555; font-size:0.92em; margin:0; padding-left:20px; line-height:1.9;">
+        <li>
+          Go to <strong>Monitoring &rarr; Cisco Identity Intelligence</strong> and click
+          <strong>"Connect to Cisco Identity Intelligence"</strong>.
+        </li>
+        <li>
+          Click on <strong>"Set Up SSO Access"</strong>.
+        </li>
+        <li>
+          On the Application Page, click on the app called <strong>cii-sso-…</strong> and add the
+          <strong>PoC Users</strong> group to <em>"Enable only for permitted groups"</em> under the
+          <strong>User Access</strong> section.
+        </li>
+        <li>
+          Go back to <strong>Monitoring &rarr; Cisco Identity Intelligence</strong> and click
+          <strong>"Launch Identity Intelligence"</strong>.
+        </li>
+      </ol>
     </section>
 
   {{ super() }}

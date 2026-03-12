@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cisco SSE Check — Zero Trust Access Verifier</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✅</text></svg>">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --blue:   #049fd9;
+      --dark:   #005073;
+      --green:  #16a34a;
+      --orange: #c2410c;
+      --indigo: #0066ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      color: #222;
+      font-size: 15px;
+    }
+
+    header {
+      background: linear-gradient(90deg, var(--dark), var(--blue));
+      color: #fff;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    header img  { height: 38px; }
+    header .t   { font-size: 1.2em; font-weight: 600; }
+    header .sub { font-size: 0.85em; opacity: 0.8; margin-top: 2px; }
+
+    main {
+      max-width: 760px;
+      margin: 36px auto 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding: 0 16px;
+    }
+
+    /* ── access flow diagram ── */
+    .diagram-card {
+      background: #f8f9fa;
+      border: 1px solid #e2e4e8;
+      border-radius: 10px;
+      padding: 22px 24px;
+    }
+    .diagram-label {
+      font-size: 0.68em;
+      font-weight: 700;
+      color: #aaa;
+      letter-spacing: 0.8px;
+      margin-bottom: 16px;
+    }
+    .flow {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      min-width: 0;
+      padding-bottom: 4px;
+    }
+    .flow-node {
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .flow-box {
+      background: #fff;
+      border: 2px solid var(--indigo);
+      border-radius: 8px;
+      padding: 10px 14px;
+      min-width: 80px;
+    }
+    .flow-box.cloud { border-color: var(--blue); }
+    .flow-box.pod   { border-color: #16a34a; }
+    .flow-box i {
+      font-size: 1.2rem;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .flow-box .fn  { font-size: 0.75em; font-weight: 600; color: #333; line-height: 1.2; }
+    .flow-box .fs  { font-size: 0.66em; color: #999; margin-top: 2px; }
+    .flow-arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+      flex-shrink: 0;
+    }
+    .flow-arrow .alabel { font-size: 0.66em; color: #7c4dff; font-weight: 600; white-space: nowrap; }
+    .flow-arrow .aline  { color: #ccc; font-size: 1.3rem; line-height: 1; }
+
+    .flow-note {
+      margin-top: 14px;
+      border-top: 1px dashed #ddd;
+      padding-top: 12px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .flow-note-item {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 0.78em;
+      color: #555;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    /* ── status banner ── */
+    .banner {
+      border-radius: 12px;
+      padding: 26px 30px;
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      border: 2px solid transparent;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .banner.checking { background: #f0f4ff; border-color: #93c5fd; }
+    .banner.ztna     { background: #f0fdf4; border-color: #4ade80; }
+    .banner.direct   { background: #fff7ed; border-color: #fb923c; }
+
+    .banner-icon { font-size: 2.4rem; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+
+    .banner-tag {
+      font-size: 0.68em;
+      font-weight: 700;
+      letter-spacing: 0.9px;
+      margin-bottom: 5px;
+    }
+    .banner.checking .banner-tag { color: #3b82f6; }
+    .banner.ztna     .banner-tag { color: var(--green); }
+    .banner.direct   .banner-tag { color: var(--orange); }
+
+    .banner-title {
+      font-size: 1.15em;
+      font-weight: 700;
+      margin: 0 0 7px;
+      color: #111;
+    }
+    .banner-body {
+      font-size: 0.88em;
+      color: #555;
+      line-height: 1.65;
+      margin: 0;
+    }
+
+    /* ── card ── */
+    .card {
+      background: #fff;
+      border: 1px solid #e2e4e8;
+      border-radius: 10px;
+      padding: 22px 28px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .card-title {
+      font-size: 0.68em;
+      font-weight: 700;
+      color: #aaa;
+      letter-spacing: 0.8px;
+      margin: 0 0 18px;
+    }
+
+    /* ── detail grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 24px;
+    }
+    .grid label {
+      display: block;
+      font-size: 0.68em;
+      font-weight: 700;
+      color: #999;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .grid .val {
+      font-size: 0.9em;
+      font-weight: 600;
+      color: #111;
+      font-family: ui-monospace, "Cascadia Code", monospace;
+      word-break: break-all;
+    }
+    .val.ip { font-size: 1.05em; color: var(--blue); }
+
+    /* ── explanation panels ── */
+    .explain-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .explain-panel {
+      flex: 1;
+      min-width: 200px;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.82em;
+      line-height: 1.6;
+      color: #444;
+    }
+    .explain-panel strong { display: block; margin-bottom: 3px; font-size: 1.05em; }
+    .panel-ztna   { background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .panel-direct { background: #fff7ed; border: 1px solid #fed7aa; }
+    .panel-ztna   strong { color: var(--green); }
+    .panel-direct strong { color: var(--orange); }
+
+    footer {
+      text-align: center;
+      color: #aaa;
+      font-size: 0.8em;
+      padding: 16px 0 32px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png" alt="Cisco">
+  <div>
+    <div class="t">Cisco SSE Check</div>
+    <div class="sub">Zero Trust Application Access · Live Access Verifier</div>
+  </div>
+</header>
+
+<main>
+
+  <!-- Status banner -->
+  <div class="banner checking" id="banner">
+    <div class="banner-icon" id="bIcon">⏳</div>
+    <div>
+      <div class="banner-tag" id="bTag">CHECKING…</div>
+      <h2 class="banner-title" id="bTitle">Verifying your connection</h2>
+      <p class="banner-body" id="bBody">Analysing the access path to this server…</p>
+    </div>
+  </div>
+
+  <!-- Connection details -->
+  <div class="card">
+    <div class="card-title">CONNECTION DETAILS</div>
+    <div class="grid">
+
+      <div>
+        <label>SERVER SEES YOUR IP AS</label>
+        <!--
+          nginx SSI injects the real client IP here at request time.
+          Through ZTNA this will be the Connector pod's internal cluster IP.
+          Accessed directly this will be your real public IP.
+        -->
+        <div class="val ip" id="serverIp"><!--# echo var="remote_addr" default="n/a" --></div>
+      </div>
+
+      <div>
+        <label>ACCESS METHOD</label>
+        <div class="val" id="accessMethod">—</div>
+      </div>
+
+      <div>
+        <label>EXPECTED CONNECTOR RANGE</label>
+        <div class="val ip" id="valConnectorIp">240.0.0.0/29</div>
+      </div>
+
+      <div>
+        <label>PROTOCOL</label>
+        <div class="val" id="valProtocol">—</div>
+      </div>
+
+      <div>
+        <label>PORT</label>
+        <div class="val" id="valPort">—</div>
+      </div>
+
+      <div>
+        <label>TIMESTAMP</label>
+        <div class="val" id="valTime">—</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Explanation -->
+  <div class="card">
+    <div class="card-title">HOW ACCESS IS DETECTED</div>
+    <p style="font-size:0.88em; color:#555; line-height:1.7; margin:0;">
+      Via <strong>Cisco Secure Access</strong>: traffic exits through the on-premises connector pod
+      (IP in <code>240.0.0.0/29</code>) — the app sees that IP, not yours.<br>
+      Via <strong>direct access</strong>: the app sees your real IP.
+    </p>
+  </div>
+
+</main>
+
+<footer>Cisco Secure Access · PoC in a Pod · SSE Check · Zero Trust Demo</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Always populate these fields — they don't need server-side data
+  document.getElementById('valProtocol').textContent =
+    window.location.protocol.replace(':', '').toUpperCase();
+  document.getElementById('valPort').textContent =
+    window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+  document.getElementById('valTime').textContent = new Date().toLocaleString();
+
+  var banner = document.getElementById('banner');
+  var bIcon  = document.getElementById('bIcon');
+  var bTag   = document.getElementById('bTag');
+  var bTitle = document.getElementById('bTitle');
+  var bBody  = document.getElementById('bBody');
+  var method = document.getElementById('accessMethod');
+
+  try {
+    var ipEl = document.getElementById('serverIp');
+    var ip   = ipEl ? ipEl.textContent.trim() : '';
+    var connectorCidr = '240.0.0.0/29';
+
+    // Returns true if addr falls within the given CIDR (e.g. "240.0.0.0/29")
+    function ipInCIDR(addr, cidr) {
+      try {
+        var parts  = cidr.split('/');
+        var bits   = parseInt(parts[1], 10);
+        var mask   = bits === 0 ? 0 : (0xFFFFFFFF << (32 - bits)) >>> 0;
+        function toInt(s) {
+          return s.split('.').reduce(function(a, o) { return (a << 8) + parseInt(o, 10); }, 0) >>> 0;
+        }
+        return (toInt(addr) & mask) === (toInt(parts[0]) & mask);
+      } catch (e) { return false; }
+    }
+
+    if (!ip || ip === 'n/a') {
+      bIcon.textContent  = '🔍';
+      bTag.textContent   = 'IP UNAVAILABLE';
+      bTitle.textContent = 'Could not determine access method';
+      bBody.textContent  = 'Server-side IP injection requires nginx SSI to be enabled.';
+      method.textContent = 'Unknown';
+      banner.className   = 'banner direct';
+
+    } else if (ipInCIDR(ip, connectorCidr)) {
+      banner.className   = 'banner ztna';
+      bIcon.textContent  = '✅';
+      bTag.textContent   = 'ZERO TRUST ACCESS VERIFIED';
+      bTitle.textContent = 'You are accessing via Cisco Secure Access';
+      bBody.textContent  = 'The server sees ' + ip + ' — a Cisco Resource Connector IP (' + connectorCidr + '). Your real IP is never exposed to this application.';
+      method.textContent = 'ZTNA (Cisco Secure Access)';
+
+    } else {
+      banner.className   = 'banner direct';
+      bIcon.textContent  = '⚠️';
+      bTag.textContent   = 'DIRECT ACCESS — NO ZTNA';
+      bTitle.textContent = 'You are NOT going through Cisco Secure Access';
+      bBody.textContent  = 'The server sees ' + ip + ' — your real IP. Traffic is not tunnelled through ZTNA.';
+      method.textContent = 'Direct (no ZTNA)';
+    }
+  } catch (e) {
+    banner.className   = 'banner direct';
+    bIcon.textContent  = '🔍';
+    bTag.textContent   = 'DETECTION ERROR';
+    bTitle.textContent = 'Could not determine access method';
+    bBody.textContent  = 'JS error: ' + e.message;
+  }
+});
+</script>
+
+</body>
+</html>

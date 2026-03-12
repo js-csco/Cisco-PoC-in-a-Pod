@@ -8,6 +8,7 @@ metadata:
   labels:
     io.kompose.service: ssh-server
   name: ssh-server
+  namespace: piap
 spec:
   replicas: 1
   selector:
@@ -44,7 +45,13 @@ spec:
           ports:
             - containerPort: 2222
               protocol: TCP
-          resources: {}
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
       hostname: openssh-server
       restartPolicy: Always
 status: {}

@@ -8,6 +8,7 @@ metadata:
   labels:
     io.kompose.service: dashy
   name: dashy
+  namespace: piap
 spec:
   replicas: 1
   selector:
@@ -27,11 +28,32 @@ spec:
         app: dashy
     spec:
       containers:
-        - image: ghcr.io/lissy93/dashy:latest
+        - image: ghcr.io/lissy93/dashy:3.1.1
           name: dashy
           ports:
             - containerPort: 8080
               protocol: TCP
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "256Mi"
+            limits:
+              cpu: "200m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
           volumeMounts:
             - mountPath: /app/user-data/conf.yml
               name: dashy-config

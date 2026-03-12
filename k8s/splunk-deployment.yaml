@@ -1,3 +1,14 @@
+# Secret with admin password and HEC token — apply before the Deployment
+apiVersion: v1
+kind: Secret
+metadata:
+  name: splunk-creds
+  namespace: piap
+type: Opaque
+stringData:
+  password: "piap"
+  hec_token: "piap-hec-token"
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -90,6 +101,12 @@ spec:
         # Ensure proper role
         - name: SPLUNK_ROLE
           value: "splunk_standalone"
+        # HEC — enables the HTTP Event Collector with this token
+        - name: SPLUNK_HEC_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: splunk-creds
+              key: hec_token
         ports:
         - name: web
           containerPort: 8000
