@@ -533,6 +533,9 @@ for manifest in "$REPO_ROOT/k8s/"*.yaml; do
         *caldera*)
             echo "  Skipping $(basename $manifest) — deploy from the Automagic dashboard"
             ;;
+        *uptime-kuma-seed*)
+            echo "  Skipping $(basename $manifest) — will run after pods are ready"
+            ;;
         *)
             kubectl apply -f "$manifest" -n piap
             ;;
@@ -553,6 +556,15 @@ echo ""
 echo "Step 19: Waiting for pods to be ready..."
 kubectl wait --for=condition=Ready pods --all -n piap --timeout=120s || true
 kubectl get pods -n piap
+echo ""
+
+# Step 19a: Seed Uptime-Kuma monitors
+echo "Step 19a: Seeding Uptime-Kuma monitors..."
+kubectl delete job uptime-kuma-seed -n piap --ignore-not-found=true
+kubectl apply -f "$REPO_ROOT/k8s/uptime-kuma-seed-job.yaml" -n piap
+kubectl wait --for=condition=Complete job/uptime-kuma-seed -n piap --timeout=180s || \
+    echo "  Warning: Uptime-Kuma seed job did not complete in time (monitors can be added manually)"
+echo "  ✓ Uptime-Kuma monitors seeded"
 echo ""
 
 # Step 19.1: Install the connector internet masquerade rule.

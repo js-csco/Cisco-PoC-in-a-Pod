@@ -47,6 +47,13 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 20
             failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
           volumeMounts:
             - mountPath: /app/user-data/conf.yml
               name: dashy-config
