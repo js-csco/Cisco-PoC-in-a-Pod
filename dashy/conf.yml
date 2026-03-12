@@ -70,6 +70,11 @@ sections:
         icon: fas fa-skull-crossbones
         url: http://SERVER_IP:30600
         statusCheck: true
+      - title: Uptime Kuma
+        description: Status monitoring dashboard (login admin / piap)
+        icon: fas fa-heartbeat
+        url: http://SERVER_IP:30300
+        statusCheck: true
       - title: Splunk
         description: Aggregate Telemetry and Logs
         icon: fas fa-server
