@@ -57,6 +57,17 @@ services:
     networks:
       - cisco-pod-network
 
+  uptime-kuma:
+    image: dhi/uptime-kuma:latest
+    container_name: uptime-kuma
+    ports:
+      - "3001:3001"
+    volumes:
+      - /opt/uptime-kuma:/app/data
+    restart: unless-stopped
+    networks:
+      - cisco-pod-network
+
 networks:
   cisco-pod-network:
     driver: bridge
