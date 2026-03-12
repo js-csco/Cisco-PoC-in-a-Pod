@@ -2,15 +2,15 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    io.kompose.service: testcases
-  name: testcases
+    io.kompose.service: playbook
+  name: playbook
   namespace: piap
 spec:
   type: NodePort
   selector:
-    io.kompose.service: testcases
+    io.kompose.service: playbook
   ports:
-    - name: "testcases"
+    - name: "playbook"
       port: 9250
       targetPort: 80
       nodePort: 30250

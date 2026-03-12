@@ -81,7 +81,7 @@ sections:
         url: http://SERVER_IP:30500
         statusCheck: true
       - title: PoC Playbook
-        description: Guided test case runner for validating the full PoC
+        description: Guided playbook for validating the full PoC
         icon: fas fa-book
         url: http://SERVER_IP:30250
         statusCheck: true

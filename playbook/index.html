@@ -223,7 +223,7 @@
     }
     .progress-label span { font-weight: 700; color: #374151; }
 
-    /* ── Test case card ── */
+    /* ── Playbook card ── */
     .tc-card {
       background: #fff;
       border: 1px solid #e5e7eb;
@@ -513,7 +513,7 @@
       <div class="header-divider"></div>
       <div>
         <div class="t">PoC Playbook</div>
-        <div class="sub">Guided test cases for Zero Trust Application Access</div>
+        <div class="sub">Guided playbook for Zero Trust Application Access</div>
       </div>
     </div>
     <div class="header-right">
@@ -532,7 +532,7 @@
   <div class="modal-box">
     <button class="modal-close" onclick="document.getElementById('inviteModal').classList.remove('active')" title="Close">&times;</button>
     <h2>👤 Invite your Cisco SE</h2>
-    <p>If you want to invite your Cisco SE to have remote access to the test cases, please do the following:</p>
+    <p>If you want to invite your Cisco SE to have remote access to the PoC Playbook, please do the following:</p>
     <ul>
       <li>Create Duo user in Group <strong>"PoC Users"</strong></li>
       <li>Allow browser based access to PoC Playbook
@@ -554,7 +554,7 @@
 
 <script>
 // ─────────────────────────────────────────────
-// Test case definitions
+// Playbook definitions
 // ─────────────────────────────────────────────
 const TABS = [
   {
@@ -895,7 +895,7 @@ const TABS = [
     id: 'custom',
     label: 'Custom Tests',
     icon: 'fa-flask',
-    subtitle: 'Define your own test cases specific to your environment and requirements.',
+    subtitle: 'Define your own tests specific to your environment and requirements.',
     isCustomTab: true,
     cases: [],
   },
@@ -981,7 +981,7 @@ function getState(tcId, field) {
 }
 
 function resetAll() {
-  if (!confirm('Reset all test case results and notes?')) return;
+  if (!confirm('Reset all results and notes?')) return;
   localStorage.removeItem(STORE_KEY);
   renderAll();
 }
@@ -1007,7 +1007,7 @@ function addCustomTest(title, desc, steps) {
 }
 
 function deleteCustomTest(id) {
-  if (!confirm('Delete this custom test case?')) return;
+  if (!confirm('Delete this custom test?')) return;
   let tests = loadCustomTests();
   tests = tests.filter(t => t.id !== id);
   saveCustomTests(tests);
@@ -1043,7 +1043,7 @@ function submitCustomTest() {
   const title = document.getElementById('cfTitle').value.trim();
   const desc = document.getElementById('cfDesc').value.trim();
   const stepsRaw = document.getElementById('cfSteps').value.trim();
-  if (!title) { alert('Please enter a test case title.'); return; }
+  if (!title) { alert('Please enter a test title.'); return; }
   const steps = stepsRaw ? stepsRaw.split('\n').filter(s => s.trim()) : [];
   addCustomTest(title, desc, steps);
   hideCustomForm();
@@ -1062,7 +1062,7 @@ function renderAll() {
   updateOverall();
 }
 
-// Returns all test cases for a tab, regardless of flat or sectioned structure
+// Returns all tests for a tab, regardless of flat or sectioned structure
 function tabCases(tab) {
   if (tab.sections) return tab.sections.flatMap(s => s.cases);
   return tab.cases || [];
@@ -1134,7 +1134,7 @@ function renderCustomTab(tab) {
       <div style="text-align:center; padding:40px 20px; color:#999;">
         <i class="fa-solid fa-flask" style="font-size:2rem; color:#c4b5fd; margin-bottom:12px; display:block;"></i>
         <div style="font-size:0.95em; font-weight:600; color:#666; margin-bottom:4px;">No custom tests yet</div>
-        <div style="font-size:0.83em;">Click the button below to add your first test case.</div>
+        <div style="font-size:0.83em;">Click the button below to add your first custom test.</div>
       </div>`;
   }
   return `
@@ -1150,10 +1150,10 @@ function renderCustomTab(tab) {
       </div>
       ${cardsHtml}
       <button class="btn-add-custom" onclick="showCustomForm()">
-        <i class="fa-solid fa-plus"></i> Add Custom Test Case
+        <i class="fa-solid fa-plus"></i> Add Custom Test
       </button>
       <div id="customForm">
-        <label for="cfTitle">Test Case Title *</label>
+        <label for="cfTitle">Test Title *</label>
         <input type="text" id="cfTitle" placeholder="e.g., VPN Failover Test">
         <label for="cfDesc">Description</label>
         <textarea id="cfDesc" rows="2" placeholder="What should this test verify?"></textarea>

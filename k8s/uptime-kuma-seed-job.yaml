@@ -64,9 +64,9 @@ data:
             "maxretries": 3,
         },
         {
-            "name": "Testcases",
+            "name": "PoC Playbook",
             "type": "http",
-            "url": "http://testcases.piap.svc.cluster.local:9250",
+            "url": "http://playbook.piap.svc.cluster.local:9250",
             "interval": 60,
             "maxretries": 3,
         },
