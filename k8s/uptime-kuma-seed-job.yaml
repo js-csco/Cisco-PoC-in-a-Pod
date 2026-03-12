@@ -16,7 +16,7 @@ data:
 
     KUMA_URL = "http://uptime-kuma.piap.svc.cluster.local:3001"
     ADMIN_USER = "admin"
-    ADMIN_PASS = "piap-admin-2024"
+    ADMIN_PASS = "piap"
 
     MONITORS = [
         {
