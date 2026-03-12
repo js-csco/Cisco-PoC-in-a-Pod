@@ -57,6 +57,7 @@ echo "Step 1: Ensuring symlinks..."
 ln -sfn "$REPO_ROOT/sse-check"        /sse-check       && echo "  ✓ /sse-check"
 ln -sfn "$REPO_ROOT/playbook"         /playbook        && echo "  ✓ /playbook"
 ln -sfn "$REPO_ROOT/automagic-server" /automagic-server && echo "  ✓ /automagic-server"
+ln -sfn "$REPO_ROOT/saml-app"         /saml-app        && echo "  ✓ /saml-app"
 
 # ── 2. Detect connector IP ──────────────────────────────────────────────────
 echo ""

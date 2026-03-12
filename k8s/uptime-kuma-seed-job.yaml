@@ -93,6 +93,15 @@ data:
             "notificationIDList": [],
             "accepted_statuscodes": ["200-299"],
         },
+        {
+            "name": "SAML Demo",
+            "type": "http",
+            "url": "http://saml-app.piap.svc.cluster.local:9400/health",
+            "interval": 60,
+            "maxretries": 3,
+            "notificationIDList": [],
+            "accepted_statuscodes": ["200-299"],
+        },
     ]
 
     def wait_for_kuma(max_retries=30, delay=10):

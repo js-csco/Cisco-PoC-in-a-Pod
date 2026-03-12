@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: saml-app
+  namespace: piap
+  labels:
+    app: saml-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: saml-app
+  template:
+    metadata:
+      labels:
+        app: saml-app
+    spec:
+      containers:
+        - name: saml-app
+          image: python:3.11-slim
+          command:
+            - /bin/sh
+            - -c
+            - |
+              apt-get update && \
+              apt-get install -y --no-install-recommends \
+                pkg-config gcc libxml2-dev libxmlsec1-dev libxmlsec1-openssl && \
+              pip install --no-cache-dir flask python3-saml && \
+              cd /app && python app.py
+          ports:
+            - containerPort: 9400
+              protocol: TCP
+          env:
+            - name: SP_HOST
+              value: ""
+            - name: IDP_ENTITY_ID
+              value: ""
+            - name: IDP_SSO_URL
+              value: ""
+            - name: IDP_SLO_URL
+              value: ""
+            - name: IDP_CERT
+              value: ""
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9400
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9400
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            failureThreshold: 5
+          volumeMounts:
+            - mountPath: /app
+              name: code
+      restartPolicy: Always
+      volumes:
+        - name: code
+          hostPath:
+            path: /saml-app

@@ -145,6 +145,7 @@ echo ""
 
 echo "Step 6: Removing application symlinks..."
 rm -f /automagic-server && echo "  ✓ /automagic-server removed" || true
+rm -f /saml-app && echo "  ✓ /saml-app removed" || true
 echo ""
 
 echo "Step 7: Cleaning up Cilium BPF filesystem..."

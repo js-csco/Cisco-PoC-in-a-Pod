@@ -73,6 +73,7 @@ echo "Step 1: Creating symlinks and preparing system..."
 ln -sf "$REPO_ROOT/automagic-server" /automagic-server && echo "  ✓ /automagic-server"
 ln -sf "$REPO_ROOT/sse-check" /sse-check && echo "  ✓ /sse-check"
 ln -sf "$REPO_ROOT/playbook" /playbook && echo "  ✓ /playbook"
+ln -sf "$REPO_ROOT/saml-app" /saml-app && echo "  ✓ /saml-app"
 
 echo "  Removing system containerd package (Docker brings its own)..."
 apt-get remove -y containerd 2>/dev/null || true

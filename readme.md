@@ -48,6 +48,7 @@ The script is interactive and takes ~10-20 minutes. Have these ready:
 | 30389 | RDP Server | RDP target workload |
 | 30050 | Kubectl MCP | Kubernetes MCP server (read-only) |
 | 30250 | PoC Playbook | Guided test playbook |
+| 30400 | SAML Demo | Duo SSO SAML demo app |
 | 30550 | SSE Check | SSE access path verification |
 | 30600 | Caldera C2 | MITRE Caldera (deploy from Automagic) |
 | 30800 | Hubble UI | Network flow observability |
