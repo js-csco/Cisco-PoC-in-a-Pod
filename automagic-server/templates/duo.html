@@ -251,11 +251,84 @@
         <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">INTEGRATIONS</h3>
       </div>
 
-      <!-- SAML App Integration -->
+      <!-- 1. Cisco Secure Access Integration -->
       <div style="margin-bottom:28px;">
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
           <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
-          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">1. Generic SAML Application</h3>
+          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">1. Cisco Secure Access</h3>
+        </div>
+
+        <p style="margin-top:0; margin-bottom:20px; color:#555; font-size:0.92em;">
+          In the <strong>Duo Admin Panel</strong>, go to <em>Applications &rarr; Protect an Application</em>, search for
+          <strong>Cisco Secure Access</strong>, and follow the setup guide. This integration covers two parts:
+        </p>
+
+        <!-- 1a. SAML Integration -->
+        <div style="margin-left:16px; margin-bottom:24px;">
+          <p style="color:#333; font-size:0.92em; font-weight:600; margin:0 0 8px 0;">a) SAML Integration</p>
+          <p style="margin-top:0; margin-bottom:14px; color:#555; font-size:0.9em; line-height:1.6;">
+            Configure Single Sign-On between Duo and Cisco Secure Access. Follow the SSO setup guide to connect Duo as the identity provider.
+          </p>
+
+          <a href="https://duo.com/docs/sso-cisco-secure-access" target="_blank"
+             style="display:inline-block; background-color:#0066ff; color:#fff; text-decoration:none;
+                    padding:10px 20px; border-radius:6px; font-weight:500; font-size:0.95rem;">
+            Duo SSO – Cisco Secure Access Docs
+          </a>
+        </div>
+
+        <!-- 1b. User Provisioning -->
+        <div style="margin-left:16px;">
+          <p style="color:#333; font-size:0.92em; font-weight:600; margin:0 0 8px 0;">b) User Provisioning</p>
+          <p style="margin-top:0; margin-bottom:14px; color:#555; font-size:0.9em; line-height:1.6;">
+            Enable SCIM provisioning in the same integration to sync Duo users and groups to Cisco Secure Access.
+          </p>
+
+          <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px 18px; margin-bottom:16px; font-size:0.88em; color:#6d4c00;">
+            <strong>Tip — Provisioning tab &rarr; Groups section:</strong>
+            In the <em>Select Groups</em> field, make sure to select <strong>PoC Users</strong> so that only your PoC users are synced to Cisco Secure Access.
+          </div>
+
+          <p style="color:#555; font-size:0.9rem; font-weight:600; margin:0 0 8px 0;">Attribute Mapping</p>
+
+          <table style="width:100%; border-collapse:collapse; font-size:0.88em;">
+            <thead>
+              <tr style="background:#f0f4ff; border-bottom:2px solid #c0d0ff;">
+                <th style="text-align:left; padding:10px 14px; color:#333; font-weight:600;">Duo User Attribute</th>
+                <th style="text-align:left; padding:10px 14px; color:#333; font-weight:600;">Application Attribute</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid #e8e8e8;">
+                <td style="padding:9px 14px; color:#444; font-family:monospace;">displayName</td>
+                <td style="padding:9px 14px; color:#444; font-family:monospace;">displayName</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e8e8e8; background:#fafafa;">
+                <td style="padding:9px 14px; color:#444; font-family:monospace;">emails</td>
+                <td style="padding:9px 14px; color:#444; font-family:monospace;">emails</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e8e8e8;">
+                <td style="padding:9px 14px; color:#444; font-family:monospace;">name.familyName</td>
+                <td style="padding:9px 14px; color:#444; font-family:monospace;">name.familyName</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e8e8e8; background:#fafafa;">
+                <td style="padding:9px 14px; color:#444; font-family:monospace;">name.givenName</td>
+                <td style="padding:9px 14px; color:#444; font-family:monospace;">name.givenName</td>
+              </tr>
+              <tr>
+                <td style="padding:9px 14px; color:#444; font-family:monospace;">userName</td>
+                <td style="padding:9px 14px; color:#444; font-family:monospace;">userName</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 2. Generic SAML Application -->
+      <div style="margin-bottom:28px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+          <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">2. Generic SAML Application</h3>
         </div>
 
         <p style="color:#555; font-size:0.92em; margin-top:0; margin-bottom:14px;">
@@ -280,77 +353,6 @@
                        font-size:0.95rem;">
           Create SAML App
         </button>
-      </div>
-
-      <!-- Cisco Secure Access Integration -->
-      <div style="margin-bottom:28px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-          <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
-          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">2. Cisco Secure Access</h3>
-        </div>
-
-        <p style="margin-top:0; margin-bottom:14px; color:#555; font-size:0.92em;">
-          A single integration connects Duo with Cisco Secure Access, covering both SSO and user provisioning (SCIM).
-          In the <strong>Duo Admin Panel</strong>, go to <em>Applications → Protect an Application</em>, search for
-          <strong>Cisco Secure Access</strong>, and follow the setup guide to configure SSO and enable user provisioning.
-        </p>
-
-        <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px 18px; margin-bottom:16px; font-size:0.88em; color:#6d4c00;">
-          <strong>Tip — Provisioning tab &rarr; Groups section:</strong>
-          In the <em>Select Groups</em> field, make sure to select <strong>PoC Users</strong> so that only your PoC users are synced to Cisco Secure Access.
-        </div>
-
-        <a href="https://duo.com/docs/sso-cisco-secure-access" target="_blank"
-           style="display:inline-block; background-color:#0066ff; color:#fff; text-decoration:none;
-                  padding:10px 20px; border-radius:6px; font-weight:500;">
-          Duo SSO – Cisco Secure Access Docs
-        </a>
-      </div>
-
-      <!-- Provisioning of Users -->
-      <div>
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-          <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
-          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">3. Provisioning of Users</h3>
-        </div>
-
-        <p style="color:#555; font-size:0.95em; margin-top:0; margin-bottom:16px;">
-          When SCIM provisioning is enabled, Duo syncs user attributes to Cisco Secure Access.
-          The table below shows the default attribute mapping used during provisioning.
-        </p>
-
-        <p style="color:#555; font-size:0.9rem; font-weight:600; margin:0 0 8px 0;">Attribute Mapping</p>
-
-        <table style="width:100%; border-collapse:collapse; font-size:0.88em;">
-          <thead>
-            <tr style="background:#f0f4ff; border-bottom:2px solid #c0d0ff;">
-              <th style="text-align:left; padding:10px 14px; color:#333; font-weight:600;">Duo User Attribute</th>
-              <th style="text-align:left; padding:10px 14px; color:#333; font-weight:600;">Application Attribute</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="border-bottom:1px solid #e8e8e8;">
-              <td style="padding:9px 14px; color:#444; font-family:monospace;">displayName</td>
-              <td style="padding:9px 14px; color:#444; font-family:monospace;">displayName</td>
-            </tr>
-            <tr style="border-bottom:1px solid #e8e8e8; background:#fafafa;">
-              <td style="padding:9px 14px; color:#444; font-family:monospace;">emails</td>
-              <td style="padding:9px 14px; color:#444; font-family:monospace;">emails</td>
-            </tr>
-            <tr style="border-bottom:1px solid #e8e8e8;">
-              <td style="padding:9px 14px; color:#444; font-family:monospace;">name.familyName</td>
-              <td style="padding:9px 14px; color:#444; font-family:monospace;">name.familyName</td>
-            </tr>
-            <tr style="border-bottom:1px solid #e8e8e8; background:#fafafa;">
-              <td style="padding:9px 14px; color:#444; font-family:monospace;">name.givenName</td>
-              <td style="padding:9px 14px; color:#444; font-family:monospace;">name.givenName</td>
-            </tr>
-            <tr>
-              <td style="padding:9px 14px; color:#444; font-family:monospace;">userName</td>
-              <td style="padding:9px 14px; color:#444; font-family:monospace;">userName</td>
-            </tr>
-          </tbody>
-        </table>
       </div>
     </section>
 
