@@ -301,7 +301,22 @@ def duo():
                 if result['errors']:
                     for error in result['errors']:
                         flash(f"⚠️ {error}")
-            
+
+            # Action: CREATE SAML APP
+            if action == 'create_saml_app':
+                from scripts.duo.duo_automation import create_integration
+                result = create_integration(
+                    api_hostname=api_hostname,
+                    integration_key=integration_key,
+                    secret_key=secret_key,
+                    name="PoC in a Pod: SAML App",
+                    integration_type="sso-generic"
+                )
+                if result['success']:
+                    flash(f"✅ SAML App created — Integration Key: {result['integration_key']}")
+                else:
+                    flash(f"⚠️ {result['error']}")
+
         except Exception as e:
             flash(f"⚠️ Error: {str(e)}")
         

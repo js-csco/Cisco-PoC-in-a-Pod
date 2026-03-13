@@ -206,28 +206,70 @@
         <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">INTEGRATIONS</h3>
       </div>
 
-      <p style="margin-top:0; margin-bottom:20px; color:#555; font-size:0.95em;">
-        A single integration connects Duo with Cisco Secure Access, covering both SSO and user provisioning (SCIM).
-        In the <strong>Duo Admin Panel</strong>, go to <em>Applications → Protect an Application</em>, search for
-        <strong>Cisco Secure Access</strong>, and follow the setup guide to configure SSO and enable user provisioning.
-      </p>
+      <!-- SAML App Integration -->
+      <div style="margin-bottom:28px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+          <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">1. Generic SAML Application</h3>
+        </div>
 
-      <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px 18px; margin-bottom:20px; font-size:0.88em; color:#6d4c00;">
-        <strong>Tip — Provisioning tab &rarr; Groups section:</strong>
-        In the <em>Select Groups</em> field, make sure to select <strong>PoC Users</strong> so that only your PoC users are synced to Cisco Secure Access.
+        <p style="color:#555; font-size:0.92em; margin-top:0; margin-bottom:14px;">
+          Creates a <strong>Generic SAML Service Provider</strong> integration in Duo called
+          <em>"PoC in a Pod: SAML App"</em> and assigns it to the <strong>PoC Users</strong> group.
+        </p>
+
+        <div style="background:#f0f8f0; border:1px solid #c8e6c9; border-radius:8px; padding:14px 18px; margin-bottom:16px; font-size:0.88em; color:#2e7d32;">
+          <strong>This will:</strong>
+          <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
+            <li>Create a <code>sso-generic</code> integration via the Duo Admin API</li>
+            <li>Restrict access to the <strong>PoC Users</strong> group</li>
+            <li>Return the integration key and metadata needed for SAML configuration</li>
+          </ul>
+        </div>
+
+        <button type="submit" name="action" value="create_saml_app"
+                {% if not session.get('duo_authenticated') %}disabled{% endif %}
+                style="background-color:{% if session.get('duo_authenticated') %}#0066ff{% else %}#aaa{% endif %};
+                       color:#fff; border:none; padding:10px 20px; border-radius:6px;
+                       font-weight:500; cursor:{% if session.get('duo_authenticated') %}pointer{% else %}default{% endif %};
+                       font-size:0.95rem;">
+          Create SAML App
+        </button>
+        {% if not session.get('duo_authenticated') %}
+          <span style="color:#888; font-size:0.82em; margin-left:8px;">Authenticate first</span>
+        {% endif %}
       </div>
 
-      <a href="https://duo.com/docs/sso-cisco-secure-access" target="_blank"
-         style="display:inline-block; background-color:#0066ff; color:#fff; text-decoration:none;
-                padding:10px 20px; border-radius:6px; font-weight:500;">
-        Duo SSO – Cisco Secure Access Docs
-      </a>
+      <!-- Cisco Secure Access Integration -->
+      <div style="margin-bottom:28px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+          <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">2. Cisco Secure Access</h3>
+        </div>
+
+        <p style="margin-top:0; margin-bottom:14px; color:#555; font-size:0.92em;">
+          A single integration connects Duo with Cisco Secure Access, covering both SSO and user provisioning (SCIM).
+          In the <strong>Duo Admin Panel</strong>, go to <em>Applications → Protect an Application</em>, search for
+          <strong>Cisco Secure Access</strong>, and follow the setup guide to configure SSO and enable user provisioning.
+        </p>
+
+        <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px 18px; margin-bottom:16px; font-size:0.88em; color:#6d4c00;">
+          <strong>Tip — Provisioning tab &rarr; Groups section:</strong>
+          In the <em>Select Groups</em> field, make sure to select <strong>PoC Users</strong> so that only your PoC users are synced to Cisco Secure Access.
+        </div>
+
+        <a href="https://duo.com/docs/sso-cisco-secure-access" target="_blank"
+           style="display:inline-block; background-color:#0066ff; color:#fff; text-decoration:none;
+                  padding:10px 20px; border-radius:6px; font-weight:500;">
+          Duo SSO – Cisco Secure Access Docs
+        </a>
+      </div>
 
       <!-- Provisioning of Users -->
-      <div style="margin-top:28px;">
+      <div>
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
           <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
-          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">Provisioning of Users</h3>
+          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">3. Provisioning of Users</h3>
         </div>
 
         <p style="color:#555; font-size:0.95em; margin-top:0; margin-bottom:16px;">
