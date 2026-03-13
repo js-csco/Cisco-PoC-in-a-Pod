@@ -311,7 +311,7 @@ def duo():
                     secret_key=secret_key
                 )
                 if result['success']:
-                    flash("✅ Global Policy configured — Authentication methods set to recommended only, risk-based factor selection disabled")
+                    flash("✅ Global Policy configured — Authentication methods set to recommended only (Platform/Roaming Passkey + Duo Push for 2FA and Passwordless SSO)")
                 else:
                     flash(f"⚠️ {result['error']}")
 

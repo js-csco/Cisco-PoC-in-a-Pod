@@ -575,6 +575,19 @@ const TABS = [
         ],
       },
       {
+        id: 'duo-2',
+        title: 'SAML App — User Authentication Check',
+        desc: 'Verify Duo SSO authentication works via the SAML App from two different browsers to demonstrate Duo Passport.',
+        steps: [
+          'Open <strong>Browser 1</strong> (e.g. Chrome) and navigate to the SAML App login page.',
+          'Log in with a test user — complete the Duo MFA prompt (push or passkey).',
+          'Confirm the user is authenticated and the SAML assertion is received.',
+          'Open <strong>Browser 2</strong> (e.g. Firefox or Edge) and navigate to the same SAML App login page.',
+          'Log in with the <strong>same test user</strong> — observe that Duo Passport provides a seamless SSO experience (reduced or no MFA prompt).',
+          'Verify the authentication event appears in the Duo Admin Panel → Reports → Authentication Log.',
+        ],
+      },
+      {
         id: 'duo-5',
         title: 'Identity Intelligence — Dashboard Access',
         desc: 'Cisco Identity Intelligence dashboard launches successfully.',

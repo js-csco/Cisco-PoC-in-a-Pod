@@ -206,9 +206,10 @@ def setup_duo_complete(api_hostname, integration_key, secret_key, users_list):
 def configure_global_policy(api_hostname, integration_key, secret_key):
     """
     Configure the Global Policy via Duo Admin API v2:
-    - Authentication methods: recommended only (platform authenticator, roaming authenticator, Duo Push)
-    - Passwordless in SSO: same recommended authenticators
-    - Risk-based factor selection: disabled (don't limit methods based on risk)
+    - Authentication methods: recommended only
+      - 2FA: webauthn-platform, webauthn-roaming, duo-push
+      - Passwordless SSO: webauthn-platform-pwl, webauthn-roaming-pwl, duo-push-pwl
+    - Blocked: desktop, duo-passcode, phonecall, hardware-token, sms
 
     Returns:
         dict with 'success', 'before', 'after', and 'error' keys
@@ -236,29 +237,27 @@ def configure_global_policy(api_hostname, integration_key, secret_key):
         pretty_before = json.dumps(current_policy, indent=2, sort_keys=True, default=str)
         print(f"Current global policy:\n{pretty_before}")
 
-        # Step 2: Update authentication methods and risk-based settings
-        print("\nStep 2: Updating authentication methods and risk-based settings...")
+        # Step 2: Update authentication methods (recommended only)
+        print("\nStep 2: Updating authentication methods (recommended only)...")
 
         json_request = {
             "sections": {
                 "authentication_methods": {
                     "allowed_auth_list": [
                         "duo-push",
-                        "platform-authenticator",
-                        "roaming-authenticator",
+                        "webauthn-platform",
+                        "webauthn-roaming",
+                        "duo-push-pwl",
+                        "webauthn-platform-pwl",
+                        "webauthn-roaming-pwl",
                     ],
-                    "blocked_auth_list": [],
-                },
-                "authentication_methods_for_passwordless": {
-                    "allowed_auth_list": [
-                        "platform-authenticator",
-                        "roaming-authenticator",
-                        "duo-push",
+                    "blocked_auth_list": [
+                        "desktop",
+                        "duo-passcode",
+                        "phonecall",
+                        "hardware-token",
+                        "sms",
                     ],
-                    "blocked_auth_list": [],
-                },
-                "risk_based_factor_selection": {
-                    "enabled": False,
                 },
             },
         }
