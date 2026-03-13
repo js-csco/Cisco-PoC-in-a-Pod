@@ -3,6 +3,7 @@ Duo Admin API Automation
 Creates users, groups, manages group membership, and creates integrations for PoC environments
 """
 
+import json
 import duo_client
 
 
@@ -199,6 +200,84 @@ def setup_duo_complete(api_hostname, integration_key, secret_key, users_list):
             print(f"⚠️  {error_msg}")
             result['errors'].append(error_msg)
     
+    return result
+
+
+def configure_global_policy(api_hostname, integration_key, secret_key):
+    """
+    Configure the Global Policy via Duo Admin API v2:
+    - Authentication methods: recommended only (platform authenticator, roaming authenticator, Duo Push)
+    - Passwordless in SSO: same recommended authenticators
+    - Risk-based factor selection: disabled (don't limit methods based on risk)
+
+    Returns:
+        dict with 'success', 'before', 'after', and 'error' keys
+    """
+    admin_api = duo_client.Admin(
+        ikey=integration_key,
+        skey=secret_key,
+        host=api_hostname
+    )
+
+    result = {
+        'success': False,
+        'before': None,
+        'after': None,
+        'error': None
+    }
+
+    try:
+        # Step 1: Retrieve the current global policy
+        print("\n=== Configuring Global Policy ===")
+        print("Step 1: Retrieving current global policy...")
+
+        current_policy = admin_api.get_policy_v2("global")
+        result['before'] = current_policy
+        pretty_before = json.dumps(current_policy, indent=2, sort_keys=True, default=str)
+        print(f"Current global policy:\n{pretty_before}")
+
+        # Step 2: Update authentication methods and risk-based settings
+        print("\nStep 2: Updating authentication methods and risk-based settings...")
+
+        json_request = {
+            "sections": {
+                "authentication_methods": {
+                    "allowed_auth_list": [
+                        "duo-push",
+                        "platform-authenticator",
+                        "roaming-authenticator",
+                    ],
+                    "blocked_auth_list": [],
+                },
+                "authentication_methods_for_passwordless": {
+                    "allowed_auth_list": [
+                        "platform-authenticator",
+                        "roaming-authenticator",
+                        "duo-push",
+                    ],
+                    "blocked_auth_list": [],
+                },
+                "risk_based_factor_selection": {
+                    "enabled": False,
+                },
+            },
+        }
+
+        print(f"Update request:\n{json.dumps(json_request, indent=2)}")
+
+        updated_policy = admin_api.update_policy_v2("global", json_request)
+        result['after'] = updated_policy
+        result['success'] = True
+
+        pretty_after = json.dumps(updated_policy, indent=2, sort_keys=True, default=str)
+        print(f"\n✅ Global policy updated successfully")
+        print(f"Updated policy:\n{pretty_after}")
+
+    except Exception as e:
+        error_msg = f"Failed to configure global policy: {str(e)}"
+        print(f"❌ {error_msg}")
+        result['error'] = error_msg
+
     return result
 
 
