@@ -469,32 +469,6 @@
       cursor: pointer;
     }
 
-    /* ── What's Next cards ── */
-    .next-card {
-      background: #fff;
-      border: 1px solid #e2e4e8;
-      border-radius: 10px;
-      padding: 20px 24px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      transition: box-shadow 0.15s;
-    }
-    .next-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
-    .next-icon {
-      flex-shrink: 0;
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-    }
-    .next-card h3 { font-size: 0.95em; color: #111; margin-bottom: 6px; }
-    .next-card p { font-size: 0.85em; color: #555; line-height: 1.6; margin: 0; }
-    .next-card ul { font-size: 0.83em; color: #555; line-height: 1.8; margin: 8px 0 0 18px; padding: 0; }
 
     footer {
       text-align: center;
@@ -503,32 +477,52 @@
       padding: 12px 0 28px;
     }
 
-    /* ── Journey Map ── */
+    /* ── Journey Map — Dashboard Layout ── */
+    .journey-dashboard {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 28px;
+      min-height: calc(100vh - 180px);
+      align-content: start;
+    }
+    .journey-left {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .journey-right {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+      max-height: calc(100vh - 180px);
+      padding-right: 4px;
+    }
+
     .journey-hero {
       text-align: center;
-      padding: 32px 20px 28px;
+      padding: 28px 20px 24px;
       background: linear-gradient(135deg, #f0f9ff 0%, #eff6ff 50%, #f5f3ff 100%);
       border-radius: 16px;
-      margin-bottom: 32px;
       border: 1px solid #e0e7ff;
     }
     .journey-hero h2 {
-      font-size: 1.3rem;
+      font-size: 1.15rem;
       color: #111;
       margin-bottom: 4px;
     }
     .journey-hero p {
       color: #666;
-      font-size: 0.88em;
-      margin-bottom: 20px;
+      font-size: 0.82em;
+      margin-bottom: 18px;
     }
     .journey-score-wrap {
       display: inline-block;
       position: relative;
     }
     .journey-score-wrap svg {
-      width: 120px;
-      height: 120px;
+      width: 180px;
+      height: 180px;
       transform: rotate(-90deg);
     }
     .journey-score-label {
@@ -540,26 +534,26 @@
       justify-content: center;
     }
     .journey-score-pct {
-      font-size: 1.6rem;
+      font-size: 2.2rem;
       font-weight: 800;
       color: #111;
       line-height: 1;
     }
     .journey-score-sub {
-      font-size: 0.65rem;
+      font-size: 0.7rem;
       font-weight: 600;
       color: #888;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-top: 2px;
+      margin-top: 6px;
     }
 
-    .journey-phase { margin-bottom: 8px; }
+    .journey-phase { margin-bottom: 4px; }
     .journey-phase-label {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 14px;
+      margin-bottom: 10px;
       font-size: 0.72em;
       font-weight: 800;
       text-transform: uppercase;
@@ -585,15 +579,15 @@
       font-weight: 800;
     }
 
-    .journey-grid { display: grid; gap: 14px; }
-    .journey-grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .journey-grid { display: grid; gap: 10px; }
+    .journey-grid-4 { grid-template-columns: repeat(2, 1fr); }
     .journey-grid-3 { grid-template-columns: repeat(3, 1fr); }
 
     .journey-card {
       background: #fff;
       border: 1px solid #e5e7eb;
       border-radius: 12px;
-      padding: 20px 14px 16px;
+      padding: 16px 12px 14px;
       text-align: center;
       transition: all 0.2s ease;
       cursor: pointer;
@@ -607,24 +601,24 @@
     .journey-core:hover { border-color: var(--cyan); }
 
     .journey-card-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.1rem;
-      margin-bottom: 10px;
+      font-size: 1rem;
+      margin-bottom: 8px;
     }
 
     .journey-ring-wrap {
       display: inline-block;
       position: relative;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .journey-ring-wrap svg {
-      width: 72px;
-      height: 72px;
+      width: 64px;
+      height: 64px;
       transform: rotate(-90deg);
     }
     .journey-ring-label {
@@ -633,39 +627,39 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.82em;
+      font-size: 0.78em;
       font-weight: 800;
       color: #333;
     }
 
     .journey-card-title {
-      font-size: 0.82em;
+      font-size: 0.78em;
       font-weight: 700;
       color: #222;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
       line-height: 1.3;
     }
     .journey-card-stats {
-      font-size: 0.72em;
+      font-size: 0.68em;
       color: #888;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .journey-card-desc {
-      font-size: 0.75em;
+      font-size: 0.72em;
       color: #666;
-      line-height: 1.5;
-      margin-top: 6px;
+      line-height: 1.4;
+      margin-top: 4px;
     }
 
     .journey-card-dots {
       display: flex;
-      gap: 4px;
+      gap: 3px;
       justify-content: center;
       flex-wrap: wrap;
     }
     .jdot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       display: inline-block;
       background: #e5e7eb;
@@ -677,12 +671,12 @@
 
     .journey-card-badge {
       display: inline-block;
-      font-size: 0.63em;
+      font-size: 0.6em;
       font-weight: 700;
       letter-spacing: 0.5px;
-      padding: 3px 10px;
+      padding: 2px 8px;
       border-radius: 8px;
-      margin-top: 10px;
+      margin-top: 8px;
     }
     .badge-ready { background: #dcfce7; color: var(--green); }
     .badge-soon { background: #fef3c7; color: #b45309; }
@@ -690,9 +684,9 @@
     .journey-connector {
       display: flex;
       justify-content: center;
-      padding: 6px 0;
+      padding: 4px 0;
       color: #d1d5db;
-      font-size: 1.1rem;
+      font-size: 1rem;
       transition: color 0.3s;
     }
     .journey-connector.active { color: var(--cyan); }
@@ -700,23 +694,22 @@
     .journey-recommendation {
       background: linear-gradient(135deg, #1a1a2e 0%, var(--dark) 100%);
       border-radius: 12px;
-      padding: 16px 24px;
-      margin-top: 28px;
+      padding: 16px 20px;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       color: #fff;
     }
     .journey-rec-icon {
       flex-shrink: 0;
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       background: rgba(255,255,255,0.1);
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.1rem;
+      font-size: 1rem;
       animation: rec-pulse 2s ease-in-out infinite;
     }
     @keyframes rec-pulse {
@@ -725,7 +718,7 @@
     }
     .journey-rec-text {
       flex: 1;
-      font-size: 0.88em;
+      font-size: 0.82em;
       line-height: 1.5;
     }
     .journey-rec-text strong { color: var(--cyan); }
@@ -735,8 +728,8 @@
       color: #fff;
       border: none;
       border-radius: 8px;
-      padding: 8px 20px;
-      font-size: 0.85em;
+      padding: 8px 18px;
+      font-size: 0.82em;
       font-weight: 700;
       cursor: pointer;
       transition: opacity 0.15s;
@@ -748,33 +741,40 @@
       background: #fff;
       border: 1px solid #e5e7eb;
       border-radius: 12px;
-      padding: 20px 16px;
+      padding: 14px 12px;
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
+      gap: 6px;
     }
     .journey-zt-pillar {
       text-align: center;
-      padding: 12px 8px;
+      padding: 10px 6px;
     }
     .journey-zt-pillar i {
-      font-size: 1.3rem;
+      font-size: 1.1rem;
       color: var(--green);
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       display: block;
     }
     .journey-zt-pillar .zt-title {
-      font-size: 0.78em;
+      font-size: 0.72em;
       font-weight: 700;
       color: #333;
       margin-bottom: 2px;
     }
     .journey-zt-pillar .zt-desc {
-      font-size: 0.68em;
+      font-size: 0.62em;
       color: #888;
     }
 
-    @media (max-width: 700px) {
+    /* Journey tab needs wider main */
+    .main-journey {
+      max-width: 1100px;
+    }
+
+    @media (max-width: 900px) {
+      .journey-dashboard { grid-template-columns: 1fr; }
+      .journey-right { max-height: none; }
       .journey-grid-4 { grid-template-columns: repeat(2, 1fr); }
       .journey-grid-3 { grid-template-columns: repeat(1, 1fr); }
       .journey-zt-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1197,58 +1197,6 @@ const TABS = [
     isCustomTab: true,
     cases: [],
   },
-  {
-    id: 'next',
-    label: "What's Next",
-    icon: 'fa-road',
-    subtitle: 'Advanced use cases to expand your Zero Trust deployment beyond the PoC.',
-    isInfoTab: true,
-    cases: [],
-    content: [
-      {
-        icon: 'fa-network-wired',
-        color: '#0066ff',
-        bg: '#eff6ff',
-        title: 'Connect Your Networks / Firewalls / Branches',
-        desc: 'Extend Zero Trust access beyond this single VM. Connect your production network segments, firewall zones, and branch offices to Cisco Secure Access.',
-        items: [
-          'Deploy additional Resource Connectors in each network segment or branch',
-          'Configure IP-based private resources for entire subnets (e.g., 10.0.0.0/24)',
-          'Set up site-to-site IPsec or GRE tunnels from firewalls to Secure Access',
-          'Use Cisco SD-WAN integration for branch connectivity',
-          'Apply network-level access policies per site, subnet, or VLAN',
-        ],
-      },
-      {
-        icon: 'fa-users',
-        color: '#7c4dff',
-        bg: '#ede9fe',
-        title: 'Connect More Users',
-        desc: 'Onboard your full user base with Duo and Cisco Secure Client for organization-wide Zero Trust access.',
-        items: [
-          'Integrate Duo with your Identity Provider (Azure AD, Okta, Google Workspace)',
-          'Roll out Cisco Secure Client via MDM/GPO to all managed devices',
-          'Configure device posture checks (OS version, disk encryption, firewall status)',
-          'Set up Duo Passwordless for a frictionless login experience',
-          'Define per-group access policies (Engineering, Finance, Contractors, etc.)',
-        ],
-      },
-      {
-        icon: 'fa-window-restore',
-        color: '#049fd9',
-        bg: '#e0f7fa',
-        title: 'Connect Your Applications',
-        desc: 'Protect your real applications — SaaS, internal web apps, APIs, and legacy systems — behind Zero Trust policies.',
-        items: [
-          'Register internal web applications as private resources (e.g., Jira, GitLab, ERP)',
-          'Enable browser-based agentless access for contractors and unmanaged devices',
-          'Configure per-app DLP policies to prevent data leakage from sensitive apps',
-          'Set up SaaS application controls and shadow IT discovery',
-          'Apply AI Guardrails to control how users interact with AI services',
-        ],
-      },
-    ],
-  },
 ];
 
 // ─────────────────────────────────────────────
@@ -1358,6 +1306,13 @@ function renderAll() {
   renderNav();
   renderContent();
   updateOverall();
+  // Widen main for journey dashboard
+  const main = document.querySelector('main');
+  if (activeTab === 'getting-started') {
+    main.classList.add('main-journey');
+  } else {
+    main.classList.remove('main-journey');
+  }
 }
 
 // Returns all tests for a tab, regardless of flat or sectioned structure
@@ -1498,25 +1453,7 @@ function renderCustomCard(tc, num) {
 }
 
 function renderInfoTab(tab) {
-  const cardsHtml = tab.content.map(card => `
-    <div class="next-card">
-      <div class="next-icon" style="background:${card.bg}; color:${card.color};">
-        <i class="fa-solid ${card.icon}"></i>
-      </div>
-      <div style="flex:1;">
-        <h3>${card.title}</h3>
-        <p>${card.desc}</p>
-        <ul>${card.items.map(item => `<li>${item}</li>`).join('')}</ul>
-      </div>
-    </div>`).join('');
-  return `
-    <div class="tab-panel ${tab.id === activeTab ? 'active' : ''}" id="panel-${tab.id}">
-      <div class="tab-header">
-        <h2>${tab.label}</h2>
-        <p>${tab.subtitle}</p>
-      </div>
-      ${cardsHtml}
-    </div>`;
+  return '';
 }
 
 function tabProgress(tab) {
@@ -1654,9 +1591,9 @@ function getRecommendation() {
     }
   }
   return {
-    text: 'All foundation test cases complete! Explore <strong>What\'s Next</strong> for advanced use cases.',
-    tabId: 'next',
-    action: 'Explore \u2192'
+    text: 'All foundation test cases complete! You\'re ready to <strong>Connect</strong>, <strong>Observe</strong>, and build toward full Zero Trust maturity.',
+    tabId: 'getting-started',
+    action: 'Review \u2192'
   };
 }
 
@@ -1669,7 +1606,7 @@ function renderJourneyTab(tab) {
 
   const coreColors = { duo: '#049fd9', secureaccess: '#0066ff', cilium: '#16a34a', tetragon: '#7c4dff' };
 
-  const scoreRing = makeRingSvg(overallPct, 'var(--cyan)', 42, 6);
+  const scoreRing = makeRingSvg(overallPct, 'var(--cyan)', 68, 8);
 
   // Phase 1 — Foundation: Core module cards with progress rings
   const phase1Html = coreTabs.map(t => {
@@ -1704,7 +1641,7 @@ function renderJourneyTab(tab) {
     { icon: 'fa-users', color: '#7c4dff', bg: '#ede9fe', title: 'Connect Your Users', desc: 'Onboard your full user base with Duo and Secure Client.' },
   ];
   const phase2Html = phase2Items.map(item => `
-    <div class="journey-card" onclick="switchTab('next')">
+    <div class="journey-card" onclick="void(0)">
       <div class="journey-card-icon" style="background:${item.bg};color:${item.color};">
         <i class="fa-solid ${item.icon}"></i>
       </div>
@@ -1754,59 +1691,58 @@ function renderJourneyTab(tab) {
 
   return `
     <div class="tab-panel ${tab.id === activeTab ? 'active' : ''}" id="panel-${tab.id}">
-      <div class="journey-hero">
-        <h2>Your Zero Trust Journey</h2>
-        <p>Complete the foundation, then expand your deployment step by step.</p>
-        <div class="journey-score-wrap">
-          ${scoreRing}
-          <div class="journey-score-label">
-            <span class="journey-score-pct">${overallPct}%</span>
-            <span class="journey-score-sub">Zero Trust Score</span>
+      <div class="journey-dashboard">
+        <div class="journey-left">
+          <div class="journey-hero">
+            <h2>Your Zero Trust Journey</h2>
+            <p>Complete the foundation, then expand your deployment step by step.</p>
+            <div class="journey-score-wrap">
+              ${scoreRing}
+              <div class="journey-score-label">
+                <span class="journey-score-pct">${overallPct}%</span>
+                <span class="journey-score-sub">Zero Trust Score</span>
+              </div>
+            </div>
+          </div>
+          ${recHtml}
+          <div class="journey-phase">
+            <div class="journey-phase-label">
+              <span class="journey-phase-num">1</span> Foundation
+            </div>
+            <div class="journey-grid journey-grid-4">${phase1Html}</div>
+          </div>
+        </div>
+        <div class="journey-right">
+          <div class="journey-phase">
+            <div class="journey-phase-label">
+              <span class="journey-phase-num">2</span> Connect
+            </div>
+            <div class="journey-grid journey-grid-3">${phase2Html}</div>
+          </div>
+
+          <div class="journey-connector${foundationReady ? ' active' : ''}">
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+
+          <div class="journey-phase">
+            <div class="journey-phase-label">
+              <span class="journey-phase-num">3</span> Observe & Defend
+            </div>
+            <div class="journey-grid journey-grid-3">${phase3Html}</div>
+          </div>
+
+          <div class="journey-connector">
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+
+          <div class="journey-phase">
+            <div class="journey-phase-label">
+              <span class="journey-phase-num">4</span> Zero Trust Maturity
+            </div>
+            <div class="journey-zt-grid">${phase4Html}</div>
           </div>
         </div>
       </div>
-
-      <div class="journey-phase">
-        <div class="journey-phase-label">
-          <span class="journey-phase-num">1</span> Foundation
-        </div>
-        <div class="journey-grid journey-grid-4">${phase1Html}</div>
-      </div>
-
-      <div class="journey-connector${foundationReady ? ' active' : ''}">
-        <i class="fa-solid fa-chevron-down"></i>
-      </div>
-
-      <div class="journey-phase">
-        <div class="journey-phase-label">
-          <span class="journey-phase-num">2</span> Connect
-        </div>
-        <div class="journey-grid journey-grid-3">${phase2Html}</div>
-      </div>
-
-      <div class="journey-connector">
-        <i class="fa-solid fa-chevron-down"></i>
-      </div>
-
-      <div class="journey-phase">
-        <div class="journey-phase-label">
-          <span class="journey-phase-num">3</span> Observe & Defend
-        </div>
-        <div class="journey-grid journey-grid-3">${phase3Html}</div>
-      </div>
-
-      <div class="journey-connector">
-        <i class="fa-solid fa-chevron-down"></i>
-      </div>
-
-      <div class="journey-phase">
-        <div class="journey-phase-label">
-          <span class="journey-phase-num">4</span> Zero Trust Maturity
-        </div>
-        <div class="journey-zt-grid">${phase4Html}</div>
-      </div>
-
-      ${recHtml}
     </div>`;
 }
 
