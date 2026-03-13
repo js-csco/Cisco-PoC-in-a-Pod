@@ -3,6 +3,7 @@ Duo Admin API Automation
 Creates users, groups, manages group membership, and creates integrations for PoC environments
 """
 
+import json
 import duo_client
 
 
@@ -13,7 +14,7 @@ def check_credentials(api_hostname, integration_key, secret_key):
         skey=secret_key,
         host=api_hostname,
     )
-    admin.check()
+    admin.get_info_summary()
 
 
 def setup_duo_complete(api_hostname, integration_key, secret_key, users_list):
@@ -199,6 +200,83 @@ def setup_duo_complete(api_hostname, integration_key, secret_key, users_list):
             print(f"⚠️  {error_msg}")
             result['errors'].append(error_msg)
     
+    return result
+
+
+def configure_global_policy(api_hostname, integration_key, secret_key):
+    """
+    Configure the Global Policy via Duo Admin API v2:
+    - Authentication methods: recommended only
+      - 2FA: webauthn-platform, webauthn-roaming, duo-push
+      - Passwordless SSO: webauthn-platform-pwl, webauthn-roaming-pwl, duo-push-pwl
+    - Blocked: desktop, duo-passcode, phonecall, hardware-token, sms
+
+    Returns:
+        dict with 'success', 'before', 'after', and 'error' keys
+    """
+    admin_api = duo_client.Admin(
+        ikey=integration_key,
+        skey=secret_key,
+        host=api_hostname
+    )
+
+    result = {
+        'success': False,
+        'before': None,
+        'after': None,
+        'error': None
+    }
+
+    try:
+        # Step 1: Retrieve the current global policy
+        print("\n=== Configuring Global Policy ===")
+        print("Step 1: Retrieving current global policy...")
+
+        current_policy = admin_api.get_policy_v2("global")
+        result['before'] = current_policy
+        pretty_before = json.dumps(current_policy, indent=2, sort_keys=True, default=str)
+        print(f"Current global policy:\n{pretty_before}")
+
+        # Step 2: Update authentication methods (recommended only)
+        print("\nStep 2: Updating authentication methods (recommended only)...")
+
+        json_request = {
+            "sections": {
+                "authentication_methods": {
+                    "allowed_auth_list": [
+                        "duo-push",
+                        "webauthn-platform",
+                        "webauthn-roaming",
+                        "duo-push-pwl",
+                        "webauthn-platform-pwl",
+                        "webauthn-roaming-pwl",
+                    ],
+                    "blocked_auth_list": [
+                        "desktop",
+                        "duo-passcode",
+                        "phonecall",
+                        "hardware-token",
+                        "sms",
+                    ],
+                },
+            },
+        }
+
+        print(f"Update request:\n{json.dumps(json_request, indent=2)}")
+
+        updated_policy = admin_api.update_policy_v2("global", json_request)
+        result['after'] = updated_policy
+        result['success'] = True
+
+        pretty_after = json.dumps(updated_policy, indent=2, sort_keys=True, default=str)
+        print(f"\n✅ Global policy updated successfully")
+        print(f"Updated policy:\n{pretty_after}")
+
+    except Exception as e:
+        error_msg = f"Failed to configure global policy: {str(e)}"
+        print(f"❌ {error_msg}")
+        result['error'] = error_msg
+
     return result
 
 

@@ -94,6 +94,15 @@ data:
             "accepted_statuscodes": ["200-299"],
         },
         {
+            "name": "Caldera Victim",
+            "type": "ping",
+            "hostname": "caldera-victim.piap.svc.cluster.local",
+            "interval": 120,
+            "maxretries": 3,
+            "notificationIDList": [],
+            "accepted_statuscodes": ["200-299"],
+        },
+        {
             "name": "SAML App",
             "type": "http",
             "url": "http://saml-app.piap.svc.cluster.local:9400/health",

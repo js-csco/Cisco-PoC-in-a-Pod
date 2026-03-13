@@ -302,6 +302,19 @@ def duo():
                     for error in result['errors']:
                         flash(f"⚠️ {error}")
 
+            # Action: CONFIGURE GLOBAL POLICY
+            if action == 'configure_policy':
+                from scripts.duo.duo_automation import configure_global_policy
+                result = configure_global_policy(
+                    api_hostname=api_hostname,
+                    integration_key=integration_key,
+                    secret_key=secret_key
+                )
+                if result['success']:
+                    flash("✅ Global Policy configured — Authentication methods set to recommended only (Platform/Roaming Passkey + Duo Push for 2FA and Passwordless SSO)")
+                else:
+                    flash(f"⚠️ {result['error']}")
+
             # Action: CREATE SAML APP
             if action == 'create_saml_app':
                 from scripts.duo.duo_automation import create_integration

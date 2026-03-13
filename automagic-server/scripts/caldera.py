@@ -140,7 +140,8 @@ def deploy_caldera():
     """
     Create (or idempotently re-apply) the Caldera C2 + victim pod resources:
       ConfigMap caldera-config, Deployment caldera, Service caldera,
-      ConfigMap caldera-victim-script, Deployment caldera-victim.
+      ConfigMap caldera-victim-script, Deployment caldera-victim,
+      Headless Service caldera-victim (for DNS/ping monitoring).
     """
     core = _core()
     apps = _apps()
@@ -159,10 +160,11 @@ def deploy_caldera():
             core.delete_namespaced_config_map(name, NAMESPACE_OLD)
         except ApiException:
             pass
-    try:
-        core.delete_namespaced_service("caldera", NAMESPACE_OLD)
-    except ApiException:
-        pass
+    for name in ["caldera", "caldera-victim"]:
+        try:
+            core.delete_namespaced_service(name, NAMESPACE_OLD)
+        except ApiException:
+            pass
 
     # ── 1. ConfigMap: caldera-config ────────────────────────────────────────
     local_yml = (
@@ -373,6 +375,25 @@ def deploy_caldera():
     except ApiException as e:
         if e.status == 409:
             apps.patch_namespaced_deployment("caldera-victim", NAMESPACE, victim_dep)
+        else:
+            raise
+
+    # ── 6. Headless Service: caldera-victim (for DNS / ping monitoring) ────
+    victim_svc = client.V1Service(
+        metadata=client.V1ObjectMeta(
+            name="caldera-victim", namespace=NAMESPACE,
+            labels={"app": "caldera-victim"},
+        ),
+        spec=client.V1ServiceSpec(
+            cluster_ip="None",
+            selector={"app": "caldera-victim"},
+        ),
+    )
+    try:
+        core.create_namespaced_service(NAMESPACE, victim_svc)
+    except ApiException as e:
+        if e.status == 409:
+            core.patch_namespaced_service("caldera-victim", NAMESPACE, victim_svc)
         else:
             raise
 
