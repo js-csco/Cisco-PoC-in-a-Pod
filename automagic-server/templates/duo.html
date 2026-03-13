@@ -21,41 +21,82 @@
     </p>
   </div>
 
-    <!-- AUTHENTICATION -->
+    <!-- GETTING STARTED -->
     <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
         <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">AUTHENTICATION</h3>
+        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">GETTING STARTED</h3>
       </div>
 
-      <p style="color:#666; font-size:0.95em; margin-top:0; margin-bottom:20px;">
-        Connect to Cisco Duo Admin API with your API hostname, integration key, and secret key.
-      </p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
 
-      {% if not session.get('duo_authenticated') %}
-        <input type="text" id="api_hostname" name="api_hostname" placeholder="API Hostname (e.g., api-xxxxx.duosecurity.com)"
-               value="{{ session.get('duo_api_hostname', '') }}"
-               style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+        <!-- 1. Create API Keys -->
+        <div style="border:1px solid #e0e0e0; border-radius:10px; padding:1.2rem 1.5rem;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+            <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+            <h4 style="color:#333; margin:0; font-size:1rem;">1. Create API Keys</h4>
+          </div>
 
-        <input type="password" id="integration_key" name="integration_key" placeholder="Integration Key"
-               value="{{ session.get('duo_integration_key', '') }}"
-               style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+          <p style="color:#555; font-size:0.9em; margin:0 0 12px 0; line-height:1.6;">
+            In the <strong>Duo Admin Panel</strong>, go to
+            <em>Applications &rarr; Protect an Application</em> and search for <strong>Admin API</strong>.
+          </p>
 
-        <input type="password" id="secret_key" name="secret_key" placeholder="Secret Key"
-               value="{{ session.get('duo_secret_key', '') }}"
-               style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
-
-        <button type="submit" name="action" value="auth"
-                style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
-                       border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
-          🔐 Authenticate
-        </button>
-      {% else %}
-        <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:10px 16px;">
-          <span style="font-size:1.2rem;">✅</span>
-          <span style="font-weight:600; color:#2e7d32;">Authenticated</span>
+          <div style="background:#f0f4ff; border:1px solid #c0d0ff; border-radius:8px; padding:12px 16px; font-size:0.88em; color:#1a3a6b;">
+            <strong>Required permissions:</strong>
+            <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
+              <li>Grant read resource</li>
+              <li>Grant write resource</li>
+              <li>Grant read log</li>
+            </ul>
+            <p style="margin:8px 0 0 0; font-size:0.92em;">
+              Enable <strong>all Read &amp; Write</strong> permissions for full PoC automation.
+            </p>
+          </div>
         </div>
-      {% endif %}
+
+        <!-- 2. Authenticate -->
+        <div style="border:1px solid #e0e0e0; border-radius:10px; padding:1.2rem 1.5rem; display:flex; flex-direction:column;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+            <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
+            <h4 style="color:#333; margin:0; font-size:1rem;">2. Authenticate</h4>
+          </div>
+
+          {% if not session.get('duo_authenticated') %}
+            <div style="display:flex; flex-direction:column; gap:10px; flex:1;">
+              <div>
+                <label style="display:block; font-size:0.82em; color:#555; margin-bottom:4px; font-weight:500;">API Hostname</label>
+                <input type="text" id="api_hostname" name="api_hostname" placeholder="api-xxxxx.duosecurity.com"
+                       value="{{ session.get('duo_api_hostname', '') }}"
+                       style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
+              </div>
+              <div>
+                <label style="display:block; font-size:0.82em; color:#555; margin-bottom:4px; font-weight:500;">Integration Key</label>
+                <input type="password" id="integration_key" name="integration_key" placeholder="DI..."
+                       value="{{ session.get('duo_integration_key', '') }}"
+                       style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
+              </div>
+              <div>
+                <label style="display:block; font-size:0.82em; color:#555; margin-bottom:4px; font-weight:500;">Secret Key</label>
+                <input type="password" id="secret_key" name="secret_key" placeholder="Secret Key"
+                       value="{{ session.get('duo_secret_key', '') }}"
+                       style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
+              </div>
+              <button type="submit" name="action" value="auth"
+                      style="margin-top:auto; background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
+                             border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
+                🔐 Authenticate
+              </button>
+            </div>
+          {% else %}
+            <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:10px 16px;">
+              <span style="font-size:1.2rem;">✅</span>
+              <span style="font-weight:600; color:#2e7d32;">Authenticated</span>
+            </div>
+          {% endif %}
+        </div>
+
+      </div>
     </section>
 
     <!-- DUO POLICIES -->
@@ -193,8 +234,12 @@
       </div>
 
       <button type="submit" name="action" value="setup_duo"
-              style="background-color:#0066ff; color:#fff; border:none; padding:12px 24px;
-                     border-radius:6px; font-weight:500; cursor:pointer; font-size:1rem;">
+              {% if not session.get('duo_authenticated') %}disabled{% endif %}
+              style="background-color:{% if session.get('duo_authenticated') %}#0066ff{% else %}#aaa{% endif %};
+                     color:#fff; border:none; padding:12px 24px;
+                     border-radius:6px; font-weight:500;
+                     cursor:{% if session.get('duo_authenticated') %}pointer{% else %}default{% endif %};
+                     font-size:1rem;">
         Add Users and Groups
       </button>
     </section>
@@ -235,9 +280,6 @@
                        font-size:0.95rem;">
           Create SAML App
         </button>
-        {% if not session.get('duo_authenticated') %}
-          <span style="color:#888; font-size:0.82em; margin-left:8px;">Authenticate first</span>
-        {% endif %}
       </div>
 
       <!-- Cisco Secure Access Integration -->
