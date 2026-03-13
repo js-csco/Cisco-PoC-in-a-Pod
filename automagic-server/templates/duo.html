@@ -3,416 +3,683 @@
 {% block title %}Cisco Duo - Cisco PoC in a Pod{% endblock %}
 
 {% block content %}
+<style>
+  /* ── Page-level design tokens ── */
+  .duo-page h1 { color: #111; margin-bottom: 0.3rem; font-size: 1.8rem; }
+  .duo-page > p.subtitle { color: #666; margin: 0 0 2rem; font-size: 0.95em; line-height: 1.6; }
+
+  /* ── Stepper ── */
+  .duo-stepper {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    margin-bottom: 2.5rem;
+    padding: 18px 0;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .duo-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    text-align: center;
+  }
+  .duo-step::after {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: calc(50% + 18px);
+    width: calc(100% - 36px);
+    height: 2px;
+    background: #e0e0e0;
+  }
+  .duo-step:last-child::after { display: none; }
+  .duo-step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    color: #999;
+    font-size: 0.78em;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 1;
+    transition: all 0.2s;
+  }
+  .duo-step.active .duo-step-num { background: #0066ff; color: #fff; }
+  .duo-step.done .duo-step-num { background: #16a34a; color: #fff; }
+  .duo-step.done::after { background: #16a34a; }
+  .duo-step-label {
+    font-size: 0.72em;
+    font-weight: 600;
+    color: #999;
+    letter-spacing: 0.2px;
+    max-width: 100px;
+    line-height: 1.3;
+  }
+  .duo-step.active .duo-step-label,
+  .duo-step.done .duo-step-label { color: #333; }
+
+  /* ── Section card ── */
+  .duo-section {
+    background: #fafbfc;
+    border: 1px solid #eef0f3;
+    border-radius: 12px;
+    padding: 2rem 2rem 1.8rem;
+    margin-bottom: 1.5rem;
+  }
+  .duo-section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .duo-section-head h3 {
+    color: #111;
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .duo-section-bar {
+    width: 5px;
+    height: 20px;
+    background: #0066ff;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .duo-section > p.desc {
+    color: #555;
+    font-size: 0.92em;
+    margin: 0 0 1.2rem;
+    line-height: 1.6;
+  }
+
+  /* ── Subsection ── */
+  .duo-sub {
+    margin-bottom: 1.5rem;
+  }
+  .duo-sub:last-child { margin-bottom: 0; }
+  .duo-sub-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .duo-sub-head h4 {
+    color: #333;
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+  .duo-sub-bar {
+    width: 3px;
+    height: 14px;
+    background: #b0cbff;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ── Info boxes ── */
+  .duo-info {
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 0.88em;
+    line-height: 1.7;
+  }
+  .duo-info ul, .duo-info ol { margin: 6px 0 0; padding-left: 18px; }
+  .duo-info-blue { background: #f0f4ff; border: 1px solid #c0d0ff; color: #1a3a6b; }
+  .duo-info-green { background: #f0f8f0; border: 1px solid #c8e6c9; color: #2e7d32; }
+  .duo-info-yellow { background: #fff8e1; border: 1px solid #ffe082; color: #6d4c00; }
+
+  /* ── Two-column grid ── */
+  .duo-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+  }
+  .duo-grid-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 1.2rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Forms ── */
+  .duo-label {
+    display: block;
+    font-size: 0.82em;
+    color: #555;
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+  .duo-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 0.92em;
+    color: #333;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    background: #fff;
+  }
+  .duo-input:focus {
+    outline: none;
+    border-color: #0066ff;
+    box-shadow: 0 0 0 3px rgba(0,102,255,0.08);
+  }
+  .duo-input::placeholder { color: #aaa; }
+  .duo-field { margin-bottom: 10px; }
+  .duo-field:last-child { margin-bottom: 0; }
+
+  /* ── Buttons ── */
+  .duo-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.92em;
+    cursor: pointer;
+    transition: background-color 0.15s, opacity 0.15s;
+    text-decoration: none;
+    line-height: 1;
+  }
+  .duo-btn-primary { background: #0066ff; color: #fff; }
+  .duo-btn-primary:hover { background: #0052cc; }
+  .duo-btn-disabled { background: #ccc; color: #888; cursor: default; pointer-events: none; }
+  .duo-btn-hint {
+    color: #888;
+    font-size: 0.8em;
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+
+  /* ── Authenticated badge ── */
+  .duo-auth-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #e8f5e9;
+    border: 1px solid #a5d6a7;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: 600;
+    color: #2e7d32;
+    font-size: 0.92em;
+  }
+
+  /* ── Ordered list styling ── */
+  .duo-steps {
+    color: #555;
+    font-size: 0.92em;
+    margin: 0;
+    padding-left: 20px;
+    line-height: 1.9;
+  }
+  .duo-steps li { margin-bottom: 2px; }
+  .duo-steps ul {
+    margin: 4px 0;
+    padding-left: 18px;
+    line-height: 1.8;
+  }
+
+  /* ── User row ── */
+  .duo-user-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .duo-user-label {
+    font-size: 0.85em;
+    font-weight: 500;
+  }
+  .duo-user-label.required { color: #555; }
+  .duo-user-label.optional { color: #999; }
+
+  /* ── Table ── */
+  .duo-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88em;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e0e5ee;
+  }
+  .duo-table thead { background: #f5f7fb; }
+  .duo-table th {
+    text-align: left;
+    padding: 10px 14px;
+    color: #444;
+    font-weight: 600;
+    border-bottom: 2px solid #e0e5ee;
+  }
+  .duo-table td {
+    padding: 9px 14px;
+    color: #444;
+    font-family: monospace;
+    font-size: 0.95em;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .duo-table tr:nth-child(even) { background: #fafbfc; }
+  .duo-table tr:last-child td { border-bottom: none; }
+
+  /* ── Indented sub-block ── */
+  .duo-indent { margin-left: 16px; }
+
+  @media (max-width: 700px) {
+    .duo-grid-2 { grid-template-columns: 1fr; }
+    .duo-user-row { grid-template-columns: 1fr; }
+    .duo-stepper { flex-wrap: wrap; gap: 8px; }
+    .duo-step::after { display: none; }
+  }
+</style>
+
 {% with messages = get_flashed_messages() %}
   {% if messages %}
-    <ul class="messages" style="list-style:none; padding:0; margin-bottom:1.5rem;">
+    <ul style="list-style:none; padding:0; margin-bottom:1.5rem;">
       {% for message in messages %}
-        <li style="background:#e8f0fe; color:#333; padding:8px 12px; border-radius:6px; margin-bottom:6px;">{{ message }}</li>
+        <li class="duo-info duo-info-blue" style="margin-bottom:6px;">{{ message }}</li>
       {% endfor %}
     </ul>
   {% endif %}
 {% endwith %}
 
-<form method="POST" style="display:flex; flex-direction:column; gap:3rem;">
-  <div>
-    <h1 style="color:#111; margin-bottom:0.4rem;">Cisco Duo</h1>
-    <p style="color:#666; margin:0; font-size:0.95em; line-height:1.6;">
-      Multi-factor authentication and Zero Trust access — verify user identities and device health before granting access to applications and resources.
-    </p>
+<form method="POST" class="duo-page">
+  <h1>Cisco Duo</h1>
+  <p class="subtitle">Multi-factor authentication and Zero Trust access — verify user identities and device health before granting access to applications and resources.</p>
+
+  <!-- ── Stepper ── -->
+  <div class="duo-stepper">
+    <div class="duo-step {% if session.get('duo_authenticated') %}done{% else %}active{% endif %}">
+      <div class="duo-step-num">1</div>
+      <div class="duo-step-label">Getting Started</div>
+    </div>
+    <div class="duo-step {% if session.get('duo_authenticated') %}active{% endif %}">
+      <div class="duo-step-num">2</div>
+      <div class="duo-step-label">Policies</div>
+    </div>
+    <div class="duo-step">
+      <div class="duo-step-num">3</div>
+      <div class="duo-step-label">Users & Groups</div>
+    </div>
+    <div class="duo-step">
+      <div class="duo-step-num">4</div>
+      <div class="duo-step-label">Integrations</div>
+    </div>
+    <div class="duo-step">
+      <div class="duo-step-num">5</div>
+      <div class="duo-step-label">Identity Intelligence</div>
+    </div>
   </div>
 
-    <!-- GETTING STARTED -->
-    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">GETTING STARTED</h3>
-      </div>
+  <!-- ══════════════════════════════════════════ -->
+  <!-- GETTING STARTED                            -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="duo-section">
+    <div class="duo-section-head">
+      <div class="duo-section-bar"></div>
+      <h3>GETTING STARTED</h3>
+    </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
-
-        <!-- 1. Create API Keys -->
-        <div style="border:1px solid #e0e0e0; border-radius:10px; padding:1.2rem 1.5rem;">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-            <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
-            <h4 style="color:#333; margin:0; font-size:1rem;">1. Create API Keys</h4>
-          </div>
-
-          <p style="color:#555; font-size:0.9em; margin:0 0 12px 0; line-height:1.6;">
-            In the <strong>Duo Admin Panel</strong>, go to
-            <em>Applications &rarr; Protect an Application</em> and search for <strong>Admin API</strong>.
-          </p>
-
-          <div style="background:#f0f4ff; border:1px solid #c0d0ff; border-radius:8px; padding:12px 16px; font-size:0.88em; color:#1a3a6b;">
-            <strong>Required permissions:</strong>
-            <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
-              <li>Grant read resource</li>
-              <li>Grant write resource</li>
-              <li>Grant read log</li>
-            </ul>
-            <p style="margin:8px 0 0 0; font-size:0.92em;">
-              Enable <strong>all Read &amp; Write</strong> permissions for full PoC automation.
-            </p>
-          </div>
+    <div class="duo-grid-2">
+      <!-- 1. Create API Keys -->
+      <div class="duo-grid-card">
+        <div class="duo-sub-head">
+          <div class="duo-sub-bar"></div>
+          <h4>1. Create API Keys</h4>
         </div>
 
-        <!-- 2. Authenticate -->
-        <div style="border:1px solid #e0e0e0; border-radius:10px; padding:1.2rem 1.5rem; display:flex; flex-direction:column;">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-            <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
-            <h4 style="color:#333; margin:0; font-size:1rem;">2. Authenticate</h4>
-          </div>
-
-          {% if not session.get('duo_authenticated') %}
-            <div style="display:flex; flex-direction:column; gap:10px; flex:1;">
-              <div>
-                <label style="display:block; font-size:0.82em; color:#555; margin-bottom:4px; font-weight:500;">API Hostname</label>
-                <input type="text" id="api_hostname" name="api_hostname" placeholder="api-xxxxx.duosecurity.com"
-                       value="{{ session.get('duo_api_hostname', '') }}"
-                       style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
-              </div>
-              <div>
-                <label style="display:block; font-size:0.82em; color:#555; margin-bottom:4px; font-weight:500;">Integration Key</label>
-                <input type="password" id="integration_key" name="integration_key" placeholder="DI..."
-                       value="{{ session.get('duo_integration_key', '') }}"
-                       style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
-              </div>
-              <div>
-                <label style="display:block; font-size:0.82em; color:#555; margin-bottom:4px; font-weight:500;">Secret Key</label>
-                <input type="password" id="secret_key" name="secret_key" placeholder="Secret Key"
-                       value="{{ session.get('duo_secret_key', '') }}"
-                       style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
-              </div>
-              <button type="submit" name="action" value="auth"
-                      style="margin-top:auto; background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
-                             border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
-                🔐 Authenticate
-              </button>
-            </div>
-          {% else %}
-            <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:10px 16px;">
-              <span style="font-size:1.2rem;">✅</span>
-              <span style="font-weight:600; color:#2e7d32;">Authenticated</span>
-            </div>
-          {% endif %}
-        </div>
-
-      </div>
-    </section>
-
-    <!-- DUO POLICIES -->
-    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DUO POLICIES</h3>
-      </div>
-
-      <p style="margin-top:0; margin-bottom:24px; color:#555; font-size:0.95em;">
-        Configure Duo enrollment and authentication policies for the PoC environment.
-        These settings must be applied manually in the <strong>Duo Admin Panel</strong>.
-      </p>
-
-      <!-- Enrollment Policy -->
-      <div style="margin-bottom:28px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-          <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
-          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">1. Enrollment Policy</h3>
-        </div>
-
-        <p style="color:#555; font-size:0.92em; margin:0 0 14px 0;">
-          In the <strong>Duo Admin Panel</strong>, navigate to <em>Policies &rarr; User Enrollment Policies</em> and apply the following settings:
+        <p style="color:#555; font-size:0.9em; margin:0 0 12px; line-height:1.6;">
+          In the <strong>Duo Admin Panel</strong>, go to
+          <em>Applications &rarr; Protect an Application</em> and search for <strong>Admin API</strong>.
         </p>
 
-        <ol style="color:#555; font-size:0.92em; margin:0; padding-left:20px; line-height:1.9;">
-          <li>
-            <strong>Policy Enablement:</strong> Check the box next to
-            <em>"Enable the enrollment and account management policies on this page"</em>.
-          </li>
-          <li>
-            Under <strong>Global Enrollment Policy</strong>, configure:
-            <ul style="margin:4px 0 4px 0; padding-left:18px; line-height:1.9;">
-              <li><strong>Require Password:</strong> enable the checkbox.</li>
-              <li>
-                <strong>Authenticators:</strong> allow only the following:
-                <ul style="margin:4px 0; padding-left:18px; line-height:1.7;">
-                  <li>Passkey (Current Device)</li>
-                  <li>Passkey (Mobile Device) <em>or</em> Security Key</li>
-                  <li>Duo Mobile</li>
-                </ul>
-              </li>
-            </ul>
-          </li>
-        </ol>
-      </div>
-
-      <!-- Global Policy -->
-      <div style="margin-bottom:28px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-          <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
-          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">2. Global Policy</h3>
-        </div>
-
-        <p style="color:#555; font-size:0.92em; margin:0 0 14px 0;">
-          In the <strong>Duo Admin Panel</strong>, navigate to <em>Policies &rarr; Policies</em> and edit the
-          <strong>Global Policy</strong>:
-        </p>
-
-        <ol style="color:#555; font-size:0.92em; margin:0; padding-left:20px; line-height:1.9;">
-          <li>
-            <strong>New User Policy:</strong> set to
-            <em>"Require enrollment"</em> so all users must complete MFA setup.
-          </li>
-          <li>
-            <strong>Authentication Methods:</strong> only recommended authenticators
-            (Platform Authenticator, Roaming Authenticator, Duo Push) for both
-            second factor and passwordless SSO.
-          </li>
-          <li>
-            <strong>Risk-based Factor Selection:</strong> disabled &mdash;
-            don&rsquo;t limit authentication methods based on risk.
-          </li>
-          <li>
-            <strong>User Location:</strong> leave as default (<em>"No restriction"</em>).
-          </li>
-        </ol>
-
-        {% if session.get('duo_authenticated') %}
-        <div style="margin-top:16px;">
-          <button type="submit" name="action" value="configure_policy"
-                  style="background-color:#0066ff; color:white; border:none; padding:10px 22px;
-                         border-radius:6px; cursor:pointer; font-size:0.92em; font-weight:500;
-                         letter-spacing:0.3px;">
-            Configure Global Policy via API
-          </button>
-          <p style="color:#888; font-size:0.82em; margin:6px 0 0 0;">
-            Sets authentication methods to recommended only (Platform Passkey, Roaming Passkey, Duo Push)
-            for both 2FA and Passwordless SSO. Blocks SMS, phone call, hardware tokens, and desktop.
-            New User Policy and User Location must be configured manually.
+        <div class="duo-info duo-info-blue">
+          <strong>Required permissions:</strong>
+          <ul>
+            <li>Grant read resource</li>
+            <li>Grant write resource</li>
+            <li>Grant read log</li>
+          </ul>
+          <p style="margin:8px 0 0; font-size:0.92em;">
+            Enable <strong>all Read &amp; Write</strong> permissions for full PoC automation.
           </p>
         </div>
+      </div>
+
+      <!-- 2. Authenticate -->
+      <div class="duo-grid-card">
+        <div class="duo-sub-head">
+          <div class="duo-sub-bar"></div>
+          <h4>2. Authenticate</h4>
+        </div>
+
+        {% if not session.get('duo_authenticated') %}
+          <div style="display:flex; flex-direction:column; gap:10px; flex:1;">
+            <div class="duo-field">
+              <label class="duo-label">API Hostname</label>
+              <input type="text" name="api_hostname" placeholder="api-xxxxx.duosecurity.com"
+                     value="{{ session.get('duo_api_hostname', '') }}" class="duo-input">
+            </div>
+            <div class="duo-field">
+              <label class="duo-label">Integration Key</label>
+              <input type="password" name="integration_key" placeholder="DI..."
+                     value="{{ session.get('duo_integration_key', '') }}" class="duo-input">
+            </div>
+            <div class="duo-field">
+              <label class="duo-label">Secret Key</label>
+              <input type="password" name="secret_key" placeholder="Secret Key"
+                     value="{{ session.get('duo_secret_key', '') }}" class="duo-input">
+            </div>
+            <button type="submit" name="action" value="auth" class="duo-btn duo-btn-primary" style="margin-top:auto;">
+              Authenticate
+            </button>
+          </div>
+        {% else %}
+          <div class="duo-auth-badge">
+            <span style="font-size:1.1rem;">&#10003;</span>
+            Authenticated
+          </div>
         {% endif %}
       </div>
+    </div>
+  </div>
 
-      <!-- Duo Passport -->
-      <div>
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-          <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
-          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">3. Duo Passport</h3>
-        </div>
+  <!-- ══════════════════════════════════════════ -->
+  <!-- DUO POLICIES                               -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="duo-section">
+    <div class="duo-section-head">
+      <div class="duo-section-bar"></div>
+      <h3>DUO POLICIES</h3>
+    </div>
+    <p class="desc">Configure Duo enrollment and authentication policies for the PoC environment.
+      These settings must be applied manually in the <strong>Duo Admin Panel</strong>.</p>
 
-        <p style="color:#555; font-size:0.92em; margin:0 0 14px 0;">
-          In the <strong>Duo Admin Panel</strong>, navigate to <em>Policies &rarr; Passport</em> and click
-          <strong>"Set up Passport"</strong>. Select <strong>"On for all users"</strong> as recommended.
-        </p>
+    <!-- Enrollment Policy -->
+    <div class="duo-sub">
+      <div class="duo-sub-head">
+        <div class="duo-sub-bar"></div>
+        <h4>1. Enrollment Policy</h4>
       </div>
-    </section>
 
-    <!-- USER & GROUP CREATION -->
-    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">USER & GROUP CREATION</h3>
-      </div>
-
-      <p style="margin-top:0; margin-bottom:25px; color:#555; font-size:0.95em;">
-        Add up to three users for your Duo PoC environment. At least one user is required.
-        Click "Add Users and Groups" to create the users, the "PoC Users" group, and assign everyone to it.
+      <p style="color:#555; font-size:0.92em; margin:0 0 14px;">
+        In the <strong>Duo Admin Panel</strong>, navigate to <em>Policies &rarr; User Enrollment Policies</em> and apply the following settings:
       </p>
 
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-        <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
-        <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">Add Users</h3>
+      <ol class="duo-steps">
+        <li>
+          <strong>Policy Enablement:</strong> Check the box next to
+          <em>"Enable the enrollment and account management policies on this page"</em>.
+        </li>
+        <li>
+          Under <strong>Global Enrollment Policy</strong>, configure:
+          <ul>
+            <li><strong>Require Password:</strong> enable the checkbox.</li>
+            <li>
+              <strong>Authenticators:</strong> allow only the following:
+              <ul style="margin:4px 0; padding-left:18px; line-height:1.7;">
+                <li>Passkey (Current Device)</li>
+                <li>Passkey (Mobile Device) <em>or</em> Security Key</li>
+                <li>Duo Mobile</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ol>
+    </div>
+
+    <!-- Global Policy -->
+    <div class="duo-sub">
+      <div class="duo-sub-head">
+        <div class="duo-sub-bar"></div>
+        <h4>2. Global Policy</h4>
+      </div>
+
+      <p style="color:#555; font-size:0.92em; margin:0 0 14px;">
+        In the <strong>Duo Admin Panel</strong>, navigate to <em>Policies &rarr; Policies</em> and edit the
+        <strong>Global Policy</strong>:
+      </p>
+
+      <ol class="duo-steps">
+        <li>
+          <strong>New User Policy:</strong> set to
+          <em>"Require enrollment"</em> so all users must complete MFA setup.
+        </li>
+        <li>
+          <strong>Authentication Methods:</strong> only recommended authenticators
+          (Platform Authenticator, Roaming Authenticator, Duo Push) for both
+          second factor and passwordless SSO.
+        </li>
+        <li>
+          <strong>Risk-based Factor Selection:</strong> disabled &mdash;
+          don&rsquo;t limit authentication methods based on risk.
+        </li>
+        <li>
+          <strong>User Location:</strong> leave as default (<em>"No restriction"</em>).
+        </li>
+      </ol>
+
+      {% if session.get('duo_authenticated') %}
+      <div style="margin-top:16px;">
+        <button type="submit" name="action" value="configure_policy" class="duo-btn duo-btn-primary">
+          Configure Global Policy via API
+        </button>
+        <p class="duo-btn-hint">
+          Sets authentication methods to recommended only (Platform Passkey, Roaming Passkey, Duo Push)
+          for both 2FA and Passwordless SSO. Blocks SMS, phone call, hardware tokens, and desktop.
+          New User Policy and User Location must be configured manually.
+        </p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Duo Passport -->
+    <div class="duo-sub">
+      <div class="duo-sub-head">
+        <div class="duo-sub-bar"></div>
+        <h4>3. Duo Passport</h4>
+      </div>
+
+      <p style="color:#555; font-size:0.92em; margin:0;">
+        In the <strong>Duo Admin Panel</strong>, navigate to <em>Policies &rarr; Passport</em> and click
+        <strong>"Set up Passport"</strong>. Select <strong>"On for all users"</strong> as recommended.
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- USER & GROUP CREATION                      -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="duo-section">
+    <div class="duo-section-head">
+      <div class="duo-section-bar"></div>
+      <h3>USER & GROUP CREATION</h3>
+    </div>
+    <p class="desc">Add up to three users for your Duo PoC environment. At least one user is required.
+      Click "Add Users and Groups" to create the users, the "PoC Users" group, and assign everyone to it.</p>
+
+    <div class="duo-sub">
+      <div class="duo-sub-head">
+        <div class="duo-sub-bar"></div>
+        <h4>Add Users</h4>
       </div>
 
       <!-- User 1 (required) -->
-      <div style="display:grid; grid-template-columns:auto 1fr 1fr; align-items:center; gap:12px; margin-bottom:12px;">
-        <span style="font-size:0.85em; color:#555; white-space:nowrap;">User 1 <span style="color:#cc0000;">*</span></span>
-        <input type="email" name="user_email_1" placeholder="Email"
-               style="padding:10px; border:1px solid #ccc; border-radius:6px;">
-        <input type="text" name="user_username_1" placeholder="Username"
-               style="padding:10px; border:1px solid #ccc; border-radius:6px;">
+      <div class="duo-user-row">
+        <span class="duo-user-label required">User 1 <span style="color:#cc0000;">*</span></span>
+        <input type="email" name="user_email_1" placeholder="Email" class="duo-input">
+        <input type="text" name="user_username_1" placeholder="Username" class="duo-input">
       </div>
 
       <!-- User 2 (optional) -->
-      <div style="display:grid; grid-template-columns:auto 1fr 1fr; align-items:center; gap:12px; margin-bottom:12px;">
-        <span style="font-size:0.85em; color:#888; white-space:nowrap;">User 2</span>
-        <input type="email" name="user_email_2" placeholder="Email (optional)"
-               style="padding:10px; border:1px solid #e0e0e0; border-radius:6px;">
-        <input type="text" name="user_username_2" placeholder="Username (optional)"
-               style="padding:10px; border:1px solid #e0e0e0; border-radius:6px;">
+      <div class="duo-user-row">
+        <span class="duo-user-label optional">User 2</span>
+        <input type="email" name="user_email_2" placeholder="Email (optional)" class="duo-input" style="border-color:#e0e0e0;">
+        <input type="text" name="user_username_2" placeholder="Username (optional)" class="duo-input" style="border-color:#e0e0e0;">
       </div>
 
       <!-- User 3 (optional) -->
-      <div style="display:grid; grid-template-columns:auto 1fr 1fr; align-items:center; gap:12px; margin-bottom:25px;">
-        <span style="font-size:0.85em; color:#888; white-space:nowrap;">User 3</span>
-        <input type="email" name="user_email_3" placeholder="Email (optional)"
-               style="padding:10px; border:1px solid #e0e0e0; border-radius:6px;">
-        <input type="text" name="user_username_3" placeholder="Username (optional)"
-               style="padding:10px; border:1px solid #e0e0e0; border-radius:6px;">
+      <div class="duo-user-row">
+        <span class="duo-user-label optional">User 3</span>
+        <input type="email" name="user_email_3" placeholder="Email (optional)" class="duo-input" style="border-color:#e0e0e0;">
+        <input type="text" name="user_username_3" placeholder="Username (optional)" class="duo-input" style="border-color:#e0e0e0;">
+      </div>
+    </div>
+
+    <div class="duo-info duo-info-green" style="margin: 20px 0;">
+      <strong>Add Users and Groups will perform the following:</strong>
+      <ul>
+        <li>Create each provided user with email and username</li>
+        <li>Create "PoC Users" group (if it doesn't exist)</li>
+        <li>Add all users to "PoC Users" group</li>
+        <li>Send enrollment email to each new user</li>
+      </ul>
+    </div>
+
+    <button type="submit" name="action" value="setup_duo"
+            class="duo-btn {% if session.get('duo_authenticated') %}duo-btn-primary{% else %}duo-btn-disabled{% endif %}"
+            {% if not session.get('duo_authenticated') %}disabled{% endif %}>
+      Add Users and Groups
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- INTEGRATIONS                               -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="duo-section">
+    <div class="duo-section-head">
+      <div class="duo-section-bar"></div>
+      <h3>INTEGRATIONS</h3>
+    </div>
+
+    <!-- 1. Cisco Secure Access -->
+    <div class="duo-sub">
+      <div class="duo-sub-head">
+        <div class="duo-sub-bar"></div>
+        <h4>1. Cisco Secure Access</h4>
       </div>
 
-      <div style="background:#f0f8f0; border:1px solid #c8e6c9; border-radius:8px; padding:14px 18px; margin-bottom:20px; font-size:0.88em; color:#2e7d32;">
-        <strong>Add Users and Groups will perform the following:</strong>
-        <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
-          <li>Create each provided user with email and username</li>
-          <li>Create "PoC Users" group (if it doesn't exist)</li>
-          <li>Add all users to "PoC Users" group</li>
-          <li>Send enrollment email to each new user</li>
+      <p style="color:#555; font-size:0.92em; margin:0 0 20px;">
+        In the <strong>Duo Admin Panel</strong>, go to <em>Applications &rarr; Protect an Application</em>, search for
+        <strong>Cisco Secure Access</strong>, and follow the setup guide. This integration covers two parts:
+      </p>
+
+      <!-- 1a. SAML Integration -->
+      <div class="duo-indent" style="margin-bottom:24px;">
+        <p style="color:#333; font-size:0.92em; font-weight:600; margin:0 0 8px;">a) SAML Integration</p>
+        <p style="color:#555; font-size:0.9em; margin:0 0 14px; line-height:1.6;">
+          Configure Single Sign-On between Duo and Cisco Secure Access. Follow the SSO setup guide to connect Duo as the identity provider.
+        </p>
+
+        <a href="https://duo.com/docs/sso-cisco-secure-access" target="_blank" class="duo-btn duo-btn-primary">
+          Duo SSO &ndash; Cisco Secure Access Docs
+        </a>
+      </div>
+
+      <!-- 1b. User Provisioning -->
+      <div class="duo-indent">
+        <p style="color:#333; font-size:0.92em; font-weight:600; margin:0 0 8px;">b) User Provisioning</p>
+        <p style="color:#555; font-size:0.9em; margin:0 0 14px; line-height:1.6;">
+          Enable SCIM provisioning in the same integration to sync Duo users and groups to Cisco Secure Access.
+        </p>
+
+        <div class="duo-info duo-info-yellow" style="margin-bottom:16px;">
+          <strong>Tip &mdash; Provisioning tab &rarr; Groups section:</strong>
+          In the <em>Select Groups</em> field, make sure to select <strong>PoC Users</strong> so that only your PoC users are synced to Cisco Secure Access.
+        </div>
+
+        <p style="color:#555; font-size:0.9em; font-weight:600; margin:0 0 8px;">Attribute Mapping</p>
+
+        <table class="duo-table">
+          <thead>
+            <tr>
+              <th>Duo User Attribute</th>
+              <th>Application Attribute</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>displayName</td><td>displayName</td></tr>
+            <tr><td>emails</td><td>emails</td></tr>
+            <tr><td>name.familyName</td><td>name.familyName</td></tr>
+            <tr><td>name.givenName</td><td>name.givenName</td></tr>
+            <tr><td>userName</td><td>userName</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 2. Generic SAML Application -->
+    <div class="duo-sub" style="margin-top:28px;">
+      <div class="duo-sub-head">
+        <div class="duo-sub-bar"></div>
+        <h4>2. Generic SAML Application</h4>
+      </div>
+
+      <p style="color:#555; font-size:0.92em; margin:0 0 14px;">
+        Creates a <strong>Generic SAML Service Provider</strong> integration in Duo called
+        <em>"PoC in a Pod: SAML App"</em> and assigns it to the <strong>PoC Users</strong> group.
+      </p>
+
+      <div class="duo-info duo-info-green" style="margin-bottom:16px;">
+        <strong>This will:</strong>
+        <ul>
+          <li>Create a <code>sso-generic</code> integration via the Duo Admin API</li>
+          <li>Restrict access to the <strong>PoC Users</strong> group</li>
+          <li>Return the integration key and metadata needed for SAML configuration</li>
         </ul>
       </div>
 
-      <button type="submit" name="action" value="setup_duo"
-              {% if not session.get('duo_authenticated') %}disabled{% endif %}
-              style="background-color:{% if session.get('duo_authenticated') %}#0066ff{% else %}#aaa{% endif %};
-                     color:#fff; border:none; padding:12px 24px;
-                     border-radius:6px; font-weight:500;
-                     cursor:{% if session.get('duo_authenticated') %}pointer{% else %}default{% endif %};
-                     font-size:1rem;">
-        Add Users and Groups
+      <button type="submit" name="action" value="create_saml_app"
+              class="duo-btn {% if session.get('duo_authenticated') %}duo-btn-primary{% else %}duo-btn-disabled{% endif %}"
+              {% if not session.get('duo_authenticated') %}disabled{% endif %}>
+        Create SAML App
       </button>
-    </section>
+    </div>
+  </div>
 
-    <!-- INTEGRATIONS -->
-    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">INTEGRATIONS</h3>
-      </div>
+  <!-- ══════════════════════════════════════════ -->
+  <!-- IDENTITY INTELLIGENCE                      -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="duo-section">
+    <div class="duo-section-head">
+      <div class="duo-section-bar"></div>
+      <h3>IDENTITY INTELLIGENCE</h3>
+    </div>
+    <p class="desc">Identify, reduce, and respond to identity-based threats.</p>
 
-      <!-- 1. Cisco Secure Access Integration -->
-      <div style="margin-bottom:28px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-          <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
-          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">1. Cisco Secure Access</h3>
-        </div>
-
-        <p style="margin-top:0; margin-bottom:20px; color:#555; font-size:0.92em;">
-          In the <strong>Duo Admin Panel</strong>, go to <em>Applications &rarr; Protect an Application</em>, search for
-          <strong>Cisco Secure Access</strong>, and follow the setup guide. This integration covers two parts:
-        </p>
-
-        <!-- 1a. SAML Integration -->
-        <div style="margin-left:16px; margin-bottom:24px;">
-          <p style="color:#333; font-size:0.92em; font-weight:600; margin:0 0 8px 0;">a) SAML Integration</p>
-          <p style="margin-top:0; margin-bottom:14px; color:#555; font-size:0.9em; line-height:1.6;">
-            Configure Single Sign-On between Duo and Cisco Secure Access. Follow the SSO setup guide to connect Duo as the identity provider.
-          </p>
-
-          <a href="https://duo.com/docs/sso-cisco-secure-access" target="_blank"
-             style="display:inline-block; background-color:#0066ff; color:#fff; text-decoration:none;
-                    padding:10px 20px; border-radius:6px; font-weight:500; font-size:0.95rem;">
-            Duo SSO – Cisco Secure Access Docs
-          </a>
-        </div>
-
-        <!-- 1b. User Provisioning -->
-        <div style="margin-left:16px;">
-          <p style="color:#333; font-size:0.92em; font-weight:600; margin:0 0 8px 0;">b) User Provisioning</p>
-          <p style="margin-top:0; margin-bottom:14px; color:#555; font-size:0.9em; line-height:1.6;">
-            Enable SCIM provisioning in the same integration to sync Duo users and groups to Cisco Secure Access.
-          </p>
-
-          <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px 18px; margin-bottom:16px; font-size:0.88em; color:#6d4c00;">
-            <strong>Tip — Provisioning tab &rarr; Groups section:</strong>
-            In the <em>Select Groups</em> field, make sure to select <strong>PoC Users</strong> so that only your PoC users are synced to Cisco Secure Access.
-          </div>
-
-          <p style="color:#555; font-size:0.9rem; font-weight:600; margin:0 0 8px 0;">Attribute Mapping</p>
-
-          <table style="width:100%; border-collapse:collapse; font-size:0.88em;">
-            <thead>
-              <tr style="background:#f0f4ff; border-bottom:2px solid #c0d0ff;">
-                <th style="text-align:left; padding:10px 14px; color:#333; font-weight:600;">Duo User Attribute</th>
-                <th style="text-align:left; padding:10px 14px; color:#333; font-weight:600;">Application Attribute</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style="border-bottom:1px solid #e8e8e8;">
-                <td style="padding:9px 14px; color:#444; font-family:monospace;">displayName</td>
-                <td style="padding:9px 14px; color:#444; font-family:monospace;">displayName</td>
-              </tr>
-              <tr style="border-bottom:1px solid #e8e8e8; background:#fafafa;">
-                <td style="padding:9px 14px; color:#444; font-family:monospace;">emails</td>
-                <td style="padding:9px 14px; color:#444; font-family:monospace;">emails</td>
-              </tr>
-              <tr style="border-bottom:1px solid #e8e8e8;">
-                <td style="padding:9px 14px; color:#444; font-family:monospace;">name.familyName</td>
-                <td style="padding:9px 14px; color:#444; font-family:monospace;">name.familyName</td>
-              </tr>
-              <tr style="border-bottom:1px solid #e8e8e8; background:#fafafa;">
-                <td style="padding:9px 14px; color:#444; font-family:monospace;">name.givenName</td>
-                <td style="padding:9px 14px; color:#444; font-family:monospace;">name.givenName</td>
-              </tr>
-              <tr>
-                <td style="padding:9px 14px; color:#444; font-family:monospace;">userName</td>
-                <td style="padding:9px 14px; color:#444; font-family:monospace;">userName</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- 2. Generic SAML Application -->
-      <div style="margin-bottom:28px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-          <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
-          <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">2. Generic SAML Application</h3>
-        </div>
-
-        <p style="color:#555; font-size:0.92em; margin-top:0; margin-bottom:14px;">
-          Creates a <strong>Generic SAML Service Provider</strong> integration in Duo called
-          <em>"PoC in a Pod: SAML App"</em> and assigns it to the <strong>PoC Users</strong> group.
-        </p>
-
-        <div style="background:#f0f8f0; border:1px solid #c8e6c9; border-radius:8px; padding:14px 18px; margin-bottom:16px; font-size:0.88em; color:#2e7d32;">
-          <strong>This will:</strong>
-          <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
-            <li>Create a <code>sso-generic</code> integration via the Duo Admin API</li>
-            <li>Restrict access to the <strong>PoC Users</strong> group</li>
-            <li>Return the integration key and metadata needed for SAML configuration</li>
-          </ul>
-        </div>
-
-        <button type="submit" name="action" value="create_saml_app"
-                {% if not session.get('duo_authenticated') %}disabled{% endif %}
-                style="background-color:{% if session.get('duo_authenticated') %}#0066ff{% else %}#aaa{% endif %};
-                       color:#fff; border:none; padding:10px 20px; border-radius:6px;
-                       font-weight:500; cursor:{% if session.get('duo_authenticated') %}pointer{% else %}default{% endif %};
-                       font-size:0.95rem;">
-          Create SAML App
-        </button>
-      </div>
-    </section>
-
-    <!-- IDENTITY INTELLIGENCE -->
-    <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">IDENTITY INTELLIGENCE</h3>
-      </div>
-
-      <p style="margin-top:0; margin-bottom:24px; color:#555; font-size:0.95em;">
-        Identify, reduce, and respond to identity-based threats.
-      </p>
-
-      <ol style="color:#555; font-size:0.92em; margin:0; padding-left:20px; line-height:1.9;">
-        <li>
-          Go to <strong>Monitoring &rarr; Cisco Identity Intelligence</strong> and click
-          <strong>"Connect to Cisco Identity Intelligence"</strong>.
-        </li>
-        <li>
-          Click on <strong>"Set Up SSO Access"</strong>.
-        </li>
-        <li>
-          On the Application Page, click on the app called <strong>cii-sso-…</strong> and add the
-          <strong>PoC Users</strong> group to <em>"Enable only for permitted groups"</em> under the
-          <strong>User Access</strong> section.
-        </li>
-        <li>
-          Go back to <strong>Monitoring &rarr; Cisco Identity Intelligence</strong> and click
-          <strong>"Launch Identity Intelligence"</strong>.
-        </li>
-      </ol>
-    </section>
+    <ol class="duo-steps">
+      <li>
+        Go to <strong>Monitoring &rarr; Cisco Identity Intelligence</strong> and click
+        <strong>"Connect to Cisco Identity Intelligence"</strong>.
+      </li>
+      <li>
+        Click on <strong>"Set Up SSO Access"</strong>.
+      </li>
+      <li>
+        On the Application Page, click on the app called <strong>cii-sso-&hellip;</strong> and add the
+        <strong>PoC Users</strong> group to <em>"Enable only for permitted groups"</em> under the
+        <strong>User Access</strong> section.
+      </li>
+      <li>
+        Go back to <strong>Monitoring &rarr; Cisco Identity Intelligence</strong> and click
+        <strong>"Launch Identity Intelligence"</strong>.
+      </li>
+    </ol>
+  </div>
 
   {{ super() }}
 </form>
