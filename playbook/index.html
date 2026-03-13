@@ -502,6 +502,284 @@
       font-size: 0.78em;
       padding: 12px 0 28px;
     }
+
+    /* ── Journey Map ── */
+    .journey-hero {
+      text-align: center;
+      padding: 32px 20px 28px;
+      background: linear-gradient(135deg, #f0f9ff 0%, #eff6ff 50%, #f5f3ff 100%);
+      border-radius: 16px;
+      margin-bottom: 32px;
+      border: 1px solid #e0e7ff;
+    }
+    .journey-hero h2 {
+      font-size: 1.3rem;
+      color: #111;
+      margin-bottom: 4px;
+    }
+    .journey-hero p {
+      color: #666;
+      font-size: 0.88em;
+      margin-bottom: 20px;
+    }
+    .journey-score-wrap {
+      display: inline-block;
+      position: relative;
+    }
+    .journey-score-wrap svg {
+      width: 120px;
+      height: 120px;
+      transform: rotate(-90deg);
+    }
+    .journey-score-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .journey-score-pct {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #111;
+      line-height: 1;
+    }
+    .journey-score-sub {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    .journey-phase { margin-bottom: 8px; }
+    .journey-phase-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      font-size: 0.72em;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #888;
+    }
+    .journey-phase-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e5e7eb;
+    }
+    .journey-phase-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #e5e7eb;
+      color: #666;
+      font-size: 0.85em;
+      font-weight: 800;
+    }
+
+    .journey-grid { display: grid; gap: 14px; }
+    .journey-grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .journey-grid-3 { grid-template-columns: repeat(3, 1fr); }
+
+    .journey-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px 14px 16px;
+      text-align: center;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      position: relative;
+    }
+    .journey-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      border-color: #c7d2fe;
+    }
+    .journey-core:hover { border-color: var(--cyan); }
+
+    .journey-card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
+
+    .journey-ring-wrap {
+      display: inline-block;
+      position: relative;
+      margin-bottom: 8px;
+    }
+    .journey-ring-wrap svg {
+      width: 72px;
+      height: 72px;
+      transform: rotate(-90deg);
+    }
+    .journey-ring-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82em;
+      font-weight: 800;
+      color: #333;
+    }
+
+    .journey-card-title {
+      font-size: 0.82em;
+      font-weight: 700;
+      color: #222;
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+    .journey-card-stats {
+      font-size: 0.72em;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    .journey-card-desc {
+      font-size: 0.75em;
+      color: #666;
+      line-height: 1.5;
+      margin-top: 6px;
+    }
+
+    .journey-card-dots {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .jdot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      background: #e5e7eb;
+      transition: background 0.2s;
+    }
+    .jdot-pass { background: var(--green); }
+    .jdot-fail { background: var(--red); }
+    .jdot-skip { background: var(--orange); }
+
+    .journey-card-badge {
+      display: inline-block;
+      font-size: 0.63em;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 3px 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    .badge-ready { background: #dcfce7; color: var(--green); }
+    .badge-soon { background: #fef3c7; color: #b45309; }
+
+    .journey-connector {
+      display: flex;
+      justify-content: center;
+      padding: 6px 0;
+      color: #d1d5db;
+      font-size: 1.1rem;
+      transition: color 0.3s;
+    }
+    .journey-connector.active { color: var(--cyan); }
+
+    .journey-recommendation {
+      background: linear-gradient(135deg, #1a1a2e 0%, var(--dark) 100%);
+      border-radius: 12px;
+      padding: 16px 24px;
+      margin-top: 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: #fff;
+    }
+    .journey-rec-icon {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      animation: rec-pulse 2s ease-in-out infinite;
+    }
+    @keyframes rec-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .journey-rec-text {
+      flex: 1;
+      font-size: 0.88em;
+      line-height: 1.5;
+    }
+    .journey-rec-text strong { color: var(--cyan); }
+    .journey-rec-btn {
+      flex-shrink: 0;
+      background: var(--cyan);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 20px;
+      font-size: 0.85em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+    .journey-rec-btn:hover { opacity: 0.85; }
+
+    .journey-zt-grid {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px 16px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .journey-zt-pillar {
+      text-align: center;
+      padding: 12px 8px;
+    }
+    .journey-zt-pillar i {
+      font-size: 1.3rem;
+      color: var(--green);
+      margin-bottom: 6px;
+      display: block;
+    }
+    .journey-zt-pillar .zt-title {
+      font-size: 0.78em;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 2px;
+    }
+    .journey-zt-pillar .zt-desc {
+      font-size: 0.68em;
+      color: #888;
+    }
+
+    @media (max-width: 700px) {
+      .journey-grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .journey-grid-3 { grid-template-columns: repeat(1, 1fr); }
+      .journey-zt-grid { grid-template-columns: repeat(2, 1fr); }
+      .journey-recommendation { flex-direction: column; text-align: center; }
+    }
   </style>
 </head>
 <body>
@@ -557,6 +835,13 @@
 // Playbook definitions
 // ─────────────────────────────────────────────
 const TABS = [
+  {
+    id: 'getting-started',
+    label: 'Getting Started',
+    icon: 'fa-rocket',
+    isJourneyTab: true,
+    cases: [],
+  },
   {
     id: 'duo',
     label: 'Duo & Identity Intelligence',
@@ -1084,7 +1369,7 @@ function tabCases(tab) {
 function renderNav() {
   const nav = document.getElementById('tabNav');
   nav.innerHTML = TABS.map(tab => {
-    if (tab.isInfoTab) {
+    if (tab.isInfoTab || tab.isJourneyTab) {
       return `
         <button class="tab-btn ${tab.id === activeTab ? 'active' : ''}"
                 onclick="switchTab('${tab.id}')">
@@ -1119,6 +1404,7 @@ function renderTabCases(tab) {
 function renderContent() {
   const container = document.getElementById('tabContent');
   container.innerHTML = TABS.map(tab => {
+    if (tab.isJourneyTab) return renderJourneyTab(tab);
     if (tab.isInfoTab) return renderInfoTab(tab);
     if (tab.isCustomTab) return renderCustomTab(tab);
     return `
@@ -1320,12 +1606,208 @@ function saveNotes(tcId, value) {
 }
 
 function updateOverall() {
-  const allCases = TABS.filter(t => !t.isInfoTab).flatMap(t => tabCases(t));
+  const allCases = TABS.filter(t => !t.isInfoTab && !t.isJourneyTab).flatMap(t => tabCases(t));
   const total    = allCases.length;
   const passed   = allCases.filter(tc => getState(tc.id, 'status') === 'pass').length;
   const failed   = allCases.filter(tc => getState(tc.id, 'status') === 'fail').length;
   const badge    = document.getElementById('overallBadge');
   badge.textContent = `${passed} / ${total} passed` + (failed ? ` · ${failed} failed` : '');
+}
+
+// ─────────────────────────────────────────────
+// Journey Map
+// ─────────────────────────────────────────────
+function makeRingSvg(pct, color, r, strokeW) {
+  const circ = 2 * Math.PI * r;
+  const offset = circ * (1 - pct / 100);
+  const size = (r + strokeW) * 2;
+  return `<svg viewBox="0 0 ${size} ${size}">
+    <circle cx="${r+strokeW}" cy="${r+strokeW}" r="${r}" fill="none" stroke="#e5e7eb" stroke-width="${strokeW}"/>
+    <circle cx="${r+strokeW}" cy="${r+strokeW}" r="${r}" fill="none" stroke="${color}" stroke-width="${strokeW}"
+      stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round"
+      style="transition:stroke-dashoffset 0.6s ease;"/>
+  </svg>`;
+}
+
+function getRecommendation() {
+  const coreTabs = TABS.filter(t => !t.isInfoTab && !t.isCustomTab && !t.isJourneyTab);
+  for (const tab of coreTabs) {
+    const cases = tabCases(tab);
+    const pending = cases.find(tc => {
+      const st = getState(tc.id, 'status');
+      return !st || st === 'pending';
+    });
+    if (pending) {
+      const passed = cases.filter(tc => getState(tc.id, 'status') === 'pass').length;
+      if (passed === 0) {
+        return {
+          text: `Start your journey with <strong>${tab.label}</strong> — begin with "${pending.title}".`,
+          tabId: tab.id,
+          action: 'Start \u2192'
+        };
+      }
+      return {
+        text: `Continue with <strong>${tab.label}</strong> — next up: "${pending.title}".`,
+        tabId: tab.id,
+        action: 'Continue \u2192'
+      };
+    }
+  }
+  return {
+    text: 'All foundation test cases complete! Explore <strong>What\'s Next</strong> for advanced use cases.',
+    tabId: 'next',
+    action: 'Explore \u2192'
+  };
+}
+
+function renderJourneyTab(tab) {
+  const coreTabs = TABS.filter(t => !t.isInfoTab && !t.isCustomTab && !t.isJourneyTab);
+  const allCases = coreTabs.flatMap(t => tabCases(t));
+  const totalCases = allCases.length;
+  const passedCases = allCases.filter(tc => getState(tc.id, 'status') === 'pass').length;
+  const overallPct = totalCases ? Math.round((passedCases / totalCases) * 100) : 0;
+
+  const coreColors = { duo: '#049fd9', secureaccess: '#0066ff', cilium: '#16a34a', tetragon: '#7c4dff' };
+
+  const scoreRing = makeRingSvg(overallPct, 'var(--cyan)', 42, 6);
+
+  // Phase 1 — Foundation: Core module cards with progress rings
+  const phase1Html = coreTabs.map(t => {
+    const cases = tabCases(t);
+    const total = cases.length;
+    const passed = cases.filter(tc => getState(tc.id, 'status') === 'pass').length;
+    const pct = total ? Math.round((passed / total) * 100) : 0;
+    const color = coreColors[t.id] || '#049fd9';
+    const ring = makeRingSvg(pct, color, 30, 5);
+    const dots = cases.map(tc => {
+      const st = getState(tc.id, 'status') || 'pending';
+      return `<span class="jdot jdot-${st}" title="${tc.title}"></span>`;
+    }).join('');
+    return `
+      <div class="journey-card journey-core" onclick="switchTab('${t.id}')">
+        <div class="journey-ring-wrap">
+          ${ring}
+          <div class="journey-ring-label">${pct}%</div>
+        </div>
+        <div class="journey-card-title">${t.label}</div>
+        <div class="journey-card-stats">${passed}/${total} passed</div>
+        <div class="journey-card-dots">${dots}</div>
+      </div>`;
+  }).join('');
+
+  const foundationReady = overallPct >= 50;
+
+  // Phase 2 — Connect
+  const phase2Items = [
+    { icon: 'fa-network-wired', color: '#0066ff', bg: '#eff6ff', title: 'Connect Your Networks', desc: 'Extend access to production segments, branches, and firewall zones.' },
+    { icon: 'fa-window-restore', color: '#049fd9', bg: '#e0f7fa', title: 'Connect Your Applications', desc: 'Protect SaaS, internal web apps, and APIs behind Zero Trust policies.' },
+    { icon: 'fa-users', color: '#7c4dff', bg: '#ede9fe', title: 'Connect Your Users', desc: 'Onboard your full user base with Duo and Secure Client.' },
+  ];
+  const phase2Html = phase2Items.map(item => `
+    <div class="journey-card" onclick="switchTab('next')">
+      <div class="journey-card-icon" style="background:${item.bg};color:${item.color};">
+        <i class="fa-solid ${item.icon}"></i>
+      </div>
+      <div class="journey-card-title">${item.title}</div>
+      <div class="journey-card-desc">${item.desc}</div>
+      <div class="journey-card-badge ${foundationReady ? 'badge-ready' : 'badge-soon'}">${foundationReady ? 'READY' : 'COMPLETE FOUNDATION FIRST'}</div>
+    </div>`).join('');
+
+  // Phase 3 — Observe & Defend
+  const phase3Items = [
+    { icon: 'fa-magnifying-glass-chart', color: '#d32f2f', bg: '#ffebee', title: 'Splunk', desc: 'Forward security events to Splunk for SIEM correlation and alerting.' },
+    { icon: 'fa-skull-crossbones', color: '#e65100', bg: '#fff3e0', title: 'Caldera', desc: 'Simulate adversary techniques with MITRE Caldera to validate defenses.' },
+    { icon: 'fa-chart-line', color: '#1565c0', bg: '#e3f2fd', title: 'Network Monitoring', desc: 'Full network flow visibility and anomaly detection.' },
+  ];
+  const phase3Html = phase3Items.map(item => `
+    <div class="journey-card" style="cursor:default;">
+      <div class="journey-card-icon" style="background:${item.bg};color:${item.color};">
+        <i class="fa-solid ${item.icon}"></i>
+      </div>
+      <div class="journey-card-title">${item.title}</div>
+      <div class="journey-card-desc">${item.desc}</div>
+      <div class="journey-card-badge badge-soon">COMING SOON</div>
+    </div>`).join('');
+
+  // Phase 4 — Zero Trust Maturity
+  const ztPillars = [
+    { icon: 'fa-gavel', title: 'Policy Enforcement', desc: 'Every access decision governed by policy' },
+    { icon: 'fa-rotate', title: 'Continuous Verification', desc: 'Never trust, always verify' },
+    { icon: 'fa-lock', title: 'Least Privilege', desc: 'Minimum access for every identity' },
+    { icon: 'fa-bell', title: 'Threat Response', desc: 'Detect, respond, adapt in real-time' },
+  ];
+  const phase4Html = ztPillars.map(p => `
+    <div class="journey-zt-pillar">
+      <i class="fa-solid ${p.icon}"></i>
+      <div class="zt-title">${p.title}</div>
+      <div class="zt-desc">${p.desc}</div>
+    </div>`).join('');
+
+  // Smart recommendation
+  const rec = getRecommendation();
+  const recHtml = `
+    <div class="journey-recommendation">
+      <div class="journey-rec-icon"><i class="fa-solid fa-bolt"></i></div>
+      <div class="journey-rec-text">${rec.text}</div>
+      <button class="journey-rec-btn" onclick="switchTab('${rec.tabId}')">${rec.action}</button>
+    </div>`;
+
+  return `
+    <div class="tab-panel ${tab.id === activeTab ? 'active' : ''}" id="panel-${tab.id}">
+      <div class="journey-hero">
+        <h2>Your Zero Trust Journey</h2>
+        <p>Complete the foundation, then expand your deployment step by step.</p>
+        <div class="journey-score-wrap">
+          ${scoreRing}
+          <div class="journey-score-label">
+            <span class="journey-score-pct">${overallPct}%</span>
+            <span class="journey-score-sub">Zero Trust Score</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="journey-phase">
+        <div class="journey-phase-label">
+          <span class="journey-phase-num">1</span> Foundation
+        </div>
+        <div class="journey-grid journey-grid-4">${phase1Html}</div>
+      </div>
+
+      <div class="journey-connector${foundationReady ? ' active' : ''}">
+        <i class="fa-solid fa-chevron-down"></i>
+      </div>
+
+      <div class="journey-phase">
+        <div class="journey-phase-label">
+          <span class="journey-phase-num">2</span> Connect
+        </div>
+        <div class="journey-grid journey-grid-3">${phase2Html}</div>
+      </div>
+
+      <div class="journey-connector">
+        <i class="fa-solid fa-chevron-down"></i>
+      </div>
+
+      <div class="journey-phase">
+        <div class="journey-phase-label">
+          <span class="journey-phase-num">3</span> Observe & Defend
+        </div>
+        <div class="journey-grid journey-grid-3">${phase3Html}</div>
+      </div>
+
+      <div class="journey-connector">
+        <i class="fa-solid fa-chevron-down"></i>
+      </div>
+
+      <div class="journey-phase">
+        <div class="journey-phase-label">
+          <span class="journey-phase-num">4</span> Zero Trust Maturity
+        </div>
+        <div class="journey-zt-grid">${phase4Html}</div>
+      </div>
+
+      ${recHtml}
+    </div>`;
 }
 
 // ─────────────────────────────────────────────
