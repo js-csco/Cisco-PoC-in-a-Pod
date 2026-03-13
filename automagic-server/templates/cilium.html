@@ -22,39 +22,65 @@
     </p>
   </div>
 
-  <!-- CURRENT STATUS -->
+  <!-- TOP ROW: Current Status + Cilium UI -->
   <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CURRENT STATUS</h3>
-    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
 
-    {% if policy_error %}
-      <p style="color:#c00; font-size:0.9em;">
-        ⚠️ Could not read policies from Kubernetes API: {{ policy_error }}
-      </p>
-    {% else %}
-      {% set zero_trust_active = ('piap-zero-trust' in active_policies) %}
-      {% if zero_trust_active %}
-        <div style="display:inline-flex; align-items:center; gap:8px; background:#fff3e0; border:1px solid #f90; border-radius:8px; padding:10px 16px;">
-          <span style="font-size:1.2rem;">🔒</span>
-          <span style="font-weight:600; color:#b36a00;">Zero Trust Application Access — active</span>
+      <!-- Current Status box -->
+      <div style="border:1px solid #e0e0e0; border-radius:10px; padding:1.2rem 1.5rem;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+          <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+          <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CURRENT STATUS</h3>
         </div>
-        <p style="color:#666; font-size:0.88em; margin-top:8px;">
-          Active policies: {{ active_policies | join(', ') }}
+
+        {% if policy_error %}
+          <p style="color:#c00; font-size:0.9em; margin:0;">
+            ⚠️ Could not read policies from Kubernetes API: {{ policy_error }}
+          </p>
+        {% else %}
+          {% set zero_trust_active = ('piap-zero-trust' in active_policies) %}
+          {% if zero_trust_active %}
+            <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:10px 16px;">
+              <span style="font-size:1.2rem;">🔒</span>
+              <span style="font-weight:600; color:#2e7d32;">Zero Trust Application Access — active</span>
+            </div>
+            <p style="color:#666; font-size:0.88em; margin-top:8px; margin-bottom:0;">
+              Active policies: {{ active_policies | join(', ') }}
+            </p>
+          {% elif active_policies %}
+            <div style="display:inline-flex; align-items:center; gap:8px; background:#fff8e1; border:1px solid #ccc; border-radius:8px; padding:10px 16px;">
+              <span style="font-size:1.2rem;">⚙️</span>
+              <span style="font-weight:600; color:#555;">Custom policies active: {{ active_policies | join(', ') }}</span>
+            </div>
+          {% else %}
+            <div style="display:inline-flex; align-items:center; gap:8px; background:#e3f2fd; border:1px solid #42a5f5; border-radius:8px; padding:10px 16px;">
+              <span style="font-size:1.2rem;">🟢</span>
+              <span style="font-weight:600; color:#1565c0;">Allow All Traffic — active (no policies)</span>
+            </div>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      <!-- Cilium UI box -->
+      <div style="border:1px solid #e0e0e0; border-radius:10px; padding:1.2rem 1.5rem; display:flex; flex-direction:column;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+          <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+          <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CILIUM UI</h3>
+        </div>
+        <p style="margin:0 0 12px 0; color:#555; font-size:0.9em; line-height:1.6;">
+          Hubble gives you a real-time visual graph of network flows between pods —
+          which connections are allowed, which are dropped, and by which policy.
         </p>
-      {% elif active_policies %}
-        <div style="display:inline-flex; align-items:center; gap:8px; background:#fff8e1; border:1px solid #ccc; border-radius:8px; padding:10px 16px;">
-          <span style="font-size:1.2rem;">⚙️</span>
-          <span style="font-weight:600; color:#555;">Custom policies active: {{ active_policies | join(', ') }}</span>
-        </div>
-      {% else %}
-        <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:10px 16px;">
-          <span style="font-size:1.2rem;">🟢</span>
-          <span style="font-weight:600; color:#2e7d32;">Allow All Traffic — active (no policies)</span>
-        </div>
-      {% endif %}
-    {% endif %}
+        <a href="http://{{ request.host.split(':')[0] }}:30800/?namespace=piap"
+           target="_blank"
+           style="display:inline-flex; align-items:center; gap:8px; background:#0066ff; color:#fff;
+                  text-decoration:none; padding:10px 24px; border-radius:6px; font-weight:500;
+                  font-size:0.95rem; margin-top:auto;">
+          Open Hubble UI — piap namespace ↗
+        </a>
+      </div>
+
+    </div>
   </section>
 
   <!-- NETWORK POLICY TOGGLE — side by side cards -->
@@ -69,14 +95,14 @@
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
 
       <!-- Allow All card -->
-      <div style="border:2px solid {% if not zero_trust_active %}#4caf50{% else %}#ddd{% endif %};
-                  border-radius:10px; padding:1.5rem; background:{% if not zero_trust_active %}#f0faf0{% else %}#fafafa{% endif %};
+      <div style="border:2px solid {% if not zero_trust_active %}#1976d2{% else %}#ddd{% endif %};
+                  border-radius:10px; padding:1.5rem; background:{% if not zero_trust_active %}#e3f2fd{% else %}#fafafa{% endif %};
                   display:flex; flex-direction:column; gap:1rem;">
         <div style="display:flex; align-items:center; gap:8px;">
-          <div style="width:4px; height:20px; background-color:#4caf50; border-radius:2px;"></div>
-          <h4 style="margin:0; font-size:1rem; color:#1b5e20;">Allow All Traffic</h4>
+          <div style="width:4px; height:20px; background-color:#1976d2; border-radius:2px;"></div>
+          <h4 style="margin:0; font-size:1rem; color:#0d47a1;">Allow All Traffic</h4>
           {% if not zero_trust_active %}
-            <span style="margin-left:auto; background:#4caf50; color:#fff; font-size:0.75rem;
+            <span style="margin-left:auto; background:#1976d2; color:#fff; font-size:0.75rem;
                          font-weight:600; padding:2px 8px; border-radius:99px;">ACTIVE</span>
           {% endif %}
         </div>
@@ -87,7 +113,7 @@
           from the local LAN, from the Resource Connector, and from each other without restriction.
         </p>
 
-        <div style="background:#e8f5e9; border:1px solid #c8e6c9; border-radius:8px; padding:12px 16px; font-size:0.88em; color:#2e7d32;">
+        <div style="background:#e3f2fd; border:1px solid #90caf9; border-radius:8px; padding:12px 16px; font-size:0.88em; color:#1565c0;">
           <strong>What gets allowed:</strong>
           <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
             <li>Direct LAN access to all pods (SSH, RDP, web services, Splunk, …)</li>
@@ -99,24 +125,24 @@
         {% if not policy_error %}
           <button type="submit" name="action" value="allow_all"
                   {% if not zero_trust_active %}disabled{% endif %}
-                  style="margin-top:auto; background-color:{% if zero_trust_active %}#28a745{% else %}#aaa{% endif %};
+                  style="margin-top:auto; background-color:{% if zero_trust_active %}#1976d2{% else %}#aaa{% endif %};
                          color:#fff; border:none; padding:10px 24px; border-radius:6px;
                          font-weight:500; cursor:{% if zero_trust_active %}pointer{% else %}default{% endif %};
                          font-size:0.95rem; width:100%;">
-            🟢 Switch to Allow All
+            🔓 Switch to Allow All
           </button>
         {% endif %}
       </div>
 
       <!-- Zero Trust card -->
-      <div style="border:2px solid {% if zero_trust_active %}#d9534f{% else %}#ddd{% endif %};
-                  border-radius:10px; padding:1.5rem; background:{% if zero_trust_active %}#fff8f8{% else %}#fafafa{% endif %};
+      <div style="border:2px solid {% if zero_trust_active %}#4caf50{% else %}#ddd{% endif %};
+                  border-radius:10px; padding:1.5rem; background:{% if zero_trust_active %}#f0faf0{% else %}#fafafa{% endif %};
                   display:flex; flex-direction:column; gap:1rem;">
         <div style="display:flex; align-items:center; gap:8px;">
-          <div style="width:4px; height:20px; background-color:#d9534f; border-radius:2px;"></div>
-          <h4 style="margin:0; font-size:1rem; color:#7f0000;">Zero Trust Application Access</h4>
+          <div style="width:4px; height:20px; background-color:#4caf50; border-radius:2px;"></div>
+          <h4 style="margin:0; font-size:1rem; color:#1b5e20;">Zero Trust Application Access</h4>
           {% if zero_trust_active %}
-            <span style="margin-left:auto; background:#d9534f; color:#fff; font-size:0.75rem;
+            <span style="margin-left:auto; background:#4caf50; color:#fff; font-size:0.75rem;
                          font-weight:600; padding:2px 8px; border-radius:99px;">ACTIVE</span>
           {% endif %}
         </div>
@@ -127,7 +153,7 @@
           users must authenticate through Cisco Secure Access to reach any service.
         </p>
 
-        <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:12px 16px; font-size:0.88em; color:#5d4037;">
+        <div style="background:#e8f5e9; border:1px solid #c8e6c9; border-radius:8px; padding:12px 16px; font-size:0.88em; color:#2e7d32;">
           <strong>Policy: <code>piap-zero-trust</code></strong>
           <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
             <li>Ingress: only from the Resource Connector (cilium_host IP, Docker bridge, and host entity)</li>
@@ -142,7 +168,7 @@
 
         {% if not policy_error %}
           <button type="submit" name="action" value="zero_trust"
-                  style="margin-top:auto; background-color:#d9534f;
+                  style="margin-top:auto; background-color:#4caf50;
                          color:#fff; border:none; padding:10px 24px; border-radius:6px;
                          font-weight:500; cursor:pointer; font-size:0.95rem; width:100%;">
             🔒 {% if zero_trust_active %}Reapply Zero Trust{% else %}Switch to Zero Trust{% endif %}
@@ -166,8 +192,8 @@
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
 
       <!-- LEFT: Allow All mode -->
-      <div style="background:#f8faf8; border:2px solid #4caf50; border-radius:10px; overflow:hidden;">
-        <div style="background:#4caf50; padding:12px 16px; display:flex; align-items:center; gap:8px;">
+      <div style="background:#f5f9ff; border:2px solid #1976d2; border-radius:10px; overflow:hidden;">
+        <div style="background:#1976d2; padding:12px 16px; display:flex; align-items:center; gap:8px;">
           <span class="fa-solid fa-lock-open" style="color:#fff; font-size:1rem;"></span>
           <div>
             <div style="color:#fff; font-weight:700; font-size:0.9em;">Allow All Traffic</div>
@@ -177,37 +203,37 @@
         <div style="padding:1.2rem; display:flex; flex-direction:column; gap:6px;">
 
           <!-- LAN user -->
-          <div style="background:#fff; border:2px solid #4caf50; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
-            <span class="fa-solid fa-laptop" style="color:#4caf50; font-size:1rem; flex-shrink:0;"></span>
+          <div style="background:#fff; border:2px solid #1976d2; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
+            <span class="fa-solid fa-laptop" style="color:#1976d2; font-size:1rem; flex-shrink:0;"></span>
             <div>
               <div style="font-size:0.82em; font-weight:600; color:#111;">Any device on the LAN</div>
               <div style="font-size:0.65em; color:#888;">Direct access · no authentication required</div>
             </div>
           </div>
 
-          <div style="text-align:center; color:#4caf50; font-size:0.8em; font-weight:600;">↓</div>
+          <div style="text-align:center; color:#1976d2; font-size:0.8em; font-weight:600;">↓</div>
 
           <!-- NodePort -->
-          <div style="background:#fff; border:1px solid #c8e6c9; border-radius:6px; padding:8px 12px;">
+          <div style="background:#fff; border:1px solid #90caf9; border-radius:6px; padding:8px 12px;">
             <div style="font-size:0.75em; font-weight:600; color:#333;">NodePort</div>
             <div style="font-size:0.65em; color:#888;">No policy evaluation — Cilium defaults to allow</div>
           </div>
 
-          <div style="text-align:center; color:#4caf50; font-size:0.8em; font-weight:600;">↓</div>
+          <div style="text-align:center; color:#1976d2; font-size:0.8em; font-weight:600;">↓</div>
 
           <!-- Pod -->
-          <div style="background:#dcfce7; border:2px solid #4caf50; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
-            <span class="fa-solid fa-cube" style="color:#4caf50; font-size:1rem; flex-shrink:0;"></span>
+          <div style="background:#e3f2fd; border:2px solid #1976d2; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
+            <span class="fa-solid fa-cube" style="color:#1976d2; font-size:1rem; flex-shrink:0;"></span>
             <div>
-              <div style="font-size:0.82em; font-weight:600; color:#2e7d32;">Pod</div>
-              <div style="font-size:0.68em; color:#4caf50; font-weight:700;">ALLOWED ✅</div>
+              <div style="font-size:0.82em; font-weight:600; color:#0d47a1;">Pod</div>
+              <div style="font-size:0.68em; color:#1976d2; font-weight:700;">ALLOWED ✅</div>
             </div>
           </div>
 
           <div style="height:1px; background:#e0e0e0; margin:8px 0;"></div>
 
           <!-- SSE user also works -->
-          <div style="background:#fff; border:2px solid #4caf50; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
+          <div style="background:#fff; border:2px solid #1976d2; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
             <span class="fa-solid fa-shield-halved" style="color:#049fd9; font-size:1rem; flex-shrink:0;"></span>
             <div>
               <div style="font-size:0.82em; font-weight:600; color:#111;">Secure Access user</div>
@@ -215,18 +241,18 @@
             </div>
           </div>
 
-          <div style="text-align:center; color:#4caf50; font-size:0.8em; font-weight:600;">↓</div>
+          <div style="text-align:center; color:#1976d2; font-size:0.8em; font-weight:600;">↓</div>
 
-          <div style="background:#dcfce7; border:2px solid #4caf50; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
-            <span class="fa-solid fa-cube" style="color:#4caf50; font-size:1rem; flex-shrink:0;"></span>
+          <div style="background:#e3f2fd; border:2px solid #1976d2; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
+            <span class="fa-solid fa-cube" style="color:#1976d2; font-size:1rem; flex-shrink:0;"></span>
             <div>
-              <div style="font-size:0.82em; font-weight:600; color:#2e7d32;">Pod</div>
-              <div style="font-size:0.68em; color:#4caf50; font-weight:700;">ALLOWED ✅</div>
+              <div style="font-size:0.82em; font-weight:600; color:#0d47a1;">Pod</div>
+              <div style="font-size:0.68em; color:#1976d2; font-weight:700;">ALLOWED ✅</div>
             </div>
           </div>
 
           <!-- Summary -->
-          <div style="background:#e8f5e9; border:1px solid #c8e6c9; border-radius:6px; padding:10px 12px; margin-top:6px; font-size:0.78em; color:#2e7d32; display:flex; align-items:flex-start; gap:8px;">
+          <div style="background:#e3f2fd; border:1px solid #90caf9; border-radius:6px; padding:10px 12px; margin-top:6px; font-size:0.78em; color:#1565c0; display:flex; align-items:flex-start; gap:8px;">
             <span class="fa-solid fa-circle-info" style="flex-shrink:0; margin-top:2px;"></span>
             <span>Everyone can reach every pod — LAN users, Secure Access users, and pod-to-pod traffic. No restrictions.</span>
           </div>
@@ -234,8 +260,8 @@
       </div>
 
       <!-- RIGHT: Zero Trust mode -->
-      <div style="background:#fefcf8; border:2px solid #d9534f; border-radius:10px; overflow:hidden;">
-        <div style="background:#d9534f; padding:12px 16px; display:flex; align-items:center; gap:8px;">
+      <div style="background:#f0faf0; border:2px solid #4caf50; border-radius:10px; overflow:hidden;">
+        <div style="background:#4caf50; padding:12px 16px; display:flex; align-items:center; gap:8px;">
           <span class="fa-solid fa-lock" style="color:#fff; font-size:1rem;"></span>
           <div>
             <div style="color:#fff; font-weight:700; font-size:0.9em;">Zero Trust Application Access</div>
@@ -298,7 +324,7 @@
           </div>
 
           <!-- Summary -->
-          <div style="background:#fff3e0; border:1px solid #ffe082; border-radius:6px; padding:10px 12px; margin-top:6px; font-size:0.78em; color:#5d4037; display:flex; align-items:flex-start; gap:8px;">
+          <div style="background:#e8f5e9; border:1px solid #c8e6c9; border-radius:6px; padding:10px 12px; margin-top:6px; font-size:0.78em; color:#2e7d32; display:flex; align-items:flex-start; gap:8px;">
             <span class="fa-solid fa-circle-info" style="flex-shrink:0; margin-top:2px;"></span>
             <span>Only users going through Cisco Secure Access can reach workload pods. Direct LAN access is blocked by Cilium at the kernel level.</span>
           </div>
@@ -317,28 +343,6 @@
         LAN traffic keeps its real IP (<code>10.10.2.x</code>) — classified as <strong>world</strong> entity and dropped.
       </span>
     </div>
-  </section>
-
-  <!-- HUBBLE UI -->
-  <section style="padding-bottom:2.5rem; border-top:1px solid #e0e0e0; padding-top:2.5rem;">
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">HUBBLE UI</h3>
-    </div>
-
-    <p style="margin-top:0; margin-bottom:16px; color:#555; font-size:0.95em; line-height:1.6;">
-      Hubble is Cilium's built-in observability layer. It gives you a real-time visual graph of
-      network flows between pods — which connections are allowed, which are dropped, and by which policy.
-      Open it filtered to the <code>piap</code> namespace to watch traffic while toggling policies above.
-    </p>
-
-    <a href="http://{{ request.host.split(':')[0] }}:30800/?namespace=piap"
-       target="_blank"
-       style="display:inline-flex; align-items:center; gap:8px; background:#0066ff; color:#fff;
-              text-decoration:none; padding:10px 24px; border-radius:6px; font-weight:500;
-              font-size:0.95rem;">
-      Open Hubble UI — piap namespace ↗
-    </a>
   </section>
 
 </form>
