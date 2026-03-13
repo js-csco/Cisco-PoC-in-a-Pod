@@ -13,7 +13,7 @@ def check_credentials(api_hostname, integration_key, secret_key):
         skey=secret_key,
         host=api_hostname,
     )
-    admin.check()
+    admin.get_info_summary()
 
 
 def setup_duo_complete(api_hostname, integration_key, secret_key, users_list):
