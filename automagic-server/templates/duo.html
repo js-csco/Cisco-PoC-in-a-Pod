@@ -201,9 +201,6 @@
                      font-size:1rem;">
         Add Users and Groups
       </button>
-      {% if not session.get('duo_authenticated') %}
-        <span style="color:#888; font-size:0.82em; margin-left:8px;">Authenticate first</span>
-      {% endif %}
     </section>
 
     <!-- INTEGRATIONS -->
@@ -242,9 +239,6 @@
                        font-size:0.95rem;">
           Create SAML App
         </button>
-        {% if not session.get('duo_authenticated') %}
-          <span style="color:#888; font-size:0.82em; margin-left:8px;">Authenticate first</span>
-        {% endif %}
       </div>
 
       <!-- Cisco Secure Access Integration -->
