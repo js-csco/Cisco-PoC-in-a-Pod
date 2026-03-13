@@ -226,9 +226,15 @@
              style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
 
       <button type="submit" name="action" value="create_pod"
-              style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500; cursor:pointer;">
+              {% if not session.get('authenticated') %}disabled{% endif %}
+              style="background-color:{% if session.get('authenticated') %}#0066ff{% else %}#aaa{% endif %};
+                     color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500;
+                     cursor:{% if session.get('authenticated') %}pointer{% else %}default{% endif %};">
         Create Pod Resources
       </button>
+      {% if not session.get('authenticated') %}
+        <span style="color:#888; font-size:0.82em; margin-left:8px;">Authenticate first</span>
+      {% endif %}
 
       <!-- Create Private Access Policies -->
       <h4 style="color:#005073; margin-top:30px; margin-bottom:5px;">Private Access Policy</h4>
@@ -237,9 +243,15 @@
       </p>
 
       <button type="submit" name="action" value="create_private"
-              style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500; cursor:pointer;">
+              {% if not session.get('authenticated') %}disabled{% endif %}
+              style="background-color:{% if session.get('authenticated') %}#0066ff{% else %}#aaa{% endif %};
+                     color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500;
+                     cursor:{% if session.get('authenticated') %}pointer{% else %}default{% endif %};">
         Create Private Access Policy
       </button>
+      {% if not session.get('authenticated') %}
+        <span style="color:#888; font-size:0.82em; margin-left:8px;">Authenticate first</span>
+      {% endif %}
 
     </section>
 
@@ -262,9 +274,16 @@
             Follow Cisco recommendations for Internet Access rules & decryption of web traffic (MSFT 365 Bypass, Certificate Pinning, Do not Decrypt Destinations).
       </p>
       <button type="submit" name="action" value="follow_recom"
-              style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500; cursor:pointer; margin-bottom:20px;">
+              {% if not session.get('authenticated') %}disabled{% endif %}
+              style="background-color:{% if session.get('authenticated') %}#0066ff{% else %}#aaa{% endif %};
+                     color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500;
+                     cursor:{% if session.get('authenticated') %}pointer{% else %}default{% endif %};
+                     margin-bottom:20px;">
         Follow Recommendations
       </button>
+      {% if not session.get('authenticated') %}
+        <span style="color:#888; font-size:0.82em; margin-left:8px;">Authenticate first</span>
+      {% endif %}
 
       <!-- Create Internet Access Rules -->
       <h4 style="color:#005073; margin-top:20px; margin-bottom:5px;">Internet Access Policies</h4>
@@ -273,9 +292,15 @@
       </p>
 
       <button type="submit" name="action" value="create_internet"
-              style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500; cursor:pointer;">
+              {% if not session.get('authenticated') %}disabled{% endif %}
+              style="background-color:{% if session.get('authenticated') %}#0066ff{% else %}#aaa{% endif %};
+                     color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500;
+                     cursor:{% if session.get('authenticated') %}pointer{% else %}default{% endif %};">
         Create Internet Access Policies
       </button>
+      {% if not session.get('authenticated') %}
+        <span style="color:#888; font-size:0.82em; margin-left:8px;">Authenticate first</span>
+      {% endif %}
 
       <!-- Create Decryption Profile -->
       <h4 style="color:#005073; margin-top:20px; margin-bottom:5px;">Security Profile</h4>
@@ -283,9 +308,15 @@
             Go to Cisco Secure Access Dashboard, create a Security Profile for Internet Access with Decryption enabled and attach it to each Internet Access Policy.
       </p>
       <button type="submit" name="action" value="create_profile"
-              style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500; cursor:pointer;">
+              {% if not session.get('authenticated') %}disabled{% endif %}
+              style="background-color:{% if session.get('authenticated') %}#0066ff{% else %}#aaa{% endif %};
+                     color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500;
+                     cursor:{% if session.get('authenticated') %}pointer{% else %}default{% endif %};">
         Create Security Profile
       </button>
+      {% if not session.get('authenticated') %}
+        <span style="color:#888; font-size:0.82em; margin-left:8px;">Authenticate first</span>
+      {% endif %}
 
       <!-- Deploy Cisco Secure Client -->
       <h4 style="color:#005073; margin-top:20px; margin-bottom:5px;">Deploy Cisco Secure Client</h4>

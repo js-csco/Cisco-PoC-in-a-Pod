@@ -193,10 +193,17 @@
       </div>
 
       <button type="submit" name="action" value="setup_duo"
-              style="background-color:#0066ff; color:#fff; border:none; padding:12px 24px;
-                     border-radius:6px; font-weight:500; cursor:pointer; font-size:1rem;">
+              {% if not session.get('duo_authenticated') %}disabled{% endif %}
+              style="background-color:{% if session.get('duo_authenticated') %}#0066ff{% else %}#aaa{% endif %};
+                     color:#fff; border:none; padding:12px 24px;
+                     border-radius:6px; font-weight:500;
+                     cursor:{% if session.get('duo_authenticated') %}pointer{% else %}default{% endif %};
+                     font-size:1rem;">
         Add Users and Groups
       </button>
+      {% if not session.get('duo_authenticated') %}
+        <span style="color:#888; font-size:0.82em; margin-left:8px;">Authenticate first</span>
+      {% endif %}
     </section>
 
     <!-- INTEGRATIONS -->
