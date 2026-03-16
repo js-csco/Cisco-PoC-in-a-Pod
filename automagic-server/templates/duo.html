@@ -450,41 +450,16 @@
       </div>
 
       <p style="color:#555; font-size:0.92em; margin:0 0 14px;">
-        In the <strong>Duo Admin Panel</strong>, navigate to <em>Policies &rarr; Policies</em> and edit the
-        <strong>Global Policy</strong>:
+        Sets New User Policy to require enrollment, authentication methods to recommended only
+        (Platform Passkey, Roaming Passkey, Duo Push) for both 2FA and Passwordless SSO,
+        and disables risk-based factor selection. User Location is left as default.
       </p>
 
-      <ol class="duo-steps">
-        <li>
-          <strong>New User Policy:</strong> set to
-          <em>"Require enrollment"</em> so all users must complete MFA setup.
-        </li>
-        <li>
-          <strong>Authentication Methods:</strong> only recommended authenticators
-          (Platform Authenticator, Roaming Authenticator, Duo Push) for both
-          second factor and passwordless SSO.
-        </li>
-        <li>
-          <strong>Risk-based Factor Selection:</strong> disabled &mdash;
-          don&rsquo;t limit authentication methods based on risk.
-        </li>
-        <li>
-          <strong>User Location:</strong> leave as default (<em>"No restriction"</em>).
-        </li>
-      </ol>
-
-      {% if session.get('duo_authenticated') %}
-      <div style="margin-top:16px;">
-        <button type="submit" name="action" value="configure_policy" class="duo-btn duo-btn-primary">
-          Configure Global Policy via API
-        </button>
-        <p class="duo-btn-hint">
-          Sets New User Policy to require enrollment, authentication methods to recommended only
-          (Platform Passkey, Roaming Passkey, Duo Push) for both 2FA and Passwordless SSO,
-          and disables risk-based factor selection. User Location is left as default.
-        </p>
-      </div>
-      {% endif %}
+      <button type="submit" name="action" value="configure_policy"
+              class="duo-btn {% if session.get('duo_authenticated') %}duo-btn-primary{% else %}duo-btn-disabled{% endif %}"
+              {% if not session.get('duo_authenticated') %}disabled{% endif %}>
+        Update Global Policy
+      </button>
     </div>
 
     <!-- Duo Passport -->
