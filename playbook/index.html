@@ -480,8 +480,8 @@
     /* ── Journey Map — Dashboard Layout ── */
     .journey-dashboard {
       display: grid;
-      grid-template-columns: 380px 1fr;
-      gap: 40px;
+      grid-template-columns: 360px 1px 1fr;
+      gap: 0;
       min-height: calc(100vh - 180px);
       align-content: start;
     }
@@ -492,40 +492,47 @@
       position: sticky;
       top: 0;
       align-self: start;
+      padding-right: 36px;
+    }
+    .journey-divider {
+      background: #e9ebef;
+      align-self: stretch;
     }
     .journey-right {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 10px;
       overflow-y: auto;
       max-height: calc(100vh - 180px);
+      padding-left: 36px;
       padding-right: 4px;
     }
 
     .journey-hero {
       text-align: center;
-      padding: 28px 20px 24px;
+      padding: 32px 24px 28px;
       background: linear-gradient(135deg, #f0f9ff 0%, #eff6ff 50%, #f5f3ff 100%);
       border-radius: 16px;
       border: 1px solid #e0e7ff;
     }
     .journey-hero h2 {
-      font-size: 1.15rem;
+      font-size: 1.25rem;
       color: #111;
       margin-bottom: 4px;
+      font-weight: 800;
     }
     .journey-hero p {
       color: #666;
       font-size: 0.82em;
-      margin-bottom: 18px;
+      margin-bottom: 22px;
     }
     .journey-score-wrap {
       display: inline-block;
       position: relative;
     }
     .journey-score-wrap svg {
-      width: 180px;
-      height: 180px;
+      width: 200px;
+      height: 200px;
       transform: rotate(-90deg);
     }
     .journey-score-label {
@@ -537,26 +544,26 @@
       justify-content: center;
     }
     .journey-score-pct {
-      font-size: 2.2rem;
+      font-size: 2.6rem;
       font-weight: 800;
       color: #111;
       line-height: 1;
     }
     .journey-score-sub {
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: #888;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #777;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
       margin-top: 6px;
     }
 
-    .journey-phase { margin-bottom: 4px; }
+    .journey-phase { margin-bottom: 0; }
     .journey-phase-label {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       font-size: 0.72em;
       font-weight: 800;
       text-transform: uppercase;
@@ -582,15 +589,15 @@
       font-weight: 800;
     }
 
-    .journey-grid { display: grid; gap: 10px; }
+    .journey-grid { display: grid; gap: 8px; }
     .journey-grid-4 { grid-template-columns: repeat(2, 1fr); }
     .journey-grid-3 { grid-template-columns: repeat(3, 1fr); }
 
     .journey-card {
       background: #fff;
       border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 16px 12px 14px;
+      border-radius: 10px;
+      padding: 12px 10px 10px;
       text-align: center;
       transition: all 0.2s ease;
       cursor: pointer;
@@ -604,24 +611,24 @@
     .journey-core:hover { border-color: var(--cyan); }
 
     .journey-card-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 1rem;
-      margin-bottom: 8px;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
     }
 
     .journey-ring-wrap {
       display: inline-block;
       position: relative;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
     .journey-ring-wrap svg {
-      width: 64px;
-      height: 64px;
+      width: 56px;
+      height: 56px;
       transform: rotate(-90deg);
     }
     .journey-ring-label {
@@ -687,71 +694,84 @@
     .journey-connector {
       display: flex;
       justify-content: center;
-      padding: 4px 0;
+      padding: 2px 0;
       color: #d1d5db;
-      font-size: 1rem;
+      font-size: 0.85rem;
       transition: color 0.3s;
     }
     .journey-connector.active { color: var(--cyan); }
 
     .journey-recommendation {
       background: linear-gradient(135deg, #1a1a2e 0%, var(--dark) 100%);
-      border-radius: 12px;
-      padding: 16px 20px;
+      border-radius: 14px;
+      padding: 20px 22px;
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 14px;
       color: #fff;
     }
+    .journey-rec-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
     .journey-rec-icon {
       flex-shrink: 0;
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       background: rgba(255,255,255,0.1);
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1rem;
+      font-size: 1.05rem;
       animation: rec-pulse 2s ease-in-out infinite;
     }
     @keyframes rec-pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.6; }
     }
+    .journey-rec-label {
+      font-size: 0.68em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.5);
+    }
     .journey-rec-text {
       flex: 1;
-      font-size: 0.82em;
+      font-size: 0.88em;
       line-height: 1.5;
     }
     .journey-rec-text strong { color: var(--cyan); }
     .journey-rec-btn {
-      flex-shrink: 0;
+      align-self: stretch;
       background: var(--cyan);
       color: #fff;
       border: none;
       border-radius: 8px;
-      padding: 8px 18px;
-      font-size: 0.82em;
+      padding: 10px 18px;
+      font-size: 0.88em;
       font-weight: 700;
       cursor: pointer;
       transition: opacity 0.15s;
       white-space: nowrap;
+      text-align: center;
     }
     .journey-rec-btn:hover { opacity: 0.85; }
 
     .journey-zt-grid {
       background: #fff;
       border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 14px 12px;
+      border-radius: 10px;
+      padding: 10px 8px;
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
+      gap: 4px;
     }
     .journey-zt-pillar {
       text-align: center;
-      padding: 10px 6px;
+      padding: 8px 4px;
     }
     .journey-zt-pillar i {
       font-size: 1.1rem;
@@ -777,12 +797,12 @@
 
     @media (max-width: 960px) {
       .journey-dashboard { grid-template-columns: 1fr; }
-      .journey-left { position: static; }
-      .journey-right { max-height: none; }
+      .journey-left { position: static; padding-right: 0; }
+      .journey-divider { display: none; }
+      .journey-right { max-height: none; padding-left: 0; }
       .journey-grid-4 { grid-template-columns: repeat(2, 1fr); }
       .journey-grid-3 { grid-template-columns: repeat(1, 1fr); }
       .journey-zt-grid { grid-template-columns: repeat(2, 1fr); }
-      .journey-recommendation { flex-direction: column; text-align: center; }
     }
   </style>
 </head>
@@ -1610,7 +1630,7 @@ function renderJourneyTab(tab) {
 
   const coreColors = { duo: '#049fd9', secureaccess: '#0066ff', cilium: '#16a34a', tetragon: '#7c4dff' };
 
-  const scoreRing = makeRingSvg(overallPct, 'var(--cyan)', 68, 8);
+  const scoreRing = makeRingSvg(overallPct, 'var(--cyan)', 76, 9);
 
   // Phase 1 — Foundation: Core module cards with progress rings
   const phase1Html = coreTabs.map(t => {
@@ -1619,7 +1639,7 @@ function renderJourneyTab(tab) {
     const passed = cases.filter(tc => getState(tc.id, 'status') === 'pass').length;
     const pct = total ? Math.round((passed / total) * 100) : 0;
     const color = coreColors[t.id] || '#049fd9';
-    const ring = makeRingSvg(pct, color, 30, 5);
+    const ring = makeRingSvg(pct, color, 24, 4);
     const dots = cases.map(tc => {
       const st = getState(tc.id, 'status') || 'pending';
       return `<span class="jdot jdot-${st}" title="${tc.title}"></span>`;
@@ -1651,7 +1671,6 @@ function renderJourneyTab(tab) {
       </div>
       <div class="journey-card-title">${item.title}</div>
       <div class="journey-card-desc">${item.desc}</div>
-      <div class="journey-card-badge ${foundationReady ? 'badge-ready' : 'badge-soon'}">${foundationReady ? 'READY' : 'COMPLETE FOUNDATION FIRST'}</div>
     </div>`).join('');
 
   // Phase 3 — Observe & Defend
@@ -1667,7 +1686,6 @@ function renderJourneyTab(tab) {
       </div>
       <div class="journey-card-title">${item.title}</div>
       <div class="journey-card-desc">${item.desc}</div>
-      <div class="journey-card-badge badge-soon">COMING SOON</div>
     </div>`).join('');
 
   // Phase 4 — Zero Trust Maturity
@@ -1688,8 +1706,13 @@ function renderJourneyTab(tab) {
   const rec = getRecommendation();
   const recHtml = `
     <div class="journey-recommendation">
-      <div class="journey-rec-icon"><i class="fa-solid fa-bolt"></i></div>
-      <div class="journey-rec-text">${rec.text}</div>
+      <div class="journey-rec-top">
+        <div class="journey-rec-icon"><i class="fa-solid fa-bolt"></i></div>
+        <div>
+          <div class="journey-rec-label">Next Step</div>
+          <div class="journey-rec-text">${rec.text}</div>
+        </div>
+      </div>
       <button class="journey-rec-btn" onclick="switchTab('${rec.tabId}')">${rec.action}</button>
     </div>`;
 
@@ -1710,6 +1733,7 @@ function renderJourneyTab(tab) {
           </div>
           ${recHtml}
         </div>
+        <div class="journey-divider"></div>
         <div class="journey-right">
           <div class="journey-phase">
             <div class="journey-phase-label">
