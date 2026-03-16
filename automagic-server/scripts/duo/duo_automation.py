@@ -385,6 +385,7 @@ def create_integration(api_hostname, integration_key, secret_key, name, integrat
             {
                 'name': name,
                 'type': integration_type,
+                'user_access': 'PERMITTED_GROUPS',
                 'groups_allowed': [group_id]
             }
         )
