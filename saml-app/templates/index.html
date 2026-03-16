@@ -320,10 +320,13 @@
     {% if configured %}
     <div class="banner banner-ok" style="margin-top: 12px;">
       <div class="banner-icon">&#x2705;</div>
-      <div>
+      <div style="flex:1;">
         <div class="banner-tag">SAML CONFIGURED</div>
         <p class="banner-title">Duo SSO integration is active</p>
         <p class="banner-body">The IdP metadata has been loaded. Users can now sign in below.</p>
+        <button class="btn btn-gray btn-sm" style="margin-top: 10px;" onclick="resetIdp()">
+          <i class="fa-solid fa-link-slash"></i> Disconnect IdP
+        </button>
       </div>
     </div>
     {% else %}
@@ -432,6 +435,15 @@
   fileInput.addEventListener('change', function() {
     if (fileInput.files.length) uploadFile(fileInput.files[0]);
   });
+
+  window.resetIdp = function() {
+    if (!confirm('Disconnect IdP configuration? You will need to re-upload the metadata to use SSO again.')) return;
+    fetch('/reset-idp', { method: 'POST' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.ok) window.location.reload();
+      });
+  };
 
   function uploadFile(file) {
     statusEl.className = 'status-msg';
