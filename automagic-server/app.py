@@ -318,12 +318,22 @@ def duo():
             # Action: CREATE SAML APP
             if action == 'create_saml_app':
                 from scripts.duo.duo_automation import create_integration
+                sp_base_url = f"http://{request.host.split(':')[0]}:30400"
                 result = create_integration(
                     api_hostname=api_hostname,
                     integration_key=integration_key,
                     secret_key=secret_key,
                     name="PoC in a Pod: SAML App",
-                    integration_type="sso-generic"
+                    integration_type="sso-generic",
+                    sso_config={
+                        'acs_urls': [{'url': f"{sp_base_url}/acs"}],
+                        'entity_id': f"{sp_base_url}/metadata",
+                        'nameid_attribute': 'email',
+                        'nameid_format': 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+                        'sign_assertion': True,
+                        'sign_response': True,
+                        'signing_algorithm': 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
+                    }
                 )
                 if result['success']:
                     flash(f"✅ SAML App created — Integration Key: {result['integration_key']}")
