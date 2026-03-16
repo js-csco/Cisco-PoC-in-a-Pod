@@ -161,6 +161,14 @@ def upload_idp_metadata():
         return jsonify({"ok": False, "error": f"Invalid XML: {e}"}), 400
 
 
+@app.route("/reset-idp", methods=["POST"])
+def reset_idp():
+    """Clear the IdP configuration so the admin can re-configure."""
+    _idp_config.update({"entity_id": "", "sso_url": "", "slo_url": "", "cert": ""})
+    session.clear()
+    return jsonify({"ok": True})
+
+
 @app.route("/login")
 def login():
     """Initiate SAML login — redirect to Duo SSO."""

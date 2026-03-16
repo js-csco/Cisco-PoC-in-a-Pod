@@ -327,10 +327,10 @@ def list_integrations(api_hostname, integration_key, secret_key):
         return []
 
 
-def create_integration(api_hostname, integration_key, secret_key, name, integration_type, group_name="PoC Users"):
+def create_integration(api_hostname, integration_key, secret_key, name, integration_type, group_name="PoC Users", sso_config=None):
     """
     Create a new integration and assign it to a group
-    
+
     Args:
         api_hostname: Duo API hostname
         integration_key: Duo integration key
@@ -338,7 +338,8 @@ def create_integration(api_hostname, integration_key, secret_key, name, integrat
         name: Name of the integration
         integration_type: Type of integration (e.g., 'sso-cisco-secure-access', 'sso-generic')
         group_name: Name of the group to assign (default: 'PoC Users')
-    
+        sso_config: Optional dict of SSO/SAML parameters for SSO integrations
+
     Returns:
         dict: Integration details or error
     """
@@ -379,15 +380,19 @@ def create_integration(api_hostname, integration_key, secret_key, name, integrat
         # Step 2: Create the integration
         print(f"Step 2: Creating integration with type '{integration_type}'")
         
+        params = {
+            'name': name,
+            'type': integration_type,
+            'user_access': 'PERMITTED_GROUPS',
+            'groups_allowed': [group_id]
+        }
+        if sso_config:
+            params['sso'] = sso_config
+
         integration_response = admin_api.json_api_call(
             'POST',
             '/admin/v3/integrations',
-            {
-                'name': name,
-                'type': integration_type,
-                'user_access': 'PERMITTED_GROUPS',
-                'groups_allowed': [group_id]
-            }
+            params
         )
         
         result['success'] = True
