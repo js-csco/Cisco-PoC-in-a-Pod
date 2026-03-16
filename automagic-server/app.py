@@ -317,7 +317,9 @@ def duo():
 
             # Action: CREATE SAML APP
             if action == 'create_saml_app':
-                from scripts.duo.duo_automation import create_integration
+                from scripts.duo.duo_automation import (
+                    create_integration, get_integration_metadata_url, fetch_and_push_idp_metadata
+                )
                 sp_base_url = f"http://{request.host.split(':')[0]}:30400"
                 result = create_integration(
                     api_hostname=api_hostname,
@@ -336,7 +338,28 @@ def duo():
                     }
                 )
                 if result['success']:
-                    flash(f"✅ SAML App created — Integration Key: {result['integration_key']}")
+                    app_ikey = result['integration_key']
+                    flash(f"✅ SAML App created — Integration Key: {app_ikey}")
+
+                    # Try to auto-configure the SAML app with Duo IdP metadata
+                    meta_result = get_integration_metadata_url(
+                        api_hostname, integration_key, secret_key, app_ikey
+                    )
+                    if meta_result['success'] and meta_result['metadata_url']:
+                        push_result = fetch_and_push_idp_metadata(
+                            meta_result['metadata_url'], sp_base_url
+                        )
+                        if push_result['success']:
+                            flash(f"✅ SAML App auto-configured with Duo IdP metadata — ready to test!")
+                            session['saml_app_configured'] = True
+                        else:
+                            flash(f"⚠️ Could not auto-configure SAML app: {push_result['error']}. Download the IdP metadata XML from Duo and upload it manually.")
+                            session['saml_app_configured'] = False
+                    else:
+                        flash(f"⚠️ Could not retrieve metadata URL from Duo. Download the IdP metadata XML from the Duo Admin Panel and upload it to the SAML app.")
+                        session['saml_app_configured'] = False
+
+                    session['saml_app_ikey'] = app_ikey
                 else:
                     flash(f"⚠️ {result['error']}")
 

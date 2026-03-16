@@ -161,6 +161,38 @@ def upload_idp_metadata():
         return jsonify({"ok": False, "error": f"Invalid XML: {e}"}), 400
 
 
+@app.route("/api/configure-idp", methods=["POST"])
+def api_configure_idp():
+    """Accept IdP config via JSON (called by automagic server)."""
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"ok": False, "error": "No JSON body"}), 400
+
+    metadata_xml = data.get("metadata_xml")
+    if metadata_xml:
+        # Parse XML metadata
+        try:
+            parsed = _parse_idp_metadata(metadata_xml if isinstance(metadata_xml, bytes) else metadata_xml.encode())
+            if not parsed["sso_url"]:
+                return jsonify({"ok": False, "error": "Could not find SSO URL in metadata XML"}), 400
+            _idp_config.update(parsed)
+            return jsonify({"ok": True, "entity_id": parsed["entity_id"], "sso_url": parsed["sso_url"]})
+        except ET.ParseError as e:
+            return jsonify({"ok": False, "error": f"Invalid XML: {e}"}), 400
+
+    # Fallback: accept individual fields
+    entity_id = data.get("entity_id", "")
+    sso_url = data.get("sso_url", "")
+    slo_url = data.get("slo_url", "")
+    cert = data.get("cert", "")
+
+    if not sso_url:
+        return jsonify({"ok": False, "error": "Either metadata_xml or sso_url is required"}), 400
+
+    _idp_config.update({"entity_id": entity_id, "sso_url": sso_url, "slo_url": slo_url, "cert": cert})
+    return jsonify({"ok": True, "entity_id": entity_id, "sso_url": sso_url})
+
+
 @app.route("/reset-idp", methods=["POST"])
 def reset_idp():
     """Clear the IdP configuration so the admin can re-configure."""
