@@ -1,4 +1,4 @@
-# Cisco PoC in a Pod (PiAP)
+# Cisco Zero Trust — PoC in a Pod
 
 A single-script lab that deploys a full Zero Trust demo stack on one Ubuntu VM.
 
@@ -6,35 +6,45 @@ A single-script lab that deploys a full Zero Trust demo stack on one Ubuntu VM.
 
 ---
 
-## Quick Start
-
-```bash
-sudo apt-get update && sudo apt-get install -y git curl
-git clone https://github.com/js-csco/piap-k3s.git
-cd piap-k3s/setup
-chmod +x setup-k3s.sh
-sudo ./setup-k3s.sh
-```
-
-The script is interactive and takes ~10-20 minutes. Have these ready:
-
-1. **Cisco Secure Access** — Connector Name + Key (from SSE dashboard → Connect → Resource Connectors)
-2. **Splunk password** *(optional)* — press Enter to skip Splunk
-
----
-
 ## VM Requirements
+
+Runs on [Ubuntu Server 24.04 LTS](https://ubuntu.com/download/server). Use **Bridged** networking (not NAT) so services are reachable from your browser.
 
 |  | Without Splunk | With Splunk |
 |--|----------------|-------------|
 | CPU | 4 cores (6 rec.) | 6 cores (8 rec.) |
 | RAM | 8 GB (12 rec.) | 16 GB (20 rec.) |
 | Disk | 40 GB (60 rec.) | 80 GB (100 rec.) |
-| OS | Ubuntu 24.04 LTS | Ubuntu 24.04 LTS |
 
 - Internet access required (~8-12 GB downloads)
 - Disable ufw or open NodePorts: `sudo ufw disable`
-- Use **Bridged** networking (not NAT) so NodePorts are reachable from your browser
+
+---
+
+## Quick Start
+
+### Pre-requisites
+
+Have these ready before running the script:
+
+- **Cisco Secure Access & Cisco Duo tenants** — contact your Cisco team
+- **Cisco Secure Access** — Connector Name + Key (from SSE dashboard → Connect → Resource Connectors)
+- **Splunk password** *(optional)* — press Enter during setup to skip Splunk
+
+### Deployment
+
+```bash
+# Install dependencies
+sudo apt-get update && sudo apt-get install -y git curl
+
+# Clone the repository
+git clone https://github.com/js-csco/piap-k3s.git
+
+# Run the setup script (~10-20 min, interactive)
+cd piap-k3s/setup
+chmod +x setup-k3s.sh
+sudo ./setup-k3s.sh
+```
 
 ---
 
