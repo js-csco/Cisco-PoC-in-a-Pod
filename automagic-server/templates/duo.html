@@ -614,7 +614,7 @@
         <ul>
           <li>Create a <code>sso-generic</code> integration via the Duo Admin API</li>
           <li>Restrict access to the <strong>PoC Users</strong> group</li>
-          <li>Return the integration key and metadata needed for SAML configuration</li>
+          <li>Auto-configure the SAML app with Duo IdP metadata (if available)</li>
         </ul>
       </div>
 
@@ -623,6 +623,32 @@
               {% if not session.get('duo_authenticated') %}disabled{% endif %}>
         Create SAML App
       </button>
+
+      {% if session.get('saml_app_ikey') %}
+      <div style="margin-top:16px; padding:14px 18px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px;">
+        <strong style="color:#166534;">SAML App Ready</strong>
+        <span style="color:#555; font-size:0.9em; display:block; margin:4px 0 10px;">
+          Integration Key: <code>{{ session.get('saml_app_ikey') }}</code>
+        </span>
+
+        {% if session.get('saml_app_configured') %}
+          <p style="color:#166534; font-size:0.92em; margin:0 0 10px;">
+            ✅ IdP metadata was auto-configured. The SAML app is ready to test!
+          </p>
+        {% else %}
+          <div class="duo-info" style="margin-bottom:10px; background:#fef9c3; border-color:#fde047;">
+            <strong>Manual step needed:</strong> Download the IdP metadata XML from the
+            <a href="https://admin.duosecurity.com" target="_blank" rel="noopener">Duo Admin Panel</a>
+            (Applications → PoC in a Pod: SAML App → Metadata section) and upload it in the SAML app.
+          </div>
+        {% endif %}
+
+        <a href="http://{{ request.host.split(':')[0] }}:30400" target="_blank" rel="noopener"
+           class="duo-btn duo-btn-primary" style="display:inline-block; text-decoration:none; text-align:center;">
+          Open SAML App →
+        </a>
+      </div>
+      {% endif %}
     </div>
   </div>
 

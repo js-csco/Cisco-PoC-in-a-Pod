@@ -4,6 +4,7 @@ Creates users, groups, manages group membership, and creates integrations for Po
 """
 
 import json
+import requests
 import duo_client
 
 
@@ -414,3 +415,112 @@ def create_integration(api_hostname, integration_key, secret_key, name, integrat
         print(f"❌ {error_msg}")
         result['error'] = error_msg
         return result
+
+
+def get_integration_metadata_url(api_hostname, integration_key, secret_key, app_integration_key):
+    """
+    Retrieve the IdP SAML metadata URL for an SSO integration.
+
+    Fetches integration details from the Duo Admin API v3 and extracts
+    the metadata_url from the SSO configuration.
+
+    Args:
+        api_hostname: Duo API hostname
+        integration_key: Admin API integration key
+        secret_key: Admin API secret key
+        app_integration_key: The integration key of the SSO app to query
+
+    Returns:
+        dict with 'success', 'metadata_url', and 'error' keys
+    """
+    admin_api = duo_client.Admin(
+        ikey=integration_key,
+        skey=secret_key,
+        host=api_hostname,
+    )
+
+    result = {'success': False, 'metadata_url': None, 'error': None}
+
+    try:
+        print(f"\n=== Retrieving integration details for {app_integration_key} ===")
+        details = admin_api.json_api_call(
+            'GET',
+            f'/admin/v3/integrations/{app_integration_key}',
+            {}
+        )
+
+        print(f"Integration details keys: {list(details.keys()) if isinstance(details, dict) else type(details)}")
+        pretty = json.dumps(details, indent=2, default=str)
+        print(f"Full response:\n{pretty}")
+
+        # Look for metadata_url in the sso section
+        sso = details.get('sso', {}) if isinstance(details, dict) else {}
+        metadata_url = sso.get('metadata_url', '')
+
+        if metadata_url:
+            result['success'] = True
+            result['metadata_url'] = metadata_url
+            print(f"✅ Found metadata URL: {metadata_url}")
+        else:
+            # Try to find it in other places in the response
+            metadata_url = details.get('metadata_url', '')
+            if metadata_url:
+                result['success'] = True
+                result['metadata_url'] = metadata_url
+                print(f"✅ Found metadata URL (top-level): {metadata_url}")
+            else:
+                result['error'] = "No metadata_url found in integration details"
+                print(f"⚠️ {result['error']}")
+
+    except Exception as e:
+        result['error'] = f"Failed to get integration details: {str(e)}"
+        print(f"❌ {result['error']}")
+
+    return result
+
+
+def fetch_and_push_idp_metadata(metadata_url, saml_app_base_url):
+    """
+    Fetch IdP metadata XML from Duo and push it to the SAML app.
+
+    Args:
+        metadata_url: The Duo SSO IdP metadata URL
+        saml_app_base_url: Base URL of the SAML app (e.g., http://10.10.5.66:30400)
+
+    Returns:
+        dict with 'success', 'entity_id', 'sso_url', and 'error' keys
+    """
+    result = {'success': False, 'entity_id': None, 'sso_url': None, 'error': None}
+
+    try:
+        # Step 1: Fetch the IdP metadata XML from Duo
+        print(f"\n=== Fetching IdP metadata from {metadata_url} ===")
+        resp = requests.get(metadata_url, timeout=15)
+        resp.raise_for_status()
+        metadata_xml = resp.text
+        print(f"✅ Fetched metadata XML ({len(metadata_xml)} bytes)")
+
+        # Step 2: Push it to the SAML app
+        print(f"Pushing metadata to {saml_app_base_url}/api/configure-idp ...")
+        push_resp = requests.post(
+            f"{saml_app_base_url}/api/configure-idp",
+            json={'metadata_xml': metadata_xml},
+            timeout=10,
+        )
+        push_resp.raise_for_status()
+        push_data = push_resp.json()
+
+        if push_data.get('ok'):
+            result['success'] = True
+            result['entity_id'] = push_data.get('entity_id')
+            result['sso_url'] = push_data.get('sso_url')
+            print(f"✅ SAML app configured — Entity ID: {result['entity_id']}")
+        else:
+            result['error'] = push_data.get('error', 'Unknown error from SAML app')
+            print(f"❌ {result['error']}")
+
+    except requests.RequestException as e:
+        result['error'] = f"HTTP error: {str(e)}"
+        print(f"❌ {result['error']}")
+
+    return result
