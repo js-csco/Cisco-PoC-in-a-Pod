@@ -206,10 +206,13 @@ def setup_duo_complete(api_hostname, integration_key, secret_key, users_list):
 def configure_global_policy(api_hostname, integration_key, secret_key):
     """
     Configure the Global Policy via Duo Admin API v2:
+    - New User Policy: require enrollment
     - Authentication methods: recommended only
       - 2FA: webauthn-platform, webauthn-roaming, duo-push
       - Passwordless SSO: webauthn-platform-pwl, webauthn-roaming-pwl, duo-push-pwl
     - Blocked: desktop, duo-passcode, phonecall, hardware-token, sms
+    - Risk-based Factor Selection: disabled
+    - User Location: left as default (no change)
 
     Returns:
         dict with 'success', 'before', 'after', and 'error' keys
@@ -237,11 +240,14 @@ def configure_global_policy(api_hostname, integration_key, secret_key):
         pretty_before = json.dumps(current_policy, indent=2, sort_keys=True, default=str)
         print(f"Current global policy:\n{pretty_before}")
 
-        # Step 2: Update authentication methods (recommended only)
-        print("\nStep 2: Updating authentication methods (recommended only)...")
+        # Step 2: Update global policy sections
+        print("\nStep 2: Updating global policy (new user policy, auth methods, risk-based factor selection)...")
 
         json_request = {
             "sections": {
+                "new_user": {
+                    "new_user_behavior": "enroll",
+                },
                 "authentication_methods": {
                     "allowed_auth_list": [
                         "duo-push",
@@ -258,6 +264,9 @@ def configure_global_policy(api_hostname, integration_key, secret_key):
                         "hardware-token",
                         "sms",
                     ],
+                },
+                "risk_based_factor_selection": {
+                    "limit_to_risk_based_auth_methods": False,
                 },
             },
         }
