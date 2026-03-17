@@ -331,7 +331,7 @@ def list_integrations(api_hostname, integration_key, secret_key):
 def create_integration(api_hostname, integration_key, secret_key, name, integration_type, group_name="PoC Users", sso_config=None):
     """
     Create a new integration and assign it to a group.
-    For SSO integrations, creates the app first then updates SSO config separately.
+    For SSO integrations, the sso config is included in the create call (required by v3 API).
 
     Args:
         api_hostname: Duo API hostname
@@ -391,7 +391,7 @@ def create_integration(api_hostname, integration_key, secret_key, name, integrat
                 result['already_exists'] = True
                 return result
 
-        # Step 3: Create the integration (without SSO config)
+        # Step 3: Create the integration (with SSO config inline)
         print(f"Step 3: Creating integration with type '{integration_type}'")
 
         create_params = {
@@ -400,6 +400,9 @@ def create_integration(api_hostname, integration_key, secret_key, name, integrat
             'user_access': 'PERMITTED_GROUPS',
             'groups_allowed': [group_id],
         }
+
+        if sso_config:
+            create_params['sso'] = sso_config
 
         print(f"   Create params: {json.dumps(create_params, indent=2, default=str)}")
 
@@ -421,24 +424,6 @@ def create_integration(api_hostname, integration_key, secret_key, name, integrat
         print(f"   Integration Key: {app_ikey}")
         print(f"   Integration ID: {result['integration_id']}")
         print(f"   Group Assigned: {group_name}")
-
-        # Step 3: Update integration with SSO config (separate API call)
-        if sso_config and app_ikey:
-            print(f"\nStep 3: Updating SSO config for {app_ikey}")
-            update_params = {'sso': sso_config}
-            print(f"   SSO params: {json.dumps(update_params, indent=2, default=str)}")
-
-            try:
-                admin_api.json_api_call(
-                    'PATCH',
-                    f'/admin/v3/integrations/{app_ikey}',
-                    update_params
-                )
-                print(f"✅ SSO config applied")
-            except Exception as e:
-                print(f"⚠️  SSO config update failed: {e}")
-                print(f"   Integration was created but SSO settings need manual config in Duo Admin Panel")
-                result['sso_error'] = str(e)
 
         return result
 
