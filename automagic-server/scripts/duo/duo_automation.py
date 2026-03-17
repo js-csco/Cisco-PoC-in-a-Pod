@@ -330,7 +330,8 @@ def list_integrations(api_hostname, integration_key, secret_key):
 
 def create_integration(api_hostname, integration_key, secret_key, name, integration_type, group_name="PoC Users", sso_config=None):
     """
-    Create a new integration and assign it to a group
+    Create a new integration and assign it to a group.
+    For SSO integrations, creates the app first then updates SSO config separately.
 
     Args:
         api_hostname: Duo API hostname
@@ -349,7 +350,7 @@ def create_integration(api_hostname, integration_key, secret_key, name, integrat
         skey=secret_key,
         host=api_hostname
     )
-    
+
     result = {
         'success': False,
         'integration_key': None,
@@ -357,59 +358,78 @@ def create_integration(api_hostname, integration_key, secret_key, name, integrat
         'integration_id': None,
         'error': None
     }
-    
+
     try:
         # Step 1: Find the group ID
         print(f"\n=== Creating Integration: {name} ===")
         print(f"Step 1: Finding group '{group_name}'")
-        
+
         groups = admin_api.json_api_call('GET', '/admin/v1/groups', {})
         group_id = None
-        
+
         for group in groups:
             if group.get('name') == group_name:
                 group_id = group.get('group_id')
                 print(f"✅ Found group '{group_name}' (ID: {group_id})")
                 break
-        
+
         if not group_id:
             error_msg = f"Group '{group_name}' not found. Please create the group first."
             print(f"❌ {error_msg}")
             result['error'] = error_msg
             return result
-        
-        # Step 2: Create the integration
+
+        # Step 2: Create the integration (without SSO config)
         print(f"Step 2: Creating integration with type '{integration_type}'")
-        
-        params = {
+
+        create_params = {
             'name': name,
             'type': integration_type,
             'user_access': 'PERMITTED_GROUPS',
-            'groups_allowed': [group_id]
+            'groups_allowed': [group_id],
         }
-        if sso_config:
-            params['sso'] = sso_config
+
+        print(f"   Create params: {json.dumps(create_params, indent=2, default=str)}")
 
         integration_response = admin_api.json_api_call(
             'POST',
             '/admin/v3/integrations',
-            params
+            create_params
         )
-        
+
+        app_ikey = integration_response.get('integration_key')
         result['success'] = True
-        result['integration_key'] = integration_response.get('integration_key')
+        result['integration_key'] = app_ikey
         result['secret_key'] = integration_response.get('secret_key')
         result['integration_id'] = integration_response.get('integration_id')
-        
+
         print(f"✅ Integration created successfully")
         print(f"   Name: {name}")
         print(f"   Type: {integration_type}")
-        print(f"   Integration Key: {result['integration_key']}")
+        print(f"   Integration Key: {app_ikey}")
         print(f"   Integration ID: {result['integration_id']}")
         print(f"   Group Assigned: {group_name}")
-        
+
+        # Step 3: Update integration with SSO config (separate API call)
+        if sso_config and app_ikey:
+            print(f"\nStep 3: Updating SSO config for {app_ikey}")
+            update_params = {'sso': sso_config}
+            print(f"   SSO params: {json.dumps(update_params, indent=2, default=str)}")
+
+            try:
+                admin_api.json_api_call(
+                    'PATCH',
+                    f'/admin/v3/integrations/{app_ikey}',
+                    update_params
+                )
+                print(f"✅ SSO config applied")
+            except Exception as e:
+                print(f"⚠️  SSO config update failed: {e}")
+                print(f"   Integration was created but SSO settings need manual config in Duo Admin Panel")
+                result['sso_error'] = str(e)
+
         return result
-    
+
     except Exception as e:
         error_msg = f"Failed to create integration: {str(e)}"
         print(f"❌ {error_msg}")

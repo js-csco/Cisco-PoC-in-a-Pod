@@ -341,6 +341,9 @@ def duo():
                     app_ikey = result['integration_key']
                     flash(f"✅ SAML App created — Integration Key: {app_ikey}")
 
+                    if result.get('sso_error'):
+                        flash(f"⚠️ SSO config could not be set via API: {result['sso_error']}. You may need to configure ACS URL and Entity ID manually in the Duo Admin Panel.")
+
                     # Try to auto-configure the SAML app with Duo IdP metadata
                     meta_result = get_integration_metadata_url(
                         api_hostname, integration_key, secret_key, app_ikey
