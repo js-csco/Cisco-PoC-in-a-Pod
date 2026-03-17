@@ -339,7 +339,10 @@ def duo():
                 )
                 if result['success']:
                     app_ikey = result['integration_key']
-                    flash(f"✅ SAML App created — Integration Key: {app_ikey}")
+                    if result.get('already_exists'):
+                        flash(f"ℹ️ SAML App already exists — Integration Key: {app_ikey}")
+                    else:
+                        flash(f"✅ SAML App created — Integration Key: {app_ikey}")
 
                     if result.get('sso_error'):
                         flash(f"⚠️ SSO config could not be set via API: {result['sso_error']}. You may need to configure ACS URL and Entity ID manually in the Duo Admin Panel.")
