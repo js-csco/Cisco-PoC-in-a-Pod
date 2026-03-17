@@ -402,7 +402,7 @@ def create_integration(api_hostname, integration_key, secret_key, name, integrat
         }
 
         if sso_config:
-            create_params['sso'] = sso_config
+            create_params['sso'] = {'saml_config': sso_config}
 
         print(f"   Create params: {json.dumps(create_params, indent=2, default=str)}")
 
