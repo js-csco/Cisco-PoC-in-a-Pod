@@ -470,9 +470,10 @@ def get_integration_metadata_url(api_hostname, integration_key, secret_key, app_
         pretty = json.dumps(details, indent=2, default=str)
         print(f"Full response:\n{pretty}")
 
-        # Look for metadata_url in the sso section
+        # Look for metadata_url in sso.idp_metadata
         sso = details.get('sso', {}) if isinstance(details, dict) else {}
-        metadata_url = sso.get('metadata_url', '')
+        idp_metadata = sso.get('idp_metadata', {}) if isinstance(sso, dict) else {}
+        metadata_url = idp_metadata.get('metadata_url', '')
 
         if metadata_url:
             result['success'] = True
