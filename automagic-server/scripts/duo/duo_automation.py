@@ -379,8 +379,20 @@ def create_integration(api_hostname, integration_key, secret_key, name, integrat
             result['error'] = error_msg
             return result
 
-        # Step 2: Create the integration (without SSO config)
-        print(f"Step 2: Creating integration with type '{integration_type}'")
+        # Step 2: Check if integration already exists
+        print(f"Step 2: Checking for existing integration '{name}'")
+        existing = admin_api.json_api_call('GET', '/admin/v3/integrations', {})
+        for integration in (existing if isinstance(existing, list) else []):
+            if integration.get('name') == name:
+                existing_ikey = integration.get('integration_key')
+                print(f"ℹ️  Integration '{name}' already exists (Key: {existing_ikey})")
+                result['success'] = True
+                result['integration_key'] = existing_ikey
+                result['already_exists'] = True
+                return result
+
+        # Step 3: Create the integration (without SSO config)
+        print(f"Step 3: Creating integration with type '{integration_type}'")
 
         create_params = {
             'name': name,
