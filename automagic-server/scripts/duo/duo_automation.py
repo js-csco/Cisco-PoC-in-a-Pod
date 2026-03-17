@@ -391,7 +391,7 @@ def create_integration(api_hostname, integration_key, secret_key, name, integrat
                 result['already_exists'] = True
                 return result
 
-        # Step 3: Create the integration (SSO config applied via PATCH afterward)
+        # Step 3: Create the integration (include sso.saml_config to pass validation)
         print(f"Step 3: Creating integration with type '{integration_type}'")
 
         create_params = {
@@ -400,6 +400,9 @@ def create_integration(api_hostname, integration_key, secret_key, name, integrat
             'user_access': 'PERMITTED_GROUPS',
             'groups_allowed': [group_id],
         }
+
+        if sso_config:
+            create_params['sso'] = {'saml_config': sso_config}
 
         print(f"   Create params: {json.dumps(create_params, indent=2, default=str)}")
 
