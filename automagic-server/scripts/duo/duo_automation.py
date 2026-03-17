@@ -425,23 +425,6 @@ def create_integration(api_hostname, integration_key, secret_key, name, integrat
         print(f"   Integration ID: {result['integration_id']}")
         print(f"   Group Assigned: {group_name}")
 
-        # Step 4: Apply SAML/SSO config via PATCH
-        if sso_config and app_ikey:
-            print(f"\nStep 4: Applying SAML config to {app_ikey} via PATCH")
-            patch_params = {'sso': {'saml_config': sso_config}}
-            print(f"   PATCH params: {json.dumps(patch_params, indent=2, default=str)}")
-
-            try:
-                admin_api.json_api_call(
-                    'PATCH',
-                    f'/admin/v3/integrations/{app_ikey}',
-                    patch_params
-                )
-                print(f"✅ SAML config applied successfully")
-            except Exception as e:
-                print(f"⚠️  SAML config PATCH failed: {e}")
-                result['sso_error'] = str(e)
-
         return result
 
     except Exception as e:
