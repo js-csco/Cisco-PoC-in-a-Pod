@@ -525,6 +525,11 @@
       </ul>
     </div>
 
+    <div class="duo-info duo-info-blue" style="margin: 0 0 20px;">
+      <strong>Next step after creating users:</strong>
+      Go to the Duo Admin Dashboard &rarr; Users and share the enrollment link and code with the user. Enrollment works best in an incognito window.
+    </div>
+
     <button type="submit" name="action" value="setup_duo"
             class="duo-btn {% if session.get('duo_authenticated') %}duo-btn-primary{% else %}duo-btn-disabled{% endif %}"
             {% if not session.get('duo_authenticated') %}disabled{% endif %}>
