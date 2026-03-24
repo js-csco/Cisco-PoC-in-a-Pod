@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAML App — Duo SSO &amp; Passport</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔐</text></svg>">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --blue:   #049fd9;
+      --dark:   #005073;
+      --green:  #16a34a;
+      --orange: #c2410c;
+      --indigo: #0066ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      color: #222;
+      font-size: 15px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #000 0%, #1a1a2e 50%, var(--dark) 100%);
+      color: #fff;
+      padding: 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 60px,
+        rgba(255,255,255,0.02) 60px,
+        rgba(255,255,255,0.02) 61px
+      );
+      pointer-events: none;
+    }
+    .header-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 32px 16px;
+      position: relative;
+      z-index: 1;
+    }
+    .header-logo { height: 24px; opacity: 0.9; }
+    .header-divider {
+      width: 1px;
+      height: 28px;
+      background: rgba(255,255,255,0.2);
+    }
+    header .t   { font-size: 1.15em; font-weight: 700; letter-spacing: 0.3px; }
+    header .sub { font-size: 0.78em; opacity: 0.6; margin-top: 2px; font-weight: 400; }
+    .header-accent {
+      height: 3px;
+      background: linear-gradient(90deg, var(--blue), var(--indigo), #7c4dff);
+    }
+
+    main {
+      max-width: 760px;
+      margin: 36px auto 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding: 0 16px;
+    }
+
+    /* ── card ── */
+    .card {
+      background: #fff;
+      border: 1px solid #e2e4e8;
+      border-radius: 10px;
+      padding: 22px 28px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .card-title {
+      font-size: 0.68em;
+      font-weight: 700;
+      color: #aaa;
+      letter-spacing: 0.8px;
+      margin: 0 0 18px;
+    }
+
+    /* ── steps ── */
+    .step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+    .step:last-child { margin-bottom: 0; }
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--indigo);
+      color: #fff;
+      font-size: 0.8em;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .step-num.done {
+      background: var(--green);
+    }
+    .step-content { flex: 1; }
+    .step-label {
+      font-weight: 600;
+      font-size: 0.92em;
+      color: #111;
+      margin-bottom: 4px;
+    }
+    .step-desc {
+      font-size: 0.84em;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    /* ── buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 0.88em;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+    .btn-primary { background: var(--indigo); color: #fff; }
+    .btn-primary:hover { background: #0052cc; }
+    .btn-outline { background: #fff; color: var(--indigo); border: 2px solid var(--indigo); }
+    .btn-outline:hover { background: #f0f4ff; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-green:hover { background: #15803d; }
+    .btn-gray { background: #f0f0f0; color: #555; }
+    .btn-gray:hover { background: #e0e0e0; }
+    .btn-sm { padding: 7px 14px; font-size: 0.82em; }
+
+    /* ── upload zone ── */
+    .upload-zone {
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      margin-top: 8px;
+      transition: border-color 0.2s, background 0.2s;
+      cursor: pointer;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--indigo);
+      background: #f0f4ff;
+    }
+    .upload-zone i { font-size: 1.5rem; color: #bbb; margin-bottom: 6px; }
+    .upload-zone p { font-size: 0.82em; color: #888; margin: 4px 0 0; }
+    .upload-zone input[type="file"] { display: none; }
+
+    /* ── status banner ── */
+    .banner {
+      border-radius: 12px;
+      padding: 22px 26px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      border: 2px solid transparent;
+    }
+    .banner-ok  { background: #f0fdf4; border-color: #4ade80; }
+    .banner-warn { background: #fff7ed; border-color: #fb923c; }
+    .banner-info { background: #f0f4ff; border-color: #93c5fd; }
+    .banner-icon { font-size: 2rem; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+    .banner-tag {
+      font-size: 0.68em;
+      font-weight: 700;
+      letter-spacing: 0.9px;
+      margin-bottom: 4px;
+    }
+    .banner-ok .banner-tag { color: var(--green); }
+    .banner-warn .banner-tag { color: var(--orange); }
+    .banner-info .banner-tag { color: #3b82f6; }
+    .banner-title {
+      font-size: 1.05em;
+      font-weight: 700;
+      color: #111;
+      margin: 0 0 5px;
+    }
+    .banner-body {
+      font-size: 0.84em;
+      color: #555;
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    /* ── user info grid ── */
+    .user-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 20px;
+    }
+    .user-grid .field {
+      background: #f8f9fa;
+      border: 1px solid #e2e4e8;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .user-grid .field.full { grid-column: 1 / -1; }
+    .user-grid label {
+      display: block;
+      font-size: 0.66em;
+      font-weight: 700;
+      color: #999;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+    .user-grid .val {
+      font-size: 0.9em;
+      font-weight: 600;
+      color: #111;
+      word-break: break-all;
+    }
+
+    .status-msg {
+      margin-top: 10px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.84em;
+      display: none;
+    }
+    .status-msg.ok { display: block; background: #f0fdf4; color: var(--green); border: 1px solid #bbf7d0; }
+    .status-msg.err { display: block; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+    footer {
+      text-align: center;
+      color: #aaa;
+      font-size: 0.8em;
+      padding: 16px 0 32px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-bar">
+    <img class="header-logo" src="https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png" alt="Cisco">
+    <div class="header-divider"></div>
+    <div>
+      <div class="t">SAML App</div>
+      <div class="sub">Duo SSO &middot; Single Sign-On &amp; Passport Demo</div>
+    </div>
+  </div>
+  <div class="header-accent"></div>
+</header>
+
+<main>
+
+  <!-- ═══════════ SECTION 1: ADMIN SETUP ═══════════ -->
+  <div class="card">
+    <div class="card-title">ADMIN &middot; SAML SETUP</div>
+
+    <div class="step">
+      <div class="step-num {% if configured %}done{% endif %}">1</div>
+      <div class="step-content">
+        <div class="step-label">Download SP Metadata</div>
+        <div class="step-desc">Download this app's Service Provider metadata XML file.</div>
+        <div style="margin-top: 10px;">
+          <a href="/metadata" download="saml-sp-metadata.xml" class="btn btn-outline btn-sm">
+            <i class="fa-solid fa-download"></i> Download SP Metadata
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num {% if configured %}done{% endif %}">2</div>
+      <div class="step-content">
+        <div class="step-label">Create Application in Duo</div>
+        <div class="step-desc">
+          Go to <strong>Duo Admin</strong> &rarr; <strong>Applications</strong> &rarr;
+          <strong>Protect an Application</strong> &rarr; search <strong>"Generic SAML Service Provider"</strong>.
+          Upload the SP metadata XML you just downloaded.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num {% if configured %}done{% endif %}">3</div>
+      <div class="step-content">
+        <div class="step-label">Upload Duo IdP Metadata</div>
+        <div class="step-desc">
+          In the Duo application settings, download the <strong>IdP Metadata XML</strong> and upload it here.
+        </div>
+        <form id="uploadForm" enctype="multipart/form-data" style="margin-top: 10px;">
+          <div class="upload-zone" id="dropZone">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <p><strong>Drop Duo IdP metadata XML here</strong> or click to browse</p>
+            <input type="file" id="fileInput" name="idp_metadata" accept=".xml,text/xml,application/xml">
+          </div>
+          <div class="status-msg" id="uploadStatus"></div>
+        </form>
+      </div>
+    </div>
+
+    {% if configured %}
+    <div class="banner banner-ok" style="margin-top: 12px;">
+      <div class="banner-icon">&#x2705;</div>
+      <div style="flex:1;">
+        <div class="banner-tag">SAML CONFIGURED</div>
+        <p class="banner-title">Duo SSO integration is active</p>
+        <p class="banner-body">The IdP metadata has been loaded. Users can now sign in below.</p>
+        <button class="btn btn-gray btn-sm" style="margin-top: 10px;" onclick="resetIdp()">
+          <i class="fa-solid fa-link-slash"></i> Disconnect IdP
+        </button>
+      </div>
+    </div>
+    {% else %}
+    <div class="banner banner-warn" style="margin-top: 12px;">
+      <div class="banner-icon">&#x26A0;&#xFE0F;</div>
+      <div>
+        <div class="banner-tag">NOT CONFIGURED</div>
+        <p class="banner-title">Waiting for IdP metadata</p>
+        <p class="banner-body">Complete the steps above to enable Duo SSO authentication.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ═══════════ SECTION 2: USER AUTHENTICATION ═══════════ -->
+  <div class="card">
+    <div class="card-title">USER &middot; AUTHENTICATION</div>
+
+    {% if user %}
+      <div class="banner banner-ok" style="margin-bottom: 18px;">
+        <div class="banner-icon">&#x1F512;</div>
+        <div>
+          <div class="banner-tag">AUTHENTICATED</div>
+          <p class="banner-title">Signed in via Duo SSO</p>
+          <p class="banner-body">
+            You were authenticated using SAML 2.0 through Cisco Duo Single Sign-On.
+          </p>
+        </div>
+      </div>
+
+      <div class="user-grid">
+        <div class="field full">
+          <label>USER</label>
+          <div class="val">{{ user }}</div>
+        </div>
+        {% for key, values in attrs.items() %}
+        <div class="field">
+          <label>{{ key }}</label>
+          <div class="val">{{ values | join(', ') }}</div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="banner banner-info" style="margin-top: 18px;">
+        <div class="banner-icon">&#x1F9EA;</div>
+        <div>
+          <div class="banner-tag">DUO PASSPORT TEST</div>
+          <p class="banner-title">Try a different browser</p>
+          <p class="banner-body">
+            With <strong>Duo Passport</strong> enabled, open this app in a different browser
+            (e.g. Chrome &rarr; Firefox). You should be signed in automatically without
+            re-entering credentials or completing MFA again.
+          </p>
+        </div>
+      </div>
+
+      <div style="margin-top: 18px; display: flex; gap: 10px;">
+        <a href="/logout" class="btn btn-gray btn-sm"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</a>
+      </div>
+
+    {% elif configured %}
+      <p style="font-size: 0.88em; color: #555; line-height: 1.6; margin: 0 0 18px;">
+        Duo SSO is configured. Click below to authenticate.
+      </p>
+      <a href="/login" class="btn btn-primary">
+        <i class="fa-solid fa-right-to-bracket"></i> Sign in with Duo SSO
+      </a>
+
+    {% else %}
+      <p style="font-size: 0.88em; color: #888; line-height: 1.6; margin: 0;">
+        Complete the Admin SAML Setup above first, then the sign-in button will appear here.
+      </p>
+    {% endif %}
+  </div>
+
+</main>
+
+<footer>Cisco Duo SSO &middot; PoC in a Pod &middot; SAML App</footer>
+
+<script>
+(function() {
+  var dropZone = document.getElementById('dropZone');
+  var fileInput = document.getElementById('fileInput');
+  var statusEl = document.getElementById('uploadStatus');
+
+  if (!dropZone) return;
+
+  dropZone.addEventListener('click', function() { fileInput.click(); });
+
+  dropZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+  dropZone.addEventListener('dragleave', function() {
+    dropZone.classList.remove('dragover');
+  });
+  dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) {
+      fileInput.files = e.dataTransfer.files;
+      uploadFile(e.dataTransfer.files[0]);
+    }
+  });
+
+  fileInput.addEventListener('change', function() {
+    if (fileInput.files.length) uploadFile(fileInput.files[0]);
+  });
+
+  window.resetIdp = function() {
+    if (!confirm('Disconnect IdP configuration? You will need to re-upload the metadata to use SSO again.')) return;
+    fetch('/reset-idp', { method: 'POST' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.ok) window.location.reload();
+      });
+  };
+
+  function uploadFile(file) {
+    statusEl.className = 'status-msg';
+    statusEl.style.display = 'none';
+
+    var fd = new FormData();
+    fd.append('idp_metadata', file);
+
+    fetch('/upload-idp-metadata', { method: 'POST', body: fd })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.ok) {
+          statusEl.className = 'status-msg ok';
+          statusEl.innerHTML = '<strong>&#x2705; IdP metadata loaded!</strong> Entity: ' + data.entity_id;
+          setTimeout(function() { window.location.reload(); }, 1200);
+        } else {
+          statusEl.className = 'status-msg err';
+          statusEl.textContent = 'Error: ' + data.error;
+        }
+      })
+      .catch(function(err) {
+        statusEl.className = 'status-msg err';
+        statusEl.textContent = 'Upload failed: ' + err.message;
+      });
+  }
+})();
+</script>
+
+</body>
+</html>

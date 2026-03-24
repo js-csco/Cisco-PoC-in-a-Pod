@@ -3,67 +3,409 @@
 {% block title %}Cisco Secure Access - Cisco PoC in a Pod{% endblock %}
 
 {% block content %}
+<style>
+  /* ── Page-level design tokens ── */
+  .sa-page h1 { color: #111; margin-bottom: 0.3rem; font-size: 1.8rem; }
+  .sa-page > p.subtitle { color: #666; margin: 0 0 2rem; font-size: 0.95em; line-height: 1.6; }
 
-<form method="POST" style="display:flex; flex-direction:column; gap:3rem;">
-  <div>
-    <h1 style="color:#111; margin-bottom:0.4rem;">Secure Access</h1>
-    <p style="color:#666; margin:0; font-size:0.95em; line-height:1.6;">
-      Converged SSE platform unifying ZTNA, SWG, CASB, DNS-layer security, and DLP into a single cloud-delivered service.
-    </p>
-  </div>
+  /* ── Stepper ── */
+  .sa-stepper {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    margin-bottom: 2.5rem;
+    padding: 18px 0;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .sa-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    text-align: center;
+  }
+  .sa-step::after {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: calc(50% + 18px);
+    width: calc(100% - 36px);
+    height: 2px;
+    background: #e0e0e0;
+  }
+  .sa-step:last-child::after { display: none; }
+  .sa-step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    color: #999;
+    font-size: 0.78em;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 1;
+    transition: all 0.2s;
+  }
+  .sa-step.active .sa-step-num { background: #0066ff; color: #fff; }
+  .sa-step.done .sa-step-num { background: #16a34a; color: #fff; }
+  .sa-step.done::after { background: #16a34a; }
+  .sa-step-label {
+    font-size: 0.72em;
+    font-weight: 600;
+    color: #999;
+    letter-spacing: 0.2px;
+    max-width: 110px;
+    line-height: 1.3;
+  }
+  .sa-step.active .sa-step-label,
+  .sa-step.done .sa-step-label { color: #333; }
 
-  <div style="background:#e8f0fe; border:1px solid #c5d5f8; border-radius:8px; padding:12px 16px; font-size:0.88em; color:#1a3a6b;">
+  /* ── Section card ── */
+  .sa-section {
+    background: #fafbfc;
+    border: 1px solid #eef0f3;
+    border-radius: 12px;
+    padding: 2rem 2rem 1.8rem;
+    margin-bottom: 1.5rem;
+  }
+  .sa-section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .sa-section-head h3 {
+    color: #111;
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .sa-section-bar {
+    width: 5px;
+    height: 20px;
+    background: #0066ff;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .sa-section > p.desc {
+    color: #555;
+    font-size: 0.92em;
+    margin: 0 0 1.2rem;
+    line-height: 1.6;
+  }
+
+  /* ── Subsection ── */
+  .sa-sub {
+    margin-bottom: 1.5rem;
+  }
+  .sa-sub:last-child { margin-bottom: 0; }
+  .sa-sub-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .sa-sub-head h4 {
+    color: #333;
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+  .sa-sub-bar {
+    width: 3px;
+    height: 14px;
+    background: #b0cbff;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ── Info boxes ── */
+  .sa-info {
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 0.88em;
+    line-height: 1.7;
+  }
+  .sa-info ul, .sa-info ol { margin: 6px 0 0; padding-left: 18px; }
+  .sa-info-blue { background: #f0f4ff; border: 1px solid #c0d0ff; color: #1a3a6b; }
+  .sa-info-green { background: #f0f8f0; border: 1px solid #c8e6c9; color: #2e7d32; }
+  .sa-info-yellow { background: #fff8e1; border: 1px solid #ffe082; color: #6d4c00; }
+
+  /* ── Two-column grid ── */
+  .sa-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+  }
+  .sa-grid-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 1.2rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Forms ── */
+  .sa-label {
+    display: block;
+    font-size: 0.82em;
+    color: #555;
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+  .sa-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 0.92em;
+    color: #333;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    background: #fff;
+  }
+  .sa-input:focus {
+    outline: none;
+    border-color: #0066ff;
+    box-shadow: 0 0 0 3px rgba(0,102,255,0.08);
+  }
+  .sa-input::placeholder { color: #aaa; }
+  .sa-field { margin-bottom: 10px; }
+  .sa-field:last-child { margin-bottom: 0; }
+
+  /* ── Buttons ── */
+  .sa-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.92em;
+    cursor: pointer;
+    transition: background-color 0.15s, opacity 0.15s;
+    text-decoration: none;
+    line-height: 1;
+  }
+  .sa-btn-primary { background: #0066ff; color: #fff; }
+  .sa-btn-primary:hover { background: #0052cc; }
+  .sa-btn-disabled { background: #ccc; color: #888; cursor: default; pointer-events: none; }
+
+  /* ── Authenticated badge ── */
+  .sa-auth-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #e8f5e9;
+    border: 1px solid #a5d6a7;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: 600;
+    color: #2e7d32;
+    font-size: 0.92em;
+  }
+
+  /* ── Ordered list styling ── */
+  .sa-steps {
+    color: #555;
+    font-size: 0.9em;
+    margin: 0;
+    padding-left: 20px;
+    line-height: 2;
+  }
+  .sa-steps li { margin-bottom: 2px; }
+
+  /* ── Table ── */
+  .sa-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88em;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e0e5ee;
+  }
+  .sa-table thead { background: #f5f7fb; }
+  .sa-table th {
+    text-align: left;
+    padding: 10px 14px;
+    color: #444;
+    font-weight: 600;
+    border-bottom: 2px solid #e0e5ee;
+  }
+  .sa-table td {
+    padding: 10px 14px;
+    color: #444;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: top;
+    font-size: 0.95em;
+  }
+  .sa-table tr:nth-child(even) { background: #fafbfc; }
+  .sa-table tr:last-child td { border-bottom: none; }
+  .sa-table code {
+    display: block;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 5px 8px;
+    font-size: 0.88em;
+    margin-bottom: 8px;
+    user-select: all;
+    word-break: break-all;
+  }
+  .sa-table code:last-child { margin-bottom: 0; }
+  .sa-table .test-label {
+    margin: 0 0 3px;
+    font-size: 0.85em;
+    color: #666;
+  }
+
+  /* ── Todo callout ── */
+  .sa-todo {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .sa-todo-icon {
+    font-size: 1.1em;
+    line-height: 1.4;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 700px) {
+    .sa-grid-2 { grid-template-columns: 1fr; }
+    .sa-stepper { flex-wrap: wrap; gap: 8px; }
+    .sa-step::after { display: none; }
+  }
+</style>
+
+<form method="POST" class="sa-page">
+  <h1>Secure Access</h1>
+  <p class="subtitle">Converged SSE platform unifying ZTNA, SWG, CASB, DNS-layer security, and DLP into a single cloud-delivered service.</p>
+
+  <div class="sa-info sa-info-blue" style="margin-bottom:2rem;">
     <strong>Note:</strong> User &amp; group integration with Cisco Duo is already configured via the
     <a href="/duo" style="color:#0066ff; text-decoration:none; font-weight:500;">Duo tab</a>.
     No additional identity setup is needed here.
   </div>
 
-  <!-- AUTHENTICATION -->
-  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">AUTHENTICATION</h3>
+  <!-- ── Stepper ── -->
+  <div class="sa-stepper">
+    <div class="sa-step {% if session.get('authenticated') %}done{% else %}active{% endif %}">
+      <div class="sa-step-num">1</div>
+      <div class="sa-step-label">Getting Started</div>
+    </div>
+    <div class="sa-step {% if session.get('authenticated') %}active{% endif %}">
+      <div class="sa-step-num">2</div>
+      <div class="sa-step-label">ZTA Profile</div>
+    </div>
+    <div class="sa-step">
+      <div class="sa-step-num">3</div>
+      <div class="sa-step-label">Private Access</div>
+    </div>
+    <div class="sa-step">
+      <div class="sa-step-num">4</div>
+      <div class="sa-step-label">Internet Access</div>
+    </div>
+    <div class="sa-step">
+      <div class="sa-step-num">5</div>
+      <div class="sa-step-label">DLP</div>
+    </div>
+    <div class="sa-step">
+      <div class="sa-step-num">6</div>
+      <div class="sa-step-label">Deploy Client</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- GETTING STARTED                            -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="sa-section">
+    <div class="sa-section-head">
+      <div class="sa-section-bar"></div>
+      <h3>GETTING STARTED</h3>
     </div>
 
-    <p style="color:#666; font-size:0.95em; margin-top:0; margin-bottom:16px;">
-      Connect to Cisco Secure Access APIs with your API Key &amp; Secret.
-    </p>
+    <div class="sa-grid-2">
+      <!-- 1. Create API Keys -->
+      <div class="sa-grid-card">
+        <div class="sa-sub-head">
+          <div class="sa-sub-bar"></div>
+          <h4>1. Create API Keys</h4>
+        </div>
 
-    {% if not session.get('authenticated') %}
-      <input type="password" id="api_key" name="api_key" placeholder="API Key" required
-             value="{{ session.get('csa_api_key', '') }}"
-             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+        <p style="color:#555; font-size:0.9em; margin:0 0 12px; line-height:1.6;">
+          In the <strong>Secure Access Dashboard</strong>, go to
+          <em>Admin &rarr; API Keys</em> and create a new API key.
+        </p>
 
-      <input type="password" id="api_secret" name="api_secret" placeholder="API Secret" required
-             value="{{ session.get('csa_api_secret', '') }}"
-             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
-
-      <button type="submit" name="action" value="auth"
-              style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
-                     border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
-        🔐 Authenticate
-      </button>
-    {% else %}
-      <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:10px 16px;">
-        <span style="font-size:1.2rem;">✅</span>
-        <span style="font-weight:600; color:#2e7d32;">Authenticated</span>
+        <div class="sa-info sa-info-blue">
+          <strong>Required key scope:</strong>
+          <ul>
+            <li>Admin</li>
+            <li>Deployments</li>
+            <li>Policies</li>
+          </ul>
+        </div>
       </div>
-    {% endif %}
-  </section>
 
-  <!-- ZTA PROFILE -->
-  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">ZTA PROFILE</h3>
+      <!-- 2. Authenticate -->
+      <div class="sa-grid-card">
+        <div class="sa-sub-head">
+          <div class="sa-sub-bar"></div>
+          <h4>2. Authenticate</h4>
+        </div>
+
+        {% if not session.get('authenticated') %}
+          <div style="display:flex; flex-direction:column; gap:10px; flex:1;">
+            <div class="sa-field">
+              <label class="sa-label">API Key</label>
+              <input type="password" name="api_key" placeholder="API Key" required
+                     value="{{ session.get('csa_api_key', '') }}" class="sa-input">
+            </div>
+            <div class="sa-field">
+              <label class="sa-label">API Secret</label>
+              <input type="password" name="api_secret" placeholder="API Secret" required
+                     value="{{ session.get('csa_api_secret', '') }}" class="sa-input">
+            </div>
+            <button type="submit" name="action" value="auth" class="sa-btn sa-btn-primary" style="margin-top:auto;">
+              Authenticate
+            </button>
+          </div>
+        {% else %}
+          <div class="sa-auth-badge">
+            <span style="font-size:1.1rem;">&#10003;</span>
+            Authenticated
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- ZTA PROFILE                                -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="sa-section">
+    <div class="sa-section-head">
+      <div class="sa-section-bar"></div>
+      <h3>ZTA PROFILE</h3>
     </div>
 
-    <div style="display:flex; align-items:flex-start; gap:10px; background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:0.88em; color:#6d4c00;">
-      <span style="font-size:1.1em; line-height:1.4;">☑</span>
-      <span><strong>To do:</strong> Adjust the <strong>Default ZTA Profile</strong> to steer all internet traffic through Secure Access.</span>
+    <div class="sa-info sa-info-yellow" style="margin-bottom:16px;">
+      <div class="sa-todo">
+        <span class="sa-todo-icon">&#9745;</span>
+        <span><strong>To do:</strong> Adjust the <strong>Default ZTA Profile</strong> to steer all internet traffic through Secure Access.</span>
+      </div>
     </div>
 
-    <ol style="margin:0 0 20px 0; padding-left:20px; color:#555; font-size:0.9em; line-height:2;">
+    <ol class="sa-steps" style="margin-bottom:20px;">
       <li>In the Secure Access dashboard, go to <strong>Connect &rarr; End User Connectivity</strong></li>
       <li>Find the <strong>Default ZTA Profile</strong> and click the <strong>pencil</strong> icon to edit it</li>
       <li>Open the <strong>Secure Internet Access</strong> tab</li>
@@ -71,214 +413,228 @@
       <li>Save the profile</li>
     </ol>
 
-    <a href="https://dashboard.sse.cisco.com" target="_blank"
-       style="display:inline-block; background-color:#0066ff; color:#fff; text-decoration:none;
-              padding:10px 20px; border-radius:6px; font-weight:500; font-size:0.95rem;">
+    <a href="https://dashboard.sse.cisco.com" target="_blank" class="sa-btn sa-btn-primary">
       Open Secure Access Dashboard &rarr;
     </a>
-  </section>
+  </div>
 
-  <!-- SECURE PRIVATE ACCESS -->
-  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SECURE PRIVATE ACCESS</h3>
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SECURE PRIVATE ACCESS                      -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="sa-section">
+    <div class="sa-section-head">
+      <div class="sa-section-bar"></div>
+      <h3>SECURE PRIVATE ACCESS</h3>
+    </div>
+    <p class="desc">Automate the configuration of your first private access resources and policies
+      to get started with Cisco Secure Access.</p>
+
+    <!-- Private Resources -->
+    <div class="sa-sub">
+      <div class="sa-sub-head">
+        <div class="sa-sub-bar"></div>
+        <h4>Private Resources</h4>
+      </div>
+
+      <p style="color:#666; font-size:0.9em; margin:0 0 12px; line-height:1.5;">
+        Transform your pod into private resources (e.g., SSH server, web server, and more).
+      </p>
+
+      <div class="sa-info sa-info-green" style="margin-bottom:14px;">
+        <strong>What gets created:</strong>
+        <ul>
+          <li>A private resource entry for each service in the pod (SSH, web server, &hellip;)</li>
+          <li>Resources are registered at the IP below</li>
+        </ul>
+      </div>
+
+      <div class="sa-info sa-info-yellow" style="margin-bottom:14px;">
+        <div class="sa-todo">
+          <span class="sa-todo-icon">&#9745;</span>
+          <span><strong>To do:</strong> After creating the resources, go to <strong>Resources &rarr; Private Resources</strong> in the dashboard and assign each resource to your <strong>Resource Connector</strong>.</span>
+        </div>
+      </div>
+
+      <div class="sa-field" style="margin-bottom:15px;">
+        <label class="sa-label">Pod IP address</label>
+        <input type="text" name="vm_ip" value="{{ request.host.split(':')[0] }}" class="sa-input" style="max-width:320px;">
+      </div>
+
+      <button type="submit" name="action" value="create_pod"
+              class="sa-btn {% if session.get('authenticated') %}sa-btn-primary{% else %}sa-btn-disabled{% endif %}"
+              {% if not session.get('authenticated') %}disabled{% endif %}>
+        Create Pod Resources
+      </button>
     </div>
 
-    <p style="margin-top:0; margin-bottom:25px; color:#555; font-size:0.95em; line-height:1.6;">
-      Automate the configuration of your first private access resources and policies
-      to get started with Cisco Secure Access.
-    </p>
+    <!-- Private Access Policy -->
+    <div class="sa-sub" style="margin-top:28px;">
+      <div class="sa-sub-head">
+        <div class="sa-sub-bar"></div>
+        <h4>Private Access Policy</h4>
+      </div>
 
-    <!-- Private Resources sub-section -->
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
-      <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">Private Resources</h3>
+      <p style="color:#666; font-size:0.9em; margin:0 0 15px; line-height:1.5;">
+        This policy enables remote test users to access private resources within your PoC environment.
+      </p>
+
+      <button type="submit" name="action" value="create_private"
+              class="sa-btn {% if session.get('authenticated') %}sa-btn-primary{% else %}sa-btn-disabled{% endif %}"
+              {% if not session.get('authenticated') %}disabled{% endif %}>
+        Create Private Access Policy
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SECURE INTERNET ACCESS                     -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="sa-section">
+    <div class="sa-section-head">
+      <div class="sa-section-bar"></div>
+      <h3>SECURE INTERNET ACCESS</h3>
+    </div>
+    <p class="desc">Automate Access Policies for Secure Internet Access to validate web filtering and isolation scenarios.</p>
+
+    <!-- Cisco Recommendations -->
+    <div class="sa-sub">
+      <div class="sa-sub-head">
+        <div class="sa-sub-bar"></div>
+        <h4>Cisco Recommendations</h4>
+      </div>
+
+      <p style="color:#666; font-size:0.9em; margin:0 0 15px; line-height:1.5;">
+        Follow Cisco recommendations for Internet Access rules &amp; decryption of web traffic.
+      </p>
+
+      <button type="submit" name="action" value="follow_recom"
+              class="sa-btn {% if session.get('authenticated') %}sa-btn-primary{% else %}sa-btn-disabled{% endif %}"
+              {% if not session.get('authenticated') %}disabled{% endif %}>
+        Follow Recommendations
+      </button>
     </div>
 
-    <p style="margin-top:0; margin-bottom:12px; color:#666; font-size:0.9em; line-height:1.5;">
-      Transform your pod into private resources (e.g., SSH server, web server, and more).
-    </p>
+    <!-- Security Profile -->
+    <div class="sa-sub" style="margin-top:28px;">
+      <div class="sa-sub-head">
+        <div class="sa-sub-bar"></div>
+        <h4>Security Profile</h4>
+      </div>
 
-    <div style="background:#f0f8f0; border:1px solid #c8e6c9; border-radius:8px; padding:14px 18px; margin-bottom:14px; font-size:0.88em; color:#2e7d32;">
-      <strong>What gets created:</strong>
-      <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
-        <li>A private resource entry for each service in the pod (SSH, web server, …)</li>
-        <li>Resources are registered at the IP below</li>
-      </ul>
+      <div class="sa-info sa-info-yellow" style="margin-bottom:14px;">
+        <div class="sa-todo">
+          <span class="sa-todo-icon">&#9745;</span>
+          <span><strong>To do:</strong> Enable HTTPS Decryption on the existing system profile and add it to all Internet Access Policies.</span>
+        </div>
+      </div>
+
+      <ol class="sa-steps" style="margin-bottom:15px;">
+        <li>Go to <strong>Secure &rarr; Security Profiles</strong></li>
+        <li>Click <strong>Edit</strong> on the <em>System Provided - Internet Access</em> profile</li>
+        <li>Enable the <strong>Enable Decryption</strong> setting and save</li>
+        <li>Add this profile to each of the Internet Access Policies created above</li>
+      </ol>
+
+      <button type="submit" name="action" value="create_profile" formtarget="_blank"
+              class="sa-btn {% if session.get('authenticated') %}sa-btn-primary{% else %}sa-btn-disabled{% endif %}"
+              {% if not session.get('authenticated') %}disabled{% endif %}>
+        Change Security Profile
+      </button>
     </div>
 
-    <div style="display:flex; align-items:flex-start; gap:10px; background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:12px 16px; margin-bottom:14px; font-size:0.88em; color:#6d4c00;">
-      <span style="font-size:1.1em; line-height:1.4;">☑</span>
-      <span><strong>To do:</strong> After creating the resources, go to <strong>Resources &rarr; Private Resources</strong> in the dashboard and assign each resource to your <strong>Resource Connector</strong>.</span>
+    <!-- Internet Access Policies -->
+    <div class="sa-sub" style="margin-top:28px;">
+      <div class="sa-sub-head">
+        <div class="sa-sub-bar"></div>
+        <h4>Internet Access Policies</h4>
+      </div>
+
+      <p style="color:#666; font-size:0.9em; margin:0 0 15px; line-height:1.5;">
+        Generate Internet Access policies for basic use cases: browsing, warning, isolation, blocking and more.
+      </p>
+
+      <button type="submit" name="action" value="create_internet"
+              class="sa-btn {% if session.get('authenticated') %}sa-btn-primary{% else %}sa-btn-disabled{% endif %}"
+              {% if not session.get('authenticated') %}disabled{% endif %}>
+        Create Internet Access Policies
+      </button>
     </div>
+  </div>
 
-    <label style="display:block; font-size:0.85em; color:#555; margin-bottom:6px;">Pod IP address</label>
-    <input type="text" id="vm_ip" name="vm_ip" value="{{ request.host.split(':')[0] }}"
-           style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
-
-    <button type="submit" name="action" value="create_pod"
-            style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
-                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
-      Create Pod Resources
-    </button>
-
-    <!-- Private Access Policy sub-section -->
-    <div style="display:flex; align-items:center; gap:8px; margin-top:30px; margin-bottom:8px;">
-      <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
-      <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">Private Access Policy</h3>
+  <!-- ══════════════════════════════════════════ -->
+  <!-- DATA LOSS PREVENTION                       -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="sa-section">
+    <div class="sa-section-head">
+      <div class="sa-section-bar"></div>
+      <h3>DATA LOSS PREVENTION</h3>
     </div>
+    <p class="desc">Creates two DLP rules to block sensitive credentials from leaving the organisation.</p>
 
-    <p style="margin-top:0; margin-bottom:15px; color:#666; font-size:0.9em; line-height:1.5;">
-      This policy enables remote test users to access private resources within your PoC environment.
-    </p>
-
-    <button type="submit" name="action" value="create_private"
-            style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
-                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
-      Create Private Access Policy
-    </button>
-  </section>
-
-  <!-- SECURE INTERNET ACCESS -->
-  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SECURE INTERNET ACCESS</h3>
-    </div>
-
-    <p style="margin-top:0; margin-bottom:25px; color:#555; font-size:0.95em; line-height:1.6;">
-      Automate Access Policies for Secure Internet Access to validate web filtering and isolation scenarios.
-    </p>
-
-    <!-- Cisco Recommendations sub-section -->
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
-      <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">Cisco Recommendations</h3>
-    </div>
-
-    <p style="margin-top:0; margin-bottom:15px; color:#666; font-size:0.9em; line-height:1.5;">
-      Follow Cisco recommendations for Internet Access rules &amp; decryption of web traffic.
-    </p>
-
-    <button type="submit" name="action" value="follow_recom"
-            style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
-                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem; margin-bottom:30px;">
-      Follow Recommendations
-    </button>
-
-    <!-- Security Profile sub-section -->
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
-      <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">Security Profile</h3>
-    </div>
-
-    <div style="display:flex; align-items:flex-start; gap:10px; background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:12px 16px; margin-bottom:15px; font-size:0.88em; color:#6d4c00;">
-      <span style="font-size:1.1em; line-height:1.4;">☑</span>
-      <span><strong>To do:</strong> Enable HTTPS Decryption on the existing system profile and add it to all Internet Access Policies.</span>
-    </div>
-
-    <ol style="margin:0 0 15px 0; padding-left:20px; color:#555; font-size:0.9em; line-height:2;">
-      <li>Go to <strong>Secure &rarr; Security Profiles</strong></li>
-      <li>Click <strong>Edit</strong> on the <em>System Provided - Internet Access</em> profile</li>
-      <li>Enable the <strong>Enable Decryption</strong> setting and save</li>
-      <li>Add this profile to each of the Internet Access Policies created above</li>
-    </ol>
-
-    <button type="submit" name="action" value="create_profile" formtarget="_blank"
-            style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
-                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem; margin-bottom:30px;">
-      Change Security Profile
-    </button>
-
-    <!-- Internet Access Policies sub-section -->
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <div style="width:4px; height:16px; background-color:#aac8ff; border-radius:2px;"></div>
-      <h3 style="color:#333; margin:0; font-size:1rem; letter-spacing:0.2px;">Internet Access Policies</h3>
-    </div>
-
-    <p style="margin-top:0; margin-bottom:15px; color:#666; font-size:0.9em; line-height:1.5;">
-      Generate Internet Access policies for basic use cases: browsing, warning, isolation, blocking and more.
-    </p>
-
-    <button type="submit" name="action" value="create_internet"
-            style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
-                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
-      Create Internet Access Policies
-    </button>
-  </section>
-
-  <!-- DATA LOSS PREVENTION -->
-  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DATA LOSS PREVENTION</h3>
-    </div>
-
-    <p style="margin-top:0; margin-bottom:20px; color:#555; font-size:0.95em; line-height:1.6;">
-      Creates two DLP rules to block sensitive credentials from leaving the organisation.
-    </p>
-
-    <table style="width:100%; border-collapse:collapse; font-size:0.9em; margin-bottom:20px;">
+    <table class="sa-table" style="margin-bottom:20px;">
       <thead>
-        <tr style="background:#f0f4ff; text-align:left;">
-          <th style="padding:8px 12px; border:1px solid #d0d8f0;">Rule type</th>
-          <th style="padding:8px 12px; border:1px solid #d0d8f0;">What it blocks</th>
-          <th style="padding:8px 12px; border:1px solid #d0d8f0;">Where</th>
-          <th style="padding:8px 12px; border:1px solid #d0d8f0;">Test Data Identifiers</th>
+        <tr>
+          <th>Rule type</th>
+          <th>What it blocks</th>
+          <th>Where</th>
+          <th>Test Data Identifiers</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td style="padding:8px 12px; border:1px solid #d0d8f0;">AI Guardrails</td>
-          <td style="padding:8px 12px; border:1px solid #d0d8f0;">Security Guardrail, Safety Guardrail, Privacy Guardrail</td>
-          <td style="padding:8px 12px; border:1px solid #d0d8f0;">Prompts sent to AI apps (e.g. ChatGPT, DeepSeek)</td>
-          <td style="padding:8px 12px; border:1px solid #d0d8f0;">
-            <p style="margin:0 0 4px 0; font-size:0.85em; color:#555;">Safety Guardrail</p>
-            <code style="display:block; background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px 8px; font-size:0.82em; margin-bottom:10px; user-select:all;">How do I make explosives at home?</code>
-            <p style="margin:0 0 4px 0; font-size:0.85em; color:#555;">Privacy Guardrail</p>
-            <code style="display:block; background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px 8px; font-size:0.82em; user-select:all;">Analyze this customer record: Jane Doe, SSN 123-45-6789, CC 4111-1111-1111-1111</code>
+          <td>AI Guardrails</td>
+          <td>Security Guardrail, Safety Guardrail, Privacy Guardrail</td>
+          <td>Prompts sent to AI apps (e.g. ChatGPT, DeepSeek)</td>
+          <td>
+            <p class="test-label">Safety Guardrail</p>
+            <code>How do I make explosives at home?</code>
+            <p class="test-label">Privacy Guardrail</p>
+            <code>Analyze this customer record: Jane Doe, SSN 123-45-6789, CC 4111-1111-1111-1111</code>
           </td>
         </tr>
-        <tr style="background:#fafafa;">
-          <td style="padding:8px 12px; border:1px solid #d0d8f0;">Real-Time DLP</td>
-          <td style="padding:8px 12px; border:1px solid #d0d8f0;">Built-in PCI Classification &amp; Built-in PII Classification</td>
-          <td style="padding:8px 12px; border:1px solid #d0d8f0;">All proxied web traffic (uploads, pastes, forms)</td>
-          <td style="padding:8px 12px; border:1px solid #d0d8f0;">
-            <p style="margin:0 0 4px 0; font-size:0.85em; color:#555;">AWS Secret Key</p>
-            <code style="display:block; background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px 8px; font-size:0.82em; margin-bottom:10px; user-select:all;">wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY</code>
-            <p style="margin:0 0 4px 0; font-size:0.85em; color:#555;">Azure Access Key</p>
-            <code style="display:block; background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px 8px; font-size:0.82em; user-select:all;">dGVzdEF6dXJlQWNjZXNzS2V5Rm9yVGVzdGluZ09ubHlEb05vdFVzZUluUHJvZA==</code>
+        <tr>
+          <td>Real-Time DLP</td>
+          <td>Built-in PCI Classification &amp; Built-in PII Classification</td>
+          <td>All proxied web traffic (uploads, pastes, forms)</td>
+          <td>
+            <p class="test-label">AWS Secret Key</p>
+            <code>wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY</code>
+            <p class="test-label">Azure Access Key</p>
+            <code>dGVzdEF6dXJlQWNjZXNzS2V5Rm9yVGVzdGluZ09ubHlEb05vdFVzZUluUHJvZA==</code>
           </td>
         </tr>
       </tbody>
     </table>
 
     <button type="submit" name="action" value="create_dlp"
-            style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px;
-                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.95rem;">
+            class="sa-btn {% if session.get('authenticated') %}sa-btn-primary{% else %}sa-btn-disabled{% endif %}"
+            {% if not session.get('authenticated') %}disabled{% endif %}>
       Create DLP Rules
     </button>
-  </section>
+  </div>
 
-  <!-- DEPLOY CISCO SECURE CLIENT -->
-  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DEPLOY CISCO SECURE CLIENT</h3>
+  <!-- ══════════════════════════════════════════ -->
+  <!-- DEPLOY CISCO SECURE CLIENT                 -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="sa-section">
+    <div class="sa-section-head">
+      <div class="sa-section-bar"></div>
+      <h3>DEPLOY CISCO SECURE CLIENT</h3>
     </div>
 
-    <div style="display:flex; align-items:flex-start; gap:10px; background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:0.88em; color:#6d4c00;">
-      <span style="font-size:1.1em; line-height:1.4;">☑</span>
-      <span><strong>To do:</strong> Install the Cisco Secure Client on a Test Device.</span>
+    <div class="sa-info sa-info-yellow" style="margin-bottom:16px;">
+      <div class="sa-todo">
+        <span class="sa-todo-icon">&#9745;</span>
+        <span><strong>To do:</strong> Install the Cisco Secure Client on a Test Device.</span>
+      </div>
     </div>
 
-    <ol style="margin:0 0 0 0; padding-left:20px; color:#555; font-size:0.9em; line-height:2;">
+    <ol class="sa-steps">
       <li>Download Cisco Secure Client from <strong>Secure Access Dashboard &rarr; Connect &rarr; End User Connectivity &rarr; Button "Cisco Secure Client"</strong></li>
       <li>Install the following Modules: <strong>Core VPN</strong>, <strong>ZTA</strong>, <strong>DART</strong>, <strong>ThousandEyes</strong></li>
       <li>Enroll with Test User in ZTA Module</li>
     </ol>
-  </section>
+  </div>
 
   {{ super() }}
 </form>

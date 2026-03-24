@@ -71,9 +71,9 @@ fi
 # so Docker (installed next) can use its own bundled containerd without conflicts.
 echo "Step 1: Creating symlinks and preparing system..."
 ln -sf "$REPO_ROOT/automagic-server" /automagic-server && echo "  ✓ /automagic-server"
-ln -sf "$REPO_ROOT/dashy" /dashy && echo "  ✓ /dashy"
 ln -sf "$REPO_ROOT/sse-check" /sse-check && echo "  ✓ /sse-check"
-ln -sf "$REPO_ROOT/testcases" /testcases && echo "  ✓ /testcases"
+ln -sf "$REPO_ROOT/playbook" /playbook && echo "  ✓ /playbook"
+ln -sf "$REPO_ROOT/saml-app" /saml-app && echo "  ✓ /saml-app"
 
 echo "  Removing system containerd package (Docker brings its own)..."
 apt-get remove -y containerd 2>/dev/null || true
@@ -472,11 +472,6 @@ echo ""
 # Step 17: Update configuration files with server IP
 echo "Step 17: Updating configuration files..."
 
-if [ -f "$REPO_ROOT/dashy/conf.yml" ]; then
-    echo "  Updating Dashy config with server IP..."
-    sed -i "s/SERVER_IP/$SERVER_IP/g" "$REPO_ROOT/dashy/conf.yml"
-fi
-
 # Detect the connector's source IP as seen by apps inside the cluster.
 # Try docker inspect first; if the connector uses host-networking or a
 # non-bridge network, fall back to the secondary host NIC IP.
@@ -509,6 +504,19 @@ docker save ghcr.io/js-csco/piap-k3s-automagic:latest | k3s ctr images import -
 echo "  ✓ automagic image built and imported into k3s"
 echo ""
 
+# Step 17.2: Pre-pull images that k3s containerd may struggle to fetch
+# GHCR images and Docker Hub images can hit rate limits or mirror issues.
+# Pulling via Docker (which has its own credential chain) and importing
+# into k3s containerd is more reliable than letting k3s pull directly.
+echo "Step 17.2: Pre-pulling container images via Docker..."
+for img in "louislam/uptime-kuma:1"; do
+    echo "  Pulling $img ..."
+    docker pull "$img" && docker save "$img" | k3s ctr images import - \
+        && echo "  ✓ $img imported into k3s" \
+        || echo "  ⚠ Failed to pull $img — k3s will retry on its own"
+done
+echo ""
+
 # Step 18: Deploy Kubernetes applications
 echo "Step 18: Deploying applications to Kubernetes..."
 
@@ -533,6 +541,9 @@ for manifest in "$REPO_ROOT/k8s/"*.yaml; do
         *caldera*)
             echo "  Skipping $(basename $manifest) — deploy from the Automagic dashboard"
             ;;
+        *uptime-kuma-seed*)
+            echo "  Skipping $(basename $manifest) — will run after pods are ready"
+            ;;
         *)
             kubectl apply -f "$manifest" -n piap
             ;;
@@ -553,6 +564,15 @@ echo ""
 echo "Step 19: Waiting for pods to be ready..."
 kubectl wait --for=condition=Ready pods --all -n piap --timeout=120s || true
 kubectl get pods -n piap
+echo ""
+
+# Step 19a: Seed Uptime-Kuma monitors
+echo "Step 19a: Seeding Uptime-Kuma monitors..."
+kubectl delete job uptime-kuma-seed -n piap --ignore-not-found=true
+kubectl apply -f "$REPO_ROOT/k8s/uptime-kuma-seed-job.yaml" -n piap
+kubectl wait --for=condition=Complete job/uptime-kuma-seed -n piap --timeout=180s || \
+    echo "  Warning: Uptime-Kuma seed job did not complete in time (monitors can be added manually)"
+echo "  ✓ Uptime-Kuma monitors seeded"
 echo ""
 
 # Step 19.1: Install the connector internet masquerade rule.
@@ -625,7 +645,6 @@ echo ""
 kubectl get svc -n piap -o wide
 echo ""
 echo "Hubble UI: http://$SERVER_IP:30800"
-echo "Dashy: http://$SERVER_IP:30100"
 echo ""
 if [ "$DEPLOY_SPLUNK" = "true" ]; then
 echo "================================================"

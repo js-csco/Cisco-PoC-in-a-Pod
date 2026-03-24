@@ -26,17 +26,46 @@
     }
 
     header {
-      background: linear-gradient(90deg, var(--dark), var(--blue));
+      background: linear-gradient(135deg, #000 0%, #1a1a2e 50%, var(--dark) 100%);
       color: #fff;
-      padding: 16px 32px;
+      padding: 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 60px,
+        rgba(255,255,255,0.02) 60px,
+        rgba(255,255,255,0.02) 61px
+      );
+      pointer-events: none;
+    }
+    .header-bar {
       display: flex;
       align-items: center;
-      gap: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      gap: 16px;
+      padding: 18px 32px 16px;
+      position: relative;
+      z-index: 1;
     }
-    header img  { height: 38px; }
-    header .t   { font-size: 1.2em; font-weight: 600; }
-    header .sub { font-size: 0.85em; opacity: 0.8; margin-top: 2px; }
+    .header-logo { height: 24px; opacity: 0.9; }
+    .header-divider {
+      width: 1px;
+      height: 28px;
+      background: rgba(255,255,255,0.2);
+    }
+    header .t   { font-size: 1.15em; font-weight: 700; letter-spacing: 0.3px; }
+    header .sub { font-size: 0.78em; opacity: 0.6; margin-top: 2px; font-weight: 400; }
+    .header-accent {
+      height: 3px;
+      background: linear-gradient(90deg, var(--blue), var(--indigo), #7c4dff);
+    }
 
     main {
       max-width: 760px;
@@ -233,11 +262,15 @@
 <body>
 
 <header>
-  <img src="https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png" alt="Cisco">
-  <div>
-    <div class="t">Cisco SSE Check</div>
-    <div class="sub">Zero Trust Application Access · Live Access Verifier</div>
+  <div class="header-bar">
+    <img class="header-logo" src="https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png" alt="Cisco">
+    <div class="header-divider"></div>
+    <div>
+      <div class="t">SSE Check</div>
+      <div class="sub">Zero Trust Application Access · Live Access Verifier</div>
+    </div>
   </div>
+  <div class="header-accent"></div>
 </header>
 
 <main>

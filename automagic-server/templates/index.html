@@ -226,7 +226,10 @@
              style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
 
       <button type="submit" name="action" value="create_pod"
-              style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500; cursor:pointer;">
+              {% if not session.get('authenticated') %}disabled{% endif %}
+              style="background-color:{% if session.get('authenticated') %}#0066ff{% else %}#aaa{% endif %};
+                     color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500;
+                     cursor:{% if session.get('authenticated') %}pointer{% else %}default{% endif %};">
         Create Pod Resources
       </button>
 
@@ -237,7 +240,10 @@
       </p>
 
       <button type="submit" name="action" value="create_private"
-              style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500; cursor:pointer;">
+              {% if not session.get('authenticated') %}disabled{% endif %}
+              style="background-color:{% if session.get('authenticated') %}#0066ff{% else %}#aaa{% endif %};
+                     color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500;
+                     cursor:{% if session.get('authenticated') %}pointer{% else %}default{% endif %};">
         Create Private Access Policy
       </button>
 
@@ -262,7 +268,11 @@
             Follow Cisco recommendations for Internet Access rules & decryption of web traffic (MSFT 365 Bypass, Certificate Pinning, Do not Decrypt Destinations).
       </p>
       <button type="submit" name="action" value="follow_recom"
-              style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500; cursor:pointer; margin-bottom:20px;">
+              {% if not session.get('authenticated') %}disabled{% endif %}
+              style="background-color:{% if session.get('authenticated') %}#0066ff{% else %}#aaa{% endif %};
+                     color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500;
+                     cursor:{% if session.get('authenticated') %}pointer{% else %}default{% endif %};
+                     margin-bottom:20px;">
         Follow Recommendations
       </button>
 
@@ -273,7 +283,10 @@
       </p>
 
       <button type="submit" name="action" value="create_internet"
-              style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500; cursor:pointer;">
+              {% if not session.get('authenticated') %}disabled{% endif %}
+              style="background-color:{% if session.get('authenticated') %}#0066ff{% else %}#aaa{% endif %};
+                     color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500;
+                     cursor:{% if session.get('authenticated') %}pointer{% else %}default{% endif %};">
         Create Internet Access Policies
       </button>
 
@@ -283,7 +296,10 @@
             Go to Cisco Secure Access Dashboard, create a Security Profile for Internet Access with Decryption enabled and attach it to each Internet Access Policy.
       </p>
       <button type="submit" name="action" value="create_profile"
-              style="background-color:#0066ff; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500; cursor:pointer;">
+              {% if not session.get('authenticated') %}disabled{% endif %}
+              style="background-color:{% if session.get('authenticated') %}#0066ff{% else %}#aaa{% endif %};
+                     color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:500;
+                     cursor:{% if session.get('authenticated') %}pointer{% else %}default{% endif %};">
         Create Security Profile
       </button>
 

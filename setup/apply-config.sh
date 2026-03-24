@@ -2,8 +2,8 @@
 # apply-config.sh — re-apply IP configuration after a git pull
 #
 # Run this whenever you pull new commits to the server.
-# It re-patches dashy/conf.yml, sse-check connector IP, and
-# ensures the required symlinks exist — WITHOUT doing a full reinstall.
+# It re-patches sse-check connector IP and ensures the required
+# symlinks exist — WITHOUT doing a full reinstall.
 #
 # Usage: sudo ./setup/apply-config.sh
 
@@ -54,22 +54,14 @@ fi
 # ── 1. Ensure symlinks exist ────────────────────────────────────────────────
 echo ""
 echo "Step 1: Ensuring symlinks..."
-ln -sfn "$REPO_ROOT/dashy"            /dashy           && echo "  ✓ /dashy"
 ln -sfn "$REPO_ROOT/sse-check"        /sse-check       && echo "  ✓ /sse-check"
-ln -sfn "$REPO_ROOT/testcases"        /testcases       && echo "  ✓ /testcases"
+ln -sfn "$REPO_ROOT/playbook"         /playbook        && echo "  ✓ /playbook"
 ln -sfn "$REPO_ROOT/automagic-server" /automagic-server && echo "  ✓ /automagic-server"
+ln -sfn "$REPO_ROOT/saml-app"         /saml-app        && echo "  ✓ /saml-app"
 
-# ── 2. Patch dashy conf.yml ─────────────────────────────────────────────────
+# ── 2. Detect connector IP ──────────────────────────────────────────────────
 echo ""
-echo "Step 2: Patching Dashy config with server IP ($SERVER_IP)..."
-# Reset to the template version first (in case it was already patched), then apply
-git -C "$REPO_ROOT" checkout -- dashy/conf.yml 2>/dev/null || true
-sed -i "s/SERVER_IP/$SERVER_IP/g" "$REPO_ROOT/dashy/conf.yml"
-echo "  ✓ dashy/conf.yml updated"
-
-# ── 3. Detect connector IP ──────────────────────────────────────────────────
-echo ""
-echo "Step 3: Detecting connector IP..."
+echo "Step 2: Detecting connector IP..."
 
 CONNECTOR_NAME=$(docker ps --format '{{.Names}}' 2>/dev/null | grep -i connector | head -1 || true)
 
@@ -87,9 +79,9 @@ fi
 CONNECTOR_IP=${CONNECTOR_IP:-$SERVER_IP}
 echo "  Connector IP: $CONNECTOR_IP"
 
-# ── 4. Patch sse-check ConfigMap ────────────────────────────────────────────
+# ── 3. Patch sse-check ConfigMap ────────────────────────────────────────────
 echo ""
-echo "Step 4: Patching sse-check-config ConfigMap with connector IP..."
+echo "Step 3: Patching sse-check-config ConfigMap with connector IP..."
 if kubectl get configmap sse-check-config -n piap &>/dev/null; then
     # Use kubectl create --dry-run | apply to avoid JSON escape issues with $connector_ip
     kubectl create configmap sse-check-config -n piap \
@@ -101,16 +93,6 @@ else
     echo "  ⚠ sse-check-config ConfigMap not found — deploy manifests first, then re-run this script"
 fi
 
-# ── 5. Restart dashy to pick up conf.yml changes ────────────────────────────
 echo ""
-echo "Step 5: Restarting Dashy pod to reload config..."
-if kubectl get deployment dashy -n piap &>/dev/null; then
-    kubectl rollout restart deployment/dashy -n piap
-    echo "  ✓ Dashy restarted"
-else
-    echo "  ⚠ Dashy deployment not found — deploy manifests first"
-fi
-
-echo ""
-echo "Done. Access Dashy at: http://$SERVER_IP:30100"
-echo "      SSE Check at:    http://$SERVER_IP:30550"
+echo "Done. Access Automagic at: http://$SERVER_IP:30200"
+echo "      SSE Check at:        http://$SERVER_IP:30550"

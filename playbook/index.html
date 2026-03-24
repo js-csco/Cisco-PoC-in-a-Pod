@@ -28,39 +28,69 @@
 
     /* ── Header ── */
     header {
-      background: linear-gradient(90deg, var(--dark), var(--cyan));
+      background: linear-gradient(135deg, #000 0%, #1a1a2e 50%, var(--dark) 100%);
       color: #fff;
-      padding: 16px 32px;
+      padding: 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 60px,
+        rgba(255,255,255,0.02) 60px,
+        rgba(255,255,255,0.02) 61px
+      );
+      pointer-events: none;
+    }
+    .header-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      padding: 18px 32px 16px;
+      position: relative;
+      z-index: 1;
     }
-    .header-left { display: flex; align-items: center; gap: 20px; }
-    .header-left .t   { font-size: 1.2em; font-weight: 600; }
-    .header-left .sub { font-size: 0.82em; opacity: 0.8; margin-top: 2px; }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-logo { height: 24px; opacity: 0.9; }
+    .header-divider {
+      width: 1px;
+      height: 28px;
+      background: rgba(255,255,255,0.2);
+    }
+    .header-left .t   { font-size: 1.15em; font-weight: 700; letter-spacing: 0.3px; }
+    .header-left .sub { font-size: 0.78em; opacity: 0.6; margin-top: 2px; font-weight: 400; }
     .header-right { display: flex; align-items: center; gap: 10px; }
+    .header-accent {
+      height: 3px;
+      background: linear-gradient(90deg, var(--cyan), var(--blue), var(--purple));
+    }
     #overallBadge {
-      background: rgba(255,255,255,0.15);
-      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
       border-radius: 20px;
       padding: 5px 14px;
-      font-size: 0.82em;
+      font-size: 0.8em;
       font-weight: 600;
       white-space: nowrap;
     }
     #resetBtn {
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
       color: #fff;
       padding: 6px 14px;
       border-radius: 6px;
-      font-size: 0.82em;
+      font-size: 0.8em;
       font-weight: 500;
       cursor: pointer;
       transition: background 0.15s;
     }
-    #resetBtn:hover { background: rgba(255,255,255,0.22); }
+    #resetBtn:hover { background: rgba(255,255,255,0.18); }
 
     /* ── Invite Modal ── */
     #inviteModal {
@@ -193,7 +223,7 @@
     }
     .progress-label span { font-weight: 700; color: #374151; }
 
-    /* ── Test case card ── */
+    /* ── Playbook card ── */
     .tc-card {
       background: #fff;
       border: 1px solid #e5e7eb;
@@ -334,30 +364,469 @@
     }
     .tc-section-header:first-child { margin-top: 0; }
 
+    /* ── Custom test cards (purple accent) ── */
+    .tc-card.custom-card { border-left-color: var(--purple); background: #faf8ff; }
+    .tc-card.custom-card .tc-num { background: #ede9fe; color: var(--purple); }
+    .tc-card.custom-card[data-status="pass"]  { border-left-color: var(--green); }
+    .tc-card.custom-card[data-status="fail"]  { border-left-color: var(--red); }
+    .tc-card.custom-card[data-status="skip"]  { border-left-color: var(--orange); }
+    .tc-card.custom-card[data-status="pass"]  .tc-num { background: #dcfce7; color: var(--green); }
+    .tc-card.custom-card[data-status="fail"]  .tc-num { background: #fee2e2; color: var(--red); }
+    .tc-card.custom-card[data-status="skip"]  .tc-num { background: #ffedd5; color: var(--orange); }
+
+    .custom-badge {
+      display: inline-block;
+      background: #ede9fe;
+      color: var(--purple);
+      font-size: 0.68em;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .btn-add-custom {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #ede9fe;
+      color: var(--purple);
+      border: 2px dashed #c4b5fd;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 0.88em;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.15s, border-color 0.15s;
+      margin-top: 14px;
+    }
+    .btn-add-custom:hover { background: #ddd6fe; border-color: var(--purple); }
+
+    .btn-delete-custom {
+      background: #fee2e2;
+      color: var(--red);
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.78em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-delete-custom:hover { opacity: 0.75; }
+
+    /* ── Custom test add form ── */
+    #customForm {
+      display: none;
+      background: #faf8ff;
+      border: 2px solid #c4b5fd;
+      border-radius: 8px;
+      padding: 18px;
+      margin-top: 14px;
+    }
+    #customForm.open { display: block; }
+    #customForm input, #customForm textarea {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.88em;
+      color: #333;
+      font-family: inherit;
+      margin-bottom: 10px;
+    }
+    #customForm input:focus, #customForm textarea:focus { outline: none; border-color: var(--purple); }
+    #customForm label {
+      font-size: 0.78em;
+      font-weight: 600;
+      color: #555;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .form-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .btn-save-custom {
+      background: var(--purple);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 20px;
+      font-size: 0.85em;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-save-custom:hover { opacity: 0.85; }
+    .btn-cancel-custom {
+      background: #f3f4f6;
+      color: #6b7280;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 20px;
+      font-size: 0.85em;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+
     footer {
       text-align: center;
       color: #aaa;
       font-size: 0.78em;
       padding: 12px 0 28px;
     }
+
+    /* ── Journey Map — Dashboard Layout ── */
+    .journey-dashboard {
+      display: grid;
+      grid-template-columns: 360px 1px 1fr;
+      gap: 0;
+      min-height: calc(100vh - 180px);
+      align-content: start;
+    }
+    .journey-left {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: sticky;
+      top: 0;
+      align-self: start;
+      padding-right: 36px;
+    }
+    .journey-divider {
+      background: #e9ebef;
+      align-self: stretch;
+    }
+    .journey-right {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      max-height: calc(100vh - 180px);
+      padding-left: 36px;
+      padding-right: 4px;
+    }
+
+    .journey-hero {
+      text-align: center;
+      padding: 32px 24px 28px;
+      background: linear-gradient(135deg, #f0f9ff 0%, #eff6ff 50%, #f5f3ff 100%);
+      border-radius: 16px;
+      border: 1px solid #e0e7ff;
+    }
+    .journey-hero h2 {
+      font-size: 1.25rem;
+      color: #111;
+      margin-bottom: 4px;
+      font-weight: 800;
+    }
+    .journey-hero p {
+      color: #666;
+      font-size: 0.82em;
+      margin-bottom: 22px;
+    }
+    .journey-score-wrap {
+      display: inline-block;
+      position: relative;
+    }
+    .journey-score-wrap svg {
+      width: 200px;
+      height: 200px;
+      transform: rotate(-90deg);
+    }
+    .journey-score-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .journey-score-pct {
+      font-size: 2.6rem;
+      font-weight: 800;
+      color: #111;
+      line-height: 1;
+    }
+    .journey-score-sub {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-top: 6px;
+    }
+
+    .journey-phase { margin-bottom: 0; }
+    .journey-phase-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 0.72em;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #888;
+    }
+    .journey-phase-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e5e7eb;
+    }
+    .journey-phase-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #e5e7eb;
+      color: #666;
+      font-size: 0.85em;
+      font-weight: 800;
+    }
+
+    .journey-grid { display: grid; gap: 8px; }
+    .journey-grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .journey-grid-3 { grid-template-columns: repeat(3, 1fr); }
+
+    .journey-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 12px 10px 10px;
+      text-align: center;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      position: relative;
+    }
+    .journey-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      border-color: #c7d2fe;
+    }
+    .journey-core:hover { border-color: var(--cyan); }
+
+    .journey-card-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+
+    .journey-ring-wrap {
+      display: inline-block;
+      position: relative;
+      margin-bottom: 4px;
+    }
+    .journey-ring-wrap svg {
+      width: 56px;
+      height: 56px;
+      transform: rotate(-90deg);
+    }
+    .journey-ring-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78em;
+      font-weight: 800;
+      color: #333;
+    }
+
+    .journey-card-title {
+      font-size: 0.78em;
+      font-weight: 700;
+      color: #222;
+      margin-bottom: 3px;
+      line-height: 1.3;
+    }
+    .journey-card-stats {
+      font-size: 0.68em;
+      color: #888;
+      margin-bottom: 6px;
+    }
+    .journey-card-desc {
+      font-size: 0.72em;
+      color: #666;
+      line-height: 1.4;
+      margin-top: 4px;
+    }
+
+    .journey-card-dots {
+      display: flex;
+      gap: 3px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .jdot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+      background: #e5e7eb;
+      transition: background 0.2s;
+    }
+    .jdot-pass { background: var(--green); }
+    .jdot-fail { background: var(--red); }
+    .jdot-skip { background: var(--orange); }
+
+    .journey-card-badge {
+      display: inline-block;
+      font-size: 0.6em;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 2px 8px;
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+    .badge-ready { background: #dcfce7; color: var(--green); }
+    .badge-soon { background: #fef3c7; color: #b45309; }
+
+    .journey-connector {
+      display: flex;
+      justify-content: center;
+      padding: 2px 0;
+      color: #d1d5db;
+      font-size: 0.85rem;
+      transition: color 0.3s;
+    }
+    .journey-connector.active { color: var(--cyan); }
+
+    .journey-recommendation {
+      background: linear-gradient(135deg, #1a1a2e 0%, var(--dark) 100%);
+      border-radius: 14px;
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      color: #fff;
+    }
+    .journey-rec-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .journey-rec-icon {
+      flex-shrink: 0;
+      width: 38px;
+      height: 38px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+      animation: rec-pulse 2s ease-in-out infinite;
+    }
+    @keyframes rec-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .journey-rec-label {
+      font-size: 0.68em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.5);
+    }
+    .journey-rec-text {
+      flex: 1;
+      font-size: 0.88em;
+      line-height: 1.5;
+    }
+    .journey-rec-text strong { color: var(--cyan); }
+    .journey-rec-btn {
+      align-self: stretch;
+      background: var(--cyan);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 0.88em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+      text-align: center;
+    }
+    .journey-rec-btn:hover { opacity: 0.85; }
+
+    .journey-zt-grid {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 8px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+    }
+    .journey-zt-pillar {
+      text-align: center;
+      padding: 8px 4px;
+    }
+    .journey-zt-pillar i {
+      font-size: 1.1rem;
+      color: var(--green);
+      margin-bottom: 4px;
+      display: block;
+    }
+    .journey-zt-pillar .zt-title {
+      font-size: 0.72em;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 2px;
+    }
+    .journey-zt-pillar .zt-desc {
+      font-size: 0.62em;
+      color: #888;
+    }
+
+    /* Journey tab needs wider main */
+    .main-journey {
+      max-width: 1260px;
+    }
+
+    @media (max-width: 960px) {
+      .journey-dashboard { grid-template-columns: 1fr; }
+      .journey-left { position: static; padding-right: 0; }
+      .journey-divider { display: none; }
+      .journey-right { max-height: none; padding-left: 0; }
+      .journey-grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .journey-grid-3 { grid-template-columns: repeat(1, 1fr); }
+      .journey-zt-grid { grid-template-columns: repeat(2, 1fr); }
+    }
   </style>
 </head>
 <body>
 
 <header>
-  <div class="header-left">
-    <div>
-      <div class="t">Cisco PoC Playbook</div>
-      <div class="sub">Guided test cases for Zero Trust Application Access</div>
+  <div class="header-bar">
+    <div class="header-left">
+      <img class="header-logo" src="https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png" alt="Cisco">
+      <div class="header-divider"></div>
+      <div>
+        <div class="t">PoC Playbook</div>
+        <div class="sub">Guided playbook for Zero Trust Application Access</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div id="overallBadge">0 / 0 passed</div>
+      <button id="resetBtn" onclick="resetAll()">↺ Reset All</button>
+      <button id="inviteBtn" onclick="document.getElementById('inviteModal').classList.add('active')" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:6px 14px;border-radius:6px;font-size:0.8em;font-weight:500;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+        👤 Invite your Cisco SE
+      </button>
     </div>
   </div>
-  <div class="header-right">
-    <div id="overallBadge">0 / 0 passed</div>
-    <button id="resetBtn" onclick="resetAll()">↺ Reset All</button>
-    <button id="inviteBtn" onclick="document.getElementById('inviteModal').classList.add('active')" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 14px;border-radius:6px;font-size:0.82em;font-weight:500;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.22)'" onmouseout="this.style.background='rgba(255,255,255,0.12)'">
-      👤 Invite your Cisco SE
-    </button>
-  </div>
+  <div class="header-accent"></div>
 </header>
 
 <!-- Invite Cisco SE Modal -->
@@ -365,7 +834,7 @@
   <div class="modal-box">
     <button class="modal-close" onclick="document.getElementById('inviteModal').classList.remove('active')" title="Close">&times;</button>
     <h2>👤 Invite your Cisco SE</h2>
-    <p>If you want to invite your Cisco SE to have remote access to the test cases, please do the following:</p>
+    <p>If you want to invite your Cisco SE to have remote access to the PoC Playbook, please do the following:</p>
     <ul>
       <li>Create Duo user in Group <strong>"PoC Users"</strong></li>
       <li>Allow browser based access to PoC Playbook
@@ -387,9 +856,16 @@
 
 <script>
 // ─────────────────────────────────────────────
-// Test case definitions
+// Playbook definitions
 // ─────────────────────────────────────────────
 const TABS = [
+  {
+    id: 'getting-started',
+    label: 'Getting Started',
+    icon: 'fa-rocket',
+    isJourneyTab: true,
+    cases: [],
+  },
   {
     id: 'duo',
     label: 'Duo & Identity Intelligence',
@@ -405,6 +881,19 @@ const TABS = [
           'Open the enrollment email and click the link.',
           'Enroll using Duo Mobile or a passkey.',
           'Confirm the user shows as <strong>Active</strong> in Duo Admin Panel → Users.',
+        ],
+      },
+      {
+        id: 'duo-2',
+        title: 'SAML App — User Authentication Check',
+        desc: 'Verify Duo SSO authentication works via the SAML App from two different browsers to demonstrate Duo Passport.',
+        steps: [
+          'Open <strong>Browser 1</strong> (e.g. Chrome) and navigate to the SAML App login page.',
+          'Log in with a test user — complete the Duo MFA prompt (push or passkey).',
+          'Confirm the user is authenticated and the SAML assertion is received.',
+          'Open <strong>Browser 2</strong> (e.g. Firefox or Edge) and navigate to the same SAML App login page.',
+          'Log in with the <strong>same test user</strong> — observe that Duo Passport provides a seamless SSO experience (reduced or no MFA prompt).',
+          'Verify the authentication event appears in the Duo Admin Panel → Reports → Authentication Log.',
         ],
       },
       {
@@ -616,9 +1105,9 @@ const TABS = [
           {
             id: 'cil-3',
             title: 'Hubble UI — Flow Visibility',
-            desc: 'Open the Hubble UI on port 30800 (link on Dashy) and open namespace <strong>piap</strong>. Observe flows in the environment — everything should be allowed, hence <strong>forwarded</strong>. Go to Columns and check all boxes to get more visibility.',
+            desc: 'Open the Hubble UI on port 30800 and open namespace <strong>piap</strong>. Observe flows in the environment — everything should be allowed, hence <strong>forwarded</strong>. Go to Columns and check all boxes to get more visibility.',
             steps: [
-              'Open the Hubble UI via the link on Dashy (port 30800).',
+              'Open the Hubble UI (port 30800).',
               'Select the <strong>piap</strong> namespace from the namespace dropdown.',
               'Observe the live network flows — all traffic should appear as <strong>forwarded</strong>.',
               'Click <strong>Columns</strong> and enable all checkboxes to maximise flow visibility.',
@@ -724,12 +1213,21 @@ const TABS = [
       },
     ],
   },
+  {
+    id: 'custom',
+    label: 'Custom Tests',
+    icon: 'fa-flask',
+    subtitle: 'Define your own tests specific to your environment and requirements.',
+    isCustomTab: true,
+    cases: [],
+  },
 ];
 
 // ─────────────────────────────────────────────
 // State helpers
 // ─────────────────────────────────────────────
 const STORE_KEY = 'poc_playbook_v1';
+const CUSTOM_KEY = 'poc_custom_tests_v1';
 
 function loadState() {
   try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
@@ -753,8 +1251,72 @@ function getState(tcId, field) {
 }
 
 function resetAll() {
-  if (!confirm('Reset all test case results and notes?')) return;
+  if (!confirm('Reset all results and notes?')) return;
   localStorage.removeItem(STORE_KEY);
+  renderAll();
+}
+
+// ─────────────────────────────────────────────
+// Custom test helpers
+// ─────────────────────────────────────────────
+function loadCustomTests() {
+  try { return JSON.parse(localStorage.getItem(CUSTOM_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveCustomTests(tests) {
+  localStorage.setItem(CUSTOM_KEY, JSON.stringify(tests));
+}
+
+function addCustomTest(title, desc, steps) {
+  const tests = loadCustomTests();
+  const id = 'custom-' + Date.now();
+  tests.push({ id, title, desc, steps });
+  saveCustomTests(tests);
+  return id;
+}
+
+function deleteCustomTest(id) {
+  if (!confirm('Delete this custom test?')) return;
+  let tests = loadCustomTests();
+  tests = tests.filter(t => t.id !== id);
+  saveCustomTests(tests);
+  // Also remove state for this test
+  const s = loadState();
+  delete s[id];
+  saveState(s);
+  renderAll();
+}
+
+function getCustomTab() {
+  return TABS.find(t => t.id === 'custom');
+}
+
+function syncCustomTests() {
+  const tab = getCustomTab();
+  if (tab) tab.cases = loadCustomTests();
+}
+
+function showCustomForm() {
+  document.getElementById('customForm').classList.add('open');
+  document.getElementById('cfTitle').focus();
+}
+
+function hideCustomForm() {
+  document.getElementById('customForm').classList.remove('open');
+  document.getElementById('cfTitle').value = '';
+  document.getElementById('cfDesc').value = '';
+  document.getElementById('cfSteps').value = '';
+}
+
+function submitCustomTest() {
+  const title = document.getElementById('cfTitle').value.trim();
+  const desc = document.getElementById('cfDesc').value.trim();
+  const stepsRaw = document.getElementById('cfSteps').value.trim();
+  if (!title) { alert('Please enter a test title.'); return; }
+  const steps = stepsRaw ? stepsRaw.split('\n').filter(s => s.trim()) : [];
+  addCustomTest(title, desc, steps);
+  hideCustomForm();
   renderAll();
 }
 
@@ -764,12 +1326,20 @@ function resetAll() {
 let activeTab = TABS[0].id;
 
 function renderAll() {
+  syncCustomTests();
   renderNav();
   renderContent();
   updateOverall();
+  // Widen main for journey dashboard
+  const main = document.querySelector('main');
+  if (activeTab === 'getting-started') {
+    main.classList.add('main-journey');
+  } else {
+    main.classList.remove('main-journey');
+  }
 }
 
-// Returns all test cases for a tab, regardless of flat or sectioned structure
+// Returns all tests for a tab, regardless of flat or sectioned structure
 function tabCases(tab) {
   if (tab.sections) return tab.sections.flatMap(s => s.cases);
   return tab.cases || [];
@@ -778,6 +1348,14 @@ function tabCases(tab) {
 function renderNav() {
   const nav = document.getElementById('tabNav');
   nav.innerHTML = TABS.map(tab => {
+    if (tab.isInfoTab || tab.isJourneyTab) {
+      return `
+        <button class="tab-btn ${tab.id === activeTab ? 'active' : ''}"
+                onclick="switchTab('${tab.id}')">
+          <i class="fa-solid ${tab.icon}"></i>
+          ${tab.label}
+        </button>`;
+    }
     const cases  = tabCases(tab);
     const total  = cases.length;
     const passed = cases.filter(tc => getState(tc.id, 'status') === 'pass').length;
@@ -804,7 +1382,11 @@ function renderTabCases(tab) {
 
 function renderContent() {
   const container = document.getElementById('tabContent');
-  container.innerHTML = TABS.map(tab => `
+  container.innerHTML = TABS.map(tab => {
+    if (tab.isJourneyTab) return renderJourneyTab(tab);
+    if (tab.isInfoTab) return renderInfoTab(tab);
+    if (tab.isCustomTab) return renderCustomTab(tab);
+    return `
     <div class="tab-panel ${tab.id === activeTab ? 'active' : ''}" id="panel-${tab.id}">
       <div class="tab-header">
         <h2>${tab.label}</h2>
@@ -815,8 +1397,87 @@ function renderContent() {
         <div class="progress-label" id="lbl-${tab.id}">${tabLabel(tab)}</div>
       </div>
       ${renderTabCases(tab)}
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+}
+
+function renderCustomTab(tab) {
+  const cases = tabCases(tab);
+  const hasTests = cases.length > 0;
+  let cardsHtml = '';
+  if (hasTests) {
+    cardsHtml = cases.map((tc, i) => renderCustomCard(tc, i + 1)).join('');
+  } else {
+    cardsHtml = `
+      <div style="text-align:center; padding:40px 20px; color:#999;">
+        <i class="fa-solid fa-flask" style="font-size:2rem; color:#c4b5fd; margin-bottom:12px; display:block;"></i>
+        <div style="font-size:0.95em; font-weight:600; color:#666; margin-bottom:4px;">No custom tests yet</div>
+        <div style="font-size:0.83em;">Click the button below to add your first custom test.</div>
+      </div>`;
+  }
+  return `
+    <div class="tab-panel ${tab.id === activeTab ? 'active' : ''}" id="panel-${tab.id}">
+      <div class="tab-header">
+        <h2>${tab.label}</h2>
+        <p>${tab.subtitle}</p>
+        ${hasTests ? `
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="bar-${tab.id}" style="width:${tabProgress(tab)}%; background:var(--purple);"></div>
+        </div>
+        <div class="progress-label" id="lbl-${tab.id}">${tabLabel(tab)}</div>` : ''}
+      </div>
+      ${cardsHtml}
+      <button class="btn-add-custom" onclick="showCustomForm()">
+        <i class="fa-solid fa-plus"></i> Add Custom Test
+      </button>
+      <div id="customForm">
+        <label for="cfTitle">Test Title *</label>
+        <input type="text" id="cfTitle" placeholder="e.g., VPN Failover Test">
+        <label for="cfDesc">Description</label>
+        <textarea id="cfDesc" rows="2" placeholder="What should this test verify?"></textarea>
+        <label for="cfSteps">Steps (one per line)</label>
+        <textarea id="cfSteps" rows="4" placeholder="Step 1&#10;Step 2&#10;Step 3"></textarea>
+        <div class="form-actions">
+          <button class="btn-save-custom" onclick="submitCustomTest()">Add Test Case</button>
+          <button class="btn-cancel-custom" onclick="hideCustomForm()">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderCustomCard(tc, num) {
+  const status = getState(tc.id, 'status') || 'pending';
+  const notes  = getState(tc.id, 'notes')  || '';
+  const statusLabel = { pending: 'PENDING', pass: 'PASS', fail: 'FAIL', skip: 'SKIP' }[status];
+  const stepsHtml = tc.steps && tc.steps.length
+    ? `<div class="tc-steps"><ol>${tc.steps.map(s => `<li>${s}</li>`).join('')}</ol></div>` : '';
+  return `
+    <div class="tc-card custom-card" data-status="${status}" id="card-${tc.id}">
+      <div class="tc-top">
+        <div class="tc-num">${num}</div>
+        <div class="tc-body">
+          <div class="tc-title">${tc.title} <span class="custom-badge">CUSTOM</span></div>
+          <div class="tc-desc">${tc.desc || ''}</div>
+        </div>
+        <div class="tc-status-badge" id="badge-${tc.id}">${statusLabel}</div>
+      </div>
+      ${stepsHtml}
+      <div class="tc-actions">
+        <button class="btn-pass"     onclick="setStatus('${tc.id}', 'pass')">✓ Pass</button>
+        <button class="btn-fail"     onclick="setStatus('${tc.id}', 'fail')">✗ Fail</button>
+        <button class="btn-skip"     onclick="setStatus('${tc.id}', 'skip')">— Skip</button>
+        <button class="btn-reset-tc" onclick="setStatus('${tc.id}', 'pending')">↺</button>
+        <button class="btn-notes"    onclick="toggleNotes('${tc.id}')">Notes</button>
+        <button class="btn-delete-custom" onclick="deleteCustomTest('${tc.id}')">🗑 Delete</button>
+      </div>
+      <div class="tc-notes" id="notes-${tc.id}">
+        <textarea placeholder="Add notes…" oninput="saveNotes('${tc.id}', this.value)">${notes}</textarea>
+      </div>
+    </div>`;
+}
+
+function renderInfoTab(tab) {
+  return '';
 }
 
 function tabProgress(tab) {
@@ -906,12 +1567,216 @@ function saveNotes(tcId, value) {
 }
 
 function updateOverall() {
-  const allCases = TABS.flatMap(t => tabCases(t));
+  const allCases = TABS.filter(t => !t.isInfoTab && !t.isJourneyTab).flatMap(t => tabCases(t));
   const total    = allCases.length;
   const passed   = allCases.filter(tc => getState(tc.id, 'status') === 'pass').length;
   const failed   = allCases.filter(tc => getState(tc.id, 'status') === 'fail').length;
   const badge    = document.getElementById('overallBadge');
   badge.textContent = `${passed} / ${total} passed` + (failed ? ` · ${failed} failed` : '');
+}
+
+// ─────────────────────────────────────────────
+// Journey Map
+// ─────────────────────────────────────────────
+function makeRingSvg(pct, color, r, strokeW) {
+  const circ = 2 * Math.PI * r;
+  const offset = circ * (1 - pct / 100);
+  const size = (r + strokeW) * 2;
+  return `<svg viewBox="0 0 ${size} ${size}">
+    <circle cx="${r+strokeW}" cy="${r+strokeW}" r="${r}" fill="none" stroke="#e5e7eb" stroke-width="${strokeW}"/>
+    <circle cx="${r+strokeW}" cy="${r+strokeW}" r="${r}" fill="none" stroke="${color}" stroke-width="${strokeW}"
+      stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round"
+      style="transition:stroke-dashoffset 0.6s ease;"/>
+  </svg>`;
+}
+
+function getRecommendation() {
+  const coreTabs = TABS.filter(t => !t.isInfoTab && !t.isCustomTab && !t.isJourneyTab);
+  for (const tab of coreTabs) {
+    const cases = tabCases(tab);
+    const pending = cases.find(tc => {
+      const st = getState(tc.id, 'status');
+      return !st || st === 'pending';
+    });
+    if (pending) {
+      const passed = cases.filter(tc => getState(tc.id, 'status') === 'pass').length;
+      if (passed === 0) {
+        return {
+          text: `Start your journey with <strong>${tab.label}</strong> — begin with "${pending.title}".`,
+          tabId: tab.id,
+          action: 'Start \u2192'
+        };
+      }
+      return {
+        text: `Continue with <strong>${tab.label}</strong> — next up: "${pending.title}".`,
+        tabId: tab.id,
+        action: 'Continue \u2192'
+      };
+    }
+  }
+  return {
+    text: 'All foundation test cases complete! You\'re ready to <strong>Connect</strong>, <strong>Observe</strong>, and build toward full Zero Trust maturity.',
+    tabId: 'getting-started',
+    action: 'Review \u2192'
+  };
+}
+
+function renderJourneyTab(tab) {
+  const coreTabs = TABS.filter(t => !t.isInfoTab && !t.isCustomTab && !t.isJourneyTab);
+  const allCases = coreTabs.flatMap(t => tabCases(t));
+  const totalCases = allCases.length;
+  const passedCases = allCases.filter(tc => getState(tc.id, 'status') === 'pass').length;
+  const overallPct = totalCases ? Math.round((passedCases / totalCases) * 100) : 0;
+
+  const coreColors = { duo: '#049fd9', secureaccess: '#0066ff', cilium: '#16a34a', tetragon: '#7c4dff' };
+
+  const scoreRing = makeRingSvg(overallPct, 'var(--cyan)', 76, 9);
+
+  // Phase 1 — Foundation: Core module cards with progress rings
+  const phase1Html = coreTabs.map(t => {
+    const cases = tabCases(t);
+    const total = cases.length;
+    const passed = cases.filter(tc => getState(tc.id, 'status') === 'pass').length;
+    const pct = total ? Math.round((passed / total) * 100) : 0;
+    const color = coreColors[t.id] || '#049fd9';
+    const ring = makeRingSvg(pct, color, 24, 4);
+    const dots = cases.map(tc => {
+      const st = getState(tc.id, 'status') || 'pending';
+      return `<span class="jdot jdot-${st}" title="${tc.title}"></span>`;
+    }).join('');
+    return `
+      <div class="journey-card journey-core" onclick="switchTab('${t.id}')">
+        <div class="journey-ring-wrap">
+          ${ring}
+          <div class="journey-ring-label">${pct}%</div>
+        </div>
+        <div class="journey-card-title">${t.label}</div>
+        <div class="journey-card-stats">${passed}/${total} passed</div>
+        <div class="journey-card-dots">${dots}</div>
+      </div>`;
+  }).join('');
+
+  const foundationReady = overallPct >= 50;
+
+  // Phase 2 — Connect
+  const phase2Items = [
+    { icon: 'fa-network-wired', color: '#0066ff', bg: '#eff6ff', title: 'Connect Your Networks', desc: 'Extend access to production segments, branches, and firewall zones.' },
+    { icon: 'fa-window-restore', color: '#049fd9', bg: '#e0f7fa', title: 'Connect Your Applications', desc: 'Protect SaaS, internal web apps, and APIs behind Zero Trust policies.' },
+    { icon: 'fa-users', color: '#7c4dff', bg: '#ede9fe', title: 'Connect Your Users', desc: 'Onboard your full user base with Duo and Secure Client.' },
+  ];
+  const phase2Html = phase2Items.map(item => `
+    <div class="journey-card" onclick="void(0)">
+      <div class="journey-card-icon" style="background:${item.bg};color:${item.color};">
+        <i class="fa-solid ${item.icon}"></i>
+      </div>
+      <div class="journey-card-title">${item.title}</div>
+      <div class="journey-card-desc">${item.desc}</div>
+    </div>`).join('');
+
+  // Phase 3 — Observe & Defend
+  const phase3Items = [
+    { icon: 'fa-magnifying-glass-chart', color: '#d32f2f', bg: '#ffebee', title: 'Splunk', desc: 'Forward security events to Splunk for SIEM correlation and alerting.' },
+    { icon: 'fa-skull-crossbones', color: '#e65100', bg: '#fff3e0', title: 'Caldera', desc: 'Simulate adversary techniques with MITRE Caldera to validate defenses.' },
+    { icon: 'fa-chart-line', color: '#1565c0', bg: '#e3f2fd', title: 'Network Monitoring', desc: 'Full network flow visibility and anomaly detection.' },
+  ];
+  const phase3Html = phase3Items.map(item => `
+    <div class="journey-card" style="cursor:default;">
+      <div class="journey-card-icon" style="background:${item.bg};color:${item.color};">
+        <i class="fa-solid ${item.icon}"></i>
+      </div>
+      <div class="journey-card-title">${item.title}</div>
+      <div class="journey-card-desc">${item.desc}</div>
+    </div>`).join('');
+
+  // Phase 4 — Zero Trust Maturity
+  const ztPillars = [
+    { icon: 'fa-gavel', title: 'Policy Enforcement', desc: 'Every access decision governed by policy' },
+    { icon: 'fa-rotate', title: 'Continuous Verification', desc: 'Never trust, always verify' },
+    { icon: 'fa-lock', title: 'Least Privilege', desc: 'Minimum access for every identity' },
+    { icon: 'fa-bell', title: 'Threat Response', desc: 'Detect, respond, adapt in real-time' },
+  ];
+  const phase4Html = ztPillars.map(p => `
+    <div class="journey-zt-pillar">
+      <i class="fa-solid ${p.icon}"></i>
+      <div class="zt-title">${p.title}</div>
+      <div class="zt-desc">${p.desc}</div>
+    </div>`).join('');
+
+  // Smart recommendation
+  const rec = getRecommendation();
+  const recHtml = `
+    <div class="journey-recommendation">
+      <div class="journey-rec-top">
+        <div class="journey-rec-icon"><i class="fa-solid fa-bolt"></i></div>
+        <div>
+          <div class="journey-rec-label">Next Step</div>
+          <div class="journey-rec-text">${rec.text}</div>
+        </div>
+      </div>
+      <button class="journey-rec-btn" onclick="switchTab('${rec.tabId}')">${rec.action}</button>
+    </div>`;
+
+  return `
+    <div class="tab-panel ${tab.id === activeTab ? 'active' : ''}" id="panel-${tab.id}">
+      <div class="journey-dashboard">
+        <div class="journey-left">
+          <div class="journey-hero">
+            <h2>Your Zero Trust Journey</h2>
+            <p>Complete the foundation, then expand your deployment step by step.</p>
+            <div class="journey-score-wrap">
+              ${scoreRing}
+              <div class="journey-score-label">
+                <span class="journey-score-pct">${overallPct}%</span>
+                <span class="journey-score-sub">Zero Trust Score</span>
+              </div>
+            </div>
+          </div>
+          ${recHtml}
+        </div>
+        <div class="journey-divider"></div>
+        <div class="journey-right">
+          <div class="journey-phase">
+            <div class="journey-phase-label">
+              <span class="journey-phase-num">1</span> Foundation
+            </div>
+            <div class="journey-grid journey-grid-4">${phase1Html}</div>
+          </div>
+
+          <div class="journey-connector${foundationReady ? ' active' : ''}">
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+
+          <div class="journey-phase">
+            <div class="journey-phase-label">
+              <span class="journey-phase-num">2</span> Connect
+            </div>
+            <div class="journey-grid journey-grid-3">${phase2Html}</div>
+          </div>
+
+          <div class="journey-connector${foundationReady ? ' active' : ''}">
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+
+          <div class="journey-phase">
+            <div class="journey-phase-label">
+              <span class="journey-phase-num">3</span> Observe & Defend
+            </div>
+            <div class="journey-grid journey-grid-3">${phase3Html}</div>
+          </div>
+
+          <div class="journey-connector">
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+
+          <div class="journey-phase">
+            <div class="journey-phase-label">
+              <span class="journey-phase-num">4</span> Zero Trust Maturity
+            </div>
+            <div class="journey-zt-grid">${phase4Html}</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
 }
 
 // ─────────────────────────────────────────────
