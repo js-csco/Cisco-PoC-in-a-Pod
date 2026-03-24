@@ -292,6 +292,10 @@ def duo():
                 if result['users_added_to_group'] > 0:
                     flash(f"✅ {result['users_added_to_group']} user(s) added to 'PoC Users' group")
                 
+                # Next step: enrollment guidance
+                if result['users_created']:
+                    flash("📋 Next step: Go to the Duo Admin Dashboard → Users and share the enrollment link and code with the user. Enrollment works best in an incognito window.")
+
                 # Display any errors
                 if result['errors']:
                     for error in result['errors']:
