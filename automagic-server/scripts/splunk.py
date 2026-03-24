@@ -1,9 +1,10 @@
 """
-Splunk helper — availability checks, HEC health, Fluent Bit management,
-on-demand deployment, and Splunkbase app installation from the dashboard.
+Splunk helper — availability checks, HEC health, on-demand deployment,
+and Splunkbase app installation from the dashboard.
+
+Log sources: Cisco Duo / Identity Intelligence, Cisco Secure Access.
 """
 import os
-import datetime
 import subprocess
 import requests
 from kubernetes import client, config
@@ -20,21 +21,19 @@ SPLUNKBASE_APPS = [
         "id":          7404,
         "folder_name": "cisco_security_cloud",
         "display":     "Cisco Security Cloud",
-        "description": "Dashboards and searches for Cisco XDR / Umbrella / Secure events.",
+        "description": "Dashboards and searches for Cisco Duo, Identity Intelligence, and Secure Access events.",
         "url":         "https://splunkbase.splunk.com/app/7404",
     },
     {
         "id":          7931,
         "folder_name": "splunk_mcp_server",
         "display":     "Splunk MCP Server",
-        "description": "Expose Splunk search as an MCP tool for Claude and other AI agents.",
+        "description": "Expose Splunk search as an MCP tool for Claude and other AI agents via the /services/mcp endpoint.",
         "url":         "https://splunkbase.splunk.com/app/7931",
     },
 ]
 
-NAMESPACE            = "piap"
-FLUENT_BIT_DAEMONSET = "fluent-bit"
-FLUENT_BIT_CONFIGMAP = "fluent-bit-config"
+NAMESPACE = "piap"
 
 
 def _core():
@@ -67,29 +66,6 @@ def hec_is_healthy():
         return False
 
 
-def get_forwarder_status():
-    """Return (desired, ready) pod counts for the Fluent Bit DaemonSet, or (None, None)."""
-    try:
-        ds = _apps().read_namespaced_daemon_set(FLUENT_BIT_DAEMONSET, NAMESPACE)
-        return (ds.status.desired_number_scheduled or 0, ds.status.number_ready or 0)
-    except ApiException:
-        return (None, None)
-
-
-def get_enabled_sources():
-    """Return which log sources are currently @INCLUDEd in the Fluent Bit config."""
-    try:
-        cm = _core().read_namespaced_config_map(FLUENT_BIT_CONFIGMAP, NAMESPACE)
-        main = cm.data.get("fluent-bit.conf", "")
-        return {
-            "tetragon": "@INCLUDE input-tetragon.conf" in main,
-            "hubble":   "@INCLUDE input-hubble.conf"   in main,
-            "cilium":   "@INCLUDE input-cilium.conf"   in main,
-        }
-    except ApiException:
-        return {"tetragon": True, "hubble": True, "cilium": True}
-
-
 def deploy_splunk(license_content: str = "") -> bool:
     """
     Create (or idempotently re-apply) the Splunk Secret, Deployment, and Service.
@@ -101,13 +77,6 @@ def deploy_splunk(license_content: str = "") -> bool:
     Without a license the container starts a 60-day Enterprise trial, after which
     it degrades to Splunk Free (500 MB/day, authentication disabled — the admin
     password is then effectively ignored).
-
-    # TODO: Revisit Splunk licensing before using this in production or long-lived
-    # demos.  As of 2025/2026, Splunk has tightened its developer/free license
-    # program — a "developer license" may now require registration and approval at
-    # https://dev.splunk.com/ rather than being self-service.  Check the current
-    # options; the 60-day trial may be the only frictionless path for a PoC, but
-    # it will expire and break authentication after two months.
 
     Returns True if an Enterprise license was provided, False for trial mode.
     """
@@ -252,49 +221,6 @@ def deploy_splunk(license_content: str = "") -> bool:
             raise
 
     return has_license
-
-
-def configure_log_forwarding(sources: dict):
-    """
-    Patch the Fluent Bit ConfigMap to enable/disable log sources,
-    then trigger a DaemonSet rollout so pods pick up the new config.
-    """
-    includes = []
-    if sources.get("tetragon"):
-        includes.append("    @INCLUDE input-tetragon.conf")
-    if sources.get("hubble"):
-        includes.append("    @INCLUDE input-hubble.conf")
-    if sources.get("cilium"):
-        includes.append("    @INCLUDE input-cilium.conf")
-
-    includes_block = "\n".join(includes) if includes else "    # all sources disabled"
-
-    new_main = (
-        "[SERVICE]\n"
-        "    Flush           5\n"
-        "    Log_Level       info\n"
-        "    Daemon          off\n"
-        "    Parsers_File    parsers.conf\n"
-        "    HTTP_Server     On\n"
-        "    HTTP_Listen     0.0.0.0\n"
-        "    HTTP_Port       2020\n\n"
-        f"{includes_block}\n"
-        "    @INCLUDE output-splunk.conf\n"
-    )
-
-    core = _core()
-    cm = core.read_namespaced_config_map(FLUENT_BIT_CONFIGMAP, NAMESPACE)
-    cm.data["fluent-bit.conf"] = new_main
-    core.patch_namespaced_config_map(FLUENT_BIT_CONFIGMAP, NAMESPACE, cm)
-
-    # Bump a pod-template annotation to trigger a rolling restart of the DaemonSet
-    now = datetime.datetime.utcnow().isoformat() + "Z"
-    _apps().patch_namespaced_daemon_set(
-        FLUENT_BIT_DAEMONSET, NAMESPACE,
-        {"spec": {"template": {"metadata": {"annotations": {
-            "kubectl.kubernetes.io/restartedAt": now
-        }}}}}
-    )
 
 
 def get_splunkbase_app_status() -> dict:

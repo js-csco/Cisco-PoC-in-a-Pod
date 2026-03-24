@@ -598,8 +598,7 @@ def mcp_servers():
 @app.route('/splunk', methods=['GET', 'POST'])
 def splunk():
     from scripts.splunk import (
-        is_available, hec_is_healthy, get_forwarder_status,
-        get_enabled_sources, configure_log_forwarding,
+        is_available, hec_is_healthy,
         SPLUNKBASE_APPS, get_splunkbase_app_status,
     )
 
@@ -612,24 +611,11 @@ def splunk():
             try:
                 has_license = deploy_splunk(license_content)
                 if has_license:
-                    flash("✅ Splunk deployed with Enterprise license — allow ~5 min for startup.")
+                    flash("Splunk deployed with Enterprise license — allow ~5 min for startup.")
                 else:
-                    flash("✅ Splunk deployed (60-day Enterprise trial) — allow ~5 min for startup.")
+                    flash("Splunk deployed (60-day Enterprise trial) — allow ~5 min for startup.")
             except Exception as e:
-                flash(f"⚠️ Deployment failed: {e}")
-            return redirect(url_for('splunk'))
-
-        if action == 'configure_logs':
-            sources = {
-                'tetragon': 'log_tetragon' in request.form,
-                'hubble':   'log_hubble'   in request.form,
-                'cilium':   'log_cilium'   in request.form,
-            }
-            try:
-                configure_log_forwarding(sources)
-                flash("Log forwarding updated — Fluent Bit pods restarting.")
-            except Exception as e:
-                flash(f"Failed to update log forwarding: {e}")
+                flash(f"Deployment failed: {e}")
             return redirect(url_for('splunk'))
 
         if action == 'install_app':
@@ -639,25 +625,21 @@ def splunk():
             sb_pass = request.form.get('splunkbase_password', '').strip()
             app_name = next((a['display'] for a in SPLUNKBASE_APPS if str(a['id']) == app_id), app_id)
             if not app_id or not sb_user or not sb_pass:
-                flash("⚠️ App ID, Splunk.com username, and password are all required.")
+                flash("App ID, Splunk.com username, and password are all required.")
             else:
                 try:
                     install_splunkbase_app(int(app_id), sb_user, sb_pass)
-                    flash(f"✅ {app_name} installed — restart Splunk to activate.")
+                    flash(f"{app_name} installed — restart Splunk to activate.")
                 except Exception as e:
-                    flash(f"⚠️ Install failed: {e}")
+                    flash(f"Install failed: {e}")
             return redirect(url_for('splunk'))
 
     splunk_available = is_available()
-    forwarder_desired, forwarder_ready = get_forwarder_status()
     app_status = get_splunkbase_app_status() if splunk_available else {}
     return render_template(
         'splunk.html',
         splunk_available=splunk_available,
         hec_healthy=hec_is_healthy() if splunk_available else False,
-        forwarder_desired=forwarder_desired,
-        forwarder_ready=forwarder_ready,
-        enabled_sources=get_enabled_sources(),
         server_ip=request.host.split(':')[0],
         splunkbase_apps=SPLUNKBASE_APPS,
         app_status=app_status,
