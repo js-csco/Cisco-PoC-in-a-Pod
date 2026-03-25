@@ -526,13 +526,25 @@ kubectl wait --for=condition=Ready pods --all -n piap --timeout=120s || true
 kubectl get pods -n piap
 echo ""
 
-# Step 19a: Seed Uptime-Kuma monitors
-echo "Step 19a: Seeding Uptime-Kuma monitors..."
+# Step 19a: Wait for Uptime-Kuma specifically before seeding
+echo "Step 19a: Waiting for Uptime-Kuma to be fully ready..."
+kubectl wait --for=condition=Ready pod -l app=uptime-kuma -n piap --timeout=120s || true
+# Uptime-Kuma needs extra time after the pod is "Ready" for Socket.IO to initialize
+sleep 10
+
+# Step 19b: Seed Uptime-Kuma monitors
+echo "Step 19b: Seeding Uptime-Kuma monitors (dark mode, disable auth, add monitors)..."
 kubectl delete job uptime-kuma-seed -n piap --ignore-not-found=true
 kubectl apply -f "$REPO_ROOT/k8s/uptime-kuma-seed-job.yaml" -n piap
-kubectl wait --for=condition=Complete job/uptime-kuma-seed -n piap --timeout=180s || \
-    echo "  Warning: Uptime-Kuma seed job did not complete in time (monitors can be added manually)"
-echo "  ✓ Uptime-Kuma monitors seeded"
+echo "  Waiting for seed job to complete (up to 5 min)..."
+if kubectl wait --for=condition=Complete job/uptime-kuma-seed -n piap --timeout=300s; then
+    echo "  ✓ Uptime-Kuma monitors seeded successfully"
+else
+    echo "  ✗ Uptime-Kuma seed job failed. Logs:"
+    kubectl logs -n piap -l app=uptime-kuma-seed --tail=30 2>/dev/null || true
+    echo ""
+    echo "  You can retry manually: kubectl delete job uptime-kuma-seed -n piap && kubectl apply -f k8s/uptime-kuma-seed-job.yaml -n piap"
+fi
 echo ""
 
 # Step 19.1: Install the connector internet masquerade rule.

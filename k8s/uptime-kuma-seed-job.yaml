@@ -114,7 +114,7 @@ data:
     ]
 
     def wait_for_kuma(max_retries=30, delay=10):
-        """Wait for uptime-kuma to be reachable."""
+        """Wait for uptime-kuma to be reachable via HTTP."""
         import urllib.request
         for i in range(max_retries):
             try:
@@ -126,66 +126,102 @@ data:
                 time.sleep(delay)
         return False
 
+    def connect_socketio(max_retries=5, delay=10):
+        """Connect to Uptime-Kuma via Socket.IO with retries."""
+        for attempt in range(max_retries):
+            try:
+                sio = socketio.Client(logger=False, engineio_logger=False)
+                connected = []
+
+                @sio.event
+                def connect():
+                    connected.append(True)
+                    print("Connected to Uptime-Kuma Socket.IO")
+
+                @sio.event
+                def disconnect():
+                    print("Disconnected from Uptime-Kuma")
+
+                sio.connect(KUMA_URL, transports=["websocket"], wait_timeout=15)
+                # Give Socket.IO a moment to fully establish
+                time.sleep(2)
+                if connected:
+                    return sio
+                else:
+                    print(f"Socket.IO connected but no connect event (attempt {attempt+1})")
+                    try:
+                        sio.disconnect()
+                    except Exception:
+                        pass
+            except Exception as e:
+                print(f"Socket.IO connection attempt {attempt+1}/{max_retries} failed: {e}")
+            time.sleep(delay)
+        return None
+
     def main():
+        print(f"Uptime-Kuma seeder starting...")
+        print(f"Target: {KUMA_URL}")
+
         if not wait_for_kuma():
             print("ERROR: Uptime-Kuma not reachable after retries. Exiting.")
             sys.exit(1)
 
-        # Extra delay for Socket.IO to be fully ready
-        time.sleep(5)
+        # Extra delay — HTTP may be up but Socket.IO needs more time
+        print("Waiting 15s for Socket.IO to be fully ready...")
+        time.sleep(15)
 
-        sio = socketio.Client()
-        result = {}
-
-        @sio.event
-        def connect():
-            print("Connected to Uptime-Kuma Socket.IO")
-
-        @sio.event
-        def disconnect():
-            print("Disconnected from Uptime-Kuma")
-
-        try:
-            sio.connect(KUMA_URL, transports=["websocket"])
-        except Exception as e:
-            print(f"ERROR: Could not connect via Socket.IO: {e}")
+        sio = connect_socketio()
+        if not sio:
+            print("ERROR: Could not connect via Socket.IO after retries. Exiting.")
             sys.exit(1)
 
         # Try to set up initial admin user (only works on first run)
+        setup_ok = False
         try:
             response = sio.call("setup", {
                 "username": ADMIN_USER,
                 "password": ADMIN_PASS,
-            }, timeout=10)
+            }, timeout=15)
             print(f"Setup response: {response}")
-        except Exception as e:
-            print(f"Setup skipped (likely already configured): {e}")
-
-        # Login
-        try:
-            response = sio.call("login", {
-                "username": ADMIN_USER,
-                "password": ADMIN_PASS,
-                "token": "",
-            }, timeout=10)
-            if response.get("ok"):
-                print("Logged in successfully")
+            if isinstance(response, dict) and response.get("ok"):
+                setup_ok = True
+                print("Admin user created successfully")
             else:
-                print(f"Login failed: {response}")
-                sio.disconnect()
-                sys.exit(1)
+                print("Setup returned non-ok (user may already exist)")
         except Exception as e:
-            print(f"ERROR: Login failed: {e}")
+            print(f"Setup call failed (user may already exist): {e}")
+
+        # Login — try even if setup failed (user may already exist)
+        logged_in = False
+        for attempt in range(3):
+            try:
+                response = sio.call("login", {
+                    "username": ADMIN_USER,
+                    "password": ADMIN_PASS,
+                    "token": "",
+                }, timeout=15)
+                if isinstance(response, dict) and response.get("ok"):
+                    print("Logged in successfully")
+                    logged_in = True
+                    break
+                else:
+                    print(f"Login attempt {attempt+1} failed: {response}")
+            except Exception as e:
+                print(f"Login attempt {attempt+1} error: {e}")
+            time.sleep(3)
+
+        if not logged_in:
+            print("ERROR: Could not log in after 3 attempts. Exiting.")
             sio.disconnect()
             sys.exit(1)
 
-        # Set dark mode theme
+        # Set dark mode theme and other settings
         try:
             response = sio.call("setSettings", {
                 "primaryBaseURL": "",
                 "theme": "dark",
-            }, timeout=10)
-            if response.get("ok"):
+            }, timeout=15)
+            if isinstance(response, dict) and response.get("ok"):
                 print("Theme set to dark mode")
             else:
                 print(f"Failed to set theme: {response}")
@@ -194,8 +230,8 @@ data:
 
         # Disable authentication for easy access
         try:
-            response = sio.call("disableAuth", timeout=10)
-            if response.get("ok"):
+            response = sio.call("disableAuth", timeout=15)
+            if isinstance(response, dict) and response.get("ok"):
                 print("Authentication disabled")
             else:
                 print(f"Failed to disable auth: {response}")
@@ -213,9 +249,9 @@ data:
                 monitor_list.update(data)
 
         try:
-            sio.call("getMonitorList", timeout=10)
+            sio.call("getMonitorList", timeout=15)
             # Give time for the monitorList event to arrive
-            time.sleep(2)
+            time.sleep(3)
             for mid, mon in monitor_list.items():
                 if isinstance(mon, dict):
                     existing.add(mon.get("name"))
@@ -231,8 +267,8 @@ data:
                 continue
 
             try:
-                response = sio.call("add", monitor, timeout=10)
-                if response.get("ok"):
+                response = sio.call("add", monitor, timeout=15)
+                if isinstance(response, dict) and response.get("ok"):
                     print(f"  Added monitor: {monitor['name']}")
                     added += 1
                 else:
@@ -254,8 +290,8 @@ metadata:
   labels:
     app: uptime-kuma-seed
 spec:
-  ttlSecondsAfterFinished: 300
-  backoffLimit: 3
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 5
   template:
     metadata:
       labels:
