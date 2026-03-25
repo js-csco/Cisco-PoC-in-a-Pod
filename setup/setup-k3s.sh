@@ -437,36 +437,7 @@ echo ""
 # ============================================================
 
 # Step 16: Prompt for Splunk admin password (optional)
-echo "================================================"
-echo "  Splunk Configuration (optional)"
-echo "================================================"
-echo ""
-echo "Splunk requires a Splunk Enterprise or Free license accepted on first login."
-echo "Leave empty and press Enter to skip Splunk — all other services will still deploy."
-echo ""
-read -s -p "Splunk Admin Password (min 8 chars, or Enter to skip): " SPLUNK_PASSWORD
-echo ""
-
-DEPLOY_SPLUNK=false
-if [ -n "$SPLUNK_PASSWORD" ]; then
-    read -s -p "Confirm Splunk Admin Password: " SPLUNK_PASSWORD_CONFIRM
-    echo ""
-
-    if [ "$SPLUNK_PASSWORD" != "$SPLUNK_PASSWORD_CONFIRM" ]; then
-        echo "❌ Passwords do not match!"
-        exit 1
-    fi
-
-    if [ ${#SPLUNK_PASSWORD} -lt 8 ]; then
-        echo "❌ Password must be at least 8 characters long!"
-        exit 1
-    fi
-
-    DEPLOY_SPLUNK=true
-    echo "✓ Splunk password set — Splunk will be deployed"
-else
-    echo "  Skipping Splunk — running without Splunk"
-fi
+echo "  Splunk will be deployed from the Automagic dashboard (requires a valid license)."
 echo ""
 
 # Step 17: Update configuration files with server IP
@@ -522,21 +493,10 @@ echo "Step 18: Deploying applications to Kubernetes..."
 
 kubectl create namespace piap --dry-run=client -o yaml | kubectl apply -f -
 
-if [ "$DEPLOY_SPLUNK" = "true" ]; then
-    echo "  Creating Splunk credentials secret..."
-    kubectl create secret generic splunk-creds -n piap \
-      --from-literal=password="$SPLUNK_PASSWORD" \
-      --dry-run=client -o yaml | kubectl apply -f -
-fi
-
 for manifest in "$REPO_ROOT/k8s/"*.yaml; do
     case "$manifest" in
         *splunk*)
-            if [ "$DEPLOY_SPLUNK" = "true" ]; then
-                kubectl apply -f "$manifest" -n piap
-            else
-                echo "  Skipping $(basename $manifest) (Splunk not configured)"
-            fi
+            echo "  Skipping $(basename $manifest) — deploy from the Automagic dashboard with a license"
             ;;
         *caldera*)
             echo "  Skipping $(basename $manifest) — deploy from the Automagic dashboard"
@@ -646,35 +606,8 @@ kubectl get svc -n piap -o wide
 echo ""
 echo "Hubble UI: http://$SERVER_IP:30800"
 echo ""
-if [ "$DEPLOY_SPLUNK" = "true" ]; then
-echo "================================================"
-echo "  IMPORTANT: Splunk Setup Required"
-echo "================================================"
+echo "  Splunk: Deploy from the Automagic dashboard with your Enterprise license."
 echo ""
-echo "To complete your Splunk setup, follow these steps:"
-echo ""
-echo "1. Access Splunk Web UI at: http://$SERVER_IP:30500"
-echo "   Username: admin"
-echo "   Password: (the password you just set)"
-echo ""
-echo "2. Accept the Splunk Free License:"
-echo "   - Go to Settings > Licensing"
-echo "   - Click 'Add license' or accept the Free license"
-echo ""
-echo "3. Install required apps from Splunkbase:"
-echo "   a) Cisco Security Cloud App:"
-echo "      - Go to Apps > Find More Apps"
-echo "      - Search for 'Cisco Security Cloud'"
-echo "      - Click 'Install' (requires Splunk.com login)"
-echo ""
-echo "   b) Splunk MCP Server:"
-echo "      - Go to Apps > Find More Apps"
-echo "      - Search for 'Splunk MCP Server'"
-echo "      - Click 'Install'"
-echo ""
-echo "4. Configure the apps according to their documentation"
-echo ""
-fi
 echo "================================================"
 echo "  Useful Commands"
 echo "================================================"
