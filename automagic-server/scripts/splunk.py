@@ -10,6 +10,8 @@ import requests
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
+SPLUNK_PASSWORD = "piap-admin"
+
 SPLUNK_URL     = os.environ.get("SPLUNK_URL",      "http://splunk.piap.svc.cluster.local:8000")
 SPLUNK_HEC_URL = os.environ.get("SPLUNK_HEC_URL",  "http://splunk.piap.svc.cluster.local:8088")
 SPLUNK_API_URL = os.environ.get("SPLUNK_API_URL",  "http://splunk.piap.svc.cluster.local:8089")
@@ -87,7 +89,7 @@ def deploy_splunk(license_content: str = "") -> bool:
     # ── 1. splunk-creds Secret (password + HEC token) ────────────────────────
     creds_secret = client.V1Secret(
         metadata=client.V1ObjectMeta(name="splunk-creds", namespace=NAMESPACE),
-        string_data={"password": "piap", "hec_token": HEC_TOKEN},
+        string_data={"password": SPLUNK_PASSWORD, "hec_token": HEC_TOKEN},
     )
     try:
         core.create_namespaced_secret(NAMESPACE, creds_secret)
@@ -114,6 +116,7 @@ def deploy_splunk(license_content: str = "") -> bool:
     # ── 3. Build Deployment ───────────────────────────────────────────────────
     env = [
         client.V1EnvVar(name="SPLUNK_START_ARGS", value="--accept-license --no-prompt"),
+        client.V1EnvVar(name="SPLUNK_GENERAL_TERMS", value="--accept-sgt-current-at-splunk-com"),
         client.V1EnvVar(
             name="SPLUNK_PASSWORD",
             value_from=client.V1EnvVarSource(
@@ -233,7 +236,7 @@ def get_splunkbase_app_status() -> dict:
         for app in SPLUNKBASE_APPS:
             r = requests.get(
                 f"{SPLUNK_API_URL}/services/apps/local/{app['folder_name']}",
-                auth=("admin", "piap"),
+                auth=("admin", SPLUNK_PASSWORD),
                 timeout=5,
             )
             status[app["folder_name"]] = (r.status_code == 200)
@@ -262,7 +265,7 @@ def install_splunkbase_app(app_id: int, splunkbase_username: str, splunkbase_pas
             "kubectl", "exec", "-n", NAMESPACE, pod_name, "--",
             "/opt/splunk/bin/splunk", "install", "app",
             f"https://splunkbase.splunk.com/app/{app_id}/release/latest/download",
-            "-auth", "admin:piap",
+            "-auth", f"admin:{SPLUNK_PASSWORD}",
             "-splunkbase_username", splunkbase_username,
             "-splunkbase_password", splunkbase_password,
             "-update", "true",
@@ -272,3 +275,79 @@ def install_splunkbase_app(app_id: int, splunkbase_username: str, splunkbase_pas
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or result.stdout.strip())
     return result.stdout.strip()
+
+
+def get_pod_status() -> dict:
+    """
+    Check the Splunk pod status in Kubernetes.
+    Returns a dict with:
+      - state: "not_found" | "running" | "pending" | "crash_loop" | "error" | "starting"
+      - message: human-readable status
+      - restart_count: number of container restarts
+      - logs: last few log lines (if crashed)
+    """
+    try:
+        core = _core()
+        pods = core.list_namespaced_pod(
+            NAMESPACE, label_selector="app=splunk"
+        )
+    except Exception:
+        return {"state": "not_found", "message": "Cannot reach Kubernetes API", "restart_count": 0, "logs": ""}
+
+    if not pods.items:
+        return {"state": "not_found", "message": "No Splunk pod found", "restart_count": 0, "logs": ""}
+
+    pod = pods.items[0]
+    phase = pod.status.phase or "Unknown"
+
+    if not pod.status.container_statuses:
+        return {"state": "pending", "message": f"Pod phase: {phase}", "restart_count": 0, "logs": ""}
+
+    cs = pod.status.container_statuses[0]
+    restarts = cs.restart_count or 0
+
+    # Running and ready
+    if cs.ready and cs.state.running:
+        return {"state": "running", "message": "Splunk is running", "restart_count": restarts, "logs": ""}
+
+    # CrashLoopBackOff or Error
+    if cs.state.waiting:
+        reason = cs.state.waiting.reason or ""
+        msg = cs.state.waiting.message or reason
+        if "CrashLoopBackOff" in reason or "Error" in reason or restarts >= 2:
+            # Grab recent logs to show the user what went wrong
+            logs = ""
+            try:
+                logs = core.read_namespaced_pod_log(
+                    pod.metadata.name, NAMESPACE,
+                    container="splunk", tail_lines=15, previous=True,
+                )
+            except Exception:
+                try:
+                    logs = core.read_namespaced_pod_log(
+                        pod.metadata.name, NAMESPACE,
+                        container="splunk", tail_lines=15,
+                    )
+                except Exception:
+                    pass
+            return {"state": "crash_loop", "message": msg, "restart_count": restarts, "logs": logs}
+        return {"state": "starting", "message": f"Waiting: {msg}", "restart_count": restarts, "logs": ""}
+
+    # Container running but not ready yet (still starting up)
+    if cs.state.running and not cs.ready:
+        return {"state": "starting", "message": "Splunk is starting up...", "restart_count": restarts, "logs": ""}
+
+    # Terminated
+    if cs.state.terminated:
+        reason = cs.state.terminated.reason or "Terminated"
+        logs = ""
+        try:
+            logs = core.read_namespaced_pod_log(
+                pod.metadata.name, NAMESPACE,
+                container="splunk", tail_lines=15, previous=True,
+            )
+        except Exception:
+            pass
+        return {"state": "error", "message": reason, "restart_count": restarts, "logs": logs}
+
+    return {"state": "pending", "message": f"Pod phase: {phase}", "restart_count": restarts, "logs": ""}

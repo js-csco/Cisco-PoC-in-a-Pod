@@ -6,7 +6,7 @@ metadata:
   namespace: piap
 type: Opaque
 stringData:
-  password: "piap"
+  password: "piap-admin"
   hec_token: "piap-hec-token"
 ---
 apiVersion: v1
@@ -78,6 +78,8 @@ spec:
         env:
         - name: SPLUNK_START_ARGS
           value: "--accept-license --no-prompt"
+        - name: SPLUNK_GENERAL_TERMS
+          value: "--accept-sgt-current-at-splunk-com"
         - name: SPLUNK_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -127,11 +129,11 @@ spec:
           mountPath: /opt/splunk/etc/apps
         resources:
           requests:
-            memory: "2Gi"
-            cpu: "1000m"
+            memory: "512Mi"
+            cpu: "500m"
           limits:
-            memory: "4Gi"
-            cpu: "2000m"
+            memory: "1536Mi"
+            cpu: "1000m"
         livenessProbe:
           httpGet:
             path: /en-US/account/login

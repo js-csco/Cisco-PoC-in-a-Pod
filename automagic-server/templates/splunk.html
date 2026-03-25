@@ -29,47 +29,164 @@
   </div>
 
   <p style="color:#555; font-size:0.9em; margin:0 0 6px 0; line-height:1.6;">
-    Splunk is not yet running. Click <strong>Deploy</strong> to create the container, publish the Web UI,
+    Splunk is not yet running. Paste your <strong>Enterprise license</strong> below and click
+    <strong>Deploy</strong> to create the container, publish the Web UI,
     and configure the HTTP Event Collector (HEC).
     Startup takes approximately <strong>5 minutes</strong>.
   </p>
 
   <!-- License note -->
   <div style="background:#fff3e0; border:1px solid #ffcc80; border-radius:6px; padding:10px 14px; margin-bottom:16px; font-size:0.83em; color:#666; line-height:1.6;">
-    <strong>License:</strong>
-    Without a license file the container starts a <strong>60-day Enterprise trial</strong>, then falls back to
-    Splunk Free (500 MB/day, authentication disabled).
-    For a standing lab, paste your <strong>Enterprise or Developer .lic file</strong> below.
+    <strong>License required:</strong>
+    A valid Splunk Enterprise license is needed to install Splunkbase apps and enable
+    authentication. Without a license, apps cannot be installed from Splunkbase.
     <br>
     <span style="color:#e65100;">
-      Developer licenses may now require sign-up at
-      <a href="https://dev.splunk.com/" target="_blank" style="color:#e65100;">dev.splunk.com</a>
-      — the 60-day trial is fine for short demos.
+      Obtain a license from your Splunk account manager or at
+      <a href="https://www.splunk.com/en_us/products.html" target="_blank" style="color:#e65100;">splunk.com</a>.
     </span>
   </div>
 
-  <form method="POST">
+  <form method="POST" id="deploy-form">
     <label style="display:block; font-size:0.85em; font-weight:600; color:#555; margin-bottom:6px;">
-      Enterprise / Developer License <span style="font-weight:400; color:#999;">(optional — paste .lic file contents)</span>
+      Enterprise License <span style="font-weight:400; color:#c62828;">(required — paste .lic file contents)</span>
     </label>
-    <textarea name="license_content" rows="5"
-              placeholder="<?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>&#10;<license>...</license>&#10;&#10;Leave empty to start the 60-day Enterprise trial."
+    <textarea name="license_content" id="license-input" rows="5"
+              placeholder="<?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>&#10;<license>...</license>&#10;&#10;Paste your Splunk Enterprise .lic file contents here."
               style="width:100%; box-sizing:border-box; font-family:monospace; font-size:0.82em;
                      border:1px solid #e0e0e0; border-radius:6px; padding:10px; resize:vertical;
                      color:#333; background:#fff;"></textarea>
-    <div style="margin-top:14px;">
-      <button type="submit" name="action" value="deploy_splunk"
-              style="background-color:#f9a825; color:#333; border:none; padding:11px 28px;
-                     border-radius:8px; font-weight:700; cursor:pointer; font-size:0.95em;">
+    <div style="margin-top:14px; display:flex; align-items:center; gap:14px;">
+      <button type="submit" name="action" value="deploy_splunk" id="deploy-btn"
+              disabled
+              style="background-color:#ccc; color:#777; border:none; padding:11px 28px;
+                     border-radius:8px; font-weight:700; cursor:not-allowed; font-size:0.95em;
+                     transition: all 0.2s ease;">
         Deploy Splunk
       </button>
-      <span style="margin-left:14px; font-size:0.82em; color:#999;">
-        Web UI (30500) · HEC (30501) · Splunkd API (30502)
+      <span id="deploy-hint" style="font-size:0.82em; color:#999;">
+        Paste a license key to enable deployment
       </span>
     </div>
   </form>
 </section>
+
+<script>
+(function() {
+  var input = document.getElementById('license-input');
+  var btn   = document.getElementById('deploy-btn');
+  var hint  = document.getElementById('deploy-hint');
+  if (!input || !btn) return;
+
+  function checkLicense() {
+    var hasContent = input.value.trim().length > 0;
+    btn.disabled = !hasContent;
+    if (hasContent) {
+      btn.style.backgroundColor = '#f9a825';
+      btn.style.color = '#333';
+      btn.style.cursor = 'pointer';
+      if (hint) hint.textContent = 'Web UI (30500) · HEC (30501) · Splunkd API (30502)';
+    } else {
+      btn.style.backgroundColor = '#ccc';
+      btn.style.color = '#777';
+      btn.style.cursor = 'not-allowed';
+      if (hint) hint.textContent = 'Paste a license key to enable deployment';
+    }
+  }
+
+  input.addEventListener('input', checkLicense);
+  input.addEventListener('paste', function() { setTimeout(checkLicense, 50); });
+  checkLicense();
+})();
+</script>
 {% endif %}
+
+
+<!-- ═══════════════════════════════════════════════════════ DEPLOYMENT STATUS (polls after deploy) -->
+<div id="deploy-status" style="display:none; margin-bottom:2rem;">
+  <div id="deploy-status-inner" style="border-radius:8px; padding:16px 20px; font-size:0.9em; line-height:1.6;">
+  </div>
+</div>
+
+<script>
+(function() {
+  // Only poll if Splunk is NOT available (i.e. we might be waiting for it to start)
+  var splunkAvailable = {{ 'true' if splunk_available else 'false' }};
+  if (splunkAvailable) return;
+
+  var statusDiv = document.getElementById('deploy-status');
+  var inner     = document.getElementById('deploy-status-inner');
+  if (!statusDiv || !inner) return;
+
+  var pollCount = 0;
+  var maxPolls = 60;  // poll for up to 5 minutes (every 5s)
+
+  function poll() {
+    if (pollCount >= maxPolls) {
+      inner.innerHTML = '<strong>Timeout:</strong> Splunk has not come online yet. Check your VM with <code>kubectl logs -n piap -l app=splunk</code>.';
+      inner.style.background = '#fff3e0';
+      inner.style.border = '1px solid #ffcc80';
+      inner.style.color = '#e65100';
+      return;
+    }
+    pollCount++;
+
+    fetch('/splunk/status')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        statusDiv.style.display = 'block';
+
+        if (data.state === 'not_found') {
+          statusDiv.style.display = 'none';
+          return;
+        }
+
+        if (data.state === 'running' || data.splunk_available) {
+          inner.style.background = '#e8f5e9';
+          inner.style.border = '1px solid #a5d6a7';
+          inner.style.color = '#2e7d32';
+          inner.innerHTML = '<strong>Splunk is online!</strong> Reloading page...';
+          setTimeout(function() { window.location.reload(); }, 2000);
+          return;
+        }
+
+        if (data.state === 'crash_loop' || data.state === 'error') {
+          inner.style.background = '#fce4ec';
+          inner.style.border = '1px solid #ef9a9a';
+          inner.style.color = '#b71c1c';
+          var html = '<strong>Deployment failed</strong> (restarts: ' + data.restart_count + ')<br>';
+          html += '<span style="font-size:0.9em;">' + escapeHtml(data.message) + '</span>';
+          if (data.logs) {
+            html += '<pre style="margin:10px 0 0; padding:10px; background:#fff5f5; border:1px solid #ef9a9a; border-radius:4px; font-size:0.8em; max-height:200px; overflow-y:auto; white-space:pre-wrap; color:#333;">' + escapeHtml(data.logs) + '</pre>';
+          }
+          html += '<p style="margin:10px 0 0; font-size:0.85em; color:#666;">Check your license key and redeploy, or inspect logs on the VM: <code>kubectl logs -n piap -l app=splunk --previous</code></p>';
+          inner.innerHTML = html;
+          return;  // stop polling
+        }
+
+        // starting / pending
+        inner.style.background = '#e3f2fd';
+        inner.style.border = '1px solid #90caf9';
+        inner.style.color = '#1565c0';
+        var dots = '.'.repeat((pollCount % 3) + 1);
+        inner.innerHTML = '<strong>Splunk is starting' + dots + '</strong> (' + escapeHtml(data.message) + ')';
+        setTimeout(poll, 5000);
+      })
+      .catch(function() {
+        setTimeout(poll, 5000);
+      });
+  }
+
+  function escapeHtml(s) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(s || ''));
+    return div.innerHTML;
+  }
+
+  // Start polling after a short delay
+  setTimeout(poll, 3000);
+})();
+</script>
 
 
 <!-- ═══════════════════════════════════════════════════════ CURRENT STATUS -->
@@ -90,7 +207,7 @@
         </div>
         <p style="margin:10px 0 0; font-size:0.8em; color:#888;">
           <a href="http://{{ server_ip }}:30500" target="_blank" style="color:#0066ff;">Open Splunk UI</a>
-          &nbsp;·&nbsp; <code>admin / piap</code>
+          &nbsp;·&nbsp; <code>admin / piap-admin</code>
         </p>
       {% else %}
         <div style="display:inline-flex; align-items:center; gap:8px; background:#fce4ec; border:1px solid #ef9a9a; border-radius:8px; padding:8px 14px;">
@@ -247,7 +364,7 @@
 
     <div style="font-size:0.85em; color:#444; line-height:1.7; margin-bottom:14px;">
       <strong>Transport:</strong> Streamable HTTP (SSE) &nbsp;·&nbsp;
-      <strong>Auth:</strong> Splunk credentials (<code>admin / piap</code>)
+      <strong>Auth:</strong> Splunk credentials (<code>admin / piap-admin</code>)
     </div>
 
     <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:6px; padding:14px; margin-top:12px;">
@@ -258,7 +375,7 @@
       "type": "sse",
       "url": "https://{{ server_ip }}:30502/services/mcp",
       "headers": {
-        "Authorization": "Basic YWRtaW46cGlhcA=="
+        "Authorization": "Basic YWRtaW46cGlhcC1hZG1pbg=="
       }
     }
   }

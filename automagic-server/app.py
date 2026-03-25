@@ -608,12 +608,12 @@ def splunk():
         if action == 'deploy_splunk':
             from scripts.splunk import deploy_splunk
             license_content = request.form.get('license_content', '').strip()
+            if not license_content:
+                flash("A Splunk Enterprise license is required. Paste your .lic file contents to deploy.")
+                return redirect(url_for('splunk'))
             try:
-                has_license = deploy_splunk(license_content)
-                if has_license:
-                    flash("Splunk deployed with Enterprise license — allow ~5 min for startup.")
-                else:
-                    flash("Splunk deployed (60-day Enterprise trial) — allow ~5 min for startup.")
+                deploy_splunk(license_content)
+                flash("Splunk deployed with Enterprise license — allow ~5 min for startup.")
             except Exception as e:
                 flash(f"Deployment failed: {e}")
             return redirect(url_for('splunk'))
@@ -644,6 +644,15 @@ def splunk():
         splunkbase_apps=SPLUNKBASE_APPS,
         app_status=app_status,
     )
+
+@app.route('/splunk/status')
+def splunk_status():
+    from scripts.splunk import get_pod_status, is_available, hec_is_healthy
+    status = get_pod_status()
+    status["splunk_available"] = is_available()
+    status["hec_healthy"] = hec_is_healthy() if status["splunk_available"] else False
+    from flask import jsonify
+    return jsonify(status)
 
 @app.route('/thousandeyes')
 def thousandeyes():
