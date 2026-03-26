@@ -85,13 +85,6 @@ spec:
             secretKeyRef:
               name: splunk-creds
               key: password
-        # Disable Ansible deployment which causes the sudo error
-        - name: SPLUNK_ANSIBLE_ENV
-          value: "local"
-        - name: SPLUNK_ANSIBLE_PRE_TASKS
-          value: "null"
-        - name: SPLUNK_ANSIBLE_POST_TASKS
-          value: "null"
         - name: TZ
           value: Europe/Berlin
         # Add this to ensure proper startup
