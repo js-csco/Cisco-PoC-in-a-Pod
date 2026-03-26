@@ -497,20 +497,47 @@ def _create_adversary(name, description, ability_ids):
     return r.json()
 
 
+def _cleanup_poc_artifacts():
+    """Remove all PoC adversaries and abilities so setup can start fresh."""
+    # Delete PoC adversaries
+    for adv in get_adversaries():
+        if adv.get("name", "").startswith("PoC:"):
+            try:
+                requests.delete(
+                    f"{CALDERA_URL}/api/v2/adversaries/{adv['adversary_id']}",
+                    headers=_headers(), timeout=5,
+                )
+            except Exception:
+                pass
+
+    # Delete PoC abilities
+    try:
+        r = requests.get(f"{CALDERA_URL}/api/v2/abilities", headers=_headers(), timeout=5)
+        r.raise_for_status()
+        for ab in r.json():
+            if ab.get("name", "").startswith("PoC"):
+                try:
+                    requests.delete(
+                        f"{CALDERA_URL}/api/v2/abilities/{ab['ability_id']}",
+                        headers=_headers(), timeout=5,
+                    )
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+
 def setup_demo_adversaries():
     """
     Create the 3 PoC adversaries (and their abilities) in Caldera.
-    Skips any adversary whose name already exists.
+    Cleans up any previous PoC artifacts first to avoid duplicates.
     Returns a list of result messages.
     """
-    existing = {a["name"] for a in get_adversaries()}
+    # Always start fresh — removes duplicate abilities from failed attempts
+    _cleanup_poc_artifacts()
     messages = []
 
     for scenario in DEMO_SCENARIOS:
-        if scenario["adversary_name"] in existing:
-            messages.append(f"Already exists: {scenario['adversary_name']}")
-            continue
-
         ability_ids = []
         for ab in scenario["abilities"]:
             aid = _create_ability(ab)
