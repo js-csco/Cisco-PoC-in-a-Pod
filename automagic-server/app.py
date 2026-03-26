@@ -514,7 +514,8 @@ def tetragon_events():
 @app.route('/caldera', methods=['GET', 'POST'])
 def caldera():
     from scripts.caldera import (is_available, is_deployed, get_agents, get_operations,
-                                  setup_demo_adversaries, get_demo_adversaries)
+                                  setup_demo_adversaries, get_demo_adversaries,
+                                  cleanup_stale_agents)
 
     if request.method == 'POST':
         action = request.form.get('action')
@@ -548,6 +549,7 @@ def caldera():
     agents, operations, demo_scenarios = [], [], []
     if caldera_available:
         try:
+            cleanup_stale_agents()
             agents = get_agents()
         except Exception:
             pass

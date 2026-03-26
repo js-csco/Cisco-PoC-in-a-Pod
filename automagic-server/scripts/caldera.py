@@ -183,12 +183,10 @@ def deploy_caldera():
         "plugins:\n"
         "  - access\n"
         "  - debrief\n"
-        "  - fieldmanual\n"
         "  - manx\n"
         "  - response\n"
         "  - sandcat\n"
         "  - stockpile\n"
-        "  - training\n"
         "crypt_salt: piap-demo-salt\n"
         "encryption_key: piap-demo-enc-key\n"
         "exfil_dir: /tmp/caldera\n"
@@ -401,9 +399,54 @@ def deploy_caldera():
 def get_agents():
     r = requests.get(f"{CALDERA_URL}/api/v2/agents", headers=_headers(), timeout=5)
     r.raise_for_status()
-    # Only return agents that are currently alive (trusted=True means the agent
-    # is still beaconing; Caldera sets trusted=False for dead/stale agents).
-    return [a for a in r.json() if a.get("trusted", False)]
+    agents = r.json()
+
+    # Group by host — keep only the most recently seen agent per host.
+    # The victim pod re-registers a new PAW on every reconnect, leaving
+    # stale entries that clutter the dashboard.
+    by_host = {}
+    for a in agents:
+        if not a.get("trusted", False):
+            continue
+        host = a.get("host", "")
+        last_seen = a.get("last_seen", "")
+        if host not in by_host or last_seen > by_host[host].get("last_seen", ""):
+            by_host[host] = a
+    return list(by_host.values())
+
+
+def cleanup_stale_agents():
+    """Delete all untrusted (dead) agents from Caldera."""
+    try:
+        r = requests.get(f"{CALDERA_URL}/api/v2/agents", headers=_headers(), timeout=5)
+        r.raise_for_status()
+        agents = r.json()
+
+        # Find the most recent agent per host
+        latest_by_host = {}
+        for a in agents:
+            host = a.get("host", "")
+            last_seen = a.get("last_seen", "")
+            if host not in latest_by_host or last_seen > latest_by_host[host].get("last_seen", ""):
+                latest_by_host[host] = a
+
+        keep_paws = {a["paw"] for a in latest_by_host.values()}
+
+        # Delete all agents except the latest per host
+        deleted = 0
+        for a in agents:
+            if a["paw"] not in keep_paws:
+                try:
+                    requests.delete(
+                        f"{CALDERA_URL}/api/v2/agents/{a['paw']}",
+                        headers=_headers(), timeout=5,
+                    )
+                    deleted += 1
+                except Exception:
+                    pass
+        return deleted
+    except Exception:
+        return 0
 
 
 def get_adversaries():
@@ -463,6 +506,13 @@ def _create_ability(ability_def):
                 "name": "sh",
                 "platform": "linux",
                 "command": ability_def["command"],
+                "timeout": 60,
+                "payloads": [],
+                "uploads": [],
+                "parsers": [],
+                "cleanup": [],
+                "variations": [],
+                "additional_info": {},
             }
         ],
     }
