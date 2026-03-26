@@ -473,7 +473,8 @@ def _create_ability(ability_def):
         timeout=10,
     )
     r.raise_for_status()
-    return r.json().get("ability_id") or r.json().get("id")
+    data = r.json()
+    return data.get("ability_id") or data.get("id")
 
 
 def _create_adversary(name, description, ability_ids):
@@ -489,7 +490,10 @@ def _create_adversary(name, description, ability_ids):
         json=payload,
         timeout=10,
     )
-    r.raise_for_status()
+    if r.status_code >= 400:
+        raise RuntimeError(
+            f"Caldera adversary API returned {r.status_code}: {r.text}"
+        )
     return r.json()
 
 
