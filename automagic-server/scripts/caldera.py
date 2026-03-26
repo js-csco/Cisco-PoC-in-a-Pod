@@ -508,6 +508,13 @@ def _create_ability(ability_def):
                 "name": "sh",
                 "platform": "linux",
                 "command": ability_def["command"],
+                "timeout": 60,
+                "payloads": [],
+                "uploads": [],
+                "parsers": [],
+                "cleanup": [],
+                "variations": [],
+                "additional_info": {},
             }
         ],
     }
