@@ -180,6 +180,17 @@ def deploy_splunk(license_content: str = "") -> bool:
         ),
     )
 
+    init_container = client.V1Container(
+        name="init-dirs",
+        image="busybox",
+        command=["sh", "-c",
+                 "mkdir -p /opt/splunk/var/log/splunk "
+                 "/opt/splunk/var/lib/splunk "
+                 "/opt/splunk/var/run/splunk "
+                 "/opt/splunk/var/spool/splunk"],
+        volume_mounts=[client.V1VolumeMount(name="splunk-data", mount_path="/opt/splunk/var")],
+    )
+
     deployment = client.V1Deployment(
         metadata=client.V1ObjectMeta(name="splunk", namespace=NAMESPACE, labels={"app": "splunk"}),
         spec=client.V1DeploymentSpec(
@@ -188,7 +199,11 @@ def deploy_splunk(license_content: str = "") -> bool:
             strategy=client.V1DeploymentStrategy(type="Recreate"),
             template=client.V1PodTemplateSpec(
                 metadata=client.V1ObjectMeta(labels={"app": "splunk"}),
-                spec=client.V1PodSpec(containers=[container], volumes=volumes),
+                spec=client.V1PodSpec(
+                    init_containers=[init_container],
+                    containers=[container],
+                    volumes=volumes,
+                ),
             ),
         ),
     )
