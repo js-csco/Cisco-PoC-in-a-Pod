@@ -199,25 +199,25 @@
 
     {% set phase_meta = [
       {
-        'phase': 'PHASE 1 — RECON',
+        'phase': 'PHASE 1 - RECON',
         'subtitle': 'The attacker maps the environment',
         'bg': '#fff8e1', 'border': '#ffe082', 'bar': '#f57f17', 'btn': '#e65100',
-        'watch': 'Tetragon catches shell spawns and network tool usage. Look for <strong>EXEC</strong> events with <code>whoami</code>, <code>ps</code>, <code>ss</code> in the live stream below.',
+        'watch': 'Tetragon catches shell spawns and network tool usage. Look for EXEC events with whoami, ps, ss in the live stream below.',
         'tactics': ['Discovery']
       },
       {
-        'phase': 'PHASE 2 — CREDENTIAL HUNTING',
+        'phase': 'PHASE 2 - CREDENTIAL HUNTING',
         'subtitle': 'The attacker goes after secrets',
         'bg': '#fce4ec', 'border': '#ef9a9a', 'bar': '#c62828', 'btn': '#b71c1c',
-        'watch': 'Tetragon detects reads to <code>/etc/shadow</code> and the Kubernetes service account token. Look for <strong>KPROBE</strong> events flagging sensitive file access.',
+        'watch': 'Tetragon detects reads to /etc/shadow and the Kubernetes service account token. Look for KPROBE events flagging sensitive file access.',
         'tactics': ['Credential Access']
       },
       {
-        'phase': 'PHASE 3 — PERSISTENCE',
+        'phase': 'PHASE 3 - PERSISTENCE',
         'subtitle': 'The attacker tries to stay',
         'bg': '#f3e5f5', 'border': '#ce93d8', 'bar': '#7b1fa2', 'btn': '#6a1b9a',
-        'watch': 'Tetragon catches the backdoor script drop, cron job installation, and outbound C2 callback attempt. Look for <strong>EXEC</strong> events with <code>crontab</code> and <code>curl</code>.',
-        'tactics': ['Persistence', 'Command &amp; Control']
+        'watch': 'Tetragon catches the backdoor script drop, cron job installation, and outbound C2 callback attempt. Look for EXEC events with crontab and curl.',
+        'tactics': ['Persistence', 'Command and Control']
       }
     ] %}
 
