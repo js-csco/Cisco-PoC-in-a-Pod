@@ -187,7 +187,8 @@ def deploy_splunk(license_content: str = "") -> bool:
                  "mkdir -p /opt/splunk/var/log/splunk "
                  "/opt/splunk/var/lib/splunk "
                  "/opt/splunk/var/run/splunk "
-                 "/opt/splunk/var/spool/splunk"],
+                 "/opt/splunk/var/spool/splunk "
+                 "&& chown -R 41812:41812 /opt/splunk/var"],
         volume_mounts=[client.V1VolumeMount(name="splunk-data", mount_path="/opt/splunk/var")],
     )
 
