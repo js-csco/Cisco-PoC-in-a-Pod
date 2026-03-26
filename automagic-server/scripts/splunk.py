@@ -129,9 +129,6 @@ def deploy_splunk(license_content: str = "") -> bool:
                 secret_key_ref=client.V1SecretKeySelector(name="splunk-creds", key="hec_token")
             ),
         ),
-        client.V1EnvVar(name="SPLUNK_ANSIBLE_ENV",        value="local"),
-        client.V1EnvVar(name="SPLUNK_ANSIBLE_PRE_TASKS",  value="null"),
-        client.V1EnvVar(name="SPLUNK_ANSIBLE_POST_TASKS", value="null"),
         client.V1EnvVar(name="TZ",                        value="Europe/Berlin"),
         client.V1EnvVar(name="SPLUNK_HOME_OWNERSHIP_ENFORCEMENT", value="false"),
         client.V1EnvVar(name="SPLUNK_ENABLE_KVSTORE",     value="true"),
