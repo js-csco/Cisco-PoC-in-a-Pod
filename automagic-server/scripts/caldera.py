@@ -258,7 +258,7 @@ def deploy_caldera():
         apps.create_namespaced_deployment(NAMESPACE, caldera_dep)
     except ApiException as e:
         if e.status == 409:
-            apps.patch_namespaced_deployment("caldera", NAMESPACE, caldera_dep)
+            apps.replace_namespaced_deployment("caldera", NAMESPACE, caldera_dep)
         else:
             raise
 
@@ -372,7 +372,7 @@ def deploy_caldera():
         apps.create_namespaced_deployment(NAMESPACE, victim_dep)
     except ApiException as e:
         if e.status == 409:
-            apps.patch_namespaced_deployment("caldera-victim", NAMESPACE, victim_dep)
+            apps.replace_namespaced_deployment("caldera-victim", NAMESPACE, victim_dep)
         else:
             raise
 

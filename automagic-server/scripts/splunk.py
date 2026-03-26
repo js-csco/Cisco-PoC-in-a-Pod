@@ -196,7 +196,7 @@ def deploy_splunk(license_content: str = "") -> bool:
         apps_api.create_namespaced_deployment(NAMESPACE, deployment)
     except ApiException as e:
         if e.status == 409:
-            apps_api.patch_namespaced_deployment("splunk", NAMESPACE, deployment)
+            apps_api.replace_namespaced_deployment("splunk", NAMESPACE, deployment)
         else:
             raise
 
