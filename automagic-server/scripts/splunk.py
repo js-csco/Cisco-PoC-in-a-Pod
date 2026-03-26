@@ -281,16 +281,27 @@ def install_splunkbase_app(app_id: int, splunkbase_username: str, splunkbase_pas
         raise RuntimeError(f"Splunkbase login failed ({login_resp.status_code}): check your username/password")
     sb_cookies = login_resp.cookies
 
-    # ── 2. Download the app tarball from Splunkbase ──────────────────────────
+    # ── 2. Resolve latest version (Splunkbase has no "latest" alias) ────────
+    releases_resp = requests.get(
+        f"https://splunkbase.splunk.com/api/v1/app/{app_id}/release",
+        timeout=15,
+    )
+    if releases_resp.status_code != 200 or not releases_resp.json():
+        raise RuntimeError(f"Could not find releases for app {app_id}")
+    latest_version = releases_resp.json()[0].get("name", "")
+    if not latest_version:
+        raise RuntimeError(f"No version found for app {app_id}")
+
+    # ── 3. Download the app tarball from Splunkbase ──────────────────────────
     download_resp = requests.get(
-        f"https://splunkbase.splunk.com/app/{app_id}/release/latest/download",
+        f"https://splunkbase.splunk.com/app/{app_id}/release/{latest_version}/download/",
         cookies=sb_cookies,
         timeout=120,
     )
     if download_resp.status_code != 200:
-        raise RuntimeError(f"App download failed ({download_resp.status_code}): check the app ID")
+        raise RuntimeError(f"App download failed ({download_resp.status_code}): version {latest_version}")
 
-    # ── 3. Upload to Splunk REST API ─────────────────────────────────────────
+    # ── 4. Upload to Splunk REST API ─────────────────────────────────────────
     mgmt_url = SPLUNK_API_URL.replace("http://", "https://")
     install_resp = requests.post(
         f"{mgmt_url}/services/apps/local",
