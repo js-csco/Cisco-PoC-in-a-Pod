@@ -481,7 +481,7 @@ def _create_adversary(name, description, ability_ids):
     payload = {
         "name": name,
         "description": description,
-        "atomic_ordering": [{"id": aid} for aid in ability_ids],
+        "atomic_ordering": ability_ids,
     }
     r = requests.post(
         f"{CALDERA_URL}/api/v2/adversaries",
