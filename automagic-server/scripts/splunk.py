@@ -202,7 +202,12 @@ def deploy_splunk(license_content: str = "") -> bool:
         else:
             raise
 
-    # ── 4. Service (idempotent — skip patch if it already exists) ────────────
+    # ── 4. Service (delete-then-create to avoid stale NodePort allocations) ──
+    try:
+        core.delete_namespaced_service("splunk", NAMESPACE)
+    except ApiException:
+        pass  # not found — that's fine
+
     service = client.V1Service(
         metadata=client.V1ObjectMeta(name="splunk", namespace=NAMESPACE, labels={"app": "splunk"}),
         spec=client.V1ServiceSpec(
@@ -216,11 +221,7 @@ def deploy_splunk(license_content: str = "") -> bool:
             ],
         ),
     )
-    try:
-        core.create_namespaced_service(NAMESPACE, service)
-    except ApiException as e:
-        if e.status != 409:
-            raise
+    core.create_namespaced_service(NAMESPACE, service)
 
     return has_license
 
