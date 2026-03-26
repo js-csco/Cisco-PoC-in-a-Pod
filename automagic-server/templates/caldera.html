@@ -14,112 +14,148 @@
   {% endif %}
 {% endwith %}
 
-<h1 style="color:#111; margin-bottom:0.4rem;">MITRE Caldera — Adversary Emulation</h1>
-<p style="color:#666; margin-top:0; margin-bottom:1.5rem; font-size:0.95em; line-height:1.6;">
-  Three red-team attack scenarios against the victim pod — detected in real time by Tetragon eBPF below.
+<h1 style="color:#111; margin-bottom:0.4rem;">Attack &amp; Detect — Adversary Emulation</h1>
+<p style="color:#666; margin-top:0; margin-bottom:2rem; font-size:0.95em; line-height:1.6;">
+  Launch real MITRE ATT&amp;CK techniques against a victim pod and watch your Zero Trust stack catch every move in real time.
 </p>
 
-<!-- ABOUT -->
-<section style="background:#f8f9fa; padding:20px; border-radius:8px; border-left:4px solid #c0392b; margin-bottom:2.5rem;">
-  <p style="color:#555; font-size:0.95em; margin:0 0 10px 0; line-height:1.6;">
-    <strong>MITRE Caldera</strong> is an open-source adversary emulation platform built on the
-    <a href="https://attack.mitre.org" target="_blank" style="color:#c0392b; text-decoration:none;">MITRE ATT&amp;CK</a>
-    framework. It simulates real-world attacker behaviour using modular <em>abilities</em> chained into
-    <em>operations</em>, without needing actual malware.
-  </p>
-  <p style="color:#555; font-size:0.95em; margin:0; line-height:1.6;">
-    In this demo, Caldera runs three pre-built attack chains — Recon, Credential Hunting, and Persistence —
-    against a victim pod in the cluster. Every action is caught in real time by Tetragon eBPF kernel-level monitoring.
-  </p>
+<!-- ════════════════════════════════════════════ STEP 1: UNDERSTAND THE SCENARIO -->
+<section style="margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+    <div style="background:#c0392b; color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85em; flex-shrink:0;">1</div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">UNDERSTAND THE SCENARIO</h3>
+  </div>
+
+  <!-- Visual diagram -->
+  <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:10px; padding:24px 28px; margin-bottom:16px;">
+
+    <div style="display:flex; align-items:center; justify-content:center; gap:0; flex-wrap:nowrap; margin-bottom:20px;">
+
+      <!-- Caldera C2 -->
+      <div style="text-align:center; min-width:140px;">
+        <div style="background:#c0392b; color:#fff; border-radius:8px; padding:12px 18px; font-weight:700; font-size:0.9em; display:inline-block;">
+          Caldera C2
+        </div>
+        <div style="font-size:0.75em; color:#888; margin-top:4px;">Attacker Command &amp; Control</div>
+      </div>
+
+      <!-- Arrow: commands -->
+      <div style="display:flex; flex-direction:column; align-items:center; padding:0 8px;">
+        <div style="font-size:0.7em; color:#c0392b; font-weight:600; margin-bottom:2px;">ATT&amp;CK commands</div>
+        <div style="width:100px; height:2px; background:#c0392b; position:relative;">
+          <div style="position:absolute; right:-6px; top:-4px; width:0; height:0; border-left:8px solid #c0392b; border-top:5px solid transparent; border-bottom:5px solid transparent;"></div>
+        </div>
+      </div>
+
+      <!-- Victim Pod -->
+      <div style="text-align:center; min-width:140px; position:relative;">
+        <div style="background:#e74c3c; color:#fff; border-radius:8px; padding:12px 18px; font-weight:700; font-size:0.9em; display:inline-block; border:2px dashed #f9a825;">
+          Victim Pod
+        </div>
+        <div style="font-size:0.75em; color:#888; margin-top:4px;">Ubuntu + sandcat agent</div>
+      </div>
+
+      <!-- Arrow: monitored by -->
+      <div style="display:flex; flex-direction:column; align-items:center; padding:0 8px;">
+        <div style="font-size:0.7em; color:#2e7d32; font-weight:600; margin-bottom:2px;">kernel monitoring</div>
+        <div style="width:100px; height:2px; background:#2e7d32; position:relative;">
+          <div style="position:absolute; left:-6px; top:-4px; width:0; height:0; border-right:8px solid #2e7d32; border-top:5px solid transparent; border-bottom:5px solid transparent;"></div>
+        </div>
+      </div>
+
+      <!-- Tetragon -->
+      <div style="text-align:center; min-width:140px;">
+        <div style="background:#2e7d32; color:#fff; border-radius:8px; padding:12px 18px; font-weight:700; font-size:0.9em; display:inline-block;">
+          Tetragon eBPF
+        </div>
+        <div style="font-size:0.75em; color:#888; margin-top:4px;">Kernel-level detection</div>
+      </div>
+
+    </div>
+
+    <p style="color:#555; font-size:0.9em; line-height:1.7; margin:0; text-align:center; max-width:700px; margin:0 auto;">
+      <strong>The attacker has a C2 server and a compromised pod.</strong>
+      They run real MITRE ATT&amp;CK techniques — recon, credential theft, persistence.
+      Tetragon watches every syscall at the kernel level. <strong>The attacker can't hide.</strong>
+    </p>
+  </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════ DEPLOY PANEL -->
-{% if not caldera_available %}
-<section style="background:#fff8e1; border:1px solid #ffe082; border-radius:10px; padding:24px 28px; margin-bottom:2.5rem;">
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-    <div style="width:6px; height:20px; background-color:#f9a825; border-radius:2px;"></div>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DEPLOY CALDERA</h3>
+
+<!-- ════════════════════════════════════════════ STEP 2: DEPLOY THE RANGE -->
+<section style="margin-bottom:2.5rem; padding-bottom:2rem; border-bottom:1px solid #e0e0e0;">
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+    <div style="background:#c0392b; color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85em; flex-shrink:0;">2</div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DEPLOY THE RANGE</h3>
   </div>
-  <p style="color:#555; font-size:0.9em; line-height:1.6; margin:0 0 18px;">
-    {% if caldera_deployed %}
-      Caldera is deployed but not yet reachable — still starting up (~60 s). You can re-deploy below if the pod is stuck.
-    {% else %}
-      Caldera is not running yet. Click below to deploy the C2 server and victim pod into the cluster.
-      Startup takes ~60 s — the page will show <strong>Online</strong> once the API is reachable.
+
+  <div style="display:grid; grid-template-columns:{% if not caldera_available %}1fr 1fr 1fr{% else %}1fr 1fr{% endif %}; gap:12px;">
+
+    {% if not caldera_available %}
+    <!-- Deploy card -->
+    <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:10px; padding:16px 20px; display:flex; flex-direction:column;">
+      <div style="font-size:0.72em; font-weight:700; color:#999; letter-spacing:0.6px; margin-bottom:8px;">DEPLOY</div>
+      <p style="color:#555; font-size:0.85em; line-height:1.5; margin:0 0 12px; flex:1;">
+        {% if caldera_deployed %}
+          Caldera is deployed but still starting up (~60 s).
+        {% else %}
+          Spin up the C2 server and victim pod. Takes ~60 s.
+        {% endif %}
+      </p>
+      <form method="POST" style="margin:0;">
+        <button type="submit" name="action" value="deploy_caldera"
+                style="width:100%; background:#c0392b; color:#fff; border:none; padding:10px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.9em;">
+          {{ 'Re-deploy' if caldera_deployed else 'Deploy Caldera' }}
+        </button>
+      </form>
+    </div>
     {% endif %}
-  </p>
-  <form method="POST">
-    <button type="submit" name="action" value="deploy_caldera"
-            style="background:#c0392b; color:#fff; border:none; padding:11px 28px;
-                   border-radius:8px; font-weight:700; cursor:pointer; font-size:0.95em;">
-      {{ 'Re-deploy Caldera' if caldera_deployed else 'Deploy Caldera' }}
-    </button>
-    <span style="margin-left:14px; font-size:0.82em; color:#999;">
-      Deploys Caldera C2 (30600) + Ubuntu victim pod with sandcat agent
-    </span>
-  </form>
-</section>
-{% endif %}
 
-<!-- ═══════════════════════════════════════════════════════ CURRENT STATUS -->
-<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CURRENT STATUS</h3>
-  </div>
-
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-
-    <!-- Caldera C2 -->
+    <!-- C2 Server status -->
     <div style="border:1px solid #e0e0e0; border-radius:10px; padding:16px 20px;">
-      <div style="font-size:0.72em; font-weight:700; color:#999; letter-spacing:0.6px; margin-bottom:8px;">CALDERA C2 SERVER</div>
+      <div style="font-size:0.72em; font-weight:700; color:#999; letter-spacing:0.6px; margin-bottom:8px;">C2 SERVER</div>
       {% if caldera_available %}
         <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:8px; padding:8px 14px;">
-          <span>✅</span>
-          <span style="font-weight:600; color:#2e7d32; font-size:0.9em;">Online — API reachable</span>
+          <span style="font-weight:600; color:#2e7d32; font-size:0.9em;">Online</span>
         </div>
-        <p style="margin:10px 0 0; font-size:0.8em; color:#888;">
-          <a href="http://SERVER_IP:30600" target="_blank" style="color:#0066ff;">Open Caldera UI ↗</a>
-          &nbsp;·&nbsp; credentials: <code>admin / admin</code>
+        <p style="margin:8px 0 0; font-size:0.8em; color:#888;">
+          <a href="http://{{ request.host.split(':')[0] }}:30600" target="_blank" style="color:#0066ff;">Open Caldera UI</a>
+          &nbsp;·&nbsp; <code>admin / admin</code>
         </p>
       {% elif caldera_deployed %}
-        <div style="display:inline-flex; align-items:center; gap:8px; background:#fce4ec; border:1px solid #ef9a9a; border-radius:8px; padding:8px 14px;">
-          <span>⭕</span>
-          <span style="font-weight:600; color:#b71c1c; font-size:0.9em;">Offline — pod may still be starting (~60 s)</span>
+        <div style="display:inline-flex; align-items:center; gap:8px; background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:8px 14px;">
+          <span style="font-weight:600; color:#f57f17; font-size:0.9em;">Starting up...</span>
         </div>
       {% else %}
         <div style="display:inline-flex; align-items:center; gap:8px; background:#f5f5f5; border:1px solid #ccc; border-radius:8px; padding:8px 14px;">
-          <span>⭕</span>
           <span style="font-weight:600; color:#555; font-size:0.9em;">Not deployed</span>
         </div>
       {% endif %}
     </div>
 
-    <!-- Victim agent -->
+    <!-- Victim Agent status -->
     <div style="border:1px solid #e0e0e0; border-radius:10px; padding:16px 20px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-        <div style="font-size:0.72em; font-weight:700; color:#999; letter-spacing:0.6px;">VICTIM POD AGENT</div>
-        <span id="agent-dot" style="width:8px; height:8px; border-radius:50%; background:#ccc; display:inline-block;" title="Auto-refreshes every 5s"></span>
+        <div style="font-size:0.72em; font-weight:700; color:#999; letter-spacing:0.6px;">VICTIM AGENT</div>
+        <span id="agent-dot" style="width:8px; height:8px; border-radius:50%; background:#ccc; display:inline-block;"></span>
       </div>
       <div id="agent-wrap">
         {% if agents %}
           <div style="display:inline-flex; align-items:center; gap:8px; background:#fce4ec; border:1px solid #ef9a9a; border-radius:8px; padding:8px 14px;">
-            <span>🎯</span>
-            <span style="font-weight:600; color:#b71c1c; font-size:0.9em;">{{ agents | length }} agent(s) alive</span>
+            <span style="font-weight:600; color:#b71c1c; font-size:0.9em;">{{ agents | length }} agent(s) connected</span>
           </div>
-          <div style="margin-top:10px; display:flex; flex-direction:column; gap:4px;">
+          <div style="margin-top:8px;">
             {% for agent in agents %}
-              <div style="font-size:0.8em; color:#555; background:#f9f9f9; border-radius:6px; padding:4px 10px;">
+              <div style="font-size:0.78em; color:#555; background:#f9f9f9; border-radius:4px; padding:3px 8px; margin-bottom:2px;">
                 <code>{{ agent.get('paw', '?') }}</code> · {{ agent.get('host', '?') }} · group: <strong>{{ agent.get('group', '?') }}</strong>
               </div>
             {% endfor %}
           </div>
         {% else %}
           <div style="display:inline-flex; align-items:center; gap:8px; background:#f5f5f5; border:1px solid #ccc; border-radius:8px; padding:8px 14px;">
-            <span>⭕</span>
-            <span style="font-weight:600; color:#555; font-size:0.9em;">No agents connected yet</span>
+            <span style="font-weight:600; color:#555; font-size:0.9em;">No agents yet</span>
           </div>
-          <p style="margin:8px 0 0; font-size:0.8em; color:#888;">Victim pod downloads and starts the agent automatically after Caldera is ready.</p>
+          <p style="margin:6px 0 0; font-size:0.78em; color:#888;">Agent connects automatically after deploy.</p>
         {% endif %}
       </div>
     </div>
@@ -127,156 +163,203 @@
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════ ATTACK SCENARIOS -->
-<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-    <div style="width:6px; height:20px; background-color:#c62828; border-radius:2px;"></div>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">ATTACK SCENARIOS</h3>
+
+<!-- ════════════════════════════════════════════ STEP 3: LAUNCH ATTACKS -->
+<section style="margin-bottom:2.5rem; padding-bottom:2rem; border-bottom:1px solid #e0e0e0;">
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+    <div style="background:#c0392b; color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85em; flex-shrink:0;">3</div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">LAUNCH ATTACKS</h3>
   </div>
+  <p style="margin:0 0 16px; color:#666; font-size:0.88em; line-height:1.6;">
+    Three escalating attack phases — each maps to real MITRE ATT&amp;CK techniques. Run them in order for the full demo story.
+  </p>
 
   {% set scenarios_ready = demo_scenarios | selectattr('adversary') | list | length == 3 %}
 
   {% if not caldera_available %}
-    <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px 18px; font-size:0.88em; color:#555; margin-top:12px;">
-      ⚠️ Caldera is offline — scenarios are unavailable.
+    <div style="background:#f5f5f5; border:1px solid #e0e0e0; border-radius:8px; padding:14px 18px; font-size:0.88em; color:#999;">
+      Deploy Caldera first (Step 2) to unlock attack scenarios.
     </div>
 
   {% elif not scenarios_ready %}
-    <p style="margin:8px 0 20px; color:#555; font-size:0.9em; line-height:1.7;">
-      Click <strong>Setup Demo Scenarios</strong> to create the three pre-built adversary profiles in Caldera.
-      This only needs to be done once per Caldera instance.
-    </p>
-    <form method="POST">
-      <input type="hidden" name="action" value="setup_demo">
-      <button type="submit"
-        style="background:#0066ff; color:#fff; border:none; padding:11px 28px; border-radius:6px; font-size:0.95em; font-weight:600; cursor:pointer;">
-        ⚙️ Setup Demo Scenarios
-      </button>
-    </form>
+    <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:18px; margin-bottom:16px;">
+      <p style="margin:0 0 12px; color:#555; font-size:0.9em; line-height:1.6;">
+        <strong>First time?</strong> Create the three pre-built adversary profiles in Caldera. This only needs to be done once.
+      </p>
+      <form method="POST">
+        <input type="hidden" name="action" value="setup_demo">
+        <button type="submit"
+          style="background:#0066ff; color:#fff; border:none; padding:10px 24px; border-radius:6px; font-size:0.9em; font-weight:600; cursor:pointer;">
+          Setup Demo Scenarios
+        </button>
+      </form>
+    </div>
 
   {% else %}
-    <p style="margin:8px 0 20px; color:#555; font-size:0.9em; line-height:1.7;">
-      Launch any scenario against connected agents (group: <strong>red</strong>).
-      Detections appear in the Tetragon stream below within seconds.
-    </p>
 
-    {% set colors = [
-      {'bg': '#fff8e1', 'border': '#ffe082', 'bar': '#f57f17', 'btn': '#e65100'},
-      {'bg': '#fce4ec', 'border': '#ef9a9a', 'bar': '#c62828', 'btn': '#b71c1c'},
-      {'bg': '#f3e5f5', 'border': '#ce93d8', 'bar': '#7b1fa2', 'btn': '#6a1b9a'}
+    {% set phase_meta = [
+      {
+        'phase': 'PHASE 1 — RECON',
+        'subtitle': 'The attacker maps the environment',
+        'bg': '#fff8e1', 'border': '#ffe082', 'bar': '#f57f17', 'btn': '#e65100',
+        'watch': 'Tetragon catches shell spawns and network tool usage. Look for <strong>EXEC</strong> events with <code>whoami</code>, <code>ps</code>, <code>ss</code> in the live stream below.',
+        'tactics': ['Discovery']
+      },
+      {
+        'phase': 'PHASE 2 — CREDENTIAL HUNTING',
+        'subtitle': 'The attacker goes after secrets',
+        'bg': '#fce4ec', 'border': '#ef9a9a', 'bar': '#c62828', 'btn': '#b71c1c',
+        'watch': 'Tetragon detects reads to <code>/etc/shadow</code> and the Kubernetes service account token. Look for <strong>KPROBE</strong> events flagging sensitive file access.',
+        'tactics': ['Credential Access']
+      },
+      {
+        'phase': 'PHASE 3 — PERSISTENCE',
+        'subtitle': 'The attacker tries to stay',
+        'bg': '#f3e5f5', 'border': '#ce93d8', 'bar': '#7b1fa2', 'btn': '#6a1b9a',
+        'watch': 'Tetragon catches the backdoor script drop, cron job installation, and outbound C2 callback attempt. Look for <strong>EXEC</strong> events with <code>crontab</code> and <code>curl</code>.',
+        'tactics': ['Persistence', 'Command &amp; Control']
+      }
     ] %}
 
-    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
+    <div style="display:flex; flex-direction:column; gap:16px;">
       {% for item in demo_scenarios %}
-        {% set c = colors[loop.index0] %}
+        {% set c = phase_meta[loop.index0] %}
         {% set sc = item.scenario %}
         {% set adv = item.adversary %}
-        <div style="background:{{ c.bg }}; border:1px solid {{ c.border }}; border-radius:10px; padding:20px;">
-          <div style="width:4px; height:16px; background:{{ c.bar }}; border-radius:2px; margin-bottom:10px;"></div>
-          <div style="font-weight:700; color:#111; font-size:0.95em; margin-bottom:6px;">
-            {{ sc.adversary_name | replace('PoC: ', '') }}
-          </div>
-          <p style="color:#555; font-size:0.82em; line-height:1.6; margin:0 0 12px;">{{ sc.description }}</p>
 
-          <div style="margin-bottom:14px;">
-            <div style="font-size:0.7em; font-weight:700; color:#888; letter-spacing:0.5px; margin-bottom:5px;">DETECTS WITH</div>
-            {% for policy in sc.tetragon_policies %}
-              <span style="display:inline-block; background:#fff; border:1px solid #ccc; border-radius:4px; padding:2px 8px; font-size:0.75em; color:#555; margin-right:4px; margin-bottom:4px; font-family:monospace;">{{ policy }}</span>
-            {% endfor %}
-          </div>
+        <div style="background:{{ c.bg }}; border:1px solid {{ c.border }}; border-radius:10px; padding:20px 24px;">
+          <div style="display:flex; align-items:flex-start; gap:20px;">
 
-          <div style="margin-bottom:14px;">
-            <div style="font-size:0.7em; font-weight:700; color:#888; letter-spacing:0.5px; margin-bottom:5px;">STEPS ({{ sc.abilities | length }})</div>
-            {% for ab in sc.abilities %}
-              <div style="font-size:0.78em; color:#555; margin-bottom:3px;">
-                {{ loop.index }}. {{ ab.name | replace('PoC - ', '') }}
+            <!-- Left: phase info -->
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px; flex-wrap:wrap;">
+                <div style="width:4px; height:18px; background:{{ c.bar }}; border-radius:2px;"></div>
+                <span style="font-weight:700; color:#111; font-size:0.95em;">{{ c.phase }}</span>
+                {% for tactic in c.tactics %}
+                  <span style="background:#fff; border:1px solid #ccc; border-radius:4px; padding:1px 8px; font-size:0.72em; color:#666; font-weight:600;">{{ tactic }}</span>
+                {% endfor %}
               </div>
-            {% endfor %}
-          </div>
+              <div style="font-size:0.85em; color:#666; margin-bottom:10px;">{{ c.subtitle }}</div>
 
-          {% if not agents %}
-            <button disabled style="width:100%; background:#ccc; color:#fff; border:none; padding:9px; border-radius:6px; font-size:0.88em; font-weight:600; cursor:not-allowed;">
-              No agents connected
-            </button>
-          {% else %}
-            <form method="POST">
-              <input type="hidden" name="action" value="run_operation">
-              <input type="hidden" name="adversary_id" value="{{ adv.adversary_id }}">
-              <input type="hidden" name="op_name" value="{{ sc.adversary_name | replace('PoC: ', 'PoC ') }}">
-              <button type="submit"
-                style="width:100%; background:{{ c.btn }}; color:#fff; border:none; padding:9px; border-radius:6px; font-size:0.88em; font-weight:600; cursor:pointer;">
-                ⚔️ Launch
-              </button>
-            </form>
-          {% endif %}
+              <!-- Steps with ATT&CK IDs -->
+              <div style="margin-bottom:12px;">
+                {% for ab in sc.abilities %}
+                  <div style="font-size:0.8em; color:#444; margin-bottom:3px; display:flex; align-items:center; gap:6px;">
+                    <span style="color:#999; min-width:14px;">{{ loop.index }}.</span>
+                    <span>{{ ab.name | replace('PoC - ', '') }}</span>
+                    <a href="https://attack.mitre.org/techniques/{{ ab.technique_id | replace('.', '/') }}/"
+                       target="_blank"
+                       style="background:#eee; border:1px solid #ddd; border-radius:3px; padding:0 5px; font-size:0.85em; color:#888; text-decoration:none; font-family:monospace; white-space:nowrap;">{{ ab.technique_id }}</a>
+                  </div>
+                {% endfor %}
+              </div>
+
+              <!-- What to watch for -->
+              <div style="background:rgba(255,255,255,0.7); border:1px solid {{ c.border }}; border-radius:6px; padding:10px 14px; font-size:0.82em; color:#444; line-height:1.6;">
+                <strong style="color:{{ c.bar }};">What to watch for:</strong>
+                {{ c.watch }}
+              </div>
+            </div>
+
+            <!-- Right: launch button -->
+            <div style="display:flex; flex-direction:column; align-items:center; gap:8px; min-width:110px; padding-top:4px;">
+              <!-- Tetragon policy badges -->
+              <div style="text-align:center; margin-bottom:4px;">
+                {% for policy in sc.tetragon_policies %}
+                  <div style="font-size:0.68em; color:#2e7d32; background:#e8f5e9; border:1px solid #c8e6c9; border-radius:3px; padding:1px 6px; margin-bottom:2px; font-family:monospace;">{{ policy }}</div>
+                {% endfor %}
+              </div>
+
+              {% if not agents %}
+                <button disabled style="width:110px; background:#ccc; color:#fff; border:none; padding:10px; border-radius:6px; font-size:0.85em; font-weight:600; cursor:not-allowed;">
+                  No agents
+                </button>
+              {% else %}
+                <form method="POST" style="margin:0;">
+                  <input type="hidden" name="action" value="run_operation">
+                  <input type="hidden" name="adversary_id" value="{{ adv.adversary_id }}">
+                  <input type="hidden" name="op_name" value="{{ sc.adversary_name | replace('PoC: ', 'PoC ') }}">
+                  <button type="submit"
+                    style="width:110px; background:{{ c.btn }}; color:#fff; border:none; padding:10px; border-radius:6px; font-size:0.85em; font-weight:700; cursor:pointer;">
+                    Launch
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+
+          </div>
         </div>
       {% endfor %}
     </div>
   {% endif %}
 </section>
 
-<!-- ═══════════════════════════════════════════════════ OPERATIONS -->
-<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">OPERATIONS</h3>
-    <span id="ops-dot" style="width:9px; height:9px; border-radius:50%; background:#ccc; margin-left:8px; display:inline-block;"></span>
-  </div>
-  <p style="margin:0 0 16px; color:#888; font-size:0.8em;">Auto-refreshes every 5 s.</p>
 
-  <div id="ops-table-wrap">
-    {% if not caldera_available %}
-      <p style="color:#999; font-size:0.88em;">Caldera offline.</p>
-    {% elif operations | length == 0 %}
-      <p style="color:#999; font-size:0.88em;">No operations yet — launch a scenario above.</p>
-    {% else %}
-      <table style="width:100%; border-collapse:collapse; font-size:0.9em;">
-        <thead><tr style="border-bottom:2px solid #e0e0e0;">
-          <th style="text-align:left; padding:8px 14px; font-size:0.78em; font-weight:700; color:#999; letter-spacing:0.5px;">NAME</th>
-          <th style="text-align:left; padding:8px 14px; font-size:0.78em; font-weight:700; color:#999; letter-spacing:0.5px;">ADVERSARY</th>
-          <th style="text-align:left; padding:8px 14px; font-size:0.78em; font-weight:700; color:#999; letter-spacing:0.5px;">STATE</th>
-          <th style="text-align:left; padding:8px 14px; font-size:0.78em; font-weight:700; color:#999; letter-spacing:0.5px;">STEPS</th>
-        </tr></thead>
-        <tbody>
+<!-- ════════════════════════════════════════════ STEP 4: WATCH THE DETECTIONS -->
+<section style="margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+    <div style="background:#c0392b; color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85em; flex-shrink:0;">4</div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">WATCH THE DETECTIONS</h3>
+  </div>
+  <p style="margin:0 0 16px; color:#666; font-size:0.88em; line-height:1.6;">
+    The punchline — see the attack and the detection side by side in real time.
+  </p>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+
+    <!-- Left: Operations -->
+    <div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+        <div style="font-size:0.72em; font-weight:700; color:#999; letter-spacing:0.6px;">ATTACK OPERATIONS</div>
+        <span id="ops-dot" style="width:8px; height:8px; border-radius:50%; background:#ccc; display:inline-block;"></span>
+        <span style="font-size:0.72em; color:#aaa; margin-left:auto;">auto-refreshes</span>
+      </div>
+
+      <div id="ops-table-wrap" style="border:1px solid #e0e0e0; border-radius:8px; padding:12px; min-height:360px; max-height:360px; overflow-y:auto; background:#fff;">
+        {% if not caldera_available %}
+          <p style="color:#999; font-size:0.88em; margin:0;">Caldera offline.</p>
+        {% elif operations | length == 0 %}
+          <p style="color:#999; font-size:0.88em; margin:0;">No operations yet — launch a scenario above.</p>
+        {% else %}
           {% for op in operations | sort(attribute='start', reverse=True) %}
-            <tr>
-              <td style="padding:10px 14px; font-size:0.88em;">{{ op.name or '—' }}</td>
-              <td style="padding:10px 14px; font-size:0.88em;">{{ (op.adversary or {}).get('name', '—') | replace('PoC: ', '') }}</td>
-              <td style="padding:10px 14px;">
-                <span style="border-radius:5px; padding:3px 10px; font-size:0.8em; font-weight:600;
+            <div style="border-bottom:1px solid #f0f0f0; padding:10px 4px; {% if loop.last %}border-bottom:none;{% endif %}">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                <span style="font-weight:600; font-size:0.88em; color:#111;">{{ op.name or '—' }}</span>
+                <span style="margin-left:auto; border-radius:5px; padding:2px 8px; font-size:0.75em; font-weight:600;
                   {% if op.state == 'running' %}background:#e3f2fd; color:#1565c0;
                   {% elif op.state == 'finished' %}background:#e8f5e9; color:#2e7d32;
                   {% elif op.state == 'stop' %}background:#fce4ec; color:#b71c1c;
                   {% else %}background:#f5f5f5; color:#555;{% endif %}">
                   {{ (op.state or 'unknown') | upper }}
                 </span>
-              </td>
-              <td style="padding:10px 14px; font-size:0.88em; color:#666;">{{ (op.chain or []) | length }} link(s)</td>
-            </tr>
+              </div>
+              <div style="font-size:0.78em; color:#888;">
+                {{ (op.adversary or {}).get('name', '—') | replace('PoC: ', '') }}
+                · {{ (op.chain or []) | length }} step(s)
+              </div>
+            </div>
           {% endfor %}
-        </tbody>
-      </table>
-    {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right: Tetragon Live Stream -->
+    <div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+        <div style="font-size:0.72em; font-weight:700; color:#999; letter-spacing:0.6px;">TETRAGON DETECTIONS</div>
+        <span id="tet-dot" style="width:8px; height:8px; border-radius:50%; background:#ccc; display:inline-block;"></span>
+        <a href="/tetragon" style="color:#0066ff; font-size:0.72em; margin-left:auto;">Full stream</a>
+      </div>
+
+      <div id="tet-stream"
+        style="background:#0d1117; border-radius:8px; padding:14px; height:360px; overflow-y:auto; font-family:ui-monospace,'Cascadia Code',monospace; font-size:0.75em; color:#8b949e;">
+        <span style="color:#555;">Waiting for events from victim pod...</span>
+      </div>
+    </div>
+
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════ TETRAGON LIVE STREAM -->
-<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">TETRAGON LIVE DETECTIONS</h3>
-    <span id="tet-dot" style="width:9px; height:9px; border-radius:50%; background:#ccc; margin-left:8px; display:inline-block;" title="Live — victim pod only"></span>
-  </div>
-  <p style="margin:0 0 12px; color:#888; font-size:0.8em;">
-    Filtered to <code>caldera-victim</code> pod · refreshes every 3 s · newest at top.
-    <a href="/tetragon" style="color:#0066ff; margin-left:8px;">Full stream ↗</a>
-  </p>
-
-  <div id="tet-stream"
-    style="background:#0d1117; border-radius:8px; padding:16px; height:360px; overflow-y:auto; font-family:ui-monospace,'Cascadia Code',monospace; font-size:0.78em; color:#8b949e;">
-    <span style="color:#555;">Waiting for events from victim pod…</span>
-  </div>
-</section>
 
 <script>
 // ── Agent auto-refresh ────────────────────────────────────────────────────────
@@ -290,31 +373,30 @@
 
     if (alive.length > 0) {
       var rows = alive.map(function(a) {
-        return '<div style="font-size:0.8em;color:#555;background:#f9f9f9;border-radius:6px;padding:4px 10px;">' +
+        return '<div style="font-size:0.78em;color:#555;background:#f9f9f9;border-radius:4px;padding:3px 8px;margin-bottom:2px;">' +
           '<code>'+(a.paw||'?')+'</code> · '+(a.host||'?')+' · group: <strong>'+(a.group||'?')+'</strong></div>';
       }).join('');
       agentWrap.innerHTML =
         '<div style="display:inline-flex;align-items:center;gap:8px;background:#fce4ec;border:1px solid #ef9a9a;border-radius:8px;padding:8px 14px;">' +
-        '<span>🎯</span><span style="font-weight:600;color:#b71c1c;font-size:0.9em;">'+alive.length+' agent(s) alive</span></div>' +
-        '<div style="margin-top:10px;display:flex;flex-direction:column;gap:4px;">'+rows+'</div>';
+        '<span style="font-weight:600;color:#b71c1c;font-size:0.9em;">'+alive.length+' agent(s) connected</span></div>' +
+        '<div style="margin-top:8px;">'+rows+'</div>';
     } else if (dead.length > 0) {
       var rows = dead.map(function(a) {
-        return '<div style="font-size:0.8em;color:#999;background:#f9f9f9;border-radius:6px;padding:4px 10px;">' +
-          '<code>'+(a.paw||'?')+'</code> · '+(a.host||'?')+' · <span style="color:#e57373;">reconnecting…</span></div>';
+        return '<div style="font-size:0.78em;color:#999;background:#f9f9f9;border-radius:4px;padding:3px 8px;margin-bottom:2px;">' +
+          '<code>'+(a.paw||'?')+'</code> · '+(a.host||'?')+' · <span style="color:#e57373;">reconnecting...</span></div>';
       }).join('');
       agentWrap.innerHTML =
         '<div style="display:inline-flex;align-items:center;gap:8px;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:8px 14px;">' +
-        '<span>⏳</span><span style="font-weight:600;color:#f57f17;font-size:0.9em;">'+dead.length+' agent(s) — reconnecting</span></div>' +
-        '<div style="margin-top:10px;display:flex;flex-direction:column;gap:4px;">'+rows+'</div>';
+        '<span style="font-weight:600;color:#f57f17;font-size:0.9em;">'+dead.length+' agent(s) reconnecting</span></div>' +
+        '<div style="margin-top:8px;">'+rows+'</div>';
     } else {
       agentWrap.innerHTML =
         '<div style="display:inline-flex;align-items:center;gap:8px;background:#f5f5f5;border:1px solid #ccc;border-radius:8px;padding:8px 14px;">' +
-        '<span>⭕</span><span style="font-weight:600;color:#555;font-size:0.9em;">No agents connected yet</span></div>' +
-        '<p style="margin:8px 0 0;font-size:0.8em;color:#888;">Victim pod downloads and starts the agent automatically after Caldera is ready.</p>';
+        '<span style="font-weight:600;color:#555;font-size:0.9em;">No agents yet</span></div>' +
+        '<p style="margin:6px 0 0;font-size:0.78em;color:#888;">Agent connects automatically after deploy.</p>';
     }
   }
 
-  // Hook into the existing /caldera/status poll (runs below) — exposed as window._calderaAgentRender
   window._calderaAgentRender = renderAgents;
   window._calderaAgentDot    = agentDot;
 })();
@@ -326,27 +408,23 @@
 
   function renderOps(ops) {
     if (!ops || ops.length === 0) {
-      wrap.innerHTML = '<p style="color:#999;font-size:0.88em;">No operations yet.</p>';
+      wrap.innerHTML = '<p style="color:#999;font-size:0.88em;margin:0;">No operations yet — launch a scenario above.</p>';
       return;
     }
     ops.sort(function(a,b){ return (b.start||'').localeCompare(a.start||''); });
-    var rows = ops.map(function(op) {
+    var rows = ops.map(function(op, i) {
       var state = op.state || 'unknown';
       var sc = {running:'#e3f2fd',finished:'#e8f5e9',stop:'#fce4ec'}[state] || '#f5f5f5';
       var tc = {running:'#1565c0',finished:'#2e7d32',stop:'#b71c1c'}[state] || '#555';
       var adv = ((op.adversary||{}).name||'—').replace('PoC: ','');
-      return '<tr><td style="padding:10px 14px;font-size:.88em;">'+(op.name||'—')+'</td>' +
-        '<td style="padding:10px 14px;font-size:.88em;">'+adv+'</td>' +
-        '<td style="padding:10px 14px;"><span style="background:'+sc+';color:'+tc+';border-radius:5px;padding:3px 10px;font-size:.8em;font-weight:600;">'+state.toUpperCase()+'</span></td>' +
-        '<td style="padding:10px 14px;font-size:.88em;color:#666;">'+((op.chain||[]).length)+' link(s)</td></tr>';
+      var bb = (i < ops.length-1) ? 'border-bottom:1px solid #f0f0f0;' : '';
+      return '<div style="'+bb+'padding:10px 4px;">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">' +
+        '<span style="font-weight:600;font-size:.88em;color:#111;">'+(op.name||'—')+'</span>' +
+        '<span style="margin-left:auto;border-radius:5px;padding:2px 8px;font-size:.75em;font-weight:600;background:'+sc+';color:'+tc+';">'+state.toUpperCase()+'</span>' +
+        '</div><div style="font-size:.78em;color:#888;">'+adv+' · '+((op.chain||[]).length)+' step(s)</div></div>';
     }).join('');
-    wrap.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:.9em;">' +
-      '<thead><tr style="border-bottom:2px solid #e0e0e0;">' +
-      '<th style="text-align:left;padding:8px 14px;font-size:.78em;font-weight:700;color:#999;letter-spacing:.5px;">NAME</th>' +
-      '<th style="text-align:left;padding:8px 14px;font-size:.78em;font-weight:700;color:#999;letter-spacing:.5px;">ADVERSARY</th>' +
-      '<th style="text-align:left;padding:8px 14px;font-size:.78em;font-weight:700;color:#999;letter-spacing:.5px;">STATE</th>' +
-      '<th style="text-align:left;padding:8px 14px;font-size:.78em;font-weight:700;color:#999;letter-spacing:.5px;">STEPS</th>' +
-      '</tr></thead><tbody>'+rows+'</tbody></table>';
+    wrap.innerHTML = rows;
   }
 
   function pollOps() {
@@ -410,11 +488,9 @@
         });
         if (newEvs.length === 0) return;
         newEvs.forEach(function(e){ seen.add(e.time + e.binary + e.arguments); });
-        // Prepend newest events to top
         var html = newEvs.reverse().map(fmt).join('');
         if (stream.querySelector('span[style*="color:#555"]')) stream.innerHTML = '';
         stream.insertAdjacentHTML('afterbegin', html);
-        // Cap to 100 rows
         while (stream.children.length > 100) stream.removeChild(stream.lastChild);
       })
       .catch(function(){ dot.style.background = '#f85149'; });
