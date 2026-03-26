@@ -16,7 +16,7 @@ rules:
   verbs: ["get", "list", "create", "update", "patch", "delete", "replace"]
 - apiGroups: [""]
   resources: ["services"]
-  verbs: ["get", "list", "create", "patch"]
+  verbs: ["get", "list", "create", "patch", "delete"]
 - apiGroups: ["batch"]
   resources: ["jobs"]
   verbs: ["get", "list", "create", "delete"]
@@ -34,7 +34,7 @@ rules:
   verbs: ["get", "create", "update", "patch"]
 - apiGroups: ["apps"]
   resources: ["deployments"]
-  verbs: ["get", "list", "create", "update", "patch"]
+  verbs: ["get", "list", "create", "update", "patch", "delete", "replace"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -69,6 +69,9 @@ rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods/exec"]
+  verbs: ["create", "get"]
 - apiGroups: [""]
   resources: ["pods/log"]
   verbs: ["get"]
