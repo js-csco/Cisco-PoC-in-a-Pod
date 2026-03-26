@@ -115,7 +115,7 @@ def deploy_splunk(license_content: str = "") -> bool:
 
     # ── 3. Build Deployment ───────────────────────────────────────────────────
     env = [
-        client.V1EnvVar(name="SPLUNK_START_ARGS", value="--accept-license --no-prompt"),
+        client.V1EnvVar(name="SPLUNK_START_ARGS", value="--accept-license"),
         client.V1EnvVar(name="SPLUNK_GENERAL_TERMS", value="--accept-sgt-current-at-splunk-com"),
         client.V1EnvVar(
             name="SPLUNK_PASSWORD",
@@ -153,7 +153,7 @@ def deploy_splunk(license_content: str = "") -> bool:
 
     container = client.V1Container(
         name="splunk",
-        image="splunk/splunk:latest",
+        image="splunk/splunk:9.3.2",
         env=env,
         ports=[
             client.V1ContainerPort(name="web",     container_port=8000),
