@@ -5,10 +5,10 @@ and Splunkbase app installation from the dashboard.
 Log sources: Cisco Duo / Identity Intelligence, Cisco Secure Access.
 """
 import os
-import subprocess
 import requests
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
+from kubernetes.stream import stream as k8s_stream
 
 SPLUNK_PASSWORD = "piap-admin"
 
@@ -266,31 +266,30 @@ def install_splunkbase_app(app_id: int, splunkbase_username: str, splunkbase_pas
     Install a Splunkbase app by numeric ID using the Splunk CLI inside the pod.
     Returns stdout on success, raises RuntimeError on failure.
     """
-    # Resolve the pod name
-    pod_result = subprocess.run(
-        ["kubectl", "get", "pods", "-n", NAMESPACE, "-l", "app=splunk",
-         "-o", "jsonpath={.items[0].metadata.name}"],
-        capture_output=True, text=True, timeout=15,
-    )
-    pod_name = pod_result.stdout.strip()
-    if not pod_name:
+    core = _core()
+    pods = core.list_namespaced_pod(NAMESPACE, label_selector="app=splunk")
+    if not pods.items:
         raise RuntimeError("Splunk pod not found — is Splunk deployed?")
+    pod_name = pods.items[0].metadata.name
 
-    result = subprocess.run(
-        [
-            "kubectl", "exec", "-n", NAMESPACE, pod_name, "--",
-            "/opt/splunk/bin/splunk", "install", "app",
-            f"https://splunkbase.splunk.com/app/{app_id}/release/latest/download",
-            "-auth", f"admin:{SPLUNK_PASSWORD}",
-            "-splunkbase_username", splunkbase_username,
-            "-splunkbase_password", splunkbase_password,
-            "-update", "true",
-        ],
-        capture_output=True, text=True, timeout=120,
+    exec_command = [
+        "/opt/splunk/bin/splunk", "install", "app",
+        f"https://splunkbase.splunk.com/app/{app_id}/release/latest/download",
+        "-auth", f"admin:{SPLUNK_PASSWORD}",
+        "-splunkbase_username", splunkbase_username,
+        "-splunkbase_password", splunkbase_password,
+        "-update", "true",
+    ]
+    resp = k8s_stream(
+        core.connect_get_namespaced_pod_exec,
+        pod_name, NAMESPACE,
+        command=exec_command,
+        stderr=True, stdin=False, stdout=True, tty=False,
+        _request_timeout=120,
     )
-    if result.returncode != 0:
-        raise RuntimeError(result.stderr.strip() or result.stdout.strip())
-    return result.stdout.strip()
+    if "error" in resp.lower() and "installed" not in resp.lower():
+        raise RuntimeError(resp.strip())
+    return resp.strip()
 
 
 def get_pod_status() -> dict:
