@@ -265,6 +265,11 @@ def deploy_caldera():
             raise
 
     # ── 3. Service: caldera (NodePort 30600) ─────────────────────────────────
+    try:
+        core.delete_namespaced_service("caldera", NAMESPACE)
+    except ApiException:
+        pass  # not found — that's fine
+
     svc = client.V1Service(
         metadata=client.V1ObjectMeta(
             name="caldera", namespace=NAMESPACE, labels={"app": "caldera"}
@@ -277,13 +282,7 @@ def deploy_caldera():
             )],
         ),
     )
-    try:
-        core.create_namespaced_service(NAMESPACE, svc)
-    except ApiException as e:
-        if e.status == 409:
-            core.patch_namespaced_service("caldera", NAMESPACE, svc)
-        else:
-            raise
+    core.create_namespaced_service(NAMESPACE, svc)
 
     # ── 4. ConfigMap: caldera-victim-script ──────────────────────────────────
     victim_script = (
