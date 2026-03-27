@@ -29,6 +29,14 @@ SPLUNKBASE_APPS = [
         "url":         "https://splunkbase.splunk.com/app/7404",
     },
     {
+        "id":          3743,
+        "folder_name": "outcold_monitoring_kubernetes",
+        "display":     "Monitoring Kubernetes",
+        "description": "Monitor your K3s cluster — nodes, pods, containers, logs, and metrics. "
+                       "Requires a free evaluation license from outcoldsolutions.com/pricing.",
+        "url":         "https://splunkbase.splunk.com/app/3743",
+    },
+    {
         "id":          7931,
         "folder_name": "splunk_mcp_server",
         "display":     "Splunk MCP Server",
