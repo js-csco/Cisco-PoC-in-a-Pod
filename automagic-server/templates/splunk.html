@@ -258,11 +258,17 @@
     <input type="hidden" name="action" value="install_app">
 
     <!-- Shared credentials -->
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center;">
       <input type="text" name="splunkbase_username" placeholder="Splunk.com username"
              style="flex:1; min-width:160px; padding:8px 12px; border:1px solid #e0e0e0; border-radius:6px; font-size:0.85em; color:#333;">
       <input type="password" name="splunkbase_password" placeholder="Password"
              style="flex:1; min-width:140px; padding:8px 12px; border:1px solid #e0e0e0; border-radius:6px; font-size:0.85em; color:#333;">
+      <button type="submit" name="action" value="restart_splunk"
+              style="background-color:#e65100; color:#fff; border:none; padding:8px 18px;
+                     border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85em;
+                     white-space:nowrap;">
+        Restart Splunk
+      </button>
     </div>
 
     <!-- App cards -->
