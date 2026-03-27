@@ -63,6 +63,20 @@ def hec_is_healthy():
         r = requests.get(
             f"{SPLUNK_HEC_URL}/services/collector/health",
             headers={"Authorization": f"Splunk {HEC_TOKEN}"},
+            verify=False,
+            timeout=5,
+        )
+        if r.status_code == 200:
+            return True
+    except Exception:
+        pass
+    # HEC may be listening on HTTPS instead of HTTP
+    try:
+        hec_https = SPLUNK_HEC_URL.replace("http://", "https://")
+        r = requests.get(
+            f"{hec_https}/services/collector/health",
+            headers={"Authorization": f"Splunk {HEC_TOKEN}"},
+            verify=False,
             timeout=5,
         )
         return r.status_code == 200
@@ -249,12 +263,14 @@ def get_splunkbase_app_status() -> dict:
     Return install status for each Splunkbase app managed by this dashboard.
     Returns {folder_name: bool} — True if installed, False otherwise.
     """
+    mgmt_url = SPLUNK_API_URL.replace("http://", "https://")
     status = {app["folder_name"]: False for app in SPLUNKBASE_APPS}
     try:
         for app in SPLUNKBASE_APPS:
             r = requests.get(
-                f"{SPLUNK_API_URL}/services/apps/local/{app['folder_name']}",
+                f"{mgmt_url}/services/apps/local/{app['folder_name']}",
                 auth=("admin", SPLUNK_PASSWORD),
+                verify=False,
                 timeout=5,
             )
             status[app["folder_name"]] = (r.status_code == 200)
