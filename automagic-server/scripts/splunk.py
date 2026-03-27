@@ -275,17 +275,17 @@ def install_splunkbase_app(app_id: int, splunkbase_username: str, splunkbase_pas
     mgmt_url = SPLUNK_API_URL.replace("http://", "https://")
 
     # ── 1. Authenticate with Splunkbase ──────────────────────────────────────
-    login_resp = requests.post(
+    session = requests.Session()
+    login_resp = session.post(
         "https://splunkbase.splunk.com/api/account:login/",
         data={"username": splunkbase_username, "password": splunkbase_password},
         timeout=30,
     )
     if login_resp.status_code != 200:
         raise RuntimeError(f"Splunkbase login failed ({login_resp.status_code}): check username/password")
-    sb_cookies = login_resp.cookies
 
     # ── 2. Resolve latest version ────────────────────────────────────────────
-    releases_resp = requests.get(
+    releases_resp = session.get(
         f"https://splunkbase.splunk.com/api/v1/app/{app_id}/release",
         timeout=15,
     )
@@ -295,11 +295,10 @@ def install_splunkbase_app(app_id: int, splunkbase_username: str, splunkbase_pas
     if not latest_version:
         raise RuntimeError(f"No version found for app {app_id}")
 
-    # ── 3. Download the app tarball ──────────────────────────────────────────
-    download_resp = requests.get(
+    # ── 3. Download the app tarball (follows 302 redirect to CDN) ────────────
+    download_resp = session.get(
         f"https://splunkbase.splunk.com/app/{app_id}/release/{latest_version}/download/",
-        cookies=sb_cookies,
-        timeout=120,
+        timeout=180,
     )
     if download_resp.status_code != 200:
         raise RuntimeError(f"Download failed ({download_resp.status_code}) for v{latest_version}")
