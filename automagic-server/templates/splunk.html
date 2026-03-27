@@ -349,6 +349,104 @@
   </div>
 </section>
 
+<!-- ═══════════════════════════════════════════════════════ KUBERNETES MONITORING (Collectord) -->
+<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;{% if not splunk_available %} opacity:0.45; pointer-events:none;{% endif %}">
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+    <div style="width:6px; height:20px; background-color:#00bcd4; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">KUBERNETES MONITORING</h3>
+    {% if not splunk_available %}
+      <span style="font-size:0.78em; color:#999; background:#f5f5f5; border:1px solid #e0e0e0; border-radius:4px; padding:2px 8px;">Splunk not running</span>
+    {% endif %}
+  </div>
+  <p style="color:#666; font-size:0.88em; margin:0 0 16px 0; line-height:1.6;">
+    Deploy <strong>Collectord</strong> by
+    <a href="https://www.outcoldsolutions.com/" target="_blank" style="color:#0066ff;">Outcold Solutions</a>
+    to forward container logs, host logs, and Kubernetes metrics to Splunk.
+    Pairs with the <strong>Monitoring Kubernetes</strong> Splunkbase app (installed above) for
+    dashboards and searches.
+  </p>
+
+  <!-- Collectord status -->
+  {% if collectord_status and collectord_status.state != 'not_deployed' %}
+  <div style="margin-bottom:16px;">
+    <div style="display:inline-flex; align-items:center; gap:8px;
+                {% if collectord_status.state == 'running' %}background:#e8f5e9; border:1px solid #a5d6a7;{% elif collectord_status.state == 'partial' or collectord_status.state == 'starting' %}background:#e3f2fd; border:1px solid #90caf9;{% else %}background:#fff8e1; border:1px solid #ffe082;{% endif %}
+                border-radius:8px; padding:8px 14px;">
+      <span style="font-weight:600; font-size:0.9em;
+                    {% if collectord_status.state == 'running' %}color:#2e7d32;{% elif collectord_status.state == 'partial' or collectord_status.state == 'starting' %}color:#1565c0;{% else %}color:#f57f17;{% endif %}">
+        Collectord: {{ collectord_status.message }}
+      </span>
+    </div>
+  </div>
+  {% endif %}
+
+  <form method="POST">
+    <input type="hidden" name="action" value="deploy_collectord">
+
+    <!-- License note -->
+    <div style="background:#e0f7fa; border:1px solid #80deea; border-radius:6px; padding:10px 14px; margin-bottom:16px; font-size:0.83em; color:#555; line-height:1.6;">
+      <strong>Evaluation license required:</strong>
+      Collectord requires a separate license from Outcold Solutions (30-day evaluation available).
+      <br>
+      <span style="color:#00695c;">
+        Request one at
+        <a href="https://www.outcoldsolutions.com/pricing/" target="_blank" style="color:#00695c; font-weight:600;">outcoldsolutions.com/pricing</a>
+        — enter your business email to receive the evaluation key.
+      </span>
+    </div>
+
+    <label style="display:block; font-size:0.85em; font-weight:600; color:#555; margin-bottom:6px;">
+      Outcold License Key <span style="font-weight:400; color:#c62828;">(required)</span>
+    </label>
+    <textarea name="outcold_license" id="outcold-license-input" rows="3"
+              placeholder="Paste the license key received from Outcold Solutions..."
+              style="width:100%; box-sizing:border-box; font-family:monospace; font-size:0.82em;
+                     border:1px solid #e0e0e0; border-radius:6px; padding:10px; resize:vertical;
+                     color:#333; background:#fff;"></textarea>
+
+    <div style="margin-top:14px; display:flex; align-items:center; gap:14px;">
+      <button type="submit" id="deploy-collectord-btn"
+              disabled
+              style="background-color:#ccc; color:#777; border:none; padding:11px 28px;
+                     border-radius:8px; font-weight:700; cursor:not-allowed; font-size:0.95em;
+                     transition: all 0.2s ease;">
+        {% if collectord_status and collectord_status.state not in ('not_deployed', 'error') %}Redeploy Collectord{% else %}Deploy Collectord{% endif %}
+      </button>
+      <span id="deploy-collectord-hint" style="font-size:0.82em; color:#999;">
+        Paste a license key to enable deployment
+      </span>
+    </div>
+  </form>
+</section>
+
+<script>
+(function() {
+  var input = document.getElementById('outcold-license-input');
+  var btn   = document.getElementById('deploy-collectord-btn');
+  var hint  = document.getElementById('deploy-collectord-hint');
+  if (!input || !btn) return;
+
+  function check() {
+    var has = input.value.trim().length > 0;
+    btn.disabled = !has;
+    if (has) {
+      btn.style.backgroundColor = '#00bcd4';
+      btn.style.color = '#fff';
+      btn.style.cursor = 'pointer';
+      if (hint) hint.textContent = 'Deploys DaemonSet to all k3s nodes';
+    } else {
+      btn.style.backgroundColor = '#ccc';
+      btn.style.color = '#777';
+      btn.style.cursor = 'not-allowed';
+      if (hint) hint.textContent = 'Paste a license key to enable deployment';
+    }
+  }
+  input.addEventListener('input', check);
+  input.addEventListener('paste', function() { setTimeout(check, 50); });
+  check();
+})();
+</script>
+
 <!-- ═══════════════════════════════════════════════════════ MCP SERVER -->
 <section style="margin-bottom:2.5rem;{% if not splunk_available or not app_status.get('splunk_mcp_server', false) %} opacity:0.45;{% endif %}">
   <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">

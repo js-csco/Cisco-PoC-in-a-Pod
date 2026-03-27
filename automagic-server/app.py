@@ -607,6 +607,19 @@ def splunk():
     if request.method == 'POST':
         action = request.form.get('action')
 
+        if action == 'deploy_collectord':
+            from scripts.splunk import deploy_collectord
+            outcold_license = request.form.get('outcold_license', '').strip()
+            if not outcold_license:
+                flash("An Outcold Solutions license key is required. Request one at outcoldsolutions.com/pricing.")
+            else:
+                try:
+                    deploy_collectord(outcold_license)
+                    flash("Collectord deployed — DaemonSet rolling out to all nodes.")
+                except Exception as e:
+                    flash(f"Collectord deployment failed: {e}")
+            return redirect(url_for('splunk'))
+
         if action == 'deploy_splunk':
             from scripts.splunk import deploy_splunk
             license_content = request.form.get('license_content', '').strip()
@@ -647,6 +660,10 @@ def splunk():
 
     splunk_available = is_available()
     app_status = get_splunkbase_app_status() if splunk_available else {}
+
+    from scripts.splunk import get_collectord_status
+    collectord_status = get_collectord_status()
+
     return render_template(
         'splunk.html',
         splunk_available=splunk_available,
@@ -654,6 +671,7 @@ def splunk():
         server_ip=request.host.split(':')[0],
         splunkbase_apps=SPLUNKBASE_APPS,
         app_status=app_status,
+        collectord_status=collectord_status,
     )
 
 @app.route('/splunk/status')
