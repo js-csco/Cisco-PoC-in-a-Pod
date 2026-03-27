@@ -67,10 +67,16 @@ spec:
           volumeMounts:
             - mountPath: /app
               name: code
+            - mountPath: /splunk-data
+              name: splunk-data
       serviceAccountName: automagic-sa
       restartPolicy: Always
       volumes:
         - name: code
           hostPath:
             path: /automagic-server
+        - name: splunk-data
+          hostPath:
+            path: /opt/splunk-data
+            type: DirectoryOrCreate
 status: {}

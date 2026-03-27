@@ -303,12 +303,22 @@ def install_splunkbase_app(app_id: int, splunkbase_username: str, splunkbase_pas
     if download_resp.status_code != 200:
         raise RuntimeError(f"Download failed ({download_resp.status_code}) for v{latest_version}")
 
-    # ── 4. Upload to Splunk ──────────────────────────────────────────────────
+    # ── 4. Write tarball to shared hostPath volume ─────────────────────────
+    #   automagic mounts /opt/splunk-data at /splunk-data
+    #   Splunk   mounts /opt/splunk-data at /opt/splunk/var
+    staging_path = "/splunk-data/splunkbase_app.tgz"
+    with open(staging_path, "wb") as f:
+        f.write(download_resp.content)
+
+    # ── 5. Tell Splunk to install from its local filesystem ──────────────────
     install_resp = requests.post(
         f"{mgmt_url}/services/apps/local",
         auth=("admin", SPLUNK_PASSWORD),
-        data={"update": "true", "filename": "true"},
-        files={"appfile": ("app.tgz", download_resp.content, "application/gzip")},
+        data={
+            "name": "/opt/splunk/var/splunkbase_app.tgz",
+            "update": "true",
+            "filename": "true",
+        },
         verify=False,
         timeout=120,
     )
