@@ -263,6 +263,17 @@ def get_splunkbase_app_status() -> dict:
     return status
 
 
+def restart_splunk():
+    """Restart the Splunk deployment by rolling out a new pod."""
+    apps_api = _apps()
+    apps_api.patch_namespaced_deployment(
+        "splunk", NAMESPACE,
+        body={"spec": {"template": {"metadata": {"annotations": {
+            "piap/restartedAt": __import__("datetime").datetime.utcnow().isoformat()
+        }}}}},
+    )
+
+
 def install_splunkbase_app(app_id: int, splunkbase_username: str, splunkbase_password: str) -> str:
     """
     Install a Splunkbase app via Splunk's REST API.

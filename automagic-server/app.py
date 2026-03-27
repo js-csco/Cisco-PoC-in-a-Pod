@@ -620,6 +620,15 @@ def splunk():
                 flash(f"Deployment failed: {e}")
             return redirect(url_for('splunk'))
 
+        if action == 'restart_splunk':
+            from scripts.splunk import restart_splunk
+            try:
+                restart_splunk()
+                flash("Splunk is restarting — allow ~2 minutes for it to come back online.")
+            except Exception as e:
+                flash(f"Restart failed: {e}")
+            return redirect(url_for('splunk'))
+
         if action == 'install_app':
             from scripts.splunk import install_splunkbase_app
             app_id  = request.form.get('app_id', '').strip()
