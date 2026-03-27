@@ -287,6 +287,7 @@ def install_splunkbase_app(app_id: int, splunkbase_username: str, splunkbase_pas
     install_resp = requests.post(
         f"{mgmt_url}/services/apps/remote/entries/{app_id}/install",
         auth=("admin", SPLUNK_PASSWORD),
+        data={"auth": f"{splunkbase_username} {splunkbase_password}"},
         verify=False,
         timeout=120,
     )
