@@ -35,13 +35,6 @@ SPLUNKBASE_APPS = [
         "description": "Expose Splunk search as an MCP tool for Claude and other AI agents via the /services/mcp endpoint.",
         "url":         "https://splunkbase.splunk.com/app/7931",
     },
-    {
-        "id":          3743,
-        "folder_name": "collectorforkubernetes",
-        "display":     "Monitoring Kubernetes",
-        "description": "Dashboards, log forwarding, and metrics collection for Kubernetes clusters — powered by Collectord (Outcold Solutions).",
-        "url":         "https://splunkbase.splunk.com/app/3743",
-    },
 ]
 
 NAMESPACE = "piap"
