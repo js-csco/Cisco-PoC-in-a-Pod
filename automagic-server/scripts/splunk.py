@@ -267,33 +267,55 @@ def install_splunkbase_app(app_id: int, splunkbase_username: str, splunkbase_pas
     """
     Install a Splunkbase app via Splunk's REST API.
 
-    1. Authenticate Splunk with Splunkbase (remote login).
-    2. Trigger install by app ID — Splunk downloads the app itself.
+    1. Authenticate with Splunkbase to get session cookies.
+    2. Resolve the latest version (Splunkbase has no "latest" alias).
+    3. Download the app tarball.
+    4. Upload to Splunk's /services/apps/local endpoint.
     """
     mgmt_url = SPLUNK_API_URL.replace("http://", "https://")
 
-    # ── 1. Authenticate Splunk instance with Splunkbase ──────────────────────
+    # ── 1. Authenticate with Splunkbase ──────────────────────────────────────
     login_resp = requests.post(
-        f"{mgmt_url}/services/apps/remote/login",
-        auth=("admin", SPLUNK_PASSWORD),
+        "https://splunkbase.splunk.com/api/account:login/",
         data={"username": splunkbase_username, "password": splunkbase_password},
-        verify=False,
         timeout=30,
     )
     if login_resp.status_code != 200:
-        raise RuntimeError(f"Splunkbase login failed ({login_resp.status_code}): check your username/password")
+        raise RuntimeError(f"Splunkbase login failed ({login_resp.status_code}): check username/password")
+    sb_cookies = login_resp.cookies
 
-    # ── 2. Trigger install by app ID ─────────────────────────────────────────
+    # ── 2. Resolve latest version ────────────────────────────────────────────
+    releases_resp = requests.get(
+        f"https://splunkbase.splunk.com/api/v1/app/{app_id}/release",
+        timeout=15,
+    )
+    if releases_resp.status_code != 200 or not releases_resp.json():
+        raise RuntimeError(f"Could not find releases for app {app_id}")
+    latest_version = releases_resp.json()[0].get("name", "")
+    if not latest_version:
+        raise RuntimeError(f"No version found for app {app_id}")
+
+    # ── 3. Download the app tarball ──────────────────────────────────────────
+    download_resp = requests.get(
+        f"https://splunkbase.splunk.com/app/{app_id}/release/{latest_version}/download/",
+        cookies=sb_cookies,
+        timeout=120,
+    )
+    if download_resp.status_code != 200:
+        raise RuntimeError(f"Download failed ({download_resp.status_code}) for v{latest_version}")
+
+    # ── 4. Upload to Splunk ──────────────────────────────────────────────────
     install_resp = requests.post(
-        f"{mgmt_url}/services/apps/remote/entries/{app_id}/install",
+        f"{mgmt_url}/services/apps/local",
         auth=("admin", SPLUNK_PASSWORD),
-        data={"auth": f"{splunkbase_username} {splunkbase_password}"},
+        data={"update": "true", "filename": "true"},
+        files={"appfile": ("app.tgz", download_resp.content, "application/gzip")},
         verify=False,
         timeout=120,
     )
     if install_resp.status_code not in (200, 201):
         raise RuntimeError(f"Splunk install failed ({install_resp.status_code}): {install_resp.text[:500]}")
-    return "App installed successfully"
+    return f"App v{latest_version} installed successfully"
 
 
 def get_pod_status() -> dict:
