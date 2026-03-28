@@ -482,7 +482,7 @@ def get_pod_status() -> dict:
 # ── Collectord (Outcold Solutions — Monitoring Kubernetes) ────────────────────
 
 COLLECTORD_NAMESPACE = "collectorforkubernetes"
-COLLECTORD_IMAGE = "docker.io/outcoldsolutions/collectord:latest"
+COLLECTORD_IMAGE = "docker.io/outcoldsolutions/collectorforkubernetes:5.24.444"
 
 
 def deploy_collectord(outcold_license: str) -> None:
