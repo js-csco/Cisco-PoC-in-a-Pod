@@ -132,6 +132,17 @@
       <p class="card-desc">Log aggregation and SIEM. Ingests security events from Tetragon, Cilium, and application logs.</p>
     </a>
 
+    <a href="{{ url_for('trivy') }}" class="link-card">
+      <div class="card-header">
+        <span class="fa-solid fa-bug" style="color:#e53935; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div class="card-title">Trivy</div>
+          <div class="card-subtitle">On-demand Job · Vulnerability Scanner</div>
+        </div>
+      </div>
+      <p class="card-desc">Scan every container image in the cluster for known CVEs. Complements Tetragon's runtime detection.</p>
+    </a>
+
   </div>
 
   <!-- APPLICATIONS -->

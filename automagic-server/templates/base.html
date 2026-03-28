@@ -185,6 +185,9 @@
         <a href="{{ url_for('splunk') }}" class="menu-item {% if active_page == 'splunk' %}active{% endif %}">
           <span class="fa-solid fa-compass"></span> Splunk
         </a>
+        <a href="{{ url_for('trivy') }}" class="menu-item {% if active_page == 'trivy' %}active{% endif %}">
+          <span class="fa-solid fa-bug"></span> Trivy
+        </a>
 
         <div class="nav-section">Red Team</div>
         <a href="{{ url_for('caldera') }}" class="menu-item {% if active_page == 'caldera' %}active{% endif %}">
