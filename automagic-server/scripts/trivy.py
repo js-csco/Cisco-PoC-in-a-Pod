@@ -338,10 +338,10 @@ TRIVY_DASHBOARD_XML = """\
     </panel>
     <panel>
       <chart>
-        <title>Trivy + Tetragon Correlation</title>
-        <search><query>sourcetype="trivy:image:scan" OR sourcetype="tetragon" | eval src=if(sourcetype=="trivy:image:scan","Trivy CVEs","Tetragon Events") | timechart count by src</query><earliest>-24h@h</earliest><latest>now</latest></search>
+        <title>Vulnerability Posture Over Time</title>
+        <search><query>sourcetype="trivy:image:scan" | stats sum(critical) as Critical sum(high) as High by scan_job _time | timechart latest(Critical) as Critical latest(High) as High</query><earliest>-7d@d</earliest><latest>now</latest></search>
         <option name="charting.chart">area</option>
-        <option name="charting.fieldColors">{"Trivy CVEs":0xe53935,"Tetragon Events":0xe65100}</option>
+        <option name="charting.fieldColors">{"Critical":0xe53935,"High":0xe65100}</option>
       </chart>
     </panel>
   </row>

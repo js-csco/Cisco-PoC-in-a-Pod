@@ -253,18 +253,7 @@
     </div>
 
     <div style="border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; background:#fff;">
-      <div style="font-weight:600; color:#b71c1c; margin-bottom:6px; font-size:0.9em;">4. Correlate with Tetragon runtime events</div>
-      <div style="font-size:0.82em; color:#666; line-height:1.5; margin-bottom:8px;">
-        The money query &mdash; find containers that are <em>both</em> vulnerable <em>and</em>
-        showing suspicious runtime behavior. These are your highest-priority targets.
-      </div>
-      <pre style="margin:0; padding:10px; background:#1e1e1e; color:#d4d4d4; border-radius:6px; font-size:0.8em; overflow-x:auto; line-height:1.5;">sourcetype="trivy:image:scan" OR sourcetype="tetragon"
-| eval src=if(sourcetype=="trivy:image:scan", "Trivy CVEs", "Tetragon Events")
-| timechart count by src</pre>
-    </div>
-
-    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; background:#fff;">
-      <div style="font-weight:600; color:#111; margin-bottom:6px; font-size:0.9em;">5. Vulnerability posture over time</div>
+      <div style="font-weight:600; color:#111; margin-bottom:6px; font-size:0.9em;">4. Vulnerability posture over time</div>
       <div style="font-size:0.82em; color:#666; line-height:1.5; margin-bottom:8px;">
         Track how your cluster's vulnerability posture changes across scans.
         Run periodic scans to populate this timeline.
