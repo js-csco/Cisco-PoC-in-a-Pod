@@ -593,10 +593,6 @@ def caldera_status():
         return jsonify({"error": str(e)})
 
 
-@app.route('/mcp-servers')
-def mcp_servers():
-    return render_template('mcp-servers.html')
-
 @app.route('/splunk', methods=['GET', 'POST'])
 def splunk():
     from scripts.splunk import (
@@ -683,9 +679,37 @@ def splunk_status():
     from flask import jsonify
     return jsonify(status)
 
-@app.route('/thousandeyes')
-def thousandeyes():
-    return render_template('thousandeyes.html')
+@app.route('/trivy', methods=['GET', 'POST'])
+def trivy():
+    from scripts.trivy import get_cluster_images, get_scan_status, get_scan_results
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'scan':
+            from scripts.trivy import run_scan
+            try:
+                run_scan()
+                flash("Vulnerability scan started — this may take a few minutes.")
+            except Exception as e:
+                flash(f"Scan failed: {e}")
+            return redirect(url_for('trivy'))
+
+    images = get_cluster_images()
+    scan_status = get_scan_status()
+    scan_results = get_scan_results() if scan_status["state"] == "completed" else []
+
+    return render_template(
+        'trivy.html',
+        images=images,
+        scan_status=scan_status,
+        scan_results=scan_results,
+    )
+
+@app.route('/trivy/status')
+def trivy_status():
+    from flask import jsonify
+    from scripts.trivy import get_scan_status
+    return jsonify(get_scan_status())
 
 @app.route('/help')
 def help_page():

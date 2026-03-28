@@ -88,17 +88,6 @@
       <p class="card-desc">Multi-factor authentication, device trust, and risk-based authentication integrated with Secure Access.</p>
     </a>
 
-    <a href="{{ url_for('thousandeyes') }}" class="link-card">
-      <div class="card-header">
-        <span class="fa-solid fa-eye" style="color:#00a0b0; font-size:1.1rem; flex-shrink:0;"></span>
-        <div>
-          <div class="card-title">ThousandEyes</div>
-          <div class="card-subtitle">Cloud · Network Monitoring</div>
-        </div>
-      </div>
-      <p class="card-desc">End-to-end network path visibility for the ZTNA access path from user to application.</p>
-    </a>
-
     <a href="{{ url_for('cilium') }}" class="link-card">
       <div class="card-header">
         <span class="fa-solid fa-network-wired" style="color:#0066ff; font-size:1.1rem; flex-shrink:0;"></span>
@@ -141,6 +130,17 @@
         </div>
       </div>
       <p class="card-desc">Log aggregation and SIEM. Ingests security events from Tetragon, Cilium, and application logs.</p>
+    </a>
+
+    <a href="{{ url_for('trivy') }}" class="link-card">
+      <div class="card-header">
+        <span class="fa-solid fa-bug" style="color:#e53935; font-size:1.1rem; flex-shrink:0;"></span>
+        <div>
+          <div class="card-title">Trivy</div>
+          <div class="card-subtitle">On-demand Job · Vulnerability Scanner</div>
+        </div>
+      </div>
+      <p class="card-desc">Scan every container image in the cluster for known CVEs. Complements Tetragon's runtime detection.</p>
     </a>
 
   </div>
