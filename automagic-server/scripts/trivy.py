@@ -6,12 +6,19 @@ Kubernetes Job to scan them with Trivy, and parses the results into a
 per-image severity summary.
 """
 import json
+import requests
+import urllib3
 from datetime import datetime
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 NAMESPACE = "piap"
 TRIVY_IMAGE = "aquasec/trivy:latest"
+
+# Track which scan jobs have already been forwarded to Splunk
+_forwarded_jobs = set()
 
 
 def _core():
@@ -222,3 +229,44 @@ def get_scan_results():
 
     results.sort(key=lambda r: (-r["critical"], -r["high"], r["image"]))
     return results
+
+
+# ── Splunk HEC forwarding ────────────────────────────────────────────────────
+
+def forward_to_splunk(results, job_name):
+    """
+    Send Trivy scan results to Splunk via HEC.
+    Each image becomes one event (sourcetype=trivy:image:scan).
+    Only forwards once per job_name to avoid duplicates on page refresh.
+    """
+    if not results or job_name in _forwarded_jobs:
+        return
+
+    from scripts.splunk import SPLUNK_HEC_URL, HEC_TOKEN, hec_is_healthy
+
+    if not hec_is_healthy():
+        return
+
+    headers = {"Authorization": f"Splunk {HEC_TOKEN}"}
+    hec_url = f"{SPLUNK_HEC_URL}/services/collector/event"
+
+    for r in results:
+        event = {
+            "sourcetype": "trivy:image:scan",
+            "source": "trivy",
+            "event": {
+                "scan_job": job_name,
+                "image": r["image"],
+                "critical": r["critical"],
+                "high": r["high"],
+                "medium": r["medium"],
+                "low": r["low"],
+                "total": r["total"],
+            },
+        }
+        try:
+            requests.post(hec_url, json=event, headers=headers, verify=False, timeout=5)
+        except Exception:
+            pass
+
+    _forwarded_jobs.add(job_name)

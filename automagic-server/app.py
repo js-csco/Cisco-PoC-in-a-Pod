@@ -698,6 +698,11 @@ def trivy():
     scan_status = get_scan_status()
     scan_results = get_scan_results() if scan_status["state"] == "completed" else []
 
+    # Forward results to Splunk HEC (once per scan, deduped by job name)
+    if scan_results and scan_status.get("job_name"):
+        from scripts.trivy import forward_to_splunk
+        forward_to_splunk(scan_results, scan_status["job_name"])
+
     return render_template(
         'trivy.html',
         images=images,
