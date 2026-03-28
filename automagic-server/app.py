@@ -593,10 +593,6 @@ def caldera_status():
         return jsonify({"error": str(e)})
 
 
-@app.route('/mcp-servers')
-def mcp_servers():
-    return render_template('mcp-servers.html')
-
 @app.route('/splunk', methods=['GET', 'POST'])
 def splunk():
     from scripts.splunk import (
@@ -682,10 +678,6 @@ def splunk_status():
     status["hec_healthy"] = hec_is_healthy() if status["splunk_available"] else False
     from flask import jsonify
     return jsonify(status)
-
-@app.route('/thousandeyes')
-def thousandeyes():
-    return render_template('thousandeyes.html')
 
 @app.route('/help')
 def help_page():
