@@ -694,9 +694,23 @@ def trivy():
                 flash(f"Scan failed: {e}")
             return redirect(url_for('trivy'))
 
+        if action == 'create_dashboard':
+            from scripts.trivy import create_splunk_dashboard
+            try:
+                path = create_splunk_dashboard()
+                flash(f"Splunk dashboard created — open it at {path}")
+            except Exception as e:
+                flash(f"Dashboard creation failed: {e}")
+            return redirect(url_for('trivy'))
+
     images = get_cluster_images()
     scan_status = get_scan_status()
     scan_results = get_scan_results() if scan_status["state"] == "completed" else []
+
+    # Forward results to Splunk HEC (once per scan, deduped by job name)
+    if scan_results and scan_status.get("job_name"):
+        from scripts.trivy import forward_to_splunk
+        forward_to_splunk(scan_results, scan_status["job_name"])
 
     return render_template(
         'trivy.html',

@@ -193,4 +193,77 @@
 
 </section>
 
+<!-- ═══════════════════════════════════════════════════════ SPLUNK INTEGRATION -->
+<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#ff6600; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SPLUNK INTEGRATION</h3>
+  </div>
+  <p style="color:#666; font-size:0.88em; margin:0 0 18px 0; line-height:1.6;">
+    Scan results are automatically forwarded to Splunk via HEC
+    (<code>sourcetype=trivy:image:scan</code>). Use the queries below to
+    explore vulnerability data and correlate it with Tetragon runtime events.
+  </p>
+
+  <!-- Create Dashboard button -->
+  <form method="POST" style="margin-bottom:20px;">
+    <button type="submit" name="action" value="create_dashboard"
+            style="background-color:#ff6600; color:#fff; border:none; padding:10px 22px;
+                   border-radius:8px; font-weight:700; cursor:pointer; font-size:0.9em;">
+      Create Splunk Dashboard
+    </button>
+    <span style="font-size:0.82em; color:#999; margin-left:10px;">
+      Installs a pre-built Trivy dashboard in Splunk with all queries below
+    </span>
+  </form>
+
+  <!-- SPL Guide -->
+  <div style="display:grid; grid-template-columns:1fr; gap:14px;">
+
+    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; background:#fff;">
+      <div style="font-weight:600; color:#111; margin-bottom:6px; font-size:0.9em;">1. Browse all scan results</div>
+      <div style="font-size:0.82em; color:#666; line-height:1.5; margin-bottom:8px;">
+        See every image scanned and its vulnerability counts.
+      </div>
+      <pre style="margin:0; padding:10px; background:#1e1e1e; color:#d4d4d4; border-radius:6px; font-size:0.8em; overflow-x:auto; line-height:1.5;">sourcetype="trivy:image:scan"
+| dedup image
+| table image critical high medium low total
+| sort -critical -high</pre>
+    </div>
+
+    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; background:#fff;">
+      <div style="font-weight:600; color:#111; margin-bottom:6px; font-size:0.9em;">2. Cluster vulnerability summary</div>
+      <div style="font-size:0.82em; color:#666; line-height:1.5; margin-bottom:8px;">
+        Total vulnerability counts across all images — the headline numbers.
+      </div>
+      <pre style="margin:0; padding:10px; background:#1e1e1e; color:#d4d4d4; border-radius:6px; font-size:0.8em; overflow-x:auto; line-height:1.5;">sourcetype="trivy:image:scan"
+| stats latest(critical) as c latest(high) as h latest(medium) as m latest(low) as l by image
+| stats sum(c) as Critical sum(h) as High sum(m) as Medium sum(l) as Low</pre>
+    </div>
+
+    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; background:#fff;">
+      <div style="font-weight:600; color:#111; margin-bottom:6px; font-size:0.9em;">3. Images with critical vulnerabilities</div>
+      <div style="font-size:0.82em; color:#666; line-height:1.5; margin-bottom:8px;">
+        Focus on the most urgent images that need patching.
+      </div>
+      <pre style="margin:0; padding:10px; background:#1e1e1e; color:#d4d4d4; border-radius:6px; font-size:0.8em; overflow-x:auto; line-height:1.5;">sourcetype="trivy:image:scan" critical>0
+| dedup image
+| table image critical high total
+| sort -critical</pre>
+    </div>
+
+    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; background:#fff;">
+      <div style="font-weight:600; color:#111; margin-bottom:6px; font-size:0.9em;">4. Vulnerability posture over time</div>
+      <div style="font-size:0.82em; color:#666; line-height:1.5; margin-bottom:8px;">
+        Track how your cluster's vulnerability posture changes across scans.
+        Run periodic scans to populate this timeline.
+      </div>
+      <pre style="margin:0; padding:10px; background:#1e1e1e; color:#d4d4d4; border-radius:6px; font-size:0.8em; overflow-x:auto; line-height:1.5;">sourcetype="trivy:image:scan"
+| stats sum(critical) as Critical sum(high) as High by scan_job _time
+| timechart latest(Critical) as Critical latest(High) as High</pre>
+    </div>
+
+  </div>
+</section>
+
 {% endblock %}

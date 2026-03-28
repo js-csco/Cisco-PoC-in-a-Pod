@@ -6,12 +6,19 @@ Kubernetes Job to scan them with Trivy, and parses the results into a
 per-image severity summary.
 """
 import json
+import requests
+import urllib3
 from datetime import datetime
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 NAMESPACE = "piap"
 TRIVY_IMAGE = "aquasec/trivy:latest"
+
+# Track which scan jobs have already been forwarded to Splunk
+_forwarded_jobs = set()
 
 
 def _core():
@@ -222,3 +229,161 @@ def get_scan_results():
 
     results.sort(key=lambda r: (-r["critical"], -r["high"], r["image"]))
     return results
+
+
+# ── Splunk HEC forwarding ────────────────────────────────────────────────────
+
+def forward_to_splunk(results, job_name):
+    """
+    Send Trivy scan results to Splunk via HEC.
+    Each image becomes one event (sourcetype=trivy:image:scan).
+    Only forwards once per job_name to avoid duplicates on page refresh.
+    """
+    if not results or job_name in _forwarded_jobs:
+        return
+
+    from scripts.splunk import SPLUNK_HEC_URL, HEC_TOKEN, hec_is_healthy
+
+    if not hec_is_healthy():
+        return
+
+    headers = {"Authorization": f"Splunk {HEC_TOKEN}"}
+    hec_url = f"{SPLUNK_HEC_URL}/services/collector/event"
+
+    for r in results:
+        event = {
+            "sourcetype": "trivy:image:scan",
+            "source": "trivy",
+            "event": {
+                "scan_job": job_name,
+                "image": r["image"],
+                "critical": r["critical"],
+                "high": r["high"],
+                "medium": r["medium"],
+                "low": r["low"],
+                "total": r["total"],
+            },
+        }
+        try:
+            requests.post(hec_url, json=event, headers=headers, verify=False, timeout=5)
+        except Exception:
+            pass
+
+    _forwarded_jobs.add(job_name)
+
+
+# ── Splunk dashboard creation ─────────────────────────────────────────────────
+
+TRIVY_DASHBOARD_XML = """\
+<dashboard version="1.1" theme="dark">
+  <label>Trivy — Vulnerability Scanner</label>
+  <description>Container image CVE scan results from the k3s cluster</description>
+
+  <row>
+    <panel>
+      <single>
+        <title>Critical</title>
+        <search><query>sourcetype="trivy:image:scan" | stats latest(critical) as count by image | stats sum(count) as Critical</query><earliest>-24h@h</earliest><latest>now</latest></search>
+        <option name="colorBy">value</option>
+        <option name="rangeColors">["0x2e7d32","0xb71c1c"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>High</title>
+        <search><query>sourcetype="trivy:image:scan" | stats latest(high) as count by image | stats sum(count) as High</query><earliest>-24h@h</earliest><latest>now</latest></search>
+        <option name="colorBy">value</option>
+        <option name="rangeColors">["0x2e7d32","0xe65100"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Medium</title>
+        <search><query>sourcetype="trivy:image:scan" | stats latest(medium) as count by image | stats sum(count) as Medium</query><earliest>-24h@h</earliest><latest>now</latest></search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Low</title>
+        <search><query>sourcetype="trivy:image:scan" | stats latest(low) as count by image | stats sum(count) as Low</query><earliest>-24h@h</earliest><latest>now</latest></search>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <table>
+        <title>Vulnerabilities by Image</title>
+        <search><query>sourcetype="trivy:image:scan" | dedup image | table image critical high medium low total | sort -critical -high</query><earliest>-24h@h</earliest><latest>now</latest></search>
+        <option name="drilldown">none</option>
+        <format type="color" field="critical"><colorPalette type="list">[#FFFFFF,#fce4ec,#e53935]</colorPalette><scale type="threshold">0,1</scale></format>
+        <format type="color" field="high"><colorPalette type="list">[#FFFFFF,#fff3e0,#e65100]</colorPalette><scale type="threshold">0,1</scale></format>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <chart>
+        <title>Top Vulnerable Images</title>
+        <search><query>sourcetype="trivy:image:scan" | dedup image | eval label=replace(image,"^.*/","") | chart values(critical) as Critical values(high) as High by label | sort -Critical -High | head 10</query><earliest>-24h@h</earliest><latest>now</latest></search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.fieldColors">{"Critical":0xe53935,"High":0xe65100}</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>Vulnerability Posture Over Time</title>
+        <search><query>sourcetype="trivy:image:scan" | stats sum(critical) as Critical sum(high) as High by scan_job _time | timechart latest(Critical) as Critical latest(High) as High</query><earliest>-7d@d</earliest><latest>now</latest></search>
+        <option name="charting.chart">area</option>
+        <option name="charting.fieldColors">{"Critical":0xe53935,"High":0xe65100}</option>
+      </chart>
+    </panel>
+  </row>
+
+</dashboard>
+"""
+
+
+def create_splunk_dashboard():
+    """
+    Create (or update) the Trivy dashboard in Splunk via the REST API.
+    Returns the dashboard URL path.
+    """
+    from scripts.splunk import SPLUNK_API_URL, SPLUNK_PASSWORD
+
+    mgmt_url = SPLUNK_API_URL.replace("http://", "https://")
+    dashboard_name = "trivy_vulnerability_scanner"
+    endpoint = f"{mgmt_url}/servicesNS/admin/search/data/ui/views"
+
+    # Try to create
+    resp = requests.post(
+        endpoint,
+        auth=("admin", SPLUNK_PASSWORD),
+        data={
+            "name": dashboard_name,
+            "eai:data": TRIVY_DASHBOARD_XML,
+        },
+        verify=False,
+        timeout=15,
+    )
+
+    # If it already exists, update it
+    if resp.status_code == 409:
+        resp = requests.post(
+            f"{endpoint}/{dashboard_name}",
+            auth=("admin", SPLUNK_PASSWORD),
+            data={"eai:data": TRIVY_DASHBOARD_XML},
+            verify=False,
+            timeout=15,
+        )
+
+    if resp.status_code not in (200, 201):
+        raise RuntimeError(f"Failed to create dashboard ({resp.status_code}): {resp.text[:300]}")
+
+    return f"/app/search/{dashboard_name}"
