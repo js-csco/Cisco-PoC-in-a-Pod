@@ -15,7 +15,7 @@ from kubernetes.client.exceptions import ApiException
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 NAMESPACE = "piap"
-TRIVY_IMAGE = "aquasec/trivy:latest"
+TRIVY_IMAGE = "ghcr.io/aquasecurity/trivy:0.69.3"
 
 # Track which scan jobs have already been forwarded to Splunk
 _forwarded_jobs = set()
