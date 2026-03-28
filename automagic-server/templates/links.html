@@ -132,6 +132,15 @@
       <p class="card-desc">Log aggregation and SIEM. Ingests security events from Tetragon, Cilium, and application logs.</p>
     </a>
 
+  </div>
+
+  <!-- APPLICATIONS -->
+  <div class="section-header">
+    <div class="section-bar" style="background-color:#0066ff;"></div>
+    <h3 class="section-title">APPLICATIONS</h3>
+  </div>
+  <div class="card-grid">
+
     <a href="{{ url_for('trivy') }}" class="link-card">
       <div class="card-header">
         <span class="fa-solid fa-bug" style="color:#e53935; font-size:1.1rem; flex-shrink:0;"></span>
@@ -142,15 +151,6 @@
       </div>
       <p class="card-desc">Scan every container image in the cluster for known CVEs. Complements Tetragon's runtime detection.</p>
     </a>
-
-  </div>
-
-  <!-- APPLICATIONS -->
-  <div class="section-header">
-    <div class="section-bar" style="background-color:#0066ff;"></div>
-    <h3 class="section-title">APPLICATIONS</h3>
-  </div>
-  <div class="card-grid">
 
     <a href="http://{{ host_ip }}:30550" target="_blank" class="link-card">
       <div class="card-header">
