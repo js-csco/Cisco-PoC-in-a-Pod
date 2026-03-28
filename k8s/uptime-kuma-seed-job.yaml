@@ -111,6 +111,34 @@ data:
             "notificationIDList": [],
             "accepted_statuscodes": ["200-299"],
         },
+        {
+            "name": "Hubble UI",
+            "type": "http",
+            "url": "http://hubble-ui.kube-system.svc.cluster.local:80",
+            "interval": 60,
+            "maxretries": 3,
+            "notificationIDList": [],
+            "accepted_statuscodes": ["200-299"],
+        },
+        {
+            "name": "Splunk HEC",
+            "type": "keyword",
+            "url": "http://splunk.piap.svc.cluster.local:8088/services/collector/health",
+            "keyword": "HEC is healthy",
+            "interval": 60,
+            "maxretries": 3,
+            "notificationIDList": [],
+            "accepted_statuscodes": ["200-299"],
+        },
+        {
+            "name": "Fluent Bit",
+            "type": "http",
+            "url": "http://fluent-bit.piap.svc.cluster.local:2020/api/v1/health",
+            "interval": 60,
+            "maxretries": 3,
+            "notificationIDList": [],
+            "accepted_statuscodes": ["200-299"],
+        },
     ]
 
     def wait_for_kuma(max_retries=30, delay=10):
@@ -181,7 +209,7 @@ data:
             response = sio.call("setup", {
                 "username": ADMIN_USER,
                 "password": ADMIN_PASS,
-            }, timeout=15)
+            }, timeout=30)
             print(f"Setup response: {response}")
             if isinstance(response, dict) and response.get("ok"):
                 setup_ok = True
@@ -189,7 +217,26 @@ data:
             else:
                 print("Setup returned non-ok (user may already exist)")
         except Exception as e:
-            print(f"Setup call failed (user may already exist): {e}")
+            print(f"Setup call failed ({type(e).__name__}): {e}")
+            # Fallback: try emit without waiting for ack (works around
+            # python-socketio / Uptime-Kuma protocol mismatches)
+            print("Trying setup via emit fallback...")
+            try:
+                setup_result = {}
+                def on_setup_result(data):
+                    setup_result.update(data if isinstance(data, dict) else {})
+                sio.emit("setup", {
+                    "username": ADMIN_USER,
+                    "password": ADMIN_PASS,
+                }, callback=on_setup_result)
+                time.sleep(5)
+                if setup_result.get("ok"):
+                    setup_ok = True
+                    print(f"Setup via emit succeeded: {setup_result}")
+                else:
+                    print(f"Setup via emit response: {setup_result}")
+            except Exception as e2:
+                print(f"Setup emit fallback also failed ({type(e2).__name__}): {e2}")
 
         # Login — try even if setup failed (user may already exist)
         logged_in = False
@@ -304,7 +351,7 @@ spec:
             - /bin/sh
             - -c
             - |
-              pip install --quiet python-socketio[client] websocket-client && \
+              pip install --quiet 'python-socketio[client]~=5.11.0' websocket-client && \
               python /scripts/seed.py
           resources:
             requests:
