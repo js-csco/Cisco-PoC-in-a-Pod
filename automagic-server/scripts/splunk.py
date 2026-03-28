@@ -546,7 +546,7 @@ def deploy_collectord(outcold_license: str) -> None:
     crb = client.V1ClusterRoleBinding(
         metadata=client.V1ObjectMeta(name=COLLECTORD_NAMESPACE),
         role_ref=client.V1RoleRef(api_group="rbac.authorization.k8s.io", kind="ClusterRole", name=COLLECTORD_NAMESPACE),
-        subjects=[client.V1Subject(kind="ServiceAccount", name=COLLECTORD_NAMESPACE, namespace=COLLECTORD_NAMESPACE)],
+        subjects=[client.RbacV1Subject(kind="ServiceAccount", name=COLLECTORD_NAMESPACE, namespace=COLLECTORD_NAMESPACE)],
     )
     try:
         rbac.create_cluster_role_binding(crb)
