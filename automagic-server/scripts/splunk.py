@@ -262,9 +262,15 @@ def get_splunkbase_app_status() -> dict:
     """
     Return install status for each Splunkbase app managed by this dashboard.
     Returns {folder_name: bool} — True if installed, False otherwise.
+
+    First tries the configured folder_name. If that misses, fetches the full
+    app list and matches by Splunkbase update URL (contains the app ID) so
+    we detect apps regardless of their actual folder name.
     """
     mgmt_url = SPLUNK_API_URL.replace("http://", "https://")
     status = {app["folder_name"]: False for app in SPLUNKBASE_APPS}
+
+    # Quick check by known folder name
     try:
         for app in SPLUNKBASE_APPS:
             r = requests.get(
@@ -273,9 +279,44 @@ def get_splunkbase_app_status() -> dict:
                 verify=False,
                 timeout=5,
             )
-            status[app["folder_name"]] = (r.status_code == 200)
+            if r.status_code == 200:
+                status[app["folder_name"]] = True
     except Exception:
         pass
+
+    # If any are still missing, scan the full app list for matching Splunkbase IDs
+    missing = [a for a in SPLUNKBASE_APPS if not status[a["folder_name"]]]
+    if missing:
+        try:
+            r = requests.get(
+                f"{mgmt_url}/services/apps/local",
+                auth=("admin", SPLUNK_PASSWORD),
+                params={"output_mode": "json", "count": "0"},
+                verify=False,
+                timeout=10,
+            )
+            if r.status_code == 200:
+                entries = r.json().get("entry", [])
+                # Build a set of Splunkbase app IDs found in the installed apps
+                installed_ids = set()
+                for entry in entries:
+                    details = entry.get("content", {})
+                    update_url = details.get("update.checkout.url", "")
+                    # update.checkout.url looks like /app/7404/... or similar
+                    for app in missing:
+                        if f"/app/{app['id']}" in update_url or f"/{app['id']}/" in update_url:
+                            installed_ids.add(app["id"])
+                    # Also check the label (display name) as a fallback
+                    label = details.get("label", "")
+                    for app in missing:
+                        if label and label.lower() == app["display"].lower():
+                            installed_ids.add(app["id"])
+                for app in missing:
+                    if app["id"] in installed_ids:
+                        status[app["folder_name"]] = True
+        except Exception:
+            pass
+
     return status
 
 
