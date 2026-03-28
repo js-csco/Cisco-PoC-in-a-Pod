@@ -694,6 +694,15 @@ def trivy():
                 flash(f"Scan failed: {e}")
             return redirect(url_for('trivy'))
 
+        if action == 'create_dashboard':
+            from scripts.trivy import create_splunk_dashboard
+            try:
+                path = create_splunk_dashboard()
+                flash(f"Splunk dashboard created — open it at {path}")
+            except Exception as e:
+                flash(f"Dashboard creation failed: {e}")
+            return redirect(url_for('trivy'))
+
     images = get_cluster_images()
     scan_status = get_scan_status()
     scan_results = get_scan_results() if scan_status["state"] == "completed" else []
