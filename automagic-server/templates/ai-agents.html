@@ -156,21 +156,49 @@
     </div>
   </div>
 
-  <form method="POST" style="display:flex; align-items:center; gap:14px;">
-    <button type="submit" name="action" value="deploy"
-            style="background-color:#0066ff; color:#fff; border:none; padding:11px 28px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.95em;
-                   {% if not status.api_key_set %}opacity:0.5;{% endif %}"
-            {% if not status.api_key_set %}disabled title="Save your Anthropic API key first"{% endif %}>
-      Configure AI Agent Environment
-    </button>
-    <span style="font-size:0.82em; color:#999;">
-      {% if not status.api_key_set %}
-        Save your API key first, then deploy.
+  <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+    <form method="POST" style="display:flex; align-items:center; gap:14px;">
+      <button type="submit" name="action" value="deploy"
+              style="background-color:#0066ff; color:#fff; border:none; padding:11px 28px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.95em;
+                     {% if not status.api_key_set %}opacity:0.5;{% endif %}"
+              {% if not status.api_key_set %}disabled title="Save your Anthropic API key first"{% endif %}>
+        Configure AI Agent Environment
+      </button>
+      <span style="font-size:0.82em; color:#999;">
+        {% if not status.api_key_set %}
+          Save your API key first, then deploy.
+        {% else %}
+          Creates namespace, deploys OpenClaw + DefenseClaw into your cluster.
+        {% endif %}
+      </span>
+    </form>
+
+    {% if status.namespace_exists and (status.gateway.state != 'not deployed' or status.openclaw.state != 'not deployed') %}
+    <form method="POST" style="display:flex; align-items:center; gap:10px;">
+      {% if status.isolated %}
+        <button type="submit" name="action" value="unisolate"
+                style="background-color:#2e7d32; color:#fff; border:none; padding:11px 24px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.95em;">
+          <span class="fa-solid fa-lock-open" style="margin-right:6px;"></span>Remove Isolation
+        </button>
       {% else %}
-        Creates namespace, deploys OpenClaw + DefenseClaw into your cluster.
+        <button type="submit" name="action" value="isolate"
+                style="background-color:#d32f2f; color:#fff; border:none; padding:11px 24px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.95em;">
+          <span class="fa-solid fa-shield-halved" style="margin-right:6px;"></span>Isolate AI Agent
+        </button>
       {% endif %}
-    </span>
-  </form>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if status.isolated %}
+  <div style="margin-top:14px; background:#ffebee; border:1px solid #ef9a9a; border-radius:8px; padding:12px 16px;">
+    <p style="font-size:0.85em; color:#c62828; margin:0;">
+      <strong><span class="fa-solid fa-shield-halved" style="margin-right:4px;"></span> Network Isolated</strong> &mdash;
+      CiliumNetworkPolicy active. The AI agent can only reach external HTTPS (Anthropic API) and DNS.
+      All egress to cluster pods (Splunk, automagic, etc.) is blocked.
+    </p>
+  </div>
+  {% endif %}
 
   {% if status.openclaw.state == 'running' %}
   <div style="margin-top:14px; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:8px; padding:12px 16px;">

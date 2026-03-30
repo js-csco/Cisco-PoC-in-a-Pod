@@ -11,6 +11,12 @@ import os, json, textwrap
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
+# Cilium policy constants
+_CILIUM_GROUP = "cilium.io"
+_CILIUM_VERSION = "v2"
+_CILIUM_PLURAL = "ciliumnetworkpolicies"
+_ISOLATION_POLICY_NAME = "ai-agent-isolation"
+
 NAMESPACE = "defenseclaw"
 DEPLOYMENT_NAME = "ai-agent"
 
@@ -326,4 +332,107 @@ def deploy_environment():
         if e.status == 409:
             core.patch_namespaced_service("ai-agent", NAMESPACE, svc)
         else:
+            raise
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Network isolation via CiliumNetworkPolicy
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _custom_api():
+    config.load_incluster_config()
+    return client.CustomObjectsApi()
+
+
+def _build_isolation_policy():
+    """
+    CiliumNetworkPolicy that isolates the AI agent pod:
+      - Ingress: allow from anywhere (users need to reach the WebChat UI)
+      - Egress:  allow DNS (kube-dns) + external HTTPS only (Anthropic API)
+      - Egress to other cluster pods is BLOCKED
+
+    This prevents a compromised agent from reaching Splunk, automagic,
+    or any other service inside the cluster.
+    """
+    return {
+        "apiVersion": "cilium.io/v2",
+        "kind": "CiliumNetworkPolicy",
+        "metadata": {"name": _ISOLATION_POLICY_NAME, "namespace": NAMESPACE},
+        "spec": {
+            "endpointSelector": {
+                "matchLabels": {"app": DEPLOYMENT_NAME}
+            },
+            "ingress": [
+                {}  # allow all ingress (WebChat UI must be reachable)
+            ],
+            "egress": [
+                # Allow DNS resolution (kube-dns in kube-system)
+                {
+                    "toEndpoints": [
+                        {"matchLabels": {"k8s:io.kubernetes.pod.namespace": "kube-system",
+                                         "k8s-app": "kube-dns"}}
+                    ],
+                    "toPorts": [
+                        {"ports": [{"port": "53", "protocol": "UDP"},
+                                   {"port": "53", "protocol": "TCP"}]}
+                    ],
+                },
+                # Allow external HTTPS only (Anthropic API, GitHub for install)
+                {
+                    "toEntities": ["world"],
+                    "toPorts": [
+                        {"ports": [{"port": "443", "protocol": "TCP"}]}
+                    ],
+                },
+            ],
+        },
+    }
+
+
+def get_isolation_status():
+    """Check if the isolation policy is active."""
+    try:
+        api = _custom_api()
+        api.get_namespaced_custom_object(
+            _CILIUM_GROUP, _CILIUM_VERSION, NAMESPACE, _CILIUM_PLURAL,
+            _ISOLATION_POLICY_NAME,
+        )
+        return True
+    except ApiException:
+        return False
+
+
+def isolate_agent():
+    """Apply CiliumNetworkPolicy to isolate the AI agent from the cluster."""
+    api = _custom_api()
+    policy = _build_isolation_policy()
+    try:
+        api.create_namespaced_custom_object(
+            _CILIUM_GROUP, _CILIUM_VERSION, NAMESPACE, _CILIUM_PLURAL, policy,
+        )
+    except ApiException as e:
+        if e.status == 409:
+            existing = api.get_namespaced_custom_object(
+                _CILIUM_GROUP, _CILIUM_VERSION, NAMESPACE, _CILIUM_PLURAL,
+                _ISOLATION_POLICY_NAME,
+            )
+            policy["metadata"]["resourceVersion"] = existing["metadata"]["resourceVersion"]
+            api.replace_namespaced_custom_object(
+                _CILIUM_GROUP, _CILIUM_VERSION, NAMESPACE, _CILIUM_PLURAL,
+                _ISOLATION_POLICY_NAME, policy,
+            )
+        else:
+            raise
+
+
+def unisolate_agent():
+    """Remove the isolation policy — agent can reach cluster services again."""
+    try:
+        api = _custom_api()
+        api.delete_namespaced_custom_object(
+            _CILIUM_GROUP, _CILIUM_VERSION, NAMESPACE, _CILIUM_PLURAL,
+            _ISOLATION_POLICY_NAME,
+        )
+    except ApiException as e:
+        if e.status != 404:
             raise

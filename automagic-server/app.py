@@ -727,7 +727,8 @@ def trivy_status():
 
 @app.route('/ai-agents', methods=['GET', 'POST'])
 def ai_agents():
-    from scripts.defenseclaw import get_status, deploy_environment, save_api_key
+    from scripts.defenseclaw import (get_status, deploy_environment, save_api_key,
+                                      isolate_agent, unisolate_agent, get_isolation_status)
 
     if request.method == 'POST':
         action = request.form.get('action')
@@ -752,7 +753,24 @@ def ai_agents():
                 flash(f"Deployment failed: {e}")
             return redirect(url_for('ai_agents'))
 
+        if action == 'isolate':
+            try:
+                isolate_agent()
+                flash("AI Agent isolated — egress to cluster pods is now blocked. Only DNS and external HTTPS (Anthropic API) are allowed.")
+            except Exception as e:
+                flash(f"Isolation failed: {e}")
+            return redirect(url_for('ai_agents'))
+
+        if action == 'unisolate':
+            try:
+                unisolate_agent()
+                flash("AI Agent isolation removed — full network access restored.")
+            except Exception as e:
+                flash(f"Failed to remove isolation: {e}")
+            return redirect(url_for('ai_agents'))
+
     status = get_status()
+    status["isolated"] = get_isolation_status()
     return render_template('ai-agents.html', status=status)
 
 @app.route('/help')
