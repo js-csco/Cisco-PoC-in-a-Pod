@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 520" font-family="Inter, system-ui, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#888"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#0066ff"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#d32f2f"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="820" height="520" rx="12" fill="#fafafa" stroke="#e0e0e0"/>
+
+  <!-- Title -->
+  <text x="410" y="32" text-anchor="middle" font-size="15" font-weight="700" fill="#111">DefenseClaw Architecture</text>
+
+  <!-- ── AI Agent (OpenClaw) ── -->
+  <rect x="30" y="60" width="180" height="100" rx="10" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.5"/>
+  <text x="120" y="88" text-anchor="middle" font-size="12" font-weight="700" fill="#1565c0">OpenClaw Agent</text>
+  <text x="120" y="106" text-anchor="middle" font-size="10" fill="#555">LLM-powered AI agent</text>
+  <text x="120" y="122" text-anchor="middle" font-size="10" fill="#555">Skills / Tools / MCP</text>
+  <rect x="55" y="133" width="130" height="18" rx="4" fill="#1976d2"/>
+  <text x="120" y="146" text-anchor="middle" font-size="9" font-weight="600" fill="#fff">Plugin (TypeScript)</text>
+
+  <!-- ── DefenseClaw Gateway ── -->
+  <rect x="300" y="55" width="220" height="180" rx="10" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+  <text x="410" y="80" text-anchor="middle" font-size="12" font-weight="700" fill="#bf360c">DefenseClaw Gateway</text>
+  <text x="410" y="96" text-anchor="middle" font-size="10" fill="#555">(Go) — Policy Engine</text>
+
+  <!-- Sub-boxes inside gateway -->
+  <rect x="315" y="110" width="90" height="36" rx="5" fill="#ffcc80" stroke="#e65100" stroke-width="0.5"/>
+  <text x="360" y="125" text-anchor="middle" font-size="9" font-weight="600" fill="#4e342e">CodeGuard</text>
+  <text x="360" y="137" text-anchor="middle" font-size="8" fill="#6d4c41">Static Analysis</text>
+
+  <rect x="415" y="110" width="90" height="36" rx="5" fill="#ffcc80" stroke="#e65100" stroke-width="0.5"/>
+  <text x="460" y="125" text-anchor="middle" font-size="9" font-weight="600" fill="#4e342e">Guardrail</text>
+  <text x="460" y="137" text-anchor="middle" font-size="8" fill="#6d4c41">LLM Proxy</text>
+
+  <rect x="315" y="155" width="90" height="36" rx="5" fill="#ffcc80" stroke="#e65100" stroke-width="0.5"/>
+  <text x="360" y="170" text-anchor="middle" font-size="9" font-weight="600" fill="#4e342e">Skill Scanner</text>
+  <text x="360" y="182" text-anchor="middle" font-size="8" fill="#6d4c41">MCP / Plugin</text>
+
+  <rect x="415" y="155" width="90" height="36" rx="5" fill="#ffcc80" stroke="#e65100" stroke-width="0.5"/>
+  <text x="460" y="170" text-anchor="middle" font-size="9" font-weight="600" fill="#4e342e">Tool Inspector</text>
+  <text x="460" y="182" text-anchor="middle" font-size="8" fill="#6d4c41">Runtime Check</text>
+
+  <rect x="315" y="200" width="190" height="24" rx="5" fill="#ffe0b2" stroke="#e65100" stroke-width="0.5"/>
+  <text x="410" y="216" text-anchor="middle" font-size="9" font-weight="600" fill="#4e342e">REST API + WebSocket + SQLite Audit</text>
+
+  <!-- ── CLI ── -->
+  <rect x="300" y="280" width="220" height="60" rx="10" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="1.5"/>
+  <text x="410" y="305" text-anchor="middle" font-size="12" font-weight="700" fill="#6a1b9a">CLI Dashboard</text>
+  <text x="410" y="321" text-anchor="middle" font-size="10" fill="#555">(Python) — Operator TUI</text>
+
+  <!-- ── LLM Provider ── -->
+  <rect x="610" y="60" width="180" height="80" rx="10" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="700" y="88" text-anchor="middle" font-size="12" font-weight="700" fill="#1b5e20">LLM Provider</text>
+  <text x="700" y="106" text-anchor="middle" font-size="10" fill="#555">Claude / GPT / Llama</text>
+  <text x="700" y="122" text-anchor="middle" font-size="10" fill="#555">API calls proxied</text>
+
+  <!-- ── SIEM / Splunk ── -->
+  <rect x="610" y="170" width="180" height="80" rx="10" fill="#fce4ec" stroke="#c62828" stroke-width="1.5"/>
+  <text x="700" y="198" text-anchor="middle" font-size="12" font-weight="700" fill="#b71c1c">Splunk / SIEM</text>
+  <text x="700" y="216" text-anchor="middle" font-size="10" fill="#555">HEC + OpenTelemetry</text>
+  <text x="700" y="232" text-anchor="middle" font-size="10" fill="#555">Audit trail &amp; alerts</text>
+
+  <!-- ── MCP Servers ── -->
+  <rect x="30" y="200" width="180" height="70" rx="10" fill="#f1f8e9" stroke="#558b2f" stroke-width="1.5"/>
+  <text x="120" y="228" text-anchor="middle" font-size="12" font-weight="700" fill="#33691e">MCP Servers</text>
+  <text x="120" y="246" text-anchor="middle" font-size="10" fill="#555">External tools &amp; APIs</text>
+  <text x="120" y="260" text-anchor="middle" font-size="10" fill="#555">Scanned before use</text>
+
+  <!-- ── k3s Cluster ── -->
+  <rect x="30" y="380" width="760" height="120" rx="10" fill="#e8eaf6" stroke="#283593" stroke-width="1.5"/>
+  <text x="410" y="405" text-anchor="middle" font-size="12" font-weight="700" fill="#1a237e">k3s Cluster — PoC in a Pod</text>
+
+  <rect x="55" y="420" width="120" height="60" rx="6" fill="#c5cae9" stroke="#3949ab" stroke-width="0.8"/>
+  <text x="115" y="443" text-anchor="middle" font-size="10" font-weight="600" fill="#1a237e">OpenClaw</text>
+  <text x="115" y="458" text-anchor="middle" font-size="9" fill="#333">Agent Pod</text>
+
+  <rect x="195" y="420" width="120" height="60" rx="6" fill="#c5cae9" stroke="#3949ab" stroke-width="0.8"/>
+  <text x="255" y="443" text-anchor="middle" font-size="10" font-weight="600" fill="#1a237e">DefenseClaw</text>
+  <text x="255" y="458" text-anchor="middle" font-size="9" fill="#333">Gateway Pod</text>
+
+  <rect x="335" y="420" width="120" height="60" rx="6" fill="#c5cae9" stroke="#3949ab" stroke-width="0.8"/>
+  <text x="395" y="443" text-anchor="middle" font-size="10" font-weight="600" fill="#1a237e">Splunk</text>
+  <text x="395" y="458" text-anchor="middle" font-size="9" fill="#333">Logging Pod</text>
+
+  <rect x="475" y="420" width="120" height="60" rx="6" fill="#c5cae9" stroke="#3949ab" stroke-width="0.8"/>
+  <text x="535" y="443" text-anchor="middle" font-size="10" font-weight="600" fill="#1a237e">Tetragon</text>
+  <text x="535" y="458" text-anchor="middle" font-size="9" fill="#333">Runtime Security</text>
+
+  <rect x="615" y="420" width="120" height="60" rx="6" fill="#c5cae9" stroke="#3949ab" stroke-width="0.8"/>
+  <text x="675" y="443" text-anchor="middle" font-size="10" font-weight="600" fill="#1a237e">Trivy</text>
+  <text x="675" y="458" text-anchor="middle" font-size="9" fill="#333">Image Scanner</text>
+
+  <!-- ═══ Arrows ═══ -->
+  <!-- Plugin → Gateway (REST) -->
+  <line x1="210" y1="110" x2="298" y2="110" stroke="#0066ff" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="254" y="103" text-anchor="middle" font-size="8" fill="#0066ff">REST API</text>
+
+  <!-- Gateway → LLM (proxied) -->
+  <line x1="522" y1="100" x2="608" y2="100" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="565" y="93" text-anchor="middle" font-size="8" fill="#666">Proxied</text>
+
+  <!-- Gateway → Splunk (HEC) -->
+  <line x1="522" y1="210" x2="608" y2="210" stroke="#d32f2f" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+  <text x="565" y="203" text-anchor="middle" font-size="8" fill="#d32f2f">HEC / OTLP</text>
+
+  <!-- CLI → Gateway -->
+  <line x1="410" y1="278" x2="410" y2="237" stroke="#7b1fa2" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="430" y="262" font-size="8" fill="#7b1fa2">REST</text>
+
+  <!-- Agent → MCP -->
+  <line x1="120" y1="160" x2="120" y2="198" stroke="#888" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="140" y="184" font-size="8" fill="#666">Tool calls</text>
+
+  <!-- Gateway blocks bad tool calls (red X) -->
+  <text x="254" y="120" text-anchor="middle" font-size="14" fill="#d32f2f">&#x2716;</text>
+  <text x="254" y="133" text-anchor="middle" font-size="7" fill="#d32f2f">block / allow</text>
+
+  <!-- Legend -->
+  <rect x="580" y="290" width="210" height="70" rx="6" fill="#fff" stroke="#ccc"/>
+  <text x="590" y="307" font-size="9" font-weight="600" fill="#333">Legend</text>
+  <line x1="590" y1="320" x2="615" y2="320" stroke="#0066ff" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="622" y="324" font-size="8" fill="#555">Intercepted tool calls</text>
+  <line x1="590" y1="338" x2="615" y2="338" stroke="#d32f2f" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+  <text x="622" y="342" font-size="8" fill="#555">Audit events to SIEM</text>
+  <line x1="590" y1="352" x2="615" y2="352" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="622" y="356" font-size="8" fill="#555">Data flow</text>
+</svg>
