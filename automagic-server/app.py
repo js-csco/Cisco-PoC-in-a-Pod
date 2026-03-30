@@ -725,6 +725,23 @@ def trivy_status():
     from scripts.trivy import get_scan_status
     return jsonify(get_scan_status())
 
+@app.route('/ai-agents', methods=['GET', 'POST'])
+def ai_agents():
+    from scripts.defenseclaw import get_status, deploy_environment
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'deploy':
+            try:
+                deploy_environment()
+                flash("DefenseClaw Gateway + OpenClaw agent deployed — pods are starting up.")
+            except Exception as e:
+                flash(f"Deployment failed: {e}")
+            return redirect(url_for('ai_agents'))
+
+    status = get_status()
+    return render_template('ai-agents.html', status=status)
+
 @app.route('/help')
 def help_page():
     return render_template('help.html')
