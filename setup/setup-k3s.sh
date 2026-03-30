@@ -480,7 +480,7 @@ echo ""
 # Pulling via Docker (which has its own credential chain) and importing
 # into k3s containerd is more reliable than letting k3s pull directly.
 echo "Step 17.2: Pre-pulling container images via Docker..."
-for img in "louislam/uptime-kuma:1" "ghcr.io/aquasecurity/trivy:0.69.3" "outcoldsolutions/collectorforkubernetes:5.24.444"; do
+for img in "louislam/uptime-kuma:1" "ghcr.io/aquasecurity/trivy:0.69.3" "outcoldsolutions/collectorforkubernetes:5.24.444" "node:24-slim" "python:3.12-slim"; do
     echo "  Pulling $img ..."
     docker pull "$img" && docker save "$img" | k3s ctr images import - \
         && echo "  ✓ $img imported into k3s" \

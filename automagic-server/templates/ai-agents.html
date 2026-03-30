@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% set active_page = 'ai_agents' %}
+{% set host_ip = request.host.split(':')[0] %}
 {% block title %}AI Agents — PoC in a Pod{% endblock %}
 
 {% block content %}
@@ -18,7 +19,7 @@
 <p style="color:#666; margin-top:0; margin-bottom:1.5rem; font-size:0.95em; line-height:1.6;">
   Enterprise security governance for agentic AI &mdash; powered by
   <a href="https://github.com/cisco-ai-defense/defenseclaw" target="_blank" style="color:#0066ff;">Cisco DefenseClaw</a>
-  and <strong>OpenClaw</strong>.
+  and <a href="https://github.com/openclaw/openclaw" target="_blank" style="color:#0066ff;">OpenClaw</a>.
 </p>
 
 <!-- ═══════════════════════════════════════════════════════ THE STORY -->
@@ -81,7 +82,7 @@
     <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">ENVIRONMENT</h3>
     {% if status.gateway.state == 'running' and status.openclaw.state == 'running' %}
       <span style="font-size:0.78em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">running</span>
-    {% elif status.namespace_exists %}
+    {% elif status.namespace_exists and (status.gateway.state != 'not deployed' or status.openclaw.state != 'not deployed') %}
       <span style="font-size:0.78em; color:#e65100; background:#fff3e0; border:1px solid #ffcc80; border-radius:4px; padding:2px 8px;">{{ status.gateway.state }} / {{ status.openclaw.state }}</span>
     {% else %}
       <span style="font-size:0.78em; color:#999; background:#f5f5f5; border:1px solid #e0e0e0; border-radius:4px; padding:2px 8px;">not deployed</span>
@@ -89,44 +90,126 @@
   </div>
   <p style="color:#666; font-size:0.88em; margin:0 0 14px 0;">
     Deploy the DefenseClaw Gateway and OpenClaw agent into your k3s cluster.
+    Both run inside a single Pod sharing <code>localhost</code> so DefenseClaw can intercept all agent traffic.
   </p>
 
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px;">
-    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:14px;">
-      <div style="display:flex; align-items:center; justify-content:space-between;">
-        <strong style="font-size:0.9em; color:#111;">DefenseClaw Gateway</strong>
-        {% if status.gateway.state == 'running' %}
-          <span style="font-size:0.78em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">{{ status.gateway.ready }}/{{ status.gateway.desired }} ready</span>
-        {% elif status.gateway.state == 'starting' %}
-          <span style="font-size:0.78em; color:#e65100; background:#fff3e0; border:1px solid #ffcc80; border-radius:4px; padding:2px 8px;">starting</span>
-        {% else %}
-          <span style="font-size:0.78em; color:#999;">not deployed</span>
-        {% endif %}
-      </div>
-      <p style="font-size:0.8em; color:#666; margin:8px 0 0;">Policy engine, CodeGuard, tool inspector, audit logger.</p>
+  <!-- API Key input -->
+  <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; margin-bottom:18px;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+      <span class="fa-solid fa-key" style="color:#e65100;"></span>
+      <strong style="font-size:0.9em; color:#111;">Anthropic API Key</strong>
+      {% if status.api_key_set %}
+        <span style="font-size:0.75em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">configured</span>
+      {% else %}
+        <span style="font-size:0.75em; color:#d32f2f; background:#ffebee; border:1px solid #ef9a9a; border-radius:4px; padding:2px 8px;">required</span>
+      {% endif %}
     </div>
+    <p style="font-size:0.82em; color:#666; margin:0 0 10px;">
+      OpenClaw uses Claude as its reasoning engine. Paste your API key from
+      <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#0066ff;">console.anthropic.com</a>.
+      The key is stored as a Kubernetes Secret &mdash; never written to disk.
+    </p>
+    <form method="POST" style="display:flex; align-items:center; gap:10px;">
+      <input type="password" name="api_key" placeholder="sk-ant-api03-..."
+             style="flex:1; padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; font-family:monospace;"
+             {% if status.api_key_set %}value="••••••••••••••••"{% endif %}>
+      <button type="submit" name="action" value="save_api_key"
+              style="background-color:#333; color:#fff; border:none; padding:9px 20px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.88em; white-space:nowrap;">
+        Save Key
+      </button>
+    </form>
+  </div>
+
+  <!-- Status cards -->
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px;">
     <div style="border:1px solid #e0e0e0; border-radius:8px; padding:14px;">
       <div style="display:flex; align-items:center; justify-content:space-between;">
         <strong style="font-size:0.9em; color:#111;">OpenClaw Agent</strong>
         {% if status.openclaw.state == 'running' %}
           <span style="font-size:0.78em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">{{ status.openclaw.ready }}/{{ status.openclaw.desired }} ready</span>
-        {% elif status.openclaw.state == 'starting' %}
-          <span style="font-size:0.78em; color:#e65100; background:#fff3e0; border:1px solid #ffcc80; border-radius:4px; padding:2px 8px;">starting</span>
+        {% elif status.openclaw.state != 'not deployed' %}
+          <span style="font-size:0.78em; color:#e65100; background:#fff3e0; border:1px solid #ffcc80; border-radius:4px; padding:2px 8px;">{{ status.openclaw.state }}</span>
         {% else %}
           <span style="font-size:0.78em; color:#999;">not deployed</span>
         {% endif %}
       </div>
-      <p style="font-size:0.8em; color:#666; margin:8px 0 0;">LLM agent with DefenseClaw plugin pre-installed.</p>
+      <p style="font-size:0.8em; color:#666; margin:8px 0 0;">AI agent with WebChat UI. Node.js 24 runtime, installed from npm.</p>
+      {% if status.openclaw.state == 'running' %}
+        <a href="http://{{ host_ip }}:31789" target="_blank"
+           style="display:inline-block; margin-top:8px; font-size:0.8em; color:#0066ff; text-decoration:none;">
+          Open WebChat UI &rarr;
+        </a>
+      {% endif %}
+    </div>
+    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:14px;">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <strong style="font-size:0.9em; color:#111;">DefenseClaw Gateway</strong>
+        {% if status.gateway.state == 'running' %}
+          <span style="font-size:0.78em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">{{ status.gateway.ready }}/{{ status.gateway.desired }} ready</span>
+        {% elif status.gateway.state != 'not deployed' %}
+          <span style="font-size:0.78em; color:#e65100; background:#fff3e0; border:1px solid #ffcc80; border-radius:4px; padding:2px 8px;">{{ status.gateway.state }}</span>
+        {% else %}
+          <span style="font-size:0.78em; color:#999;">not deployed</span>
+        {% endif %}
+      </div>
+      <p style="font-size:0.8em; color:#666; margin:8px 0 0;">Policy engine, CodeGuard, tool inspector, guardrail proxy. Audit events forwarded to Splunk.</p>
     </div>
   </div>
 
-  <form method="POST" style="display:flex; align-items:center; gap:14px;">
-    <button type="submit" name="action" value="deploy"
-            style="background-color:#0066ff; color:#fff; border:none; padding:11px 28px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.95em;">
-      Configure AI Agent Environment
-    </button>
-    <span style="font-size:0.82em; color:#999;">Creates namespace, deploys Gateway + Agent into your cluster.</span>
-  </form>
+  <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+    <form method="POST" style="display:flex; align-items:center; gap:14px;">
+      <button type="submit" name="action" value="deploy"
+              style="background-color:#0066ff; color:#fff; border:none; padding:11px 28px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.95em;
+                     {% if not status.api_key_set %}opacity:0.5;{% endif %}"
+              {% if not status.api_key_set %}disabled title="Save your Anthropic API key first"{% endif %}>
+        Configure AI Agent Environment
+      </button>
+      <span style="font-size:0.82em; color:#999;">
+        {% if not status.api_key_set %}
+          Save your API key first, then deploy.
+        {% else %}
+          Creates namespace, deploys OpenClaw + DefenseClaw into your cluster.
+        {% endif %}
+      </span>
+    </form>
+
+    {% if status.namespace_exists and (status.gateway.state != 'not deployed' or status.openclaw.state != 'not deployed') %}
+    <form method="POST" style="display:flex; align-items:center; gap:10px;">
+      {% if status.isolated %}
+        <button type="submit" name="action" value="unisolate"
+                style="background-color:#2e7d32; color:#fff; border:none; padding:11px 24px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.95em;">
+          <span class="fa-solid fa-lock-open" style="margin-right:6px;"></span>Remove Isolation
+        </button>
+      {% else %}
+        <button type="submit" name="action" value="isolate"
+                style="background-color:#d32f2f; color:#fff; border:none; padding:11px 24px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.95em;">
+          <span class="fa-solid fa-shield-halved" style="margin-right:6px;"></span>Isolate AI Agent
+        </button>
+      {% endif %}
+    </form>
+    {% endif %}
+  </div>
+
+  {% if status.isolated %}
+  <div style="margin-top:14px; background:#ffebee; border:1px solid #ef9a9a; border-radius:8px; padding:12px 16px;">
+    <p style="font-size:0.85em; color:#c62828; margin:0;">
+      <strong><span class="fa-solid fa-shield-halved" style="margin-right:4px;"></span> Network Isolated</strong> &mdash;
+      CiliumNetworkPolicy active. The AI agent can only reach external HTTPS (Anthropic API), DNS,
+      and Splunk HEC (audit logs). All other egress to cluster pods is blocked.
+    </p>
+  </div>
+  {% endif %}
+
+  {% if status.openclaw.state == 'running' %}
+  <div style="margin-top:14px; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:8px; padding:12px 16px;">
+    <p style="font-size:0.85em; color:#2e7d32; margin:0;">
+      <strong>Running!</strong> Open the
+      <a href="http://{{ host_ip }}:31789" target="_blank" style="color:#1b5e20;">OpenClaw WebChat UI</a>
+      to interact with the agent. DefenseClaw is protecting every tool call in the background.
+      Check <a href="{{ url_for('splunk') }}" style="color:#1b5e20;">Splunk</a> for audit events.
+    </p>
+  </div>
+  {% endif %}
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ USE CASES -->
