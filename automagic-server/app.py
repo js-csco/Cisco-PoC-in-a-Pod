@@ -727,14 +727,27 @@ def trivy_status():
 
 @app.route('/ai-agents', methods=['GET', 'POST'])
 def ai_agents():
-    from scripts.defenseclaw import get_status, deploy_environment
+    from scripts.defenseclaw import get_status, deploy_environment, save_api_key
 
     if request.method == 'POST':
         action = request.form.get('action')
+
+        if action == 'save_api_key':
+            api_key = request.form.get('api_key', '').strip()
+            if api_key and not api_key.startswith('•'):
+                try:
+                    save_api_key(api_key)
+                    flash("Anthropic API key saved.")
+                except Exception as e:
+                    flash(f"Failed to save API key: {e}")
+            else:
+                flash("Please enter a valid API key.")
+            return redirect(url_for('ai_agents'))
+
         if action == 'deploy':
             try:
                 deploy_environment()
-                flash("DefenseClaw Gateway + OpenClaw agent deployed — pods are starting up.")
+                flash("AI Agent environment deployed — containers are installing and starting up. This takes 1-2 minutes.")
             except Exception as e:
                 flash(f"Deployment failed: {e}")
             return redirect(url_for('ai_agents'))

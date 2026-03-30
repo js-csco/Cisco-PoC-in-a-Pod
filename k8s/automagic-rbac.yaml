@@ -87,7 +87,7 @@ rules:
 - apiGroups: [""]
   resources: ["namespaces"]
   verbs: ["get", "list", "watch", "create", "patch"]
-# Cross-namespace resource management (covers caldera + collectorforkubernetes namespaces)
+# Cross-namespace resource management (covers caldera, collectorforkubernetes, defenseclaw namespaces)
 - apiGroups: [""]
   resources: ["configmaps", "services", "secrets", "serviceaccounts"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
