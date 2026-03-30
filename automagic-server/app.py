@@ -756,7 +756,7 @@ def ai_agents():
         if action == 'isolate':
             try:
                 isolate_agent()
-                flash("AI Agent isolated — egress to cluster pods is now blocked. Only DNS and external HTTPS (Anthropic API) are allowed.")
+                flash("AI Agent isolated — egress to cluster pods is blocked. Only DNS, Splunk HEC (audit logs), and external HTTPS (Anthropic API) are allowed.")
             except Exception as e:
                 flash(f"Isolation failed: {e}")
             return redirect(url_for('ai_agents'))

@@ -348,11 +348,8 @@ def _build_isolation_policy():
     """
     CiliumNetworkPolicy that isolates the AI agent pod:
       - Ingress: allow from anywhere (users need to reach the WebChat UI)
-      - Egress:  allow DNS (kube-dns) + external HTTPS only (Anthropic API)
-      - Egress to other cluster pods is BLOCKED
-
-    This prevents a compromised agent from reaching Splunk, automagic,
-    or any other service inside the cluster.
+      - Egress:  allow DNS (kube-dns) + Splunk HEC + external HTTPS (Anthropic API)
+      - Egress to all other cluster pods is BLOCKED
     """
     return {
         "apiVersion": "cilium.io/v2",
@@ -375,6 +372,16 @@ def _build_isolation_policy():
                     "toPorts": [
                         {"ports": [{"port": "53", "protocol": "UDP"},
                                    {"port": "53", "protocol": "TCP"}]}
+                    ],
+                },
+                # Allow Splunk HEC (audit event forwarding)
+                {
+                    "toEndpoints": [
+                        {"matchLabels": {"k8s:io.kubernetes.pod.namespace": "piap",
+                                         "io.kompose.service": "splunk"}}
+                    ],
+                    "toPorts": [
+                        {"ports": [{"port": "8088", "protocol": "TCP"}]}
                     ],
                 },
                 # Allow external HTTPS only (Anthropic API, GitHub for install)

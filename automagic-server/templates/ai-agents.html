@@ -194,8 +194,8 @@
   <div style="margin-top:14px; background:#ffebee; border:1px solid #ef9a9a; border-radius:8px; padding:12px 16px;">
     <p style="font-size:0.85em; color:#c62828; margin:0;">
       <strong><span class="fa-solid fa-shield-halved" style="margin-right:4px;"></span> Network Isolated</strong> &mdash;
-      CiliumNetworkPolicy active. The AI agent can only reach external HTTPS (Anthropic API) and DNS.
-      All egress to cluster pods (Splunk, automagic, etc.) is blocked.
+      CiliumNetworkPolicy active. The AI agent can only reach external HTTPS (Anthropic API), DNS,
+      and Splunk HEC (audit logs). All other egress to cluster pods is blocked.
     </p>
   </div>
   {% endif %}
