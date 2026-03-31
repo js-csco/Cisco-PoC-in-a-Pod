@@ -156,6 +156,16 @@
     </div>
   </div>
 
+  {% if not status.hec_healthy %}
+  <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:12px 16px; margin-bottom:14px;">
+    <p style="font-size:0.85em; color:#e65100; margin:0;">
+      <strong><span class="fa-solid fa-triangle-exclamation" style="margin-right:4px;"></span> Splunk HEC not available</strong> &mdash;
+      DefenseClaw audit events cannot be forwarded to Splunk. Deploy Splunk and enable HEC on the
+      <a href="{{ url_for('splunk') }}" style="color:#e65100; font-weight:600;">Splunk page</a> first.
+    </p>
+  </div>
+  {% endif %}
+
   <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
     <form method="POST" style="display:flex; align-items:center; gap:14px;">
       <button type="submit" name="action" value="deploy"

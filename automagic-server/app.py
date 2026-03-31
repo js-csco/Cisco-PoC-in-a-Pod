@@ -729,6 +729,7 @@ def trivy_status():
 def ai_agents():
     from scripts.defenseclaw import (get_status, deploy_environment, save_api_key,
                                       isolate_agent, unisolate_agent, get_isolation_status)
+    from scripts.splunk import hec_is_healthy
 
     if request.method == 'POST':
         action = request.form.get('action')
@@ -771,6 +772,7 @@ def ai_agents():
 
     status = get_status()
     status["isolated"] = get_isolation_status()
+    status["hec_healthy"] = hec_is_healthy()
     return render_template('ai-agents.html', status=status)
 
 @app.route('/help')
