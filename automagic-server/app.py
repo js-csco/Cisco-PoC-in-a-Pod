@@ -728,7 +728,8 @@ def trivy_status():
 @app.route('/ai-agents', methods=['GET', 'POST'])
 def ai_agents():
     from scripts.defenseclaw import (get_status, deploy_environment, save_api_key,
-                                      isolate_agent, unisolate_agent, get_isolation_status)
+                                      isolate_agent, unisolate_agent, get_isolation_status,
+                                      create_splunk_dashboard)
     from scripts.splunk import hec_is_healthy
 
     if request.method == 'POST':
@@ -768,6 +769,14 @@ def ai_agents():
                 flash("AI Agent isolation removed — full network access restored.")
             except Exception as e:
                 flash(f"Failed to remove isolation: {e}")
+            return redirect(url_for('ai_agents'))
+
+        if action == 'create_dashboard':
+            try:
+                path = create_splunk_dashboard()
+                flash(f"Splunk dashboard created — open it at {path}")
+            except Exception as e:
+                flash(f"Dashboard creation failed: {e}")
             return redirect(url_for('ai_agents'))
 
     status = get_status()
