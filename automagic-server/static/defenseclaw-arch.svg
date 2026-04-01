@@ -94,8 +94,8 @@
   <text x="535" y="458" text-anchor="middle" font-size="9" fill="#333">Runtime Security</text>
 
   <rect x="615" y="420" width="120" height="60" rx="6" fill="#c5cae9" stroke="#3949ab" stroke-width="0.8"/>
-  <text x="675" y="443" text-anchor="middle" font-size="10" font-weight="600" fill="#1a237e">Trivy</text>
-  <text x="675" y="458" text-anchor="middle" font-size="9" fill="#333">Image Scanner</text>
+  <text x="675" y="443" text-anchor="middle" font-size="10" font-weight="600" fill="#1a237e">Uptime Kuma</text>
+  <text x="675" y="458" text-anchor="middle" font-size="9" fill="#333">Health Monitoring</text>
 
   <!-- ═══ Arrows ═══ -->
   <!-- Plugin → Gateway (REST) -->
