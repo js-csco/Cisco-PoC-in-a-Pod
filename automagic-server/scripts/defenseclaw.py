@@ -160,7 +160,10 @@ def deploy_environment():
             "mode": "local",
             "bind": "lan",
             "port": 18789,
-            "auth": {"token": shared_token},
+            "auth": {
+                "token": shared_token,
+                "disabled": True,
+            },
             "controlUi": {
                 "allowedOrigins": ["*"],
                 "allowInsecureAuth": True,
@@ -266,6 +269,7 @@ def deploy_environment():
             openclaw config set gateway.controlUi.allowedOrigins '["*"]'
             openclaw config set gateway.controlUi.allowInsecureAuth true
             openclaw config set gateway.controlUi.dangerouslyDisableDeviceAuth true
+            openclaw config set gateway.auth.disabled true
 
             echo "[openclaw] Starting gateway..."
             exec openclaw gateway
