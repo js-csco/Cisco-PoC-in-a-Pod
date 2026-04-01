@@ -7,7 +7,7 @@ Deploys a single Pod with two containers:
 
 Both share localhost inside the Pod so DefenseClaw can intercept OpenClaw traffic.
 """
-import os, json, textwrap
+import os, json, textwrap, secrets
 import requests as http_requests
 import urllib3
 from kubernetes import client, config
@@ -149,12 +149,18 @@ def deploy_environment():
         if e.status != 409:
             raise
 
-    # ── 2. OpenClaw config as a ConfigMap ────────────────────────────────
+    # ── 2. Pre-generate a shared auth token ────────────────────────────
+    # OpenClaw auto-generates a token on first start. DefenseClaw needs
+    # the same token to connect via WebSocket. Pre-generate one and
+    # inject it into the config so both containers share it.
+    shared_token = secrets.token_hex(32)
+
     openclaw_config = json.dumps({
         "gateway": {
             "mode": "local",
             "bind": "lan",
             "port": 18789,
+            "auth": {"token": shared_token},
             "controlUi": {
                 "dangerouslyAllowHostHeaderOriginFallback": True,
             },
@@ -170,13 +176,14 @@ def deploy_environment():
         }
     }, indent=2)
 
-    # DefenseClaw config
+    # DefenseClaw config — includes the shared token for OpenClaw WS auth
     defenseclaw_config = textwrap.dedent("""\
         claw:
           mode: openclaw
         gateway:
           host: "localhost"
           port: 18789
+          token: "{token}"
           api_port: 18790
           api_bind: "0.0.0.0"
         guardrail:
@@ -189,7 +196,7 @@ def deploy_environment():
             index: defenseclaw
             sourcetype: "defenseclaw:json"
             enabled: true
-    """).format(hec_url=SPLUNK_HEC_URL, hec_token=HEC_TOKEN)
+    """).format(token=shared_token, hec_url=SPLUNK_HEC_URL, hec_token=HEC_TOKEN)
 
     cm = client.V1ConfigMap(
         metadata=client.V1ObjectMeta(name="ai-agent-config", namespace=NAMESPACE),
@@ -207,12 +214,17 @@ def deploy_environment():
             raise
 
     # ── 3. Deployment: two containers in one Pod ─────────────────────────
-    # Shared volume for configs
+    # Shared volume for configs (read-only from ConfigMap)
     config_volume = client.V1Volume(
         name="config",
         config_map=client.V1ConfigMapVolumeSource(name="ai-agent-config"),
     )
-    # Shared emptyDir so DefenseClaw can discover OpenClaw's home
+    # Shared emptyDir for OpenClaw's home dir — both containers can
+    # read/write, so DefenseClaw can read the token from the live config
+    openclaw_home = client.V1Volume(
+        name="openclaw-home",
+        empty_dir=client.V1EmptyDirVolumeSource(),
+    )
     data_volume = client.V1Volume(name="data", empty_dir=client.V1EmptyDirVolumeSource())
 
     # Secret reference for the API key
@@ -225,6 +237,9 @@ def deploy_environment():
         ),
     )
 
+    # Shared token env var for both containers
+    token_env = client.V1EnvVar(name="OPENCLAW_AUTH_TOKEN", value=shared_token)
+
     # ── Container 1: OpenClaw ────────────────────────────────────────────
     openclaw_container = client.V1Container(
         name="openclaw",
@@ -235,14 +250,17 @@ def deploy_environment():
             echo "[openclaw] Installing OpenClaw..."
             npm install -g openclaw@latest 2>&1 | tail -5
 
-            # Write config
-            mkdir -p /root/.openclaw
-            cp /config/openclaw.json /root/.openclaw/openclaw.json
+            # Seed config into shared home dir
+            mkdir -p /openclaw-home
+            cp /config/openclaw.json /openclaw-home/openclaw.json
+            export OPENCLAW_HOME=/openclaw-home
 
-            # Set bind/port via CLI (survives config rewrites)
+            # Use CLI to set gateway config (authoritative, survives rewrites)
             echo "[openclaw] Configuring gateway..."
+            openclaw config set gateway.mode local
             openclaw config set gateway.bind lan
             openclaw config set gateway.port 18789
+            openclaw config set gateway.auth.token "$OPENCLAW_AUTH_TOKEN"
             openclaw config set gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback true
 
             echo "[openclaw] Starting gateway..."
@@ -251,13 +269,10 @@ def deploy_environment():
         ports=[
             client.V1ContainerPort(container_port=18789, name="webchat"),
         ],
-        env=[
-            api_key_env,
-            client.V1EnvVar(name="OPENCLAW_GATEWAY_BIND", value="lan"),
-            client.V1EnvVar(name="OPENCLAW_GATEWAY_PORT", value="18789"),
-        ],
+        env=[api_key_env, token_env],
         volume_mounts=[
             client.V1VolumeMount(name="config", mount_path="/config", read_only=True),
+            client.V1VolumeMount(name="openclaw-home", mount_path="/openclaw-home"),
             client.V1VolumeMount(name="data", mount_path="/data"),
         ],
         resources=client.V1ResourceRequirements(
@@ -284,7 +299,7 @@ def deploy_environment():
             echo "[defenseclaw] Installing CLI..."
             pip install --quiet "{wheel}"
 
-            # Write config
+            # Write config (includes shared auth token)
             mkdir -p /root/.defenseclaw
             cp /config/config.yaml /root/.defenseclaw/config.yaml
 
@@ -314,6 +329,7 @@ def deploy_environment():
         ],
         env=[
             api_key_env,
+            token_env,
             client.V1EnvVar(name="DEFENSECLAW_HEC_URL",
                             value=f"{SPLUNK_HEC_URL}/services/collector/event"),
             client.V1EnvVar(name="DEFENSECLAW_HEC_TOKEN", value=HEC_TOKEN),
@@ -323,6 +339,8 @@ def deploy_environment():
         ],
         volume_mounts=[
             client.V1VolumeMount(name="config", mount_path="/config", read_only=True),
+            client.V1VolumeMount(name="openclaw-home", mount_path="/openclaw-home",
+                                 read_only=True),
             client.V1VolumeMount(name="data", mount_path="/data"),
         ],
         resources=client.V1ResourceRequirements(
@@ -340,7 +358,7 @@ def deploy_environment():
                 metadata=client.V1ObjectMeta(labels={"app": DEPLOYMENT_NAME}),
                 spec=client.V1PodSpec(
                     containers=[openclaw_container, defenseclaw_container],
-                    volumes=[config_volume, data_volume],
+                    volumes=[config_volume, openclaw_home, data_volume],
                 ),
             ),
         ),
