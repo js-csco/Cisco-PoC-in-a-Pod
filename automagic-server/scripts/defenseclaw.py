@@ -252,8 +252,8 @@ def deploy_environment():
             echo "[defenseclaw] Downloading binary v{version}..."
             mkdir -p /tmp/defenseclaw-release
             curl -fsSL "{tarball}" | tar xz -C /tmp/defenseclaw-release
-            cp /tmp/defenseclaw-release/defenseclaw /usr/local/bin/defenseclaw
-            chmod +x /usr/local/bin/defenseclaw
+            cp /tmp/defenseclaw-release/defenseclaw /usr/local/bin/defenseclaw-gw
+            chmod +x /usr/local/bin/defenseclaw-gw
 
             echo "[defenseclaw] Installing CLI..."
             pip install --quiet "{wheel}"
@@ -262,11 +262,11 @@ def deploy_environment():
             mkdir -p /root/.defenseclaw
             cp /config/config.yaml /root/.defenseclaw/config.yaml
 
-            echo "[defenseclaw] Initializing (non-interactive)..."
-            defenseclaw init --enable-guardrail -y 2>&1 || true
+            echo "[defenseclaw] Initializing..."
+            defenseclaw init --enable-guardrail 2>&1 || true
 
             echo "[defenseclaw] Starting gateway..."
-            exec defenseclaw start
+            exec defenseclaw-gw
         """.format(
             version=DEFENSECLAW_VERSION,
             tarball=DEFENSECLAW_TARBALL,
