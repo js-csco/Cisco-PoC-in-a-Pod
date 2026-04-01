@@ -166,6 +166,14 @@ def deploy_environment():
     defenseclaw_config = textwrap.dedent("""\
         claw:
           mode: openclaw
+        gateway:
+          host: "localhost"
+          port: 18789
+          api_port: 18790
+          api_bind: "0.0.0.0"
+        guardrail:
+          host: "0.0.0.0"
+          port: 4000
         siem:
           splunk:
             hec_url: {hec_url}/services/collector/event
@@ -264,6 +272,16 @@ def deploy_environment():
 
             echo "[defenseclaw] Initializing..."
             defenseclaw init 2>&1 || true
+
+            # Wait for OpenClaw to be ready (shares localhost in the pod)
+            echo "[defenseclaw] Waiting for OpenClaw gateway on localhost:18789..."
+            for i in $(seq 1 30); do
+                if curl -sf http://localhost:18789/ >/dev/null 2>&1; then
+                    echo "[defenseclaw] OpenClaw is ready."
+                    break
+                fi
+                sleep 2
+            done
 
             echo "[defenseclaw] Starting gateway..."
             exec defenseclaw-gw
