@@ -224,7 +224,8 @@ def deploy_environment():
             cp /config/openclaw.json /root/.openclaw/openclaw.json
 
             echo "[openclaw] Starting gateway on port 18789..."
-            exec openclaw gateway --host 0.0.0.0 --port 18789
+            export HOST=0.0.0.0
+            exec openclaw gateway --port 18789
         """)],
         ports=[
             client.V1ContainerPort(container_port=18789, name="webchat"),
@@ -263,7 +264,7 @@ def deploy_environment():
             cp /config/config.yaml /root/.defenseclaw/config.yaml
 
             echo "[defenseclaw] Initializing..."
-            defenseclaw init --enable-guardrail 2>&1 || true
+            defenseclaw init 2>&1 || true
 
             echo "[defenseclaw] Starting gateway..."
             exec defenseclaw-gw
