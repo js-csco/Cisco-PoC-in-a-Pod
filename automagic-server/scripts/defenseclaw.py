@@ -153,6 +153,8 @@ def deploy_environment():
     openclaw_config = json.dumps({
         "gateway": {
             "mode": "local",
+            "bind": "lan",
+            "port": 18789,
             "controlUi": {
                 "dangerouslyAllowHostHeaderOriginFallback": True,
             },
