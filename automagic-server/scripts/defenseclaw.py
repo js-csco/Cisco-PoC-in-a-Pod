@@ -239,7 +239,13 @@ def deploy_environment():
             mkdir -p /root/.openclaw
             cp /config/openclaw.json /root/.openclaw/openclaw.json
 
-            echo "[openclaw] Starting gateway on port 18789..."
+            # Set bind/port via CLI (survives config rewrites)
+            echo "[openclaw] Configuring gateway..."
+            openclaw config set gateway.bind lan
+            openclaw config set gateway.port 18789
+            openclaw config set gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback true
+
+            echo "[openclaw] Starting gateway..."
             exec openclaw gateway
         """)],
         ports=[
