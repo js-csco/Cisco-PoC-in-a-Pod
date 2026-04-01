@@ -153,8 +153,9 @@ def deploy_environment():
     openclaw_config = json.dumps({
         "gateway": {
             "mode": "local",
-            "bind": "lan",
-            "port": 18789,
+            "controlUi": {
+                "dangerouslyAllowHostHeaderOriginFallback": True,
+            },
         },
         "agents": {
             "defaults": {
@@ -242,7 +243,11 @@ def deploy_environment():
         ports=[
             client.V1ContainerPort(container_port=18789, name="webchat"),
         ],
-        env=[api_key_env],
+        env=[
+            api_key_env,
+            client.V1EnvVar(name="OPENCLAW_GATEWAY_BIND", value="lan"),
+            client.V1EnvVar(name="OPENCLAW_GATEWAY_PORT", value="18789"),
+        ],
         volume_mounts=[
             client.V1VolumeMount(name="config", mount_path="/config", read_only=True),
             client.V1VolumeMount(name="data", mount_path="/data"),
