@@ -262,6 +262,8 @@ def deploy_environment():
             openclaw config set gateway.port 18789
             openclaw config set gateway.auth.token "$OPENCLAW_AUTH_TOKEN"
             openclaw config set gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback true
+            openclaw config set gateway.controlUi.dangerouslyDisableDeviceAuth true
+            openclaw config set gateway.controlUi.allowInsecureAuth true
 
             echo "[openclaw] Starting gateway..."
             exec openclaw gateway
