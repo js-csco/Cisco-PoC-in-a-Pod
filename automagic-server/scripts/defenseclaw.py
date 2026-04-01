@@ -232,7 +232,7 @@ def deploy_environment():
             cp /config/openclaw.json /root/.openclaw/openclaw.json
 
             echo "[openclaw] Starting gateway on port 18789..."
-            exec openclaw gateway --bind lan --port 18789
+            exec openclaw gateway --bind 0.0.0.0 --port 18789
         """)],
         ports=[
             client.V1ContainerPort(container_port=18789, name="webchat"),
