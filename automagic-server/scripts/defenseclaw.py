@@ -235,8 +235,8 @@ def deploy_environment():
             client.V1VolumeMount(name="data", mount_path="/data"),
         ],
         resources=client.V1ResourceRequirements(
-            requests={"memory": "256Mi", "cpu": "100m"},
-            limits={"memory": "512Mi", "cpu": "500m"},
+            requests={"memory": "512Mi", "cpu": "200m"},
+            limits={"memory": "1Gi", "cpu": "1"},
         ),
     )
 
@@ -249,8 +249,11 @@ def deploy_environment():
             set -e
             apt-get update -qq && apt-get install -y -qq curl >/dev/null 2>&1
 
-            echo "[defenseclaw] Downloading gateway binary v{version}..."
-            curl -fsSL "{tarball}" | tar xz -C /usr/local/bin/
+            echo "[defenseclaw] Downloading binary v{version}..."
+            mkdir -p /tmp/defenseclaw-release
+            curl -fsSL "{tarball}" | tar xz -C /tmp/defenseclaw-release
+            cp /tmp/defenseclaw-release/defenseclaw /usr/local/bin/defenseclaw
+            chmod +x /usr/local/bin/defenseclaw
 
             echo "[defenseclaw] Installing CLI..."
             pip install --quiet "{wheel}"
@@ -262,8 +265,8 @@ def deploy_environment():
             echo "[defenseclaw] Initializing (non-interactive)..."
             defenseclaw init --enable-guardrail -y 2>&1 || true
 
-            echo "[defenseclaw] Starting gateway on port 18790..."
-            exec defenseclaw-gateway
+            echo "[defenseclaw] Starting gateway..."
+            exec defenseclaw start
         """.format(
             version=DEFENSECLAW_VERSION,
             tarball=DEFENSECLAW_TARBALL,
@@ -288,7 +291,7 @@ def deploy_environment():
         ],
         resources=client.V1ResourceRequirements(
             requests={"memory": "256Mi", "cpu": "100m"},
-            limits={"memory": "512Mi", "cpu": "500m"},
+            limits={"memory": "768Mi", "cpu": "500m"},
         ),
     )
 
