@@ -162,7 +162,9 @@ def deploy_environment():
             "port": 18789,
             "auth": {"token": shared_token},
             "controlUi": {
-                "dangerouslyAllowHostHeaderOriginFallback": True,
+                "allowedOrigins": ["*"],
+                "allowInsecureAuth": True,
+                "dangerouslyDisableDeviceAuth": True,
             },
         },
         "agents": {
@@ -261,9 +263,9 @@ def deploy_environment():
             openclaw config set gateway.bind lan
             openclaw config set gateway.port 18789
             openclaw config set gateway.auth.token "$OPENCLAW_AUTH_TOKEN"
-            openclaw config set gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback true
-            openclaw config set gateway.controlUi.dangerouslyDisableDeviceAuth true
+            openclaw config set gateway.controlUi.allowedOrigins '["*"]'
             openclaw config set gateway.controlUi.allowInsecureAuth true
+            openclaw config set gateway.controlUi.dangerouslyDisableDeviceAuth true
 
             echo "[openclaw] Starting gateway..."
             exec openclaw gateway
