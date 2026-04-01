@@ -104,6 +104,15 @@ def get_status():
     except ApiException:
         pass
 
+    # Read the shared auth token from the ConfigMap so the UI can build
+    # a working URL with ?token=<value>
+    try:
+        cm = core.read_namespaced_config_map("ai-agent-config", NAMESPACE)
+        oc_cfg = json.loads(cm.data.get("openclaw.json", "{}"))
+        status["auth_token"] = oc_cfg.get("gateway", {}).get("auth", {}).get("token", "")
+    except Exception:
+        status["auth_token"] = ""
+
     return status
 
 
@@ -160,10 +169,7 @@ def deploy_environment():
             "mode": "local",
             "bind": "lan",
             "port": 18789,
-            "auth": {
-                "token": shared_token,
-                "disabled": True,
-            },
+            "auth": {"token": shared_token},
             "controlUi": {
                 "allowedOrigins": ["*"],
                 "allowInsecureAuth": True,
@@ -269,7 +275,6 @@ def deploy_environment():
             openclaw config set gateway.controlUi.allowedOrigins '["*"]'
             openclaw config set gateway.controlUi.allowInsecureAuth true
             openclaw config set gateway.controlUi.dangerouslyDisableDeviceAuth true
-            openclaw config set gateway.auth.disabled true
 
             echo "[openclaw] Starting gateway..."
             exec openclaw gateway
