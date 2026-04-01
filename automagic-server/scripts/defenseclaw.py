@@ -8,8 +8,12 @@ Deploys a single Pod with two containers:
 Both share localhost inside the Pod so DefenseClaw can intercept OpenClaw traffic.
 """
 import os, json, textwrap
+import requests as http_requests
+import urllib3
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Cilium policy constants
 _CILIUM_GROUP = "cilium.io"
@@ -443,3 +447,153 @@ def unisolate_agent():
     except ApiException as e:
         if e.status != 404:
             raise
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Splunk Dashboard
+# ═══════════════════════════════════════════════════════════════════════════
+
+DASHBOARD_XML = textwrap.dedent("""\
+<dashboard version="1.1" theme="light">
+  <label>DefenseClaw — AI Agent Security</label>
+  <description>Audit trail and security posture for the AI agent protected by DefenseClaw.</description>
+
+  <row>
+    <panel>
+      <title>Decisions Over Time</title>
+      <chart>
+        <search>
+          <query>index=defenseclaw sourcetype="defenseclaw:json"
+| timechart span=5m count by action</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.fieldColors">{"block": "#d32f2f", "warn": "#f57c00", "allow": "#2e7d32"}</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Blocked vs Allowed</title>
+      <chart>
+        <search>
+          <query>index=defenseclaw sourcetype="defenseclaw:json"
+| stats count by action</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.fieldColors">{"block": "#d32f2f", "warn": "#f57c00", "allow": "#2e7d32"}</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Blocks by Category</title>
+      <chart>
+        <search>
+          <query>index=defenseclaw sourcetype="defenseclaw:json" action=block
+| stats count by category
+| sort -count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top Blocked Tools</title>
+      <chart>
+        <search>
+          <query>index=defenseclaw sourcetype="defenseclaw:json" action=block
+| stats count by tool_name
+| sort -count
+| head 10</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Severity Distribution</title>
+      <chart>
+        <search>
+          <query>index=defenseclaw sourcetype="defenseclaw:json"
+| stats count by severity
+| sort -count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.fieldColors">{"CRITICAL": "#b71c1c", "HIGH": "#d32f2f", "MEDIUM": "#f57c00", "LOW": "#fbc02d", "INFO": "#2e7d32"}</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Guardrail Proxy — Prompt Inspection</title>
+      <chart>
+        <search>
+          <query>index=defenseclaw sourcetype="defenseclaw:json" category="guardrail"
+| timechart span=10m count by action</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">line</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent Audit Events</title>
+      <table>
+        <search>
+          <query>index=defenseclaw sourcetype="defenseclaw:json"
+| table _time, action, category, severity, tool_name, description, agent
+| sort -_time
+| head 50</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>
+""")
+
+
+def create_splunk_dashboard():
+    """Create or update the DefenseClaw dashboard in Splunk via REST API."""
+    from scripts.splunk import SPLUNK_API_URL, SPLUNK_PASSWORD
+
+    mgmt_url = SPLUNK_API_URL.replace("http://", "https://")
+    dashboard_name = "defenseclaw_ai_agent_security"
+    endpoint = f"{mgmt_url}/servicesNS/admin/search/data/ui/views"
+
+    resp = http_requests.post(
+        endpoint,
+        auth=("admin", SPLUNK_PASSWORD),
+        data={"name": dashboard_name, "eai:data": DASHBOARD_XML},
+        verify=False,
+        timeout=15,
+    )
+
+    if resp.status_code == 409:
+        resp = http_requests.post(
+            f"{endpoint}/{dashboard_name}",
+            auth=("admin", SPLUNK_PASSWORD),
+            data={"eai:data": DASHBOARD_XML},
+            verify=False,
+            timeout=15,
+        )
+
+    if resp.status_code not in (200, 201):
+        raise RuntimeError(f"Failed to create dashboard ({resp.status_code}): {resp.text[:300]}")
+
+    return f"/app/search/{dashboard_name}"
