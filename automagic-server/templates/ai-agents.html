@@ -182,33 +182,7 @@
         {% endif %}
       </span>
     </form>
-
-    {% if status.namespace_exists and (status.gateway.state != 'not deployed' or status.openclaw.state != 'not deployed') %}
-    <form method="POST" style="display:flex; align-items:center; gap:10px;">
-      {% if status.isolated %}
-        <button type="submit" name="action" value="unisolate"
-                style="background-color:#2e7d32; color:#fff; border:none; padding:11px 24px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.95em;">
-          <span class="fa-solid fa-lock-open" style="margin-right:6px;"></span>Remove Isolation
-        </button>
-      {% else %}
-        <button type="submit" name="action" value="isolate"
-                style="background-color:#d32f2f; color:#fff; border:none; padding:11px 24px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.95em;">
-          <span class="fa-solid fa-shield-halved" style="margin-right:6px;"></span>Isolate AI Agent
-        </button>
-      {% endif %}
-    </form>
-    {% endif %}
   </div>
-
-  {% if status.isolated %}
-  <div style="margin-top:14px; background:#ffebee; border:1px solid #ef9a9a; border-radius:8px; padding:12px 16px;">
-    <p style="font-size:0.85em; color:#c62828; margin:0;">
-      <strong><span class="fa-solid fa-shield-halved" style="margin-right:4px;"></span> Network Isolated</strong> &mdash;
-      CiliumNetworkPolicy active. The AI agent can only reach external HTTPS (Anthropic API), DNS,
-      and Splunk HEC (audit logs). All other egress to cluster pods is blocked.
-    </p>
-  </div>
-  {% endif %}
 
   {% if status.openclaw.state == 'running' %}
   <div style="margin-top:14px; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:8px; padding:12px 16px;">
@@ -222,7 +196,72 @@
   {% endif %}
 </section>
 
-<!-- ═══════════════════════════════════════════════════════ SPLUNK INTEGRATION -->
+<!-- ═══════════════════════════════════════════════════════ NETWORK ISOLATION -->
+<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#d32f2f; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">NETWORK ISOLATION</h3>
+    {% if status.isolated %}
+      <span style="font-size:0.78em; color:#d32f2f; background:#ffebee; border:1px solid #ef9a9a; border-radius:4px; padding:2px 8px;">isolated</span>
+    {% else %}
+      <span style="font-size:0.78em; color:#999; background:#f5f5f5; border:1px solid #e0e0e0; border-radius:4px; padding:2px 8px;">unrestricted</span>
+    {% endif %}
+  </div>
+
+  <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; margin-bottom:18px;">
+    <div style="font-size:0.88em; color:#444; line-height:1.7;">
+      <strong style="color:#111;">AI agents shouldn&rsquo;t have free rein inside your cluster.</strong>
+      <br><br>
+      Even with DefenseClaw inspecting every tool call, defense in depth matters. Network isolation
+      uses a <strong>CiliumNetworkPolicy</strong> to enforce a hard boundary at the network layer &mdash;
+      the agent pod physically cannot reach other cluster services, regardless of what the LLM decides to do.
+      <br><br>
+      This is especially important for PoC and evaluation environments where you&rsquo;re testing
+      untrusted skills or running adversarial demos.
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px;">
+    <div style="border:1px solid {% if not status.isolated %}#a5d6a7{% else %}#e0e0e0{% endif %}; border-radius:8px; padding:14px; {% if not status.isolated %}background:#f1f8e9;{% endif %}">
+      <strong style="font-size:0.88em; color:#111;"><span class="fa-solid fa-check-circle" style="color:#2e7d32; margin-right:4px;"></span> Allowed when isolated</strong>
+      <ul style="font-size:0.8em; color:#555; margin:8px 0 0; padding-left:18px; line-height:1.8;">
+        <li><strong>DNS</strong> &mdash; pod can resolve hostnames (kube-dns)</li>
+        <li><strong>Anthropic API</strong> &mdash; external HTTPS on port 443 (Claude)</li>
+        <li><strong>Splunk HEC</strong> &mdash; audit events to splunk.piap:8088</li>
+        <li><strong>Ingress</strong> &mdash; users can still reach the WebChat UI</li>
+      </ul>
+    </div>
+    <div style="border:1px solid {% if status.isolated %}#ef9a9a{% else %}#e0e0e0{% endif %}; border-radius:8px; padding:14px; {% if status.isolated %}background:#ffebee;{% endif %}">
+      <strong style="font-size:0.88em; color:#111;"><span class="fa-solid fa-ban" style="color:#d32f2f; margin-right:4px;"></span> Blocked when isolated</strong>
+      <ul style="font-size:0.8em; color:#555; margin:8px 0 0; padding-left:18px; line-height:1.8;">
+        <li><strong>Automagic</strong> &mdash; agent cannot call the dashboard API</li>
+        <li><strong>Other pods</strong> &mdash; no access to any other k3s service</li>
+        <li><strong>Non-HTTPS egress</strong> &mdash; no HTTP, SSH, or raw TCP out</li>
+        <li><strong>Cluster network</strong> &mdash; lateral movement is impossible</li>
+      </ul>
+    </div>
+  </div>
+
+  {% if status.namespace_exists and (status.gateway.state != 'not deployed' or status.openclaw.state != 'not deployed') %}
+  <form method="POST" style="display:flex; align-items:center; gap:14px;">
+    {% if status.isolated %}
+      <button type="submit" name="action" value="unisolate"
+              style="background-color:#2e7d32; color:#fff; border:none; padding:11px 28px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.95em;">
+        <span class="fa-solid fa-lock-open" style="margin-right:6px;"></span>Remove Isolation
+      </button>
+      <span style="font-size:0.82em; color:#999;">Deletes the CiliumNetworkPolicy — agent gets full cluster access again.</span>
+    {% else %}
+      <button type="submit" name="action" value="isolate"
+              style="background-color:#d32f2f; color:#fff; border:none; padding:11px 28px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.95em;">
+        <span class="fa-solid fa-shield-halved" style="margin-right:6px;"></span>Isolate AI Agent
+      </button>
+      <span style="font-size:0.82em; color:#999;">Applies a CiliumNetworkPolicy — blocks all egress except DNS, Splunk, and HTTPS.</span>
+    {% endif %}
+  </form>
+  {% else %}
+  <p style="font-size:0.82em; color:#999; margin:0;">Deploy the AI agent first, then you can isolate it.</p>
+  {% endif %}
+</section>
 <section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
   <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
     <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
