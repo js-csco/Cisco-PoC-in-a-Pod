@@ -151,6 +151,7 @@ def deploy_environment():
 
     # ── 2. OpenClaw config as a ConfigMap ────────────────────────────────
     openclaw_config = json.dumps({
+        "gateway": {"mode": "local"},
         "agents": {
             "defaults": {
                 "model": {"primary": "anthropic/claude-sonnet-4-6"},
