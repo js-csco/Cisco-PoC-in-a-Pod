@@ -151,7 +151,11 @@ def deploy_environment():
 
     # ── 2. OpenClaw config as a ConfigMap ────────────────────────────────
     openclaw_config = json.dumps({
-        "gateway": {"mode": "local"},
+        "gateway": {
+            "mode": "local",
+            "bind": "lan",
+            "port": 18789,
+        },
         "agents": {
             "defaults": {
                 "model": {"primary": "anthropic/claude-sonnet-4-6"},
@@ -233,7 +237,7 @@ def deploy_environment():
             cp /config/openclaw.json /root/.openclaw/openclaw.json
 
             echo "[openclaw] Starting gateway on port 18789..."
-            exec openclaw gateway --bind lan --port 18789
+            exec openclaw gateway
         """)],
         ports=[
             client.V1ContainerPort(container_port=18789, name="webchat"),
