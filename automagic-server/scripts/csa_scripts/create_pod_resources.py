@@ -92,18 +92,18 @@ def create_private_resources(token, vm_ip, resource_group_id):
     # browser=True adds clientless browser access in addition to Secure Client access.
     # fqdn_prefix is the subdomain used for the browser access URL.
     resources = [
-        {"name": "Automagic Server",   "port": 30200, "protocol": "http/https", "browser": True,  "fqdn_prefix": "automagic"},
-        {"name": "PoC Playbook",       "port": 30250, "protocol": "http/https", "browser": True,  "fqdn_prefix": "playbook"},
+        {"name": "Automagic Server",   "port": 30200, "protocol": "http/https", "browser": True},
+        {"name": "PoC Playbook",       "port": 30250, "protocol": "http/https", "browser": True},
         {"name": "OpenSSH Server",     "port": 30022, "protocol": "ssh",        "browser": False},
-        {"name": "Splunk Dashboard",   "port": 30500, "protocol": "http/https", "browser": True,  "fqdn_prefix": "splunk"},
+        {"name": "Splunk Dashboard",   "port": 30500, "protocol": "http/https", "browser": True},
         {"name": "RDP Server",         "port": 30389, "protocol": "RDP-TCP",    "browser": False},
         {"name": "Kubectl MCP Server", "port": 30050, "protocol": "Any",        "browser": False},
         {"name": "Hubble UI",          "port": 30800, "protocol": "http/https", "browser": False},
         {"name": "SSE Check",          "port": 30550, "protocol": "http/https", "browser": False},
         {"name": "Caldera C2",         "port": 30600, "protocol": "http/https", "browser": False},
-        {"name": "Uptime Kuma",        "port": 30300, "protocol": "http/https", "browser": True,  "fqdn_prefix": "uptime"},
-        {"name": "SAML App",           "port": 30400, "protocol": "http/https", "browser": True,  "fqdn_prefix": "saml-app"},
-        {"name": "AI Agent",           "port": 31789, "protocol": "http/https", "browser": True,  "fqdn_prefix": "ai-agent"},
+        {"name": "Uptime Kuma",        "port": 30300, "protocol": "http/https", "browser": True},
+        {"name": "SAML App",           "port": 30400, "protocol": "http/https", "browser": True},
+        {"name": "AI Agent",           "port": 31789, "protocol": "http/https", "browser": True},
     ]
 
 
@@ -120,10 +120,11 @@ def create_private_resources(token, vm_ip, resource_group_id):
         if res.get("browser"):
             access_types.insert(0, {
                 "type": "browser",
-                "externalFQDNPrefix": res["fqdn_prefix"],
-                "protocol": "HTTP",
-                "sni": vm_ip,
-                "sslVerificationEnabled": False
+                "protocol": "http",
+                "sni": "",
+                "customHostHeader": "",
+                "sslVerificationEnabled": True,
+                "isWebsocketEnabled": False
             })
 
         payload = {
