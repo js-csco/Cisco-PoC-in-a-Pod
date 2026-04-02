@@ -29,6 +29,13 @@ SPLUNKBASE_APPS = [
         "url":         "https://splunkbase.splunk.com/app/7404",
     },
     {
+        "id":          7569,
+        "folder_name": "cisco_secure_access_add_on",
+        "display":     "Cisco Secure Access Add-on for Splunk",
+        "description": "Ingest Cisco Secure Access and Umbrella event logs into Splunk.",
+        "url":         "https://splunkbase.splunk.com/app/7569",
+    },
+    {
         "id":          7931,
         "folder_name": "splunk_mcp_server",
         "display":     "Splunk MCP Server",
