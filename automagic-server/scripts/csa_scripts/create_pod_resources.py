@@ -118,8 +118,10 @@ def create_private_resources(token, vm_ip, resource_group_id):
 
         access_types = [{"type": "client", "reachableAddresses": [vm_ip]}]
         if res.get("browser"):
+            fqdn_prefix = res["name"].lower().replace(" ", "-")
             access_types.insert(0, {
                 "type": "browser",
+                "externalFQDNPrefix": fqdn_prefix,
                 "protocol": "http",
                 "sni": "",
                 "customHostHeader": "",
