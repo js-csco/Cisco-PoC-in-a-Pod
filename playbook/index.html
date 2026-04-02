@@ -590,7 +590,7 @@
     }
 
     .journey-grid { display: grid; gap: 8px; }
-    .journey-grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .journey-grid-4 { grid-template-columns: repeat(3, 1fr); }
     .journey-grid-3 { grid-template-columns: repeat(3, 1fr); }
 
     .journey-card {
@@ -1708,17 +1708,17 @@ function getRecommendation() {
 }
 
 function renderJourneyTab(tab) {
-  const coreTabs = TABS.filter(t => !t.isInfoTab && !t.isCustomTab && !t.isJourneyTab);
+  const coreTabs = TABS.filter(t => !t.isInfoTab && !t.isJourneyTab);
   const allCases = coreTabs.flatMap(t => tabCases(t));
   const totalCases = allCases.length;
   const passedCases = allCases.filter(tc => getState(tc.id, 'status') === 'pass').length;
   const overallPct = totalCases ? Math.round((passedCases / totalCases) * 100) : 0;
 
-  const coreColors = { duo: '#049fd9', secureaccess: '#0066ff', cilium: '#16a34a', tetragon: '#7c4dff' };
+  const coreColors = { duo: '#049fd9', secureaccess: '#0066ff', cilium: '#16a34a', tetragon: '#7c4dff', defenseclaw: '#7c4dff', custom: '#ea580c' };
 
   const scoreRing = makeRingSvg(overallPct, 'var(--cyan)', 76, 9);
 
-  // Phase 1 — Foundation: Core module cards with progress rings
+  // Phase 1 — Foundation: All module cards with progress rings (3x2 grid)
   const phase1Html = coreTabs.map(t => {
     const cases = tabCases(t);
     const total = cases.length;
@@ -1764,7 +1764,6 @@ function renderJourneyTab(tab) {
     { icon: 'fa-magnifying-glass-chart', color: '#d32f2f', bg: '#ffebee', title: 'Splunk', desc: 'Forward security events to Splunk for SIEM correlation and alerting.' },
     { icon: 'fa-skull-crossbones', color: '#e65100', bg: '#fff3e0', title: 'Caldera', desc: 'Simulate adversary techniques with MITRE Caldera to validate defenses.' },
     { icon: 'fa-chart-line', color: '#1565c0', bg: '#e3f2fd', title: 'Network Monitoring', desc: 'Full network flow visibility and anomaly detection.' },
-    { icon: 'fa-shield-virus', color: '#7c4dff', bg: '#ede7f6', title: 'DefenseClaw', desc: 'AI agent security gateway — skill scanning, prompt injection detection, and audit trail.' },
   ];
   const phase3Html = phase3Items.map(item => `
     <div class="journey-card" style="cursor:default;">
