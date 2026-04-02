@@ -119,12 +119,12 @@ def secure_access():
             if action == "create_pod":
                 if not session.get("authenticated"):
                     flash("⚠️ Please authenticate first.")
-                    return redirect(url_for("index"))
-            
+                    return redirect(url_for("secure_access"))
+
                 vm_ip = request.form.get("vm_ip", "").strip()
                 if not vm_ip:
                     flash("⚠️ IP address missing.")
-                    return redirect(url_for("index"))
+                    return redirect(url_for("secure_access"))
 
                 # this always gets the first connector in the list - array[0]
                 # reason: in this PoC tenant should only be one resouce connector

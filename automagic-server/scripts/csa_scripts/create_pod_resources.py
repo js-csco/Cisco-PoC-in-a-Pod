@@ -92,18 +92,18 @@ def create_private_resources(token, vm_ip, resource_group_id):
     # browser=True adds clientless browser access in addition to Secure Client access.
     # fqdn_prefix is the subdomain used for the browser access URL.
     resources = [
-        {"name": "Automagic Server",   "port": 30200, "protocol": "http/https", "browser": True},
-        {"name": "PoC Playbook",       "port": 30250, "protocol": "http/https", "browser": True},
-        {"name": "OpenSSH Server",     "port": 30022, "protocol": "ssh",        "browser": False},
-        {"name": "Splunk Dashboard",   "port": 30500, "protocol": "http/https", "browser": True},
-        {"name": "RDP Server",         "port": 30389, "protocol": "RDP-TCP",    "browser": False},
-        {"name": "Kubectl MCP Server", "port": 30050, "protocol": "Any",        "browser": False},
-        {"name": "Hubble UI",          "port": 30800, "protocol": "http/https", "browser": False},
-        {"name": "SSE Check",          "port": 30550, "protocol": "http/https", "browser": False},
-        {"name": "Caldera C2",         "port": 30600, "protocol": "http/https", "browser": False},
-        {"name": "Uptime Kuma",        "port": 30300, "protocol": "http/https", "browser": True},
-        {"name": "SAML App",           "port": 30400, "protocol": "http/https", "browser": True},
-        {"name": "AI Agent",           "port": 31789, "protocol": "http/https", "browser": True},
+        {"name": "Automagic Server",   "port": 30200, "protocol": "TCP",    "browser": True},
+        {"name": "PoC Playbook",       "port": 30250, "protocol": "TCP",    "browser": True},
+        {"name": "OpenSSH Server",     "port": 30022, "protocol": "ssh",    "browser": False},
+        {"name": "Splunk Dashboard",   "port": 30500, "protocol": "TCP",    "browser": True},
+        {"name": "RDP Server",         "port": 30389, "protocol": "RDP-TCP","browser": False},
+        {"name": "Kubectl MCP Server", "port": 30050, "protocol": "TCP",    "browser": False},
+        {"name": "Hubble UI",          "port": 30800, "protocol": "TCP",    "browser": False},
+        {"name": "SSE Check",          "port": 30550, "protocol": "TCP",    "browser": False},
+        {"name": "Caldera C2",         "port": 30600, "protocol": "TCP",    "browser": False},
+        {"name": "Uptime Kuma",        "port": 30300, "protocol": "TCP",    "browser": True},
+        {"name": "SAML App",           "port": 30400, "protocol": "TCP",    "browser": True},
+        {"name": "AI Agent",           "port": 31789, "protocol": "TCP",    "browser": True},
     ]
 
 
