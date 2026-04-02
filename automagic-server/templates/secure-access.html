@@ -51,9 +51,6 @@
     z-index: 1;
     transition: all 0.2s;
   }
-  .sa-step.active .sa-step-num { background: #0066ff; color: #fff; }
-  .sa-step.done .sa-step-num { background: #16a34a; color: #fff; }
-  .sa-step.done::after { background: #16a34a; }
   .sa-step-label {
     font-size: 0.72em;
     font-weight: 600;
@@ -62,8 +59,6 @@
     max-width: 110px;
     line-height: 1.3;
   }
-  .sa-step.active .sa-step-label,
-  .sa-step.done .sa-step-label { color: #333; }
 
   /* ── Section card ── */
   .sa-section {
@@ -298,11 +293,11 @@
 
   <!-- ── Stepper ── -->
   <div class="sa-stepper">
-    <div class="sa-step {% if session.get('authenticated') %}done{% else %}active{% endif %}">
+    <div class="sa-step">
       <div class="sa-step-num">1</div>
       <div class="sa-step-label">Getting Started</div>
     </div>
-    <div class="sa-step {% if session.get('authenticated') %}active{% endif %}">
+    <div class="sa-step">
       <div class="sa-step-num">2</div>
       <div class="sa-step-label">ZTA Profile</div>
     </div>

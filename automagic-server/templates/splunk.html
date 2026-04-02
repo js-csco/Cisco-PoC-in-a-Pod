@@ -285,8 +285,9 @@
         {% if not ns.cisco_sa_rendered %}
         {% set ns.cisco_sa_rendered = true %}
         {% set apps_in_bundle = splunkbase_apps | selectattr('bundle', 'equalto', 'cisco_secure_access') | list %}
-        {% set all_installed = apps_in_bundle | map(attribute='folder_name') | map('extract', app_status) | list %}
-        {% set installed_count = all_installed | select | list | length %}
+        {% set count_ns = namespace(installed=0) %}
+        {% for b in apps_in_bundle %}{% if app_status.get(b.folder_name, false) %}{% set count_ns.installed = count_ns.installed + 1 %}{% endif %}{% endfor %}
+        {% set installed_count = count_ns.installed %}
         <div style="border:1px solid #e0e0e0; border-radius:8px; padding:16px; background:#fff; display:flex; flex-direction:column; gap:8px;">
           <div style="display:flex; align-items:center; justify-content:space-between;">
             <div style="font-weight:600; color:#111; font-size:0.9em;">Cisco Secure Access</div>
