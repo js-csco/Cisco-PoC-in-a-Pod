@@ -29,11 +29,20 @@ SPLUNKBASE_APPS = [
         "url":         "https://splunkbase.splunk.com/app/7404",
     },
     {
+        "id":          5558,
+        "folder_name": "cisco_secure_access",
+        "display":     "Cisco Secure Access App for Splunk",
+        "description": "Dashboards and visibility for Cisco Secure Access and Umbrella cloud security data.",
+        "url":         "https://splunkbase.splunk.com/app/5558",
+        "bundle":      "cisco_secure_access",
+    },
+    {
         "id":          7569,
         "folder_name": "cisco_secure_access_add_on",
         "display":     "Cisco Secure Access Add-on for Splunk",
         "description": "Ingest Cisco Secure Access and Umbrella event logs into Splunk.",
         "url":         "https://splunkbase.splunk.com/app/7569",
+        "bundle":      "cisco_secure_access",
     },
     {
         "id":          7931,
