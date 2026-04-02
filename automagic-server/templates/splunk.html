@@ -351,71 +351,8 @@
       </div>
     </div>
 
-    <!-- Kubernetes Monitoring (Collectord) -->
-    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; background:#fff;{% if not splunk_available %} opacity:0.45; pointer-events:none;{% endif %}">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-        <div style="font-weight:600; color:#111; font-size:0.95em;">Kubernetes Monitoring</div>
-        {% if collectord_status and collectord_status.state == 'running' %}
-          <span style="font-size:0.75em; background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">Running</span>
-        {% elif collectord_status and collectord_status.state in ('partial', 'starting') %}
-          <span style="font-size:0.75em; background:#e3f2fd; color:#1565c0; border:1px solid #90caf9; border-radius:4px; padding:2px 8px;">{{ collectord_status.message }}</span>
-        {% elif collectord_status and collectord_status.state not in ('not_deployed', 'error') %}
-          <span style="font-size:0.75em; background:#fff8e1; color:#f57f17; border:1px solid #ffe082; border-radius:4px; padding:2px 8px;">{{ collectord_status.message }}</span>
-        {% else %}
-          <span style="font-size:0.75em; background:#fce4ec; color:#b71c1c; border:1px solid #ef9a9a; border-radius:4px; padding:2px 8px;">Not deployed</span>
-        {% endif %}
-      </div>
-      <div style="font-size:0.82em; color:#666; line-height:1.6;">
-        Container logs, host logs, and k8s metrics via
-        <a href="https://www.outcoldsolutions.com/" target="_blank" style="color:#0066ff;">Collectord</a>
-        (Outcold Solutions). Requires a
-        <a href="https://www.outcoldsolutions.com/pricing/" target="_blank" style="color:#0066ff;">30-day evaluation license</a>
-        — enter your business email to receive the key.
-      </div>
-
-      <form method="POST" style="margin-top:10px;">
-        <input type="hidden" name="action" value="deploy_collectord">
-        <textarea name="outcold_license" id="outcold-license-input" rows="2"
-                  placeholder="Paste Outcold license key..."
-                  style="width:100%; box-sizing:border-box; font-family:monospace; font-size:0.78em;
-                         border:1px solid #e0e0e0; border-radius:6px; padding:8px; resize:vertical;
-                         color:#333; background:#fff; margin-bottom:8px;"></textarea>
-        <button type="submit" id="deploy-collectord-btn"
-                disabled
-                style="background-color:#ccc; color:#777; border:none; padding:8px 18px;
-                       border-radius:6px; font-weight:600; cursor:not-allowed; font-size:0.85em;
-                       transition: all 0.2s ease;">
-          {% if collectord_status and collectord_status.state not in ('not_deployed', 'error') %}Redeploy{% else %}Deploy Collectord{% endif %}
-        </button>
-      </form>
-    </div>
 
   </div>
 </section>
-
-<script>
-(function() {
-  var input = document.getElementById('outcold-license-input');
-  var btn   = document.getElementById('deploy-collectord-btn');
-  if (!input || !btn) return;
-
-  function check() {
-    var has = input.value.trim().length > 0;
-    btn.disabled = !has;
-    if (has) {
-      btn.style.backgroundColor = '#00bcd4';
-      btn.style.color = '#fff';
-      btn.style.cursor = 'pointer';
-    } else {
-      btn.style.backgroundColor = '#ccc';
-      btn.style.color = '#777';
-      btn.style.cursor = 'not-allowed';
-    }
-  }
-  input.addEventListener('input', check);
-  input.addEventListener('paste', function() { setTimeout(check, 50); });
-  check();
-})();
-</script>
 
 {% endblock %}
