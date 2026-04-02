@@ -89,20 +89,21 @@ def create_private_resources(token, vm_ip, resource_group_id):
 
 
 
-    # add more resources here:
+    # browser=True adds clientless browser access in addition to Secure Client access.
+    # fqdn_prefix is the subdomain used for the browser access URL.
     resources = [
-        {"name": "Automagic Server", "port": 30200, "protocol": "http/https"},
-        {"name": "PoC Playbook", "port": 30250, "protocol": "http/https"},
-        {"name": "OpenSSH Server", "port": 30022, "protocol": "ssh"},
-        {"name": "Splunk Dashboard", "port": 30500, "protocol": "Any"},
-        {"name": "Splunk MCP", "port": 30501, "protocol": "Any"},
-        {"name": "RDP Server", "port": 30389, "protocol": "RDP-TCP"},
-        {"name": "Kubectl MCP Server", "port": 30050, "protocol": "Any"},
-        {"name": "Hubble UI", "port": 30800, "protocol": "http/https"},
-        {"name": "SSE Check", "port": 30550, "protocol": "http/https"},
-        {"name": "Caldera C2", "port": 30600, "protocol": "http/https"},
-        {"name": "Uptime Kuma", "port": 30300, "protocol": "http/https"},
-        {"name": "SAML App", "port": 30400, "protocol": "http/https"},
+        {"name": "Automagic Server",   "port": 30200, "protocol": "http/https", "browser": True},
+        {"name": "PoC Playbook",       "port": 30250, "protocol": "http/https", "browser": True},
+        {"name": "OpenSSH Server",     "port": 30022, "protocol": "ssh",        "browser": False},
+        {"name": "Splunk Dashboard",   "port": 30500, "protocol": "http/https", "browser": True},
+        {"name": "RDP Server",         "port": 30389, "protocol": "RDP-TCP",    "browser": False},
+        {"name": "Kubectl MCP Server", "port": 30050, "protocol": "Any",        "browser": False},
+        {"name": "Hubble UI",          "port": 30800, "protocol": "http/https", "browser": False},
+        {"name": "SSE Check",          "port": 30550, "protocol": "http/https", "browser": False},
+        {"name": "Caldera C2",         "port": 30600, "protocol": "http/https", "browser": False},
+        {"name": "Uptime Kuma",        "port": 30300, "protocol": "http/https", "browser": True},
+        {"name": "SAML App",           "port": 30400, "protocol": "http/https", "browser": True},
+        {"name": "AI Agent",           "port": 31789, "protocol": "http/https", "browser": True},
     ]
 
 
@@ -115,6 +116,17 @@ def create_private_resources(token, vm_ip, resource_group_id):
             print(f"✅ Resource '{res['name']}' already exists.")
             continue
 
+        access_types = [{"type": "client", "reachableAddresses": [vm_ip]}]
+        if res.get("browser"):
+            access_types.insert(0, {
+                "type": "browser",
+                "protocol": "http",
+                "sni": "",
+                "customHostHeader": "",
+                "sslVerificationEnabled": True,
+                "isWebsocketEnabled": False
+            })
+
         payload = {
             "name": res["name"],
             "description": f"{res['name']} for VM {vm_ip}",
@@ -126,13 +138,8 @@ def create_private_resources(token, vm_ip, resource_group_id):
                     ]
                 }
             ],
-            "accessTypes": [
-                {
-                    "type": "client", 
-                    "reachableAddresses": [vm_ip]
-                }
-            ],
-            "resourceGroupIds": [ resource_group_id ]
+            "accessTypes": access_types,
+            "resourceGroupIds": [resource_group_id]
         }
 
         r = requests.post(url, headers=headers, json=payload, timeout=15)
