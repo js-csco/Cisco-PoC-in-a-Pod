@@ -58,7 +58,7 @@ def create_int_warn_policy(token):
         ],
         "ruleAction": "warn",
         "ruleIName": None,
-        "ruleName": "joschwei - Roaming Devices - Warn - Page Gen AI Apps - Decryption required",
+        "ruleName": "Roaming Devices - Warn - Page Gen AI Apps - Decryption required",
         "ruleExternalId": None,
         "ruleAccess": "public_internet"
     }
@@ -84,7 +84,7 @@ def create_inet_isolate_policy(token):
     }
 
     payload = {
-        "ruleName": "joschwei - Roaming Devices - Isolate - News Websites - Decryption required",
+        "ruleName": "Roaming Devices - Isolate - News Websites - Decryption required",
         "ruleIName": None,
         "ruleAction": "isolate",
         "ruleDescription": "Browser Isolation for Roaming Devices to News Websites. Decryption in Security Profile is required for the Browser Isolation.",
@@ -182,7 +182,7 @@ def create_int_block_content_policy(token):
                 "settingName": "umbrella.default.traffic"
             }
         ],
-        "ruleName": "joschwei - Roaming Devices - Block - Alcohol Websites - Decryption required",
+        "ruleName": "Roaming Devices - Block - Alcohol Websites - Decryption required",
         "ruleIsDefault": False,
         "ruleExternalId": None,
         "ruleAction": "block",
@@ -233,7 +233,7 @@ def create_int_block_apps_policy(token):
                 "attributeOperator": "INTERSECT"
             }
         ],
-        "ruleName": "joschwei - Roaming Devices - Block - DeepSeek AI - Decryption required",
+        "ruleName": "Roaming Devices - Block - DeepSeek AI - Decryption required",
         "ruleSettings": [
             {
                 "settingName": "umbrella.logLevel",
@@ -272,7 +272,7 @@ def create_allow_all_policy(token):
     }
 
     payload = {
-        "ruleName": "joschwei - Roaming Devices - Allow - All Internet - Decryption required",
+        "ruleName": "Roaming Devices - Allow - All Internet - Decryption required",
         "ruleDescription": "Allow Access for Roaming Devices to all Destinations. Decryption in Security Profile is required for Advanced Security.",
         "ruleConditions": [
             {
