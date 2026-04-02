@@ -630,15 +630,17 @@ def splunk():
             app_id  = request.form.get('app_id', '').strip()
             sb_user = request.form.get('splunkbase_username', '').strip()
             sb_pass = request.form.get('splunkbase_password', '').strip()
-            app_name = next((a['display'] for a in SPLUNKBASE_APPS if str(a['id']) == app_id), app_id)
             if not app_id or not sb_user or not sb_pass:
                 flash("App ID, Splunk.com username, and password are all required.")
             else:
-                try:
-                    install_splunkbase_app(int(app_id), sb_user, sb_pass)
-                    flash(f"{app_name} installed — restart Splunk to activate.")
-                except Exception as e:
-                    flash(f"Install failed: {e}")
+                app_ids = [aid.strip() for aid in app_id.split(',') if aid.strip()]
+                for aid in app_ids:
+                    app_name = next((a['display'] for a in SPLUNKBASE_APPS if str(a['id']) == aid), aid)
+                    try:
+                        install_splunkbase_app(int(aid), sb_user, sb_pass)
+                        flash(f"{app_name} installed — restart Splunk to activate.")
+                    except Exception as e:
+                        flash(f"{app_name} install failed: {e}")
             return redirect(url_for('splunk'))
 
     splunk_available = is_available()

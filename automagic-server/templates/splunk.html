@@ -278,7 +278,53 @@
 
     <!-- App cards -->
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px;">
+      {% set ns = namespace(cisco_sa_rendered=false) %}
       {% for app in splunkbase_apps %}
+
+      {% if app.bundle == 'cisco_secure_access' %}
+        {% if not ns.cisco_sa_rendered %}
+        {% set ns.cisco_sa_rendered = true %}
+        {% set apps_in_bundle = splunkbase_apps | selectattr('bundle', 'equalto', 'cisco_secure_access') | list %}
+        {% set all_installed = apps_in_bundle | map(attribute='folder_name') | map('extract', app_status) | list %}
+        {% set installed_count = all_installed | select | list | length %}
+        <div style="border:1px solid #e0e0e0; border-radius:8px; padding:16px; background:#fff; display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div style="font-weight:600; color:#111; font-size:0.9em;">Cisco Secure Access</div>
+            {% if splunk_available %}
+              {% if installed_count == apps_in_bundle | length %}
+                <span style="font-size:0.75em; background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">Installed</span>
+              {% elif installed_count > 0 %}
+                <span style="font-size:0.75em; background:#fff8e1; color:#f57f17; border:1px solid #ffe082; border-radius:4px; padding:2px 8px;">Partial</span>
+              {% else %}
+                <span style="font-size:0.75em; background:#fce4ec; color:#b71c1c; border:1px solid #ef9a9a; border-radius:4px; padding:2px 8px;">Not installed</span>
+              {% endif %}
+            {% else %}
+              <span style="font-size:0.75em; background:#f5f5f5; color:#999; border:1px solid #e0e0e0; border-radius:4px; padding:2px 8px;">Unknown</span>
+            {% endif %}
+          </div>
+          <div style="font-size:0.8em; color:#666; line-height:1.6;">
+            Ingest and visualize Cisco Secure Access and Umbrella cloud security logs in Splunk.
+            Installs both the App (dashboards) and Add-on (data inputs).
+          </div>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            {% for b in apps_in_bundle %}
+            <a href="{{ b.url }}" target="_blank" style="color:#0066ff; font-size:0.8em;">
+              splunkbase.splunk.com/app/{{ b.id }} — {{ b.display }}
+            </a>
+            {% endfor %}
+          </div>
+          <div>
+            <button type="submit" name="app_id" value="{{ apps_in_bundle | map(attribute='id') | map('string') | join(',') }}"
+                    style="margin-top:4px; background-color:#0066ff; color:#fff; border:none;
+                           padding:8px 18px; border-radius:6px; font-weight:600;
+                           cursor:pointer; font-size:0.85em;">
+              {% if installed_count == apps_in_bundle | length %}Reinstall Both{% else %}Install Both{% endif %}
+            </button>
+          </div>
+        </div>
+        {% endif %}
+
+      {% else %}
       {% set installed = app_status.get(app.folder_name, false) %}
       <div style="border:1px solid #e0e0e0; border-radius:8px; padding:16px; background:#fff; display:flex; flex-direction:column; gap:8px;">
         <div style="display:flex; align-items:center; justify-content:space-between;">
@@ -304,6 +350,8 @@
           </button>
         </div>
       </div>
+      {% endif %}
+
       {% endfor %}
     </div>
   </form>
