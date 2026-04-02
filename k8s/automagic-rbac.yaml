@@ -63,6 +63,10 @@ rules:
 - apiGroups: ["cilium.io"]
   resources: ["ciliumnodes"]
   verbs: ["get"]
+# CiliumNetworkPolicies across namespaces (piap + defenseclaw isolation)
+- apiGroups: ["cilium.io"]
+  resources: ["ciliumnetworkpolicies"]
+  verbs: ["get", "list", "create", "update", "patch", "delete", "replace"]
 - apiGroups: [""]
   resources: ["nodes"]
   verbs: ["get", "list", "watch"]
