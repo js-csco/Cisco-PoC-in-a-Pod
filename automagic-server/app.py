@@ -738,10 +738,6 @@ def ai_agents():
     status["hec_healthy"] = hec_is_healthy()
     return render_template('ai-agents.html', status=status)
 
-@app.route('/defenseclaw')
-def defenseclaw():
-    return render_template('defenseclaw.html')
-
 @app.route('/help')
 def help_page():
     return render_template('help.html')
