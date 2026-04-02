@@ -98,9 +98,7 @@ def create_ai_guardrail_rule(token):
                 "details": "{\"id\":9,\"name\":\"roaming\",\"label\":\"Roaming Computers\",\"description\":\"Roaming devices\",\"children\":1}"
             }
         ],
-        "applications": [
-            {"id": 46060, "trafficDirection": "REQUEST"}
-        ],
+        "applications": [],
         "classifications": GUARDRAIL_CLASSIFICATION_IDS,
         "scannableContexts": ["FILENAME", "CONTENT"],
         "mipTags": [],
