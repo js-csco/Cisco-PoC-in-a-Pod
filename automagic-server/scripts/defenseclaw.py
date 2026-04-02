@@ -639,10 +639,22 @@ DASHBOARD_XML = textwrap.dedent("""\
 
 
 def create_splunk_dashboard():
-    """Create or update the DefenseClaw dashboard in Splunk via REST API."""
+    """Create the defenseclaw index and dashboard in Splunk via REST API."""
     from scripts.splunk import SPLUNK_API_URL, SPLUNK_PASSWORD
 
     mgmt_url = SPLUNK_API_URL.replace("http://", "https://")
+
+    # ── Create the defenseclaw index if it doesn't exist ─────────────
+    idx_endpoint = f"{mgmt_url}/servicesNS/admin/search/data/indexes"
+    http_requests.post(
+        idx_endpoint,
+        auth=("admin", SPLUNK_PASSWORD),
+        data={"name": "defenseclaw", "datatype": "event"},
+        verify=False,
+        timeout=15,
+    )  # 409 = already exists, that's fine
+
+    # ── Create or update the dashboard ───────────────────────────────
     dashboard_name = "defenseclaw_ai_agent_security"
     endpoint = f"{mgmt_url}/servicesNS/admin/search/data/ui/views"
 
