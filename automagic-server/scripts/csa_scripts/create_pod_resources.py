@@ -122,7 +122,7 @@ def create_private_resources(token, vm_ip, resource_group_id):
             access_types.insert(0, {
                 "type": "browser",
                 "externalFQDNPrefix": fqdn_prefix,
-                "protocol": "HTTP/HTTPS",
+                "protocol": "HTTP",
                 "sni": "",
                 "customHostHeader": "",
                 "sslVerificationEnabled": True,
