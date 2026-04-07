@@ -146,29 +146,27 @@ def secure_access():
             elif action == "create_private":
                 if not session.get("authenticated"):
                     flash("⚠️ Please authenticate first.")
-                    return redirect(url_for("index"))
+                    return redirect(url_for("secure_access"))
 
                 token = token_cache.get("access_token")
                 if not token:
                     flash("⚠️ Missing token — please re-authenticate.")
-                    return redirect(url_for("index"))
+                    return redirect(url_for("secure_access"))
 
                 # Create the policy
                 policy = create_private_access_policy(token)
                 flash(f"✅ Private Access Policy created successfully.")
 
             # Action: FOLLOW CISCO RECOMMENDATIONS
-            elif action =="follow_recom":
-                flash ("Follow Recommendations")
-
+            elif action == "follow_recom":
                 if not session.get("authenticated"):
                     flash("⚠️ Please authenticate first.")
-                    return redirect(url_for("index"))
+                    return redirect(url_for("secure_access"))
 
                 token = token_cache.get("access_token")
                 if not token:
                     flash("⚠️ Missing token — please re-authenticate.")
-                    return redirect(url_for("index"))
+                    return redirect(url_for("secure_access"))
                 
                 ### start API Call in script /scripts/.py files
                 # Follow recommendations
@@ -190,13 +188,16 @@ def secure_access():
                     return redirect(url_for("secure_access"))
 
                 create_ai_guardrail_rule(token)
-                flash("✅ AI Guardrails rule created: Block PII / Emails to AI Apps.")
+                flash("✅ AI Guardrails rule created: Security, Safety & Privacy Guardrails blocked for AI Apps.")
 
                 create_realtime_dlp_rule(token)
-                flash("✅ Real-Time DLP rule created: Block Email Addresses and IBANs.")
+                flash("✅ Real-Time DLP rule created: PCI & PII Classification blocked across all proxied traffic.")
 
             # Action: CREATE INTERNET ACCESS
             elif action == "create_internet":
+                if not session.get("authenticated"):
+                    flash("⚠️ Please authenticate first.")
+                    return redirect(url_for("secure_access"))
                 # warn
                 warn = create_int_warn_policy(token)
 
