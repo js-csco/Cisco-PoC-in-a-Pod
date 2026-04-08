@@ -33,11 +33,5 @@ spec:
             limits:
               cpu: "500m"
               memory: "1Gi"
-          lifecycle:
-            postStart:
-              exec:
-                # linuxserver/rdesktop always uses 'abc' as username — USER/PASSWORD
-                # env vars are not supported. Set the password via chpasswd instead.
-                command: ["/bin/sh", "-c", "echo 'abc:C1scoPoC!' | chpasswd"]
       restartPolicy: Always
 status: {}
