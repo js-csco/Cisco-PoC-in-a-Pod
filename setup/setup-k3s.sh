@@ -70,7 +70,7 @@ fi
 # Step 1: System prep — create symlinks and remove the system containerd package
 # so Docker (installed next) can use its own bundled containerd without conflicts.
 echo "Step 1: Creating symlinks and preparing system..."
-ln -sf "$REPO_ROOT/automagic-server" /automagic-server && echo "  ✓ /automagic-server"
+ln -sf "$REPO_ROOT/poc-dashboard" /poc-dashboard && echo "  ✓ /poc-dashboard"
 ln -sf "$REPO_ROOT/sse-check" /sse-check && echo "  ✓ /sse-check"
 ln -sf "$REPO_ROOT/playbook" /playbook && echo "  ✓ /playbook"
 ln -sf "$REPO_ROOT/saml-app" /saml-app && echo "  ✓ /saml-app"
@@ -460,19 +460,19 @@ echo "  Connector source IP (as seen by apps): $CONNECTOR_IP"
 # Patch the sse-check ConfigMap live with the real connector IP after deployment.
 echo "  Connector IP will be patched into sse-check ConfigMap after deploy."
 
-if [ -d "$REPO_ROOT/automagic-server/templates" ]; then
-    echo "  Updating automagic templates with server IP..."
-    find "$REPO_ROOT/automagic-server/templates" -name "*.html" -exec sed -i "s/SERVER_IP/$SERVER_IP/g" {} \;
+if [ -d "$REPO_ROOT/poc-dashboard/templates" ]; then
+    echo "  Updating PoC Dashboard templates with server IP..."
+    find "$REPO_ROOT/poc-dashboard/templates" -name "*.html" -exec sed -i "s/SERVER_IP/$SERVER_IP/g" {} \;
 fi
 echo ""
 
-# Step 17.1: Build automagic image and import into k3s containerd
-# The automagic deployment uses ghcr.io/js-csco/piap-k3s-automagic:latest which is
+# Step 17.1: Build PoC Dashboard image and import into k3s containerd
+# The poc-dashboard deployment uses ghcr.io/js-csco/piap-k3s-poc-dashboard:latest which is
 # built by CI. On a fresh install without that image, build it locally instead.
-echo "Step 17.1: Building automagic image..."
-docker build -t ghcr.io/js-csco/piap-k3s-automagic:latest "$REPO_ROOT/automagic-server/"
-docker save ghcr.io/js-csco/piap-k3s-automagic:latest | k3s ctr images import -
-echo "  ✓ automagic image built and imported into k3s"
+echo "Step 17.1: Building PoC Dashboard image..."
+docker build -t ghcr.io/js-csco/piap-k3s-poc-dashboard:latest "$REPO_ROOT/poc-dashboard/"
+docker save ghcr.io/js-csco/piap-k3s-poc-dashboard:latest | k3s ctr images import -
+echo "  ✓ PoC Dashboard image built and imported into k3s"
 echo ""
 
 # Step 17.2: Pre-pull images that k3s containerd may struggle to fetch

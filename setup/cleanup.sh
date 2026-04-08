@@ -144,7 +144,7 @@ echo "  ✓ Cilium iptables rules cleaned"
 echo ""
 
 echo "Step 6: Removing application symlinks..."
-rm -f /automagic-server && echo "  ✓ /automagic-server removed" || true
+rm -f /poc-dashboard && echo "  ✓ /poc-dashboard removed" || true
 rm -f /saml-app && echo "  ✓ /saml-app removed" || true
 echo ""
 
@@ -254,9 +254,9 @@ echo "================================================"
 echo ""
 echo "Restoring config files modified by setup (SERVER_IP substitution)..."
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-git -C "$REPO_ROOT" checkout -- web/index.html automagic-server/templates/ 2>/dev/null \
+git -C "$REPO_ROOT" checkout -- web/index.html poc-dashboard/templates/ 2>/dev/null \
     && echo "  ✓ Config files restored from git" \
-    || echo "  ⚠ Could not restore config files — restore manually: git checkout web/index.html automagic-server/templates/"
+    || echo "  ⚠ Could not restore config files — restore manually: git checkout web/index.html poc-dashboard/templates/"
 echo ""
 
 echo "================================================"

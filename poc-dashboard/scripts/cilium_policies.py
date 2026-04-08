@@ -8,7 +8,7 @@ PLURAL = "ciliumnetworkpolicies"
 
 POLICY_NAMES = ["piap-zero-trust"]
 
-# piap services to lock down. automagic is excluded — always reachable from LAN.
+# piap services to lock down. poc-dashboard is excluded — always reachable from LAN.
 _PIAP_RESTRICTED_SERVICES = [
     "splunk", "rdp-server", "ssh-server", "sse-check", "kubectl-mcp", "saml-app",
 ]
@@ -53,7 +53,7 @@ def _build_zero_trust_policy():
                     {
                         "key": "io.kompose.service",
                         "operator": "NotIn",
-                        "values": ["automagic"],
+                        "values": ["poc-dashboard"],
                     }
                 ]
             },

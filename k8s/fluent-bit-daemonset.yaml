@@ -1,7 +1,7 @@
 # ── Fluent Bit log forwarder ─────────────────────────────────────────────────
 # DaemonSet that tails Tetragon, Hubble, and Cilium container logs on every
 # node and ships them to the Splunk HEC endpoint.
-# Log sources are toggled live by the automagic server (it patches this
+# Log sources are toggled live by the PoC Dashboard (it patches this
 # ConfigMap and triggers a rollout).
 ---
 apiVersion: v1
@@ -10,7 +10,7 @@ metadata:
   name: fluent-bit-config
   namespace: piap
 data:
-  # Main config — @INCLUDEs are patched by automagic to enable/disable sources
+  # Main config — @INCLUDEs are patched by PoC Dashboard to enable/disable sources
   fluent-bit.conf: |
     [SERVICE]
         Flush           5

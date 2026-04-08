@@ -22,7 +22,7 @@ data:
         {
             "name": "Automagic",
             "type": "http",
-            "url": "http://automagic.piap.svc.cluster.local:9200",
+            "url": "http://poc-dashboard.piap.svc.cluster.local:9200",
             "interval": 60,
             "maxretries": 3,
             "notificationIDList": [],

@@ -282,6 +282,22 @@
 </style>
 
 <form method="POST" class="sa-page">
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div style="margin-bottom:1.5rem;">
+        {% for message in messages %}
+          <div style="padding:10px 14px; border-radius:8px; margin-bottom:6px; font-size:0.9em;
+            {% if '⚠️' in message %}background:#fff8e1; border:1px solid #ffe082; color:#6d4c00;
+            {% elif '✅' in message or '🔗' in message %}background:#f0f8f0; border:1px solid #c8e6c9; color:#2e7d32;
+            {% else %}background:#f0f4ff; border:1px solid #c0d0ff; color:#1a3a6b;{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
   <h1>Secure Access</h1>
   <p class="subtitle">Converged SSE platform unifying ZTNA, SWG, CASB, DNS-layer security, and DLP into a single cloud-delivered service.</p>
 

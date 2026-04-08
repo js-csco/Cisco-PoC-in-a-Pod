@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: automagic-sa
+  name: poc-dashboard-sa
   namespace: piap
 ---
 # Namespace-scoped: manage CiliumNetworkPolicies, Services and Jobs in the piap namespace
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: automagic-role
+  name: poc-dashboard-role
   namespace: piap
 rules:
 - apiGroups: ["cilium.io"]
@@ -39,15 +39,15 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: automagic-role-binding
+  name: poc-dashboard-role-binding
   namespace: piap
 subjects:
 - kind: ServiceAccount
-  name: automagic-sa
+  name: poc-dashboard-sa
   namespace: piap
 roleRef:
   kind: Role
-  name: automagic-role
+  name: poc-dashboard-role
   apiGroup: rbac.authorization.k8s.io
 ---
 # Cluster-scoped: manage Tetragon TracingPolicies (cluster-wide CRD),
@@ -55,7 +55,7 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: automagic-tetragon-manager
+  name: poc-dashboard-tetragon-manager
 rules:
 - apiGroups: ["cilium.io"]
   resources: ["tracingpolicies", "tracingpoliciesnamespaced"]
@@ -73,7 +73,7 @@ rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "list", "watch"]
-# Resources required for Collectord ClusterRole escalation (automagic-sa must hold
+# Resources required for Collectord ClusterRole escalation (poc-dashboard-sa must hold
 # all permissions it grants to collectorforkubernetes)
 - apiGroups: [""]
   resources: ["events", "endpoints", "persistentvolumes", "persistentvolumeclaims", "componentstatuses"]
@@ -109,12 +109,12 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: automagic-tetragon-manager-binding
+  name: poc-dashboard-tetragon-manager-binding
 subjects:
 - kind: ServiceAccount
-  name: automagic-sa
+  name: poc-dashboard-sa
   namespace: piap
 roleRef:
   kind: ClusterRole
-  name: automagic-tetragon-manager
+  name: poc-dashboard-tetragon-manager
   apiGroup: rbac.authorization.k8s.io

@@ -6,11 +6,16 @@
 
 {% with messages = get_flashed_messages() %}
   {% if messages %}
-    <ul style="list-style:none; padding:0; margin-bottom:1.5rem;">
+    <div style="margin-bottom:1.5rem;">
       {% for message in messages %}
-        <li style="background:#fce4ec; color:#b71c1c; padding:8px 12px; border-radius:6px; margin-bottom:6px;">{{ message }}</li>
+        <div style="padding:10px 14px; border-radius:8px; margin-bottom:6px; font-size:0.9em;
+          {% if '⚠️' in message %}background:#fff8e1; border:1px solid #ffe082; color:#6d4c00;
+          {% elif '✅' in message %}background:#f0f8f0; border:1px solid #c8e6c9; color:#2e7d32;
+          {% else %}background:#f0f4ff; border:1px solid #c0d0ff; color:#1a3a6b;{% endif %}">
+          {{ message }}
+        </div>
       {% endfor %}
-    </ul>
+    </div>
   {% endif %}
 {% endwith %}
 

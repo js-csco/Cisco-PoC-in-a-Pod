@@ -388,7 +388,7 @@ def install_splunkbase_app(app_id: int, splunkbase_username: str, splunkbase_pas
         raise RuntimeError(f"Download failed ({download_resp.status_code}) for v{latest_version}")
 
     # ── 4. Write tarball to shared hostPath volume ─────────────────────────
-    #   automagic mounts /opt/splunk-data at /splunk-data
+    #   poc-dashboard mounts /opt/splunk-data at /splunk-data
     #   Splunk   mounts /opt/splunk-data at /opt/splunk/var
     staging_path = "/splunk-data/splunkbase_app.tgz"
     with open(staging_path, "wb") as f:
