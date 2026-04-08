@@ -93,8 +93,8 @@ def secure_access():
         # NEEDS NO AUTHENTICATION
         # Goto CSA Dashboard & manual config
         if action ==  "create_profile":
-            # Link to Dashboard!
-            return redirect("https://dashboard.sse.cisco.com/org/8219751/secure/securityprofiles")
+            # Link to Dashboard — org ID sourced from the SSE API token claims if available
+            return redirect("https://dashboard.sse.cisco.com/secure/securityprofiles")
 
         try:
             token = ensure_valid_token(api_key, api_secret)
