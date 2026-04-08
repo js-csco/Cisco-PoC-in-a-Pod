@@ -946,7 +946,7 @@ const TABS = [
               'Ensure Cisco Secure Client (ZTA module) is connected.',
               'Open your RDP client (e.g., Microsoft Remote Desktop or Remmina).',
               'Enter the server address: <code>&lt;VM-IP&gt;:30389</code>',
-              'Log in with username <code>abc</code> and password <code>abc</code>.',
+              'Log in with username <code>abc</code> and password <code>C1scoPoC!</code>.',
               'Confirm the remote desktop session opens successfully.',
             ],
           },
@@ -1146,7 +1146,7 @@ const TABS = [
             title: 'Microsegmentation — Lateral Movement Blocked',
             desc: 'Log in to the RDP server through your SSE client, then attempt to reach the SSH server from within that RDP session. Cilium microsegmentation should prevent pod-to-pod lateral movement even between internal workloads.',
             steps: [
-              'Using your <strong>SSE-connected client</strong>, open an RDP session to the RDP server (credentials: <code>abc</code> / <code>abc</code>).',
+              'Using your <strong>SSE-connected client</strong>, open an RDP session to the RDP server (credentials: <code>abc</code> / <code>C1scoPoC!</code>).',
               'Once inside the RDP session, open a terminal and try to <strong>ping</strong> the SSH server\'s cluster IP.',
               'Also attempt an SSH login to the SSH server: <code>ssh remote_user@&lt;ssh-server-ip&gt;</code> (password: <code>C1scoPoC!</code>).',
               'Both attempts should <strong>fail</strong> — Cilium microsegmentation blocks east-west traffic that is not explicitly permitted between these pods.',
