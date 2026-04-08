@@ -163,7 +163,7 @@ def upload_idp_metadata():
 
 @app.route("/api/configure-idp", methods=["POST"])
 def api_configure_idp():
-    """Accept IdP config via JSON (called by automagic server)."""
+    """Accept IdP config via JSON (called by PoC Dashboard)."""
     data = request.get_json(silent=True)
     if not data:
         return jsonify({"ok": False, "error": "No JSON body"}), 400

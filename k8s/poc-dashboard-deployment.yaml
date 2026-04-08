@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: poc-dashboard
+  name: poc-dashboard
+  namespace: piap
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: poc-dashboard
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: poc-dashboard
+    spec:
+      containers:
+        - env:
+            - name: TZ
+              value: Europe/Berlin
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          image: ghcr.io/js-csco/piap-k3s-poc-dashboard:latest
+          imagePullPolicy: IfNotPresent
+          name: poc-dashboard
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+              ephemeral-storage: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+              ephemeral-storage: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          volumeMounts:
+            - mountPath: /app
+              name: code
+            - mountPath: /splunk-data
+              name: splunk-data
+      serviceAccountName: poc-dashboard-sa
+      restartPolicy: Always
+      volumes:
+        - name: code
+          hostPath:
+            path: /poc-dashboard
+        - name: splunk-data
+          hostPath:
+            path: /opt/splunk-data
+            type: DirectoryOrCreate
+status: {}
+
+      containers:
+        - env:
+            - name: TZ
+              value: Europe/Berlin
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          image: ghcr.io/js-csco/piap-k3s-poc-dashboard:latest
+          imagePullPolicy: IfNotPresent
+          name: poc-dashboard
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+              ephemeral-storage: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+              ephemeral-storage: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          volumeMounts:
+            - mountPath: /app
+              name: code
+            - mountPath: /splunk-data
+              name: splunk-data
+      serviceAccountName: poc-dashboard-sa
+      restartPolicy: Always
+      volumes:
+        - name: code
+          hostPath:
+            path: /poc-dashboard
+        - name: splunk-data
+          hostPath:
+            path: /opt/splunk-data
+            type: DirectoryOrCreate
+status: {}

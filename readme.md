@@ -18,6 +18,7 @@ Runs on [Ubuntu Server 24.04 LTS](https://ubuntu.com/download/server). Use **Bri
 
 - Internet access required (~8-12 GB downloads)
 - Disable ufw or open NodePorts: `sudo ufw disable`
+- Deploying the AI Agent alongside Splunk requires at least 20 GB RAM
 
 ---
 
@@ -50,20 +51,21 @@ sudo ./setup-k3s.sh
 
 ## Services & Ports
 
-| Port | Service | What it does |
-|------|---------|-------------|
-| 30200 | Automagic | Central demo dashboard + CSA automation |
-| 30300 | Uptime Kuma | Status monitoring (login: admin / piap) |
-| 30022 | SSH Server | SSH target workload |
-| 30389 | RDP Server | RDP target workload |
-| 30050 | Kubectl MCP | Kubernetes MCP server (read-only) |
-| 30250 | PoC Playbook | Guided test playbook |
-| 30400 | SAML Demo | Duo SSO SAML demo app |
-| 30550 | SSE Check | SSE access path verification |
-| 30600 | Caldera C2 | MITRE Caldera (deploy from Automagic) |
-| 30800 | Hubble UI | Network flow observability |
-| 30500 | Splunk Web | SIEM (optional) |
-| 30501 | Splunk HEC | HTTP Event Collector (optional) |
+| Port | Service | What it does | Tier |
+|------|---------|-------------|------|
+| 30200 | PoC Dashboard | Central demo dashboard + CSA automation | Core |
+| 30022 | SSH Server | SSH target workload | Core |
+| 30389 | RDP Server | RDP target workload | Core |
+| 30050 | Kubectl MCP | Kubernetes MCP server (read-only) | Core |
+| 30250 | PoC Playbook | Guided test playbook | Core |
+| 30400 | SAML Demo | Duo SSO SAML demo app | Core |
+| 30550 | SSE Check | SSE access path verification | Core |
+| 30300 | Uptime Kuma | Status monitoring (login: admin / piap) | Core |
+| 30800 | Hubble UI | Network flow observability (Cilium) | Core |
+| 30500 | Splunk Web | SIEM (deploy on setup) | Optional |
+| 30501 | Splunk HEC | HTTP Event Collector | Optional |
+| 30600 | Caldera C2 | MITRE Caldera (deploy from PoC Dashboard) | Optional |
+| 31789 | AI Agent | DefenseClaw AI agent (deploy from PoC Dashboard) | Optional |
 
 Access any service at `http://<server-ip>:<port>`
 
