@@ -1,6 +1,6 @@
 # ── MITRE Caldera C2 server ──────────────────────────────────────────────
 # UI + agent contact on port 8888, exposed as NodePort 30600
-# API key: ADMIN123 (demo default — not production)
+# API key: C1scoPoC! (demo default)
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -13,8 +13,8 @@ data:
     app.contact.http: http://caldera.piap.svc.cluster.local:8888
     app.contact.html: /beacon
     app.contact.websocket: 0.0.0.0:7012
-    api_key_red: ADMIN123
-    api_key_blue: BLUEADMIN123
+    api_key_red: C1scoPoC!
+    api_key_blue: C1scoPoC!
     users:
       red:
         admin: admin

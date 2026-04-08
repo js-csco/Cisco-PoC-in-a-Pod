@@ -38,7 +38,7 @@ def links():
 
 # Auth
 
-app.secret_key = "supersecret"
+app.secret_key = "cisco-poc-in-a-pod"
 token_cache = {"access_token": None, "expires_at": 0}
 
 
@@ -580,7 +580,7 @@ def caldera_status():
         return jsonify({"error": "Caldera offline"})
     try:
         caldera_url = _os.environ.get("CALDERA_URL", "http://caldera.piap.svc.cluster.local:8888")
-        api_key = _os.environ.get("CALDERA_API_KEY", "ADMIN123")
+        api_key = _os.environ.get("CALDERA_API_KEY", "C1scoPoC!")
         r = _requests.get(f"{caldera_url}/api/v2/agents",
                           headers={"KEY": api_key, "Content-Type": "application/json"},
                           timeout=5)

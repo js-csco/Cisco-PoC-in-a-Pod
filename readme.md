@@ -60,7 +60,7 @@ sudo ./setup-k3s.sh
 | 30250 | PoC Playbook | Guided test playbook | Core |
 | 30400 | SAML Demo | Duo SSO SAML demo app | Core |
 | 30550 | SSE Check | SSE access path verification | Core |
-| 30300 | Uptime Kuma | Status monitoring (login: admin / piap) | Core |
+| 30300 | Uptime Kuma | Status monitoring (login: admin / C1scoPoC!) | Core |
 | 30800 | Hubble UI | Network flow observability (Cilium) | Core |
 | 30500 | Splunk Web | SIEM (deploy on setup) | Optional |
 | 30501 | Splunk HEC | HTTP Event Collector | Optional |
