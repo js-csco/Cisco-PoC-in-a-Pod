@@ -22,7 +22,7 @@
       height: 100vh;
       display: flex;
       flex-direction: column;
-      background-color: #e8edf2;
+      background-color: #f0f2f5;
       color: #2a2a2a;
       font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
@@ -32,12 +32,23 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background-color: #000;
+      background-color: #fff;
+      border-bottom: 1px solid #e2e6ea;
       padding: 0 1.5rem;
       height: 52px;
-      color: #fff;
+      color: #111;
       position: relative;
       z-index: 100;
+      flex-shrink: 0;
+    }
+
+    /* Blue→purple→pink→orange gradient stripe at the very top */
+    .navbar::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #00b4e6 0%, #7c3aed 40%, #db2777 70%, #f97316 100%);
     }
 
     .navbar-logo {
@@ -46,72 +57,69 @@
       gap: 12px;
     }
 
-    .navbar-logo img { height: 24px; }
+    .navbar-logo img { height: 22px; }
 
-    .navbar-title { font-size: 17px; font-weight: 600; }
+    .navbar-title { font-size: 16px; font-weight: 600; color: #111; }
 
     .navbar-links-btn {
       display: flex;
       align-items: center;
       gap: 7px;
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.2);
-      color: #fff;
+      background: #f4f6ff;
+      border: 1px solid #d0d9ff;
+      color: #3355ff;
       padding: 6px 14px;
       border-radius: 6px;
       font-size: 0.83em;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: background 0.15s, border-color 0.15s;
       letter-spacing: 0.2px;
     }
 
-    .navbar-links-btn:hover { background: rgba(255,255,255,0.18); }
+    .navbar-links-btn:hover { background: #e8edff; border-color: #99aaff; }
 
     /* === LAYOUT === */
     .main {
       display: flex;
       flex: 1;
       overflow: hidden;
-      background: #e8edf2;
     }
 
     /* === SIDEBAR === */
     .sidebar {
-      width: 248px;
+      width: 240px;
       flex-shrink: 0;
-      background-color: #1b2b3a;
+      background-color: #fff;
+      border-right: 1px solid #dde1e7;
       display: flex;
       flex-direction: column;
       padding-top: 6px;
       overflow-y: auto;
-      margin: 10px 0 10px 10px;
-      border-radius: 10px;
-      box-shadow: 0 2px 16px rgba(0,0,0,0.22);
     }
 
     .menu-item {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 8px 12px;
-      margin: 1px 8px;
-      color: #7a99b2;
+      padding: 9px 20px 9px 17px;
+      border-left: 3px solid transparent;
+      color: #4b5563;
       text-decoration: none;
       font-weight: 500;
       font-size: 0.875em;
-      border-radius: 6px;
       transition: background 0.12s, color 0.12s;
     }
 
     .menu-item:hover {
-      background: rgba(255,255,255,0.08);
-      color: #c8dae8;
+      background: #f4f6f9;
+      color: #111;
     }
 
     .menu-item.active {
-      background: rgba(0,188,235,0.18);
-      color: #4dcbeb;
+      background: rgba(0, 90, 230, 0.07);
+      color: #0055e0;
+      border-left-color: #0066ff;
       font-weight: 600;
     }
 
@@ -119,12 +127,12 @@
       width: 16px;
       text-align: center;
       flex-shrink: 0;
-      font-size: 0.9em;
-      opacity: 0.65;
+      font-size: 0.88em;
+      color: #9ca3af;
     }
 
-    .menu-item:hover .fa-solid, .menu-item:hover .fa-brands { opacity: 1; }
-    .menu-item.active .fa-solid, .menu-item.active .fa-brands { opacity: 1; color: #4dcbeb; }
+    .menu-item:hover .fa-solid, .menu-item:hover .fa-brands { color: #6b7280; }
+    .menu-item.active .fa-solid, .menu-item.active .fa-brands { color: #0066ff; }
 
     .nav-section {
       padding: 14px 20px 4px;
@@ -132,11 +140,11 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: #2e4458;
+      color: #adb5bd;
     }
 
     .nav-section:not(:first-child) {
-      border-top: 1px solid rgba(255,255,255,0.05);
+      border-top: 1px solid #f0f2f5;
       margin-top: 6px;
     }
 
@@ -153,7 +161,7 @@
       flex: 1;
       padding: 2rem;
       overflow-y: auto;
-      background-color: #e8edf2;
+      background-color: #f0f2f5;
       display: flex;
       justify-content: center;
       align-items: flex-start;
@@ -367,7 +375,7 @@
   <!-- Header -->
   <header class="navbar">
     <div class="navbar-logo">
-      <img src="https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png" alt="Cisco Logo">
+      <img src="{{ url_for('static', filename='cisco-logo.svg') }}" alt="Cisco Logo">
       <span class="navbar-title">Cisco PoC in a Pod</span>
     </div>
     <button class="navbar-links-btn" onclick="openLinks()" title="Open quick links (Ctrl+K)">
