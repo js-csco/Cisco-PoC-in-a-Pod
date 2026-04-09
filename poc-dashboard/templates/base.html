@@ -32,11 +32,11 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background-color: #fff;
-      border-bottom: 1px solid #e2e6ea;
+      background-color: #1b2b3a;
+      border-bottom: none;
       padding: 0 1.5rem;
       height: 52px;
-      color: #111;
+      color: #fff;
       position: relative;
       z-index: 100;
       flex-shrink: 0;
@@ -59,25 +59,25 @@
 
     .navbar-logo img { height: 22px; }
 
-    .navbar-title { font-size: 16px; font-weight: 600; color: #111; }
+    .navbar-title { font-size: 16px; font-weight: 600; color: #fff; }
 
     .navbar-links-btn {
       display: flex;
       align-items: center;
       gap: 7px;
-      background: #f4f6ff;
-      border: 1px solid #d0d9ff;
-      color: #3355ff;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
       padding: 6px 14px;
       border-radius: 6px;
       font-size: 0.83em;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.15s, border-color 0.15s;
+      transition: background 0.15s;
       letter-spacing: 0.2px;
     }
 
-    .navbar-links-btn:hover { background: #e8edff; border-color: #99aaff; }
+    .navbar-links-btn:hover { background: rgba(255,255,255,0.18); }
 
     /* === LAYOUT === */
     .main {
@@ -90,8 +90,8 @@
     .sidebar {
       width: 240px;
       flex-shrink: 0;
-      background-color: #fff;
-      border-right: 1px solid #dde1e7;
+      background-color: #f0f2f5;
+      border-right: none;
       display: flex;
       flex-direction: column;
       padding-top: 6px;
@@ -102,9 +102,10 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 9px 20px 9px 17px;
-      border-left: 3px solid transparent;
-      color: #4b5563;
+      padding: 8px 12px;
+      margin: 1px 8px;
+      border-radius: 6px;
+      color: #374151;
       text-decoration: none;
       font-weight: 500;
       font-size: 0.875em;
@@ -112,14 +113,13 @@
     }
 
     .menu-item:hover {
-      background: #f4f6f9;
+      background: rgba(0,0,0,0.05);
       color: #111;
     }
 
     .menu-item.active {
-      background: rgba(0, 90, 230, 0.07);
-      color: #0055e0;
-      border-left-color: #0066ff;
+      background: #dbeafe;
+      color: #1d4ed8;
       font-weight: 600;
     }
 
@@ -132,7 +132,7 @@
     }
 
     .menu-item:hover .fa-solid, .menu-item:hover .fa-brands { color: #6b7280; }
-    .menu-item.active .fa-solid, .menu-item.active .fa-brands { color: #0066ff; }
+    .menu-item.active .fa-solid, .menu-item.active .fa-brands { color: #1d4ed8; }
 
     .nav-section {
       padding: 14px 20px 4px;
@@ -140,11 +140,11 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: #adb5bd;
+      color: #9ca3af;
     }
 
     .nav-section:not(:first-child) {
-      border-top: 1px solid #f0f2f5;
+      border-top: 1px solid #e5e7eb;
       margin-top: 6px;
     }
 
@@ -375,7 +375,7 @@
   <!-- Header -->
   <header class="navbar">
     <div class="navbar-logo">
-      <img src="{{ url_for('static', filename='cisco-logo.svg') }}" alt="Cisco Logo">
+      <img src="https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png" alt="Cisco Logo">
       <span class="navbar-title">Cisco PoC in a Pod</span>
     </div>
     <button class="navbar-links-btn" onclick="openLinks()" title="Open quick links (Ctrl+K)">
