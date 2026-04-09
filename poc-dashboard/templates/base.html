@@ -77,47 +77,89 @@
 
     /* === SIDEBAR === */
     .sidebar {
-      width: 290px;
-      background-color: #fff;
-      border-right: 1px solid #ddd;
+      width: 260px;
+      flex-shrink: 0;
+      background-color: #111;
+      border-right: none;
       display: flex;
       flex-direction: column;
-      padding-top: 0.5rem;
+      padding-top: 6px;
+      overflow-y: auto;
     }
 
     .menu-item {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 12px 20px;
-      color: #333;
+      gap: 10px;
+      padding: 8px 12px;
+      margin: 1px 8px;
+      color: #9ca3af;
       text-decoration: none;
       font-weight: 500;
-      border-left: 3px solid transparent;
-      transition: all 0.15s ease-in-out;
+      font-size: 0.875em;
+      border-radius: 6px;
+      transition: background 0.12s, color 0.12s;
     }
 
-    .menu-item:hover { background-color: #f0f2f4; }
+    .menu-item:hover {
+      background: rgba(255,255,255,0.07);
+      color: #e5e7eb;
+    }
 
     .menu-item.active {
-      background-color: #e7eef9;
-      color: #0066ff;
-      border-left: 3px solid #0066ff;
+      background: rgba(0,102,255,0.2);
+      color: #6aabff;
+      font-weight: 600;
     }
 
+    .menu-item .fa-solid, .menu-item .fa-brands {
+      width: 16px;
+      text-align: center;
+      flex-shrink: 0;
+      font-size: 0.9em;
+      opacity: 0.7;
+    }
+
+    .menu-item:hover .fa-solid, .menu-item:hover .fa-brands { opacity: 1; }
+    .menu-item.active .fa-solid, .menu-item.active .fa-brands { opacity: 1; color: #6aabff; }
+
     .nav-section {
-      padding: 16px 20px 4px;
-      font-size: 0.62rem;
+      padding: 14px 20px 4px;
+      font-size: 0.6rem;
       font-weight: 700;
-      letter-spacing: 0.09em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: #b0b4bb;
+      color: #4b5563;
     }
 
     .nav-section:not(:first-child) {
-      border-top: 1px solid #ebebeb;
-      margin-top: 4px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      margin-top: 6px;
     }
+
+    /* === CONTENT WRAPPER + TOPBAR === */
+    .content-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .content-topbar {
+      background: #fff;
+      border-bottom: 1px solid #e8eaed;
+      padding: 0 2rem;
+      height: 42px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78em;
+      color: #9ca3af;
+    }
+
+    .content-topbar .topbar-sep { color: #d1d5db; margin: 0 2px; }
+    .content-topbar .topbar-page { color: #374151; font-weight: 600; }
 
     /* === CONTENT AREA === */
     .content {
@@ -146,7 +188,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
       padding: 2.5rem 3rem;
       overflow-y: auto;
-      max-height: calc(100vh - 100px);
+      max-height: calc(100vh - 142px);
     }
 
     /* === LINKS MODAL === */
@@ -334,12 +376,26 @@
 
 <body>
   {% set host_ip = request.host.split(':')[0] %}
+  {% set _labels = {
+    'overview':      'Overview',
+    'secure_access': 'Cisco Secure Access',
+    'duo':           'Duo & Identity Intelligence',
+    'cilium':        'Cilium',
+    'tetragon':      'Tetragon',
+    'splunk':        'Splunk',
+    'ai_agents':     'AI Agent & DefenseClaw',
+    'caldera':       'Caldera',
+    'help':          'Help',
+    'links':         'Links',
+    'kubectl_mcp':   'Kubectl MCP',
+  } %}
+  {% set _page_label = _labels.get(active_page, '') %}
 
   <!-- Header -->
   <header class="navbar">
     <div class="navbar-logo">
-      <img src="https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png" alt="Cisco Logo">
-      <span class="navbar-title">Cisco PoC in a Pod</span>
+      <img src="{{ url_for('static', filename='cisco-logo.svg') }}" alt="Cisco Logo" style="height:22px; filter:brightness(0) invert(1);">
+      <span class="navbar-title">PoC in a Pod</span>
     </div>
     <button class="navbar-links-btn" onclick="openLinks()" title="Open quick links (Ctrl+K)">
       <span class="fa-solid fa-table-cells-large"></span> Links <span style="opacity:0.5; font-size:0.8em; margin-left:4px;">Ctrl+K</span>
@@ -386,11 +442,20 @@
         </a>
     </nav>
 
-    <main class="content">
-      <div class="panel">
-        {% block content %}{% endblock %}
+    <div class="content-wrapper">
+      {% if _page_label %}
+      <div class="content-topbar">
+        <span>Cisco PoC in a Pod</span>
+        <span class="topbar-sep">/</span>
+        <span class="topbar-page">{{ _page_label }}</span>
       </div>
-    </main>
+      {% endif %}
+      <main class="content">
+        <div class="panel">
+          {% block content %}{% endblock %}
+        </div>
+      </main>
+    </div>
   </div>
 
   <!-- Links modal -->
