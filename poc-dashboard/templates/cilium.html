@@ -185,7 +185,7 @@
         </div>
 
         <div style="background:#e3f2fd; border:1px solid #90caf9; border-radius:8px; padding:10px 16px; font-size:0.85em; color:#1565c0;">
-          ℹ️ Hubble UI and the PoC Dashboard remain reachable.
+          ℹ️ Hubble UI, PoC Dashboard and PoC Playbook remain reachable.
         </div>
 
         {% if not policy_error %}
@@ -276,16 +276,6 @@
       </tbody>
     </table>
 
-    <!-- Key insight -->
-    <div style="background:#fff; border:1px solid #e0e0e0; border-radius:6px; padding:10px 14px; margin-top:16px; font-size:0.78em; color:#555; display:flex; align-items:flex-start; gap:10px;">
-      <span class="fa-solid fa-lightbulb" style="color:#f59e0b; flex-shrink:0; margin-top:2px;"></span>
-      <span>
-        <strong>How it works under the hood:</strong> <code>externalTrafficPolicy: Local</code> preserves real source IPs on NodePorts.
-        Cilium's eBPF SNAT rewrites the Resource Connector's Docker IP (<code>240.0.0.x</code>) to
-        <code>cilium_host</code> — classified as the <strong>host</strong> entity and permitted by policy.
-        All other traffic (LAN users, pods) is classified as <strong>world</strong> or has no matching allow rule, so it is dropped.
-      </span>
-    </div>
   </section>
 
 </form>
