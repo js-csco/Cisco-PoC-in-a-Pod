@@ -10,15 +10,14 @@ A single-script lab that deploys a full Zero Trust demo stack on one Ubuntu VM.
 
 Runs on [Ubuntu Server 24.04 LTS](https://ubuntu.com/download/server). Use **Bridged** networking (not NAT) so services are reachable from your browser.
 
-|  | Without Splunk | With Splunk |
-|--|----------------|-------------|
-| CPU | 4 cores (6 rec.) | 6 cores (8 rec.) |
-| RAM | 8 GB (12 rec.) | 16 GB (20 rec.) |
-| Disk | 40 GB (60 rec.) | 80 GB (100 rec.) |
+|  | Without Splunk | With Splunk | With Splunk + AI Agent |
+|--|----------------|-------------|------------------------|
+| CPU | 4 cores (6 rec.) | 6 cores (8 rec.) | 8 cores (8 rec.) |
+| RAM | 8 GB (12 rec.) | 16 GB (20 rec.) | 20 GB (24 rec.) |
+| Disk | 40 GB (60 rec.) | 80 GB (100 rec.) | 80 GB (100 rec.) |
 
 - Internet access required (~8-12 GB downloads)
 - Disable ufw or open NodePorts: `sudo ufw disable`
-- Deploying the AI Agent alongside Splunk requires at least 20 GB RAM
 
 ---
 
@@ -29,8 +28,16 @@ Runs on [Ubuntu Server 24.04 LTS](https://ubuntu.com/download/server). Use **Bri
 Have these ready before running the script:
 
 - **Cisco Secure Access & Cisco Duo tenants** — contact your Cisco team
-- **Cisco Secure Access** — Connector Name + Key (from SSE dashboard → Connect → Resource Connectors)
 - **Splunk password** *(optional)* — press Enter during setup to skip Splunk
+
+### Create a Resource Connector in Secure Access
+
+The setup script deploys and registers a Resource Connector during installation. You must create the connector in Secure Access **before** running the script so you have the credentials ready when prompted.
+
+1. Log in to the [Secure Access dashboard](https://dashboard.sse.cisco.com)
+2. Navigate to **Connect → Resource Connectors**
+3. Click **Add** and follow the prompts to create a new connector
+4. Copy the **Connector Name** and **Key** — you will be prompted for these during setup
 
 ### Deployment
 
