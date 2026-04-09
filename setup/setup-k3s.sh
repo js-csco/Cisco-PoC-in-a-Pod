@@ -258,44 +258,19 @@ else
 fi
 echo ""
 
-# Step 5.1: Configure Docker Hub registry authentication
-# Prevents unauthenticated pull rate-limit errors (429) on Docker Hub images
-# (nginx:alpine, ubuntu:22.04, busybox, python:3.11-slim, etc.)
-echo "Step 5.1: Configuring Docker Hub registry authentication..."
-echo ""
-echo "Docker Hub credentials are required to avoid pull rate limits."
-echo "If you don't have an account, create a free one at https://hub.docker.com"
-echo "(Leave empty to use a mirror instead — less reliable)"
-echo ""
-read -p "Docker Hub Username (or Enter to skip): " DOCKERHUB_USER
-if [ -n "$DOCKERHUB_USER" ]; then
-    read -s -p "Docker Hub Password or Access Token: " DOCKERHUB_PASSWORD
-    echo ""
-fi
-
+# Step 5.1: Configure Docker Hub mirror
+# Routes Docker Hub pulls through mirror.gcr.io to avoid rate limits.
+# A single PoC deployment pulls ~7 Docker Hub images — well within the
+# 100-pull anonymous limit — so no credentials are needed.
+echo "Step 5.1: Configuring Docker Hub mirror (mirror.gcr.io)..."
 mkdir -p /etc/rancher/k3s
-if [ -n "$DOCKERHUB_USER" ] && [ -n "$DOCKERHUB_PASSWORD" ]; then
-    cat > /etc/rancher/k3s/registries.yaml <<EOF
-mirrors:
-  docker.io:
-    endpoint:
-      - "https://mirror.gcr.io"
-configs:
-  "registry-1.docker.io":
-    auth:
-      username: ${DOCKERHUB_USER}
-      password: ${DOCKERHUB_PASSWORD}
-EOF
-    echo "  ✓ Docker Hub credentials configured (with mirror.gcr.io as fallback)"
-else
-    cat > /etc/rancher/k3s/registries.yaml <<'EOF'
+cat > /etc/rancher/k3s/registries.yaml <<'EOF'
 mirrors:
   docker.io:
     endpoint:
       - "https://mirror.gcr.io"
 EOF
-    echo "  ✓ Docker Hub mirror configured (mirror.gcr.io) — no credentials"
-fi
+echo "  ✓ Docker Hub mirror configured (mirror.gcr.io)"
 # k3s reads registries.yaml at startup; restart to apply before any image pulls.
 systemctl restart k3s
 echo "  Waiting for k3s API server after restart..."
@@ -436,12 +411,8 @@ echo ""
 #  Phase 3: Deploy K8s applications (connector excluded)
 # ============================================================
 
-# Step 16: Prompt for Splunk admin password (optional)
-echo "  Splunk will be deployed from the PoC Dashboard (requires a valid license)."
-echo ""
-
-# Step 17: Update configuration files with server IP
-echo "Step 17: Updating configuration files..."
+# Step 16: Update configuration files with server IP
+echo "Step 16: Updating configuration files..."
 
 # Detect the connector's source IP as seen by apps inside the cluster.
 # Try docker inspect first; if the connector uses host-networking or a
@@ -466,21 +437,21 @@ if [ -d "$REPO_ROOT/poc-dashboard/templates" ]; then
 fi
 echo ""
 
-# Step 17.1: Build PoC Dashboard image and import into k3s containerd
+# Step 16.1: Build PoC Dashboard image and import into k3s containerd
 # The poc-dashboard deployment uses ghcr.io/js-csco/piap-k3s-poc-dashboard:latest which is
 # built by CI. On a fresh install without that image, build it locally instead.
-echo "Step 17.1: Building PoC Dashboard image..."
+echo "Step 16.1: Building PoC Dashboard image..."
 docker build -t ghcr.io/js-csco/piap-k3s-poc-dashboard:latest "$REPO_ROOT/poc-dashboard/"
 docker save ghcr.io/js-csco/piap-k3s-poc-dashboard:latest | k3s ctr images import -
 echo "  ✓ PoC Dashboard image built and imported into k3s"
 echo ""
 
-# Step 17.2: Pre-pull images that k3s containerd may struggle to fetch
+# Step 16.2: Pre-pull images that k3s containerd may struggle to fetch
 # GHCR images and Docker Hub images can hit rate limits or mirror issues.
 # Pulling via Docker (which has its own credential chain) and importing
 # into k3s containerd is more reliable than letting k3s pull directly.
-echo "Step 17.2: Pre-pulling container images via Docker..."
-for img in "louislam/uptime-kuma:1" "outcoldsolutions/collectorforkubernetes:5.24.444" "node:24-slim" "python:3.12-slim"; do
+echo "Step 16.2: Pre-pulling container images via Docker..."
+for img in "louislam/uptime-kuma:1" "outcoldsolutions/collectorforkubernetes:5.24.444" "node:24-slim" "python:3.11-slim"; do
     echo "  Pulling $img ..."
     docker pull "$img" && docker save "$img" | k3s ctr images import - \
         && echo "  ✓ $img imported into k3s" \
@@ -488,8 +459,8 @@ for img in "louislam/uptime-kuma:1" "outcoldsolutions/collectorforkubernetes:5.2
 done
 echo ""
 
-# Step 18: Deploy Kubernetes applications
-echo "Step 18: Deploying applications to Kubernetes..."
+# Step 17: Deploy Kubernetes applications
+echo "Step 17: Deploying applications to Kubernetes..."
 
 kubectl create namespace piap --dry-run=client -o yaml | kubectl apply -f -
 
@@ -520,20 +491,20 @@ kubectl rollout restart deployment/sse-check -n piap
 echo "  ✓ sse-check connector IP updated"
 echo ""
 
-# Step 19: Wait for pods to be ready
-echo "Step 19: Waiting for pods to be ready..."
+# Step 18: Wait for pods to be ready
+echo "Step 18: Waiting for pods to be ready..."
 kubectl wait --for=condition=Ready pods --all -n piap --timeout=120s || true
 kubectl get pods -n piap
 echo ""
 
-# Step 19a: Wait for Uptime-Kuma specifically before seeding
-echo "Step 19a: Waiting for Uptime-Kuma to be fully ready..."
+# Step 18a: Wait for Uptime-Kuma specifically before seeding
+echo "Step 18a: Waiting for Uptime-Kuma to be fully ready..."
 kubectl wait --for=condition=Ready pod -l app=uptime-kuma -n piap --timeout=120s || true
 # Uptime-Kuma needs extra time after the pod is "Ready" for Socket.IO to initialize
 sleep 10
 
-# Step 19b: Seed Uptime-Kuma monitors
-echo "Step 19b: Seeding Uptime-Kuma monitors (dark mode, disable auth, add monitors)..."
+# Step 18b: Seed Uptime-Kuma monitors
+echo "Step 18b: Seeding Uptime-Kuma monitors (dark mode, disable auth, add monitors)..."
 kubectl delete job uptime-kuma-seed -n piap --ignore-not-found=true
 kubectl apply -f "$REPO_ROOT/k8s/uptime-kuma-seed-job.yaml" -n piap
 echo "  Waiting for seed job to complete (up to 5 min)..."
@@ -547,7 +518,7 @@ else
 fi
 echo ""
 
-# Step 19.1: Install the connector internet masquerade rule.
+# Step 18.1: Install the connector internet masquerade rule.
 #
 # Docker is configured with ip-masq=false (daemon.json) so its default blanket
 # POSTROUTING MASQUERADE rule is absent.  Cilium's TC hook on docker0 handles
@@ -559,7 +530,7 @@ echo ""
 # targeted rule: masquerade only traffic leaving to non-local destinations.
 # K8s traffic (10.0.0.0/8) is explicitly excluded, so the source IP is always
 # preserved for pod-bound connections.
-echo "Step 19.1: Installing connector internet masquerade rule..."
+echo "Step 18.1: Installing connector internet masquerade rule..."
 
 # Apply immediately (idempotent: -C checks first, -A appends only if absent).
 iptables -t nat -C POSTROUTING -s 240.0.0.0/29 ! -d 10.0.0.0/8 -j MASQUERADE 2>/dev/null \
@@ -587,7 +558,7 @@ systemctl enable --now piap-connector-masquerade.service
 echo "  ✓ Connector internet masquerade rule installed (static, boot-persistent)"
 echo ""
 
-# Step 20: Show access information
+# Step 19: Show access information
 echo "================================================"
 echo "  Setup Complete!"
 echo "================================================"
