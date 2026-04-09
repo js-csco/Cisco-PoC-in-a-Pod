@@ -28,7 +28,6 @@ Runs on [Ubuntu Server 24.04 LTS](https://ubuntu.com/download/server). Use **Bri
 Have these ready before running the script:
 
 - **Cisco Secure Access & Cisco Duo tenants** — contact your Cisco team
-- **Splunk password** *(optional)* — press Enter during setup to skip Splunk
 
 ### Create a Resource Connector in Secure Access
 
@@ -96,7 +95,7 @@ docker ps | grep connector
 
 ### Splunk post-setup (optional)
 
-1. Open `http://<server-ip>:30500` → login with `admin` / your password
+1. Open `http://<server-ip>:30500` → login with `admin` / `C1scoPoC!`
 2. Accept Splunk Free License: Settings → Licensing
 3. Install **Cisco Security Cloud** app from Splunkbase
 
