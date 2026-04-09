@@ -22,9 +22,26 @@
 <form method="POST" style="display:flex; flex-direction:column; gap:3rem;">
   <div>
     <h1 style="color:#111; margin-bottom:0.4rem;">Cilium Network Policy</h1>
-    <p style="color:#666; margin:0; font-size:0.95em; line-height:1.6;">
+    <p style="color:#666; margin:0 0 1.5rem 0; font-size:0.95em; line-height:1.6;">
       eBPF-powered Kubernetes networking — enforce identity-aware network policies between workloads at the kernel level.
     </p>
+
+    <!-- What is Cilium / Getting Started -->
+    <div style="background:#f8f9ff; border:1px solid #d0dbff; border-radius:10px; padding:1.4rem 1.5rem;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+        <div style="width:5px; height:18px; background-color:#0066ff; border-radius:2px;"></div>
+        <h3 style="color:#111; margin:0; font-size:1rem; letter-spacing:0.3px;">WHAT IS CILIUM?</h3>
+      </div>
+      <p style="margin:0 0 10px 0; color:#444; font-size:0.92em; line-height:1.75;">
+        <strong>Cilium</strong> is the networking and security layer built into every node of this Kubernetes cluster. It uses <strong>eBPF</strong> — a Linux kernel technology — to enforce network policies at the kernel level, before packets even reach the application.
+      </p>
+      <p style="margin:0 0 10px 0; color:#444; font-size:0.92em; line-height:1.75;">
+        Every pod in this cluster runs with Cilium active. Out of the box, Cilium's default behavior is <strong>allow all</strong>: pods can be reached by any device on the network and can freely communicate with each other.
+      </p>
+      <p style="margin:0; color:#444; font-size:0.92em; line-height:1.75;">
+        The goal of this demo is <strong>workload microsegmentation</strong> — applying policies that isolate individual workloads so that even if one pod is compromised, an attacker cannot move laterally to other services in the cluster, and users can only reach applications through the controlled Secure Access path.
+      </p>
+    </div>
   </div>
 
   <!-- TOP ROW: Current Status + Cilium UI -->
@@ -60,7 +77,7 @@
           {% else %}
             <div style="display:inline-flex; align-items:center; gap:8px; background:#e3f2fd; border:1px solid #42a5f5; border-radius:8px; padding:10px 16px;">
               <span style="font-size:1.2rem;">🟢</span>
-              <span style="font-weight:600; color:#1565c0;">Allow All Traffic — active (no policies)</span>
+              <span style="font-weight:600; color:#1565c0;">Allow All Traffic</span>
             </div>
           {% endif %}
         {% endif %}
@@ -70,7 +87,7 @@
       <div style="border:1px solid #e0e0e0; border-radius:10px; padding:1.2rem 1.5rem; display:flex; flex-direction:column;">
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
           <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-          <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CILIUM UI</h3>
+          <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">HUBBLE UI</h3>
         </div>
         <p style="margin:0 0 12px 0; color:#555; font-size:0.9em; line-height:1.6;">
           Hubble gives you a real-time visual graph of network flows between pods —
@@ -145,7 +162,7 @@
                   display:flex; flex-direction:column; gap:1rem;">
         <div style="display:flex; align-items:center; gap:8px;">
           <div style="width:4px; height:20px; background-color:#4caf50; border-radius:2px;"></div>
-          <h4 style="margin:0; font-size:1rem; color:#1b5e20;">Zero Trust Application Access</h4>
+          <h4 style="margin:0; font-size:1rem; color:#1b5e20;">Zero Trust</h4>
           {% if zero_trust_active %}
             <span style="margin-left:auto; background:#4caf50; color:#fff; font-size:0.75rem;
                          font-weight:600; padding:2px 8px; border-radius:99px;">ACTIVE</span>
@@ -168,7 +185,7 @@
         </div>
 
         <div style="background:#e3f2fd; border:1px solid #90caf9; border-radius:8px; padding:10px 16px; font-size:0.85em; color:#1565c0;">
-          ℹ️ Hubble UI and the <em>Automagic</em> dashboard remain reachable.
+          ℹ️ Hubble UI and the <em>PoC Dashboard</em> remain reachable.
         </div>
 
         {% if not policy_error %}
@@ -191,7 +208,7 @@
       <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">TRAFFIC FLOW</h3>
     </div>
     <p style="margin-top:0; margin-bottom:16px; color:#555; font-size:0.9em; line-height:1.6;">
-      See how traffic reaches pods under each mode. The left column matches <strong>Allow All</strong>, the right matches <strong>Zero Trust</strong>.
+      The two columns below show the same three scenarios side by side — what happens to each type of traffic under <strong>Allow All</strong> versus <strong>Zero Trust</strong>. Use this to understand what the policy actually changes.
     </p>
 
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
@@ -202,64 +219,94 @@
           <span class="fa-solid fa-lock-open" style="color:#fff; font-size:1rem;"></span>
           <div>
             <div style="color:#fff; font-weight:700; font-size:0.9em;">Allow All Traffic</div>
-            <div style="color:rgba(255,255,255,0.85); font-size:0.72em;">No Cilium policies — everything reaches pods</div>
+            <div style="color:rgba(255,255,255,0.85); font-size:0.72em;">No Cilium policies — all traffic is permitted</div>
           </div>
         </div>
-        <div style="padding:1.2rem; display:flex; flex-direction:column; gap:6px;">
+        <div style="padding:1.2rem; display:flex; flex-direction:column; gap:1rem;">
 
-          <!-- LAN user -->
-          <div style="background:#fff; border:2px solid #1976d2; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
-            <span class="fa-solid fa-laptop" style="color:#1976d2; font-size:1rem; flex-shrink:0;"></span>
-            <div>
-              <div style="font-size:0.82em; font-weight:600; color:#111;">Any device on the LAN</div>
-              <div style="font-size:0.65em; color:#888;">Direct access · no authentication required</div>
+          <!-- Scenario 1 -->
+          <div>
+            <div style="font-size:0.7em; font-weight:700; color:#1976d2; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; display:flex; align-items:center; gap:5px;">
+              <span style="background:#1976d2; color:#fff; border-radius:99px; width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; font-size:0.9em; flex-shrink:0;">1</span>
+              Direct User Access
+            </div>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <div style="background:#fff; border:1.5px solid #90caf9; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
+                <span class="fa-solid fa-laptop" style="color:#1976d2; font-size:0.9rem; flex-shrink:0;"></span>
+                <div>
+                  <div style="font-size:0.8em; font-weight:600; color:#111;">Any device on the LAN</div>
+                  <div style="font-size:0.65em; color:#888;">No authentication required</div>
+                </div>
+              </div>
+              <div style="text-align:center; font-size:0.75em; color:#1976d2; font-weight:600; padding:1px 0;">↓ direct network connection</div>
+              <div style="background:#e3f2fd; border:2px solid #1976d2; border-radius:6px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="fa-solid fa-cube" style="color:#1976d2; font-size:0.9rem;"></span>
+                  <span style="font-size:0.82em; font-weight:600; color:#0d47a1;">Pod</span>
+                </div>
+                <span style="background:#1976d2; color:#fff; font-size:0.7em; font-weight:700; padding:2px 8px; border-radius:99px;">ALLOWED ✓</span>
+              </div>
             </div>
           </div>
 
-          <div style="text-align:center; color:#1976d2; font-size:0.8em; font-weight:600;">↓</div>
+          <div style="height:1px; background:#d0dcf5;"></div>
 
-          <!-- NodePort -->
-          <div style="background:#fff; border:1px solid #90caf9; border-radius:6px; padding:8px 12px;">
-            <div style="font-size:0.75em; font-weight:600; color:#333;">NodePort</div>
-            <div style="font-size:0.65em; color:#888;">No policy evaluation — Cilium defaults to allow</div>
-          </div>
-
-          <div style="text-align:center; color:#1976d2; font-size:0.8em; font-weight:600;">↓</div>
-
-          <!-- Pod -->
-          <div style="background:#e3f2fd; border:2px solid #1976d2; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
-            <span class="fa-solid fa-cube" style="color:#1976d2; font-size:1rem; flex-shrink:0;"></span>
-            <div>
-              <div style="font-size:0.82em; font-weight:600; color:#0d47a1;">Pod</div>
-              <div style="font-size:0.68em; color:#1976d2; font-weight:700;">ALLOWED ✅</div>
+          <!-- Scenario 2 -->
+          <div>
+            <div style="font-size:0.7em; font-weight:700; color:#1976d2; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; display:flex; align-items:center; gap:5px;">
+              <span style="background:#1976d2; color:#fff; border-radius:99px; width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; font-size:0.9em; flex-shrink:0;">2</span>
+              Secure Access User
+            </div>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <div style="background:#fff; border:1.5px solid #90caf9; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
+                <span class="fa-solid fa-shield-halved" style="color:#049fd9; font-size:0.9rem; flex-shrink:0;"></span>
+                <div>
+                  <div style="font-size:0.8em; font-weight:600; color:#111;">Secure Access user</div>
+                  <div style="font-size:0.65em; color:#888;">Authenticated via Cisco Secure Access</div>
+                </div>
+              </div>
+              <div style="text-align:center; font-size:0.75em; color:#555; font-weight:600; padding:1px 0;">↓ cloud tunnel → Resource Connector</div>
+              <div style="background:#e3f2fd; border:2px solid #1976d2; border-radius:6px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="fa-solid fa-cube" style="color:#1976d2; font-size:0.9rem;"></span>
+                  <span style="font-size:0.82em; font-weight:600; color:#0d47a1;">Pod</span>
+                </div>
+                <span style="background:#1976d2; color:#fff; font-size:0.7em; font-weight:700; padding:2px 8px; border-radius:99px;">ALLOWED ✓</span>
+              </div>
             </div>
           </div>
 
-          <div style="height:1px; background:#e0e0e0; margin:8px 0;"></div>
+          <div style="height:1px; background:#d0dcf5;"></div>
 
-          <!-- SSE user also works -->
-          <div style="background:#fff; border:2px solid #1976d2; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
-            <span class="fa-solid fa-shield-halved" style="color:#049fd9; font-size:1rem; flex-shrink:0;"></span>
-            <div>
-              <div style="font-size:0.82em; font-weight:600; color:#111;">Secure Access user</div>
-              <div style="font-size:0.65em; color:#888;">Also works — connector traffic is allowed too</div>
+          <!-- Scenario 3 -->
+          <div>
+            <div style="font-size:0.7em; font-weight:700; color:#1976d2; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; display:flex; align-items:center; gap:5px;">
+              <span style="background:#1976d2; color:#fff; border-radius:99px; width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; font-size:0.9em; flex-shrink:0;">3</span>
+              Pod-to-Pod Communication
             </div>
-          </div>
-
-          <div style="text-align:center; color:#1976d2; font-size:0.8em; font-weight:600;">↓</div>
-
-          <div style="background:#e3f2fd; border:2px solid #1976d2; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
-            <span class="fa-solid fa-cube" style="color:#1976d2; font-size:1rem; flex-shrink:0;"></span>
-            <div>
-              <div style="font-size:0.82em; font-weight:600; color:#0d47a1;">Pod</div>
-              <div style="font-size:0.68em; color:#1976d2; font-weight:700;">ALLOWED ✅</div>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <div style="background:#fff; border:1.5px solid #90caf9; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
+                <span class="fa-solid fa-cube" style="color:#1976d2; font-size:0.9rem; flex-shrink:0;"></span>
+                <div>
+                  <div style="font-size:0.8em; font-weight:600; color:#111;">Pod A (e.g. compromised app)</div>
+                  <div style="font-size:0.65em; color:#888;">Any workload in the cluster</div>
+                </div>
+              </div>
+              <div style="text-align:center; font-size:0.75em; color:#1976d2; font-weight:600; padding:1px 0;">↓ cluster network — no restrictions</div>
+              <div style="background:#e3f2fd; border:2px solid #1976d2; border-radius:6px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="fa-solid fa-cube" style="color:#1976d2; font-size:0.9rem;"></span>
+                  <span style="font-size:0.82em; font-weight:600; color:#0d47a1;">Pod B (e.g. database)</span>
+                </div>
+                <span style="background:#1976d2; color:#fff; font-size:0.7em; font-weight:700; padding:2px 8px; border-radius:99px;">ALLOWED ✓</span>
+              </div>
             </div>
           </div>
 
           <!-- Summary -->
-          <div style="background:#e3f2fd; border:1px solid #90caf9; border-radius:6px; padding:10px 12px; margin-top:6px; font-size:0.78em; color:#1565c0; display:flex; align-items:flex-start; gap:8px;">
-            <span class="fa-solid fa-circle-info" style="flex-shrink:0; margin-top:2px;"></span>
-            <span>Everyone can reach every pod — LAN users, Secure Access users, and pod-to-pod traffic. No restrictions.</span>
+          <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:6px; padding:10px 12px; font-size:0.78em; color:#856404; display:flex; align-items:flex-start; gap:8px; margin-top:2px;">
+            <span class="fa-solid fa-triangle-exclamation" style="flex-shrink:0; margin-top:2px;"></span>
+            <span><strong>No protection:</strong> Any device can reach any pod without authentication. A compromised pod can reach all other pods freely.</span>
           </div>
         </div>
       </div>
@@ -269,69 +316,103 @@
         <div style="background:#4caf50; padding:12px 16px; display:flex; align-items:center; gap:8px;">
           <span class="fa-solid fa-lock" style="color:#fff; font-size:1rem;"></span>
           <div>
-            <div style="color:#fff; font-weight:700; font-size:0.9em;">Zero Trust Application Access</div>
-            <div style="color:rgba(255,255,255,0.85); font-size:0.72em;">Only Resource Connector traffic reaches pods</div>
+            <div style="color:#fff; font-weight:700; font-size:0.9em;">Zero Trust</div>
+            <div style="color:rgba(255,255,255,0.85); font-size:0.72em;">Secure Access only · pods isolated from each other</div>
           </div>
         </div>
-        <div style="padding:1.2rem; display:flex; flex-direction:column; gap:6px;">
+        <div style="padding:1.2rem; display:flex; flex-direction:column; gap:1rem;">
 
-          <!-- Secure Access user (allowed) -->
-          <div style="background:#f0fdf4; border:2px solid #16a34a; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
-            <span class="fa-solid fa-shield-halved" style="color:#049fd9; font-size:1rem; flex-shrink:0;"></span>
-            <div>
-              <div style="font-size:0.82em; font-weight:600; color:#111;">Secure Access user</div>
-              <div style="font-size:0.65em; color:#888;">Authenticated via Cisco Secure Access</div>
+          <!-- Scenario 1: Direct LAN blocked -->
+          <div>
+            <div style="font-size:0.7em; font-weight:700; color:#dc2626; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; display:flex; align-items:center; gap:5px;">
+              <span style="background:#dc2626; color:#fff; border-radius:99px; width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; font-size:0.9em; flex-shrink:0;">1</span>
+              Direct User Access — BLOCKED
+            </div>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <div style="background:#fff; border:1.5px solid #fca5a5; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
+                <span class="fa-solid fa-laptop" style="color:#dc2626; font-size:0.9rem; flex-shrink:0;"></span>
+                <div>
+                  <div style="font-size:0.8em; font-weight:600; color:#111;">Any device on the LAN</div>
+                  <div style="font-size:0.65em; color:#888;">No authentication · direct connection attempt</div>
+                </div>
+              </div>
+              <div style="text-align:center; font-size:0.75em; color:#dc2626; font-weight:600; padding:1px 0;">↓ Cilium drops packet at kernel level</div>
+              <div style="background:#fee2e2; border:2px solid #dc2626; border-radius:6px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="fa-solid fa-ban" style="color:#dc2626; font-size:0.9rem;"></span>
+                  <span style="font-size:0.82em; font-weight:600; color:#dc2626;">Pod (unreachable)</span>
+                </div>
+                <span style="background:#dc2626; color:#fff; font-size:0.7em; font-weight:700; padding:2px 8px; border-radius:99px;">BLOCKED ✗</span>
+              </div>
             </div>
           </div>
 
-          <div style="text-align:center; color:#16a34a; font-size:0.75em; font-weight:600;">↓ tunnel → cloud → connector</div>
+          <div style="height:1px; background:#c8e6c9;"></div>
 
-          <!-- eBPF / Connector -->
-          <div style="background:#ede9fe; border:1px dashed #7c4dff; border-radius:6px; padding:8px 12px;">
-            <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;">
-              <span class="fa-solid fa-plug" style="color:#7c4dff; font-size:0.85rem; flex-shrink:0;"></span>
-              <div style="font-size:0.75em; font-weight:700; color:#5b21b6;">Resource Connector + Cilium eBPF</div>
+          <!-- Scenario 2: Secure Access ALLOWED -->
+          <div>
+            <div style="font-size:0.7em; font-weight:700; color:#16a34a; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; display:flex; align-items:center; gap:5px;">
+              <span style="background:#16a34a; color:#fff; border-radius:99px; width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; font-size:0.9em; flex-shrink:0;">2</span>
+              Secure Access User — ONLY ALLOWED PATH
             </div>
-            <div style="font-size:0.65em; color:#7c3aed;">src IP rewritten → <code>cilium_host</code> · identity: <code>host</code></div>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
+                <span class="fa-solid fa-shield-halved" style="color:#049fd9; font-size:0.9rem; flex-shrink:0;"></span>
+                <div>
+                  <div style="font-size:0.8em; font-weight:600; color:#111;">Secure Access user</div>
+                  <div style="font-size:0.65em; color:#16a34a;">Identity verified · must be enrolled in Cisco Secure Access</div>
+                </div>
+              </div>
+              <div style="text-align:center; font-size:0.75em; color:#16a34a; font-weight:600; padding:1px 0;">↓ cloud tunnel</div>
+              <div style="background:#f0fdf4; border:1.5px dashed #16a34a; border-radius:6px; padding:7px 12px; display:flex; align-items:center; gap:6px;">
+                <span class="fa-solid fa-plug" style="color:#7c4dff; font-size:0.8rem;"></span>
+                <div>
+                  <div style="font-size:0.75em; font-weight:700; color:#5b21b6;">Resource Connector</div>
+                  <div style="font-size:0.65em; color:#555;">Acts as trust anchor — Cilium recognises its IP and permits traffic</div>
+                </div>
+              </div>
+              <div style="text-align:center; font-size:0.75em; color:#16a34a; font-weight:600; padding:1px 0;">↓ policy match → ingress allowed</div>
+              <div style="background:#dcfce7; border:2px solid #16a34a; border-radius:6px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="fa-solid fa-cube" style="color:#16a34a; font-size:0.9rem;"></span>
+                  <span style="font-size:0.82em; font-weight:600; color:#2e7d32;">Pod</span>
+                </div>
+                <span style="background:#16a34a; color:#fff; font-size:0.7em; font-weight:700; padding:2px 8px; border-radius:99px;">ALLOWED ✓</span>
+              </div>
+            </div>
           </div>
 
-          <div style="text-align:center; color:#16a34a; font-size:0.75em; font-weight:600;">↓ <code>host</code> entity → policy match</div>
+          <div style="height:1px; background:#c8e6c9;"></div>
 
-          <!-- Pod allowed -->
-          <div style="background:#dcfce7; border:2px solid #16a34a; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
-            <span class="fa-solid fa-cube" style="color:#16a34a; font-size:1rem; flex-shrink:0;"></span>
-            <div>
-              <div style="font-size:0.82em; font-weight:600; color:#2e7d32;">Pod</div>
-              <div style="font-size:0.68em; color:#16a34a; font-weight:700;">ALLOWED ✅</div>
+          <!-- Scenario 3: Pod-to-pod BLOCKED -->
+          <div>
+            <div style="font-size:0.7em; font-weight:700; color:#dc2626; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; display:flex; align-items:center; gap:5px;">
+              <span style="background:#dc2626; color:#fff; border-radius:99px; width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; font-size:0.9em; flex-shrink:0;">3</span>
+              Pod-to-Pod Communication — BLOCKED
             </div>
-          </div>
-
-          <div style="height:1px; background:#e0e0e0; margin:8px 0;"></div>
-
-          <!-- LAN user (blocked) -->
-          <div style="background:#fff; border:2px solid #dc2626; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
-            <span class="fa-solid fa-laptop" style="color:#dc2626; font-size:1rem; flex-shrink:0;"></span>
-            <div>
-              <div style="font-size:0.82em; font-weight:600; color:#111;">Direct LAN user</div>
-              <div style="font-size:0.65em; color:#888;">No Secure Access · hits NodePort directly</div>
-            </div>
-          </div>
-
-          <div style="text-align:center; color:#dc2626; font-size:0.75em; font-weight:600;">↓ <code>world</code> entity → no policy match</div>
-
-          <!-- Pod blocked -->
-          <div style="background:#fee2e2; border:2px solid #dc2626; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">
-            <span class="fa-solid fa-ban" style="color:#dc2626; font-size:1rem; flex-shrink:0;"></span>
-            <div>
-              <div style="font-size:0.82em; font-weight:600; color:#dc2626;">Pod</div>
-              <div style="font-size:0.68em; color:#dc2626; font-weight:700;">DROPPED ❌</div>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <div style="background:#fff; border:1.5px solid #fca5a5; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
+                <span class="fa-solid fa-cube" style="color:#dc2626; font-size:0.9rem; flex-shrink:0;"></span>
+                <div>
+                  <div style="font-size:0.8em; font-weight:600; color:#111;">Pod A (e.g. compromised app)</div>
+                  <div style="font-size:0.65em; color:#888;">Attacker attempts lateral movement</div>
+                </div>
+              </div>
+              <div style="text-align:center; font-size:0.75em; color:#dc2626; font-weight:600; padding:1px 0;">↓ Cilium drops packet at kernel level</div>
+              <div style="background:#fee2e2; border:2px solid #dc2626; border-radius:6px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="fa-solid fa-ban" style="color:#dc2626; font-size:0.9rem;"></span>
+                  <span style="font-size:0.82em; font-weight:600; color:#dc2626;">Pod B (e.g. database)</span>
+                </div>
+                <span style="background:#dc2626; color:#fff; font-size:0.7em; font-weight:700; padding:2px 8px; border-radius:99px;">BLOCKED ✗</span>
+              </div>
             </div>
           </div>
 
           <!-- Summary -->
-          <div style="background:#e8f5e9; border:1px solid #c8e6c9; border-radius:6px; padding:10px 12px; margin-top:6px; font-size:0.78em; color:#2e7d32; display:flex; align-items:flex-start; gap:8px;">
-            <span class="fa-solid fa-circle-info" style="flex-shrink:0; margin-top:2px;"></span>
-            <span>Only users going through Cisco Secure Access can reach workload pods. Direct LAN access is blocked by Cilium at the kernel level.</span>
+          <div style="background:#e8f5e9; border:1px solid #c8e6c9; border-radius:6px; padding:10px 12px; font-size:0.78em; color:#2e7d32; display:flex; align-items:flex-start; gap:8px; margin-top:2px;">
+            <span class="fa-solid fa-circle-check" style="flex-shrink:0; margin-top:2px;"></span>
+            <span><strong>Fully protected:</strong> Users must go through Secure Access to reach any pod. Even if a pod is compromised, it cannot reach other pods — lateral movement is stopped at the kernel level.</span>
           </div>
         </div>
       </div>
@@ -342,10 +423,10 @@
     <div style="background:#fff; border:1px solid #e0e0e0; border-radius:6px; padding:10px 14px; margin-top:16px; font-size:0.78em; color:#555; display:flex; align-items:flex-start; gap:10px;">
       <span class="fa-solid fa-lightbulb" style="color:#f59e0b; flex-shrink:0; margin-top:2px;"></span>
       <span>
-        <strong>How it works:</strong> <code>externalTrafficPolicy: Local</code> preserves source IPs on NodePorts.
-        Cilium's eBPF SNAT rewrites the connector's Docker IP (<code>240.0.0.x</code>) to
-        <code>cilium_host</code> (<code>10.0.0.180</code>) — classified as <strong>host</strong> entity and allowed.
-        LAN traffic keeps its real IP (<code>10.10.2.x</code>) — classified as <strong>world</strong> entity and dropped.
+        <strong>How it works under the hood:</strong> <code>externalTrafficPolicy: Local</code> preserves real source IPs on NodePorts.
+        Cilium's eBPF SNAT rewrites the Resource Connector's Docker IP (<code>240.0.0.x</code>) to
+        <code>cilium_host</code> — classified as the <strong>host</strong> entity and permitted by policy.
+        All other traffic (LAN users, pods) is classified as <strong>world</strong> or has no matching allow rule, so it is dropped.
       </span>
     </div>
   </section>
