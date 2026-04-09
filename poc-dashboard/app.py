@@ -390,13 +390,11 @@ def cilium():
         action = request.form.get('action')
         try:
             if action == 'allow_all':
-                results = apply_allow_all()
+                apply_allow_all()
+                flash("✅ Allow All Traffic")
             elif action == 'zero_trust':
-                results = apply_zero_trust()
-            else:
-                results = []
-            for msg in results:
-                flash(f"✅ {msg}")
+                apply_zero_trust()
+                flash("✅ Zero Trust Segmentation")
         except Exception as e:
             flash(f"⚠️ Error applying Cilium policy: {e}")
         return redirect(url_for('cilium'))

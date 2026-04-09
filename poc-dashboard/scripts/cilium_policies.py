@@ -8,7 +8,9 @@ PLURAL = "ciliumnetworkpolicies"
 
 POLICY_NAMES = ["piap-zero-trust"]
 
-# piap services to lock down. poc-dashboard is excluded — always reachable from LAN.
+# piap services to lock down under Zero Trust.
+# poc-dashboard and playbook are excluded — always reachable from LAN.
+# Hubble UI is in kube-system and unaffected by this namespace policy.
 _PIAP_RESTRICTED_SERVICES = [
     "splunk", "rdp-server", "ssh-server", "sse-check", "kubectl-mcp", "saml-app",
 ]
@@ -53,7 +55,7 @@ def _build_zero_trust_policy():
                     {
                         "key": "app",
                         "operator": "NotIn",
-                        "values": ["poc-dashboard"],
+                        "values": ["poc-dashboard", "playbook"],
                     }
                 ]
             },
