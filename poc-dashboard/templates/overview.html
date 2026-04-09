@@ -53,8 +53,8 @@
       <p style="color:#555; font-size:0.85em; line-height:1.6; margin:0;">Users reach specific applications, not the entire network — a verified user to a verified application port. Policies define exactly who can access which resource, on which port, from which context.</p>
     </div>
     <div style="background:#f0f4ff; border-radius:8px; padding:14px 16px;">
-      <div style="font-weight:700; color:#0066ff; font-size:0.78em; letter-spacing:0.5px; margin-bottom:6px;">CONTINUOUS ENFORCEMENT</div>
-      <p style="color:#555; font-size:0.85em; line-height:1.6; margin:0;">Network and runtime security layers enforce policies in real time — microsegmentation, process monitoring, and behavioral threat detection keep enforcing trust after access is granted.</p>
+      <div style="font-weight:700; color:#0066ff; font-size:0.78em; letter-spacing:0.5px; margin-bottom:6px;">WORKLOAD SEGMENTATION</div>
+      <p style="color:#555; font-size:0.85em; line-height:1.6; margin:0;">Microsegmentation restricts traffic between containers and workloads — even inside the cluster. If one workload is compromised, lateral movement to others is blocked at the network layer.</p>
     </div>
   </div>
 </section>
@@ -71,7 +71,7 @@
   </p>
 
   <div style="background:#f8f9fa; border:1px solid #e2e4e8; border-radius:10px; padding:1.5rem; overflow-x:auto;">
-    <div style="display:flex; align-items:stretch; gap:6px; flex-wrap:nowrap; min-width:820px;">
+    <div style="display:flex; align-items:stretch; gap:6px; flex-wrap:nowrap; min-width:860px;">
 
       <!-- User Device -->
       <div style="display:flex; align-items:center; flex-shrink:0;">
@@ -124,7 +124,7 @@
       <span style="color:#ccc; font-size:1.3rem; display:flex; align-items:center; flex-shrink:0;">→</span>
 
       <!-- Locally Hosted -->
-      <div style="flex:1; min-width:400px; border:2px dashed #0066ff; border-radius:12px; overflow:hidden; display:flex; flex-direction:column;">
+      <div style="flex:1; min-width:420px; border:2px dashed #0066ff; border-radius:12px; overflow:hidden; display:flex; flex-direction:column;">
         <div style="background:#0066ff; padding:5px 14px; text-align:center;">
           <span style="color:#fff; font-weight:700; font-size:0.72em; letter-spacing:0.5px;">LOCALLY HOSTED — Ubuntu VM</span>
         </div>
@@ -150,16 +150,32 @@
               <div style="background:#e8f1ff; border:2px solid #0066ff; border-radius:8px; overflow:hidden; margin-bottom:8px;">
                 <div style="display:flex; gap:6px; padding:8px 8px 6px 8px; flex-wrap:wrap; align-items:stretch;">
                   <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:6px 9px; text-align:center; font-size:0.72em; flex-shrink:0;">
-                    <span class="fa-solid fa-globe" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
-                    <span style="color:#333; font-weight:500;">SSE Check</span>
+                    <span class="fa-solid fa-gauge-high" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
+                    <span style="color:#333; font-weight:500;">PoC Dashboard</span>
                   </div>
                   <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:6px 9px; text-align:center; font-size:0.72em; flex-shrink:0;">
                     <span class="fa-solid fa-desktop" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
-                    <span style="color:#333; font-weight:500;">RDP / SSH</span>
+                    <span style="color:#333; font-weight:500;">RDP Server</span>
+                  </div>
+                  <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:6px 9px; text-align:center; font-size:0.72em; flex-shrink:0;">
+                    <span class="fa-solid fa-terminal" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
+                    <span style="color:#333; font-weight:500;">SSH Server</span>
                   </div>
                   <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:6px 9px; text-align:center; font-size:0.72em; flex-shrink:0;">
                     <span class="fa-solid fa-id-card" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
                     <span style="color:#333; font-weight:500;">SAML App</span>
+                  </div>
+                  <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:6px 9px; text-align:center; font-size:0.72em; flex-shrink:0;">
+                    <span class="fa-solid fa-globe" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
+                    <span style="color:#333; font-weight:500;">SSE Check</span>
+                  </div>
+                  <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:6px 9px; text-align:center; font-size:0.72em; flex-shrink:0;">
+                    <span class="fa-solid fa-heart-pulse" style="color:#16a34a; display:block; margin-bottom:2px;"></span>
+                    <span style="color:#333; font-weight:500;">Uptime Kuma</span>
+                  </div>
+                  <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:6px 9px; text-align:center; font-size:0.72em; flex-shrink:0;">
+                    <span class="fa-solid fa-binoculars" style="color:#0066ff; display:block; margin-bottom:2px;"></span>
+                    <span style="color:#333; font-weight:500;">Hubble</span>
                   </div>
                   <div style="background:#fff; border:1px solid #c8d8ff; border-radius:6px; padding:6px 9px; text-align:center; font-size:0.72em; flex-shrink:0;">
                     <span class="fa-solid fa-chart-bar" style="color:#e08020; display:block; margin-bottom:2px;"></span>
@@ -212,24 +228,23 @@
     <!-- Vertical track -->
     <div style="position:absolute; left:13px; top:6px; bottom:6px; width:2px; background:#e0e0e0; border-radius:2px;"></div>
 
-    <!-- CORE label -->
-    <div style="position:relative; margin-bottom:20px;">
+    <!-- CORE section header -->
+    <div style="position:relative; margin-bottom:20px; display:flex; align-items:center; gap:10px; min-height:28px;">
       <div style="position:absolute; left:-48px; width:28px; height:28px; border-radius:50%; background:#e8f1ff; border:2px solid #0066ff; display:flex; align-items:center; justify-content:center;">
         <span style="font-size:0.6em; font-weight:800; color:#0066ff; letter-spacing:0.3px;">CORE</span>
       </div>
-      <div style="padding-top:4px;">
-        <span style="font-size:0.72em; font-weight:700; color:#0066ff; letter-spacing:0.5px;">START HERE</span>
-      </div>
+      <span style="font-size:0.72em; font-weight:700; color:#0066ff; letter-spacing:0.5px; white-space:nowrap;">CORE — START HERE</span>
+      <div style="flex:1; height:1px; background:#c8d8ff;"></div>
     </div>
 
-    <!-- Duo -->
-    <div style="position:relative; margin-bottom:20px;">
-      <div style="position:absolute; left:-48px; width:28px; height:28px; border-radius:50%; background:#0066ff; display:flex; align-items:center; justify-content:center;">
+    <!-- Duo & Identity Intelligence -->
+    <div style="position:relative; margin-bottom:20px; display:flex; align-items:center; gap:0;">
+      <div style="position:absolute; left:-48px; top:50%; transform:translateY(-50%); width:28px; height:28px; border-radius:50%; background:#0066ff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
         <span style="font-size:0.75em; font-weight:700; color:#fff;">1</span>
       </div>
-      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; width:100%;">
         <div style="font-weight:700; color:#7c4dff; font-size:0.85em; margin-bottom:8px;">
-          <span class="fa-solid fa-user-shield" style="margin-right:6px;"></span>Cisco Duo
+          <span class="fa-solid fa-user-shield" style="margin-right:6px;"></span>Duo &amp; Identity Intelligence
         </div>
         <ul style="color:#555; font-size:0.83em; line-height:1.6; margin:0; padding-left:16px;">
           <li>Create and enroll users</li>
@@ -240,13 +255,13 @@
     </div>
 
     <!-- Secure Access -->
-    <div style="position:relative; margin-bottom:20px;">
-      <div style="position:absolute; left:-48px; width:28px; height:28px; border-radius:50%; background:#0066ff; display:flex; align-items:center; justify-content:center;">
+    <div style="position:relative; margin-bottom:20px; display:flex; align-items:center;">
+      <div style="position:absolute; left:-48px; top:50%; transform:translateY(-50%); width:28px; height:28px; border-radius:50%; background:#0066ff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
         <span style="font-size:0.75em; font-weight:700; color:#fff;">2</span>
       </div>
-      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; width:100%;">
         <div style="font-weight:700; color:#049fd9; font-size:0.85em; margin-bottom:8px;">
-          <span class="fa-solid fa-cloud" style="margin-right:6px;"></span>Cisco Secure Access
+          <span class="fa-solid fa-cloud" style="margin-right:6px;"></span>Secure Access
         </div>
         <ul style="color:#555; font-size:0.83em; line-height:1.6; margin:0; padding-left:16px;">
           <li>Create private applications and access policies</li>
@@ -257,11 +272,11 @@
     </div>
 
     <!-- Cilium -->
-    <div style="position:relative; margin-bottom:20px;">
-      <div style="position:absolute; left:-48px; width:28px; height:28px; border-radius:50%; background:#0066ff; display:flex; align-items:center; justify-content:center;">
+    <div style="position:relative; margin-bottom:20px; display:flex; align-items:center;">
+      <div style="position:absolute; left:-48px; top:50%; transform:translateY(-50%); width:28px; height:28px; border-radius:50%; background:#0066ff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
         <span style="font-size:0.75em; font-weight:700; color:#fff;">3</span>
       </div>
-      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; width:100%;">
         <div style="font-weight:700; color:#0066ff; font-size:0.85em; margin-bottom:8px;">
           <span class="fa-solid fa-network-wired" style="margin-right:6px;"></span>Cilium
         </div>
@@ -272,11 +287,11 @@
     </div>
 
     <!-- Tetragon -->
-    <div style="position:relative; margin-bottom:36px;">
-      <div style="position:absolute; left:-48px; width:28px; height:28px; border-radius:50%; background:#0066ff; display:flex; align-items:center; justify-content:center;">
+    <div style="position:relative; margin-bottom:36px; display:flex; align-items:center;">
+      <div style="position:absolute; left:-48px; top:50%; transform:translateY(-50%); width:28px; height:28px; border-radius:50%; background:#0066ff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
         <span style="font-size:0.75em; font-weight:700; color:#fff;">4</span>
       </div>
-      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; width:100%;">
         <div style="font-weight:700; color:#e08000; font-size:0.85em; margin-bottom:8px;">
           <span class="fa-solid fa-shield-halved" style="margin-right:6px;"></span>Tetragon
         </div>
@@ -286,22 +301,21 @@
       </div>
     </div>
 
-    <!-- ADVANCED label -->
-    <div style="position:relative; margin-bottom:20px;">
+    <!-- ADVANCED section header -->
+    <div style="position:relative; margin-bottom:20px; display:flex; align-items:center; gap:10px; min-height:28px;">
       <div style="position:absolute; left:-48px; width:28px; height:28px; border-radius:50%; background:#f0ebff; border:2px solid #6c3fff; display:flex; align-items:center; justify-content:center;">
         <span style="font-size:0.48em; font-weight:800; color:#6c3fff; letter-spacing:0.2px;">ADV</span>
       </div>
-      <div style="padding-top:4px;">
-        <span style="font-size:0.72em; font-weight:700; color:#6c3fff; letter-spacing:0.5px;">ADVANCED</span>
-      </div>
+      <span style="font-size:0.72em; font-weight:700; color:#6c3fff; letter-spacing:0.5px; white-space:nowrap;">ADVANCED — DEEPEN VISIBILITY</span>
+      <div style="flex:1; height:1px; background:#d4c8ff;"></div>
     </div>
 
     <!-- Splunk -->
-    <div style="position:relative; margin-bottom:20px;">
-      <div style="position:absolute; left:-48px; width:28px; height:28px; border-radius:50%; background:#6c3fff; display:flex; align-items:center; justify-content:center;">
+    <div style="position:relative; margin-bottom:20px; display:flex; align-items:center;">
+      <div style="position:absolute; left:-48px; top:50%; transform:translateY(-50%); width:28px; height:28px; border-radius:50%; background:#6c3fff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
         <span style="font-size:0.75em; font-weight:700; color:#fff;">5</span>
       </div>
-      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; width:100%;">
         <div style="font-weight:700; color:#e08020; font-size:0.85em; margin-bottom:8px;">
           <span class="fa-solid fa-chart-bar" style="margin-right:6px;"></span>Splunk
         </div>
@@ -312,14 +326,14 @@
       </div>
     </div>
 
-    <!-- AI Agent -->
-    <div style="position:relative; margin-bottom:36px;">
-      <div style="position:absolute; left:-48px; width:28px; height:28px; border-radius:50%; background:#6c3fff; display:flex; align-items:center; justify-content:center;">
+    <!-- AI Agent & DefenseClaw -->
+    <div style="position:relative; margin-bottom:36px; display:flex; align-items:center;">
+      <div style="position:absolute; left:-48px; top:50%; transform:translateY(-50%); width:28px; height:28px; border-radius:50%; background:#6c3fff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
         <span style="font-size:0.75em; font-weight:700; color:#fff;">6</span>
       </div>
-      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; width:100%;">
         <div style="font-weight:700; color:#6c3fff; font-size:0.85em; margin-bottom:8px;">
-          <span class="fa-solid fa-robot" style="margin-right:6px;"></span>AI Agent
+          <span class="fa-solid fa-robot" style="margin-right:6px;"></span>AI Agent &amp; DefenseClaw
         </div>
         <ul style="color:#555; font-size:0.83em; line-height:1.6; margin:0; padding-left:16px;">
           <li>Deploy the OpenClaw AI Agent</li>
@@ -328,22 +342,21 @@
       </div>
     </div>
 
-    <!-- RED TEAM label -->
-    <div style="position:relative; margin-bottom:20px;">
+    <!-- RED TEAM section header -->
+    <div style="position:relative; margin-bottom:20px; display:flex; align-items:center; gap:10px; min-height:28px;">
       <div style="position:absolute; left:-48px; width:28px; height:28px; border-radius:50%; background:#fff0f0; border:2px solid #dc2626; display:flex; align-items:center; justify-content:center;">
         <span style="font-size:0.48em; font-weight:800; color:#dc2626; letter-spacing:0.2px;">RED</span>
       </div>
-      <div style="padding-top:4px;">
-        <span style="font-size:0.72em; font-weight:700; color:#dc2626; letter-spacing:0.5px;">RED TEAM</span>
-      </div>
+      <span style="font-size:0.72em; font-weight:700; color:#dc2626; letter-spacing:0.5px; white-space:nowrap;">RED TEAM — TEST YOUR DEFENCES</span>
+      <div style="flex:1; height:1px; background:#fca5a5;"></div>
     </div>
 
     <!-- Caldera -->
-    <div style="position:relative;">
-      <div style="position:absolute; left:-48px; width:28px; height:28px; border-radius:50%; background:#dc2626; display:flex; align-items:center; justify-content:center;">
+    <div style="position:relative; display:flex; align-items:center;">
+      <div style="position:absolute; left:-48px; top:50%; transform:translateY(-50%); width:28px; height:28px; border-radius:50%; background:#dc2626; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
         <span style="font-size:0.75em; font-weight:700; color:#fff;">7</span>
       </div>
-      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px;">
+      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; width:100%;">
         <div style="font-weight:700; color:#dc2626; font-size:0.85em; margin-bottom:8px;">
           <span class="fa-solid fa-skull-crossbones" style="margin-right:6px;"></span>Caldera
         </div>
