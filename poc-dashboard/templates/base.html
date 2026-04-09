@@ -126,6 +126,74 @@
       align-items: flex-start;
     }
 
+    /* === RIGHT PANEL === */
+    .right-panel {
+      width: 200px;
+      background: #fff;
+      border-left: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .rp-section { border-bottom: 1px solid #ebebeb; }
+
+    .rp-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px 8px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: #999;
+      cursor: pointer;
+      user-select: none;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .rp-section-header:hover { background: #f8f8f8; }
+
+    .rp-section-header .rp-chevron {
+      font-size: 0.65rem;
+      color: #ccc;
+      transition: transform 0.2s;
+    }
+
+    .rp-section-header.collapsed .rp-chevron { transform: rotate(-90deg); }
+
+    .rp-items { padding-bottom: 4px; }
+    .rp-items.hidden { display: none; }
+
+    .rp-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px 6px 16px;
+      color: #444;
+      text-decoration: none;
+      font-size: 0.81em;
+      font-weight: 500;
+      transition: background 0.1s;
+    }
+
+    .rp-item:hover { background: #f0f2f4; color: #0066ff; }
+
+    .rp-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #ccc;
+      flex-shrink: 0;
+    }
+
+    .rp-ext { font-size: 0.6rem; color: #ccc; margin-left: auto; flex-shrink: 0; }
+
     input[type="text"],
     input[type="password"],
     input[type="email"] {
@@ -162,9 +230,6 @@
     <nav class="sidebar">
         <a href="{{ url_for('overview') }}" class="menu-item {% if active_page == 'overview' %}active{% endif %}">
           <span class="fa-solid fa-house"></span> Overview
-        </a>
-        <a href="{{ url_for('links') }}" class="menu-item {% if active_page == 'links' %}active{% endif %}">
-          <span class="fa-solid fa-table-cells-large"></span> Links
         </a>
 
         <div class="nav-section">Core</div>
@@ -205,8 +270,113 @@
         {% block content %}{% endblock %}
       </div>
     </main>
+
+    <!-- Right panel -->
+    {% set host_ip = request.host.split(':')[0] %}
+    <aside class="right-panel">
+
+      <div class="rp-section">
+        <button class="rp-section-header" onclick="rpToggle(this)">
+          PoC in a Pod Tools <span class="fa-solid fa-chevron-down rp-chevron"></span>
+        </button>
+        <div class="rp-items">
+          <a href="http://{{ host_ip }}:30200" target="_blank" class="rp-item">
+            <span class="rp-dot"></span>PoC Dashboard<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          </a>
+          <a href="http://{{ host_ip }}:30250" target="_blank" class="rp-item">
+            <span class="rp-dot"></span>PoC Playbook<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          </a>
+        </div>
+      </div>
+
+      <div class="rp-section">
+        <button class="rp-section-header" onclick="rpToggle(this)">
+          Cisco Solutions <span class="fa-solid fa-chevron-down rp-chevron"></span>
+        </button>
+        <div class="rp-items">
+          <a href="{{ url_for('secure_access') }}" class="rp-item">
+            <span class="rp-dot"></span>Secure Access
+          </a>
+          <a href="{{ url_for('duo') }}" class="rp-item">
+            <span class="rp-dot"></span>Duo &amp; Identity Intelligence
+          </a>
+          <a href="{{ url_for('cilium') }}" class="rp-item">
+            <span class="rp-dot"></span>Cilium
+          </a>
+          <a href="{{ url_for('tetragon') }}" class="rp-item">
+            <span class="rp-dot"></span>Tetragon
+          </a>
+          <a href="{{ url_for('splunk') }}" class="rp-item">
+            <span class="rp-dot"></span>Splunk
+          </a>
+          <a href="https://github.com/cisco-ai-defense/defenseclaw" target="_blank" rel="noopener" class="rp-item">
+            <span class="rp-dot"></span>DefenseClaw<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          </a>
+        </div>
+      </div>
+
+      <div class="rp-section">
+        <button class="rp-section-header" onclick="rpToggle(this)">
+          Applications <span class="fa-solid fa-chevron-down rp-chevron"></span>
+        </button>
+        <div class="rp-items">
+          <a href="http://{{ host_ip }}:30550" target="_blank" class="rp-item">
+            <span class="rp-dot"></span>SSE Check<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          </a>
+          <a href="http://{{ host_ip }}:30400" target="_blank" class="rp-item">
+            <span class="rp-dot"></span>SAML App<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          </a>
+          <a href="http://{{ host_ip }}:30022" target="_blank" class="rp-item">
+            <span class="rp-dot"></span>SSH Server<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          </a>
+          <a href="http://{{ host_ip }}:30389" target="_blank" class="rp-item">
+            <span class="rp-dot"></span>RDP Server<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          </a>
+          <a href="http://{{ host_ip }}:30800" target="_blank" class="rp-item">
+            <span class="rp-dot"></span>Hubble<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          </a>
+          <a href="http://{{ host_ip }}:30300" target="_blank" class="rp-item">
+            <span class="rp-dot"></span>Uptime Kuma<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          </a>
+          <a href="http://{{ host_ip }}:30600" target="_blank" class="rp-item">
+            <span class="rp-dot"></span>Caldera<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          </a>
+        </div>
+      </div>
+
+      <div class="rp-section">
+        <button class="rp-section-header" onclick="rpToggle(this)">
+          Tools <span class="fa-solid fa-chevron-down rp-chevron"></span>
+        </button>
+        <div class="rp-items">
+          <a href="https://policy.test.sse.cisco.com/" target="_blank" rel="noopener" class="rp-item">
+            <span class="rp-dot"></span>SSE Policy Check<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          </a>
+          <a href="https://ifconfig.co/" target="_blank" rel="noopener" class="rp-item">
+            <span class="rp-dot"></span>IP Checker<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          </a>
+          <a href="https://http3.is/" target="_blank" rel="noopener" class="rp-item">
+            <span class="rp-dot"></span>QUIC Checker<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          </a>
+          <a href="https://mediatest.ciscospark.com/" target="_blank" rel="noopener" class="rp-item">
+            <span class="rp-dot"></span>Speed Test<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          </a>
+          <a href="https://packetlosstest.com/" target="_blank" rel="noopener" class="rp-item">
+            <span class="rp-dot"></span>Packet Loss Test<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          </a>
+        </div>
+      </div>
+
+    </aside>
+
   </div>
 
+  <script>
+    function rpToggle(btn) {
+      btn.classList.toggle('collapsed');
+      btn.nextElementSibling.classList.toggle('hidden');
+    }
+  </script>
 
 </body>
 </html>
