@@ -13,7 +13,6 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/cds-theme-variables.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/cds-theme-blue-variables.css') }}">
 
-
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
@@ -37,6 +36,8 @@
       padding: 0 1.5rem;
       height: 52px;
       color: #fff;
+      position: relative;
+      z-index: 100;
     }
 
     .navbar-logo {
@@ -45,14 +46,27 @@
       gap: 12px;
     }
 
-    .navbar-logo img {
-      height: 24px;
+    .navbar-logo img { height: 24px; }
+
+    .navbar-title { font-size: 17px; font-weight: 600; }
+
+    .navbar-links-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.83em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      letter-spacing: 0.2px;
     }
 
-    .navbar-title {
-      font-size: 17px;
-      font-weight: 600;
-    }
+    .navbar-links-btn:hover { background: rgba(255,255,255,0.18); }
 
     /* === LAYOUT === */
     .main {
@@ -83,22 +97,12 @@
       transition: all 0.15s ease-in-out;
     }
 
-    .menu-item:hover {
-      background-color: #f0f2f4;
-    }
+    .menu-item:hover { background-color: #f0f2f4; }
 
     .menu-item.active {
       background-color: #e7eef9;
       color: #0066ff;
       border-left: 3px solid #0066ff;
-    }
-
-    .menu-icon {
-      width: 18px;
-      height: 18px;
-      background-color: #bbb;
-      border-radius: 3px;
-      flex-shrink: 0;
     }
 
     .nav-section {
@@ -126,74 +130,6 @@
       align-items: flex-start;
     }
 
-    /* === RIGHT PANEL === */
-    .right-panel {
-      width: 200px;
-      background: #fff;
-      border-left: 1px solid #ddd;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      flex-shrink: 0;
-    }
-
-    .rp-section { border-bottom: 1px solid #ebebeb; }
-
-    .rp-section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 14px 8px;
-      font-size: 0.62rem;
-      font-weight: 700;
-      letter-spacing: 0.09em;
-      text-transform: uppercase;
-      color: #999;
-      cursor: pointer;
-      user-select: none;
-      background: none;
-      border: none;
-      width: 100%;
-      text-align: left;
-    }
-
-    .rp-section-header:hover { background: #f8f8f8; }
-
-    .rp-section-header .rp-chevron {
-      font-size: 0.65rem;
-      color: #ccc;
-      transition: transform 0.2s;
-    }
-
-    .rp-section-header.collapsed .rp-chevron { transform: rotate(-90deg); }
-
-    .rp-items { padding-bottom: 4px; }
-    .rp-items.hidden { display: none; }
-
-    .rp-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 14px 6px 16px;
-      color: #444;
-      text-decoration: none;
-      font-size: 0.81em;
-      font-weight: 500;
-      transition: background 0.1s;
-    }
-
-    .rp-item:hover { background: #f0f2f4; color: #0066ff; }
-
-    .rp-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: #ccc;
-      flex-shrink: 0;
-    }
-
-    .rp-ext { font-size: 0.6rem; color: #ccc; margin-left: auto; flex-shrink: 0; }
-
     input[type="text"],
     input[type="password"],
     input[type="email"] {
@@ -213,16 +149,157 @@
       max-height: calc(100vh - 100px);
     }
 
+    /* === LINKS MODAL === */
+    .links-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 64px;
+    }
+
+    .links-backdrop.open { display: flex; }
+
+    .links-modal {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+      width: 92%;
+      max-width: 1100px;
+      max-height: calc(100vh - 90px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .links-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px 14px;
+      border-bottom: 1px solid #eee;
+      flex-shrink: 0;
+    }
+
+    .links-modal-header h2 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #111;
+      letter-spacing: 0.2px;
+    }
+
+    .links-modal-close {
+      background: none;
+      border: none;
+      color: #999;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background 0.1s, color 0.1s;
+    }
+
+    .links-modal-close:hover { background: #f0f0f0; color: #333; }
+
+    .links-modal-body {
+      overflow-y: auto;
+      padding: 20px 24px 24px;
+    }
+
+    /* Section heading inside modal */
+    .lm-section-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #aaa;
+      margin: 0 0 10px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .lm-section-title:not(:first-child) { margin-top: 24px; }
+
+    /* Card grid */
+    .lm-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    /* Individual link card */
+    .lm-card {
+      display: block;
+      text-decoration: none;
+      background: #f8f9fb;
+      border: 1px solid #e8eaed;
+      border-radius: 8px;
+      padding: 12px 14px;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+      position: relative;
+    }
+
+    .lm-card:hover {
+      border-color: #0066ff;
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(0,102,255,0.08);
+    }
+
+    .lm-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .lm-card-name {
+      font-size: 0.85em;
+      font-weight: 700;
+      color: #111;
+    }
+
+    .lm-card-ext {
+      font-size: 0.65rem;
+      color: #ccc;
+      flex-shrink: 0;
+    }
+
+    .lm-card:hover .lm-card-ext { color: #0066ff; }
+
+    .lm-card-meta {
+      font-size: 0.72em;
+      color: #0066ff;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .lm-card-desc {
+      font-size: 0.76em;
+      color: #777;
+      line-height: 1.45;
+      margin: 0;
+    }
+
   </style>
 </head>
 
 <body>
+  {% set host_ip = request.host.split(':')[0] %}
+
   <!-- Header -->
   <header class="navbar">
     <div class="navbar-logo">
       <img src="https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png" alt="Cisco Logo">
       <span class="navbar-title">Cisco PoC in a Pod</span>
     </div>
+    <button class="navbar-links-btn" onclick="openLinks()">
+      <span class="fa-solid fa-table-cells-large"></span> Links
+    </button>
   </header>
 
   <!-- Sidebar + Main -->
@@ -270,108 +347,199 @@
         {% block content %}{% endblock %}
       </div>
     </main>
+  </div>
 
-    <!-- Right panel -->
-    {% set host_ip = request.host.split(':')[0] %}
-    <aside class="right-panel">
+  <!-- Links modal -->
+  <div class="links-backdrop" id="linksBackdrop" onclick="backdropClose(event)">
+    <div class="links-modal">
+      <div class="links-modal-header">
+        <h2>Quick Links</h2>
+        <button class="links-modal-close" onclick="closeLinks()"><span class="fa-solid fa-xmark"></span></button>
+      </div>
+      <div class="links-modal-body">
 
-      <div class="rp-section">
-        <button class="rp-section-header" onclick="rpToggle(this)">
-          PoC in a Pod Tools <span class="fa-solid fa-chevron-down rp-chevron"></span>
-        </button>
-        <div class="rp-items">
-          <a href="http://{{ host_ip }}:30200" target="_blank" class="rp-item">
-            <span class="rp-dot"></span>PoC Dashboard<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+        <p class="lm-section-title">PoC in a Pod Tools</p>
+        <div class="lm-grid">
+          <a href="http://{{ host_ip }}:30200" target="_blank" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-gauge-high" style="color:#0066ff; margin-right:6px;"></span>PoC Dashboard</span>
+              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
+            </div>
+            <div class="lm-card-meta">Port 30200</div>
+            <p class="lm-card-desc">Central hub for guided configuration and management of the PoC environment.</p>
           </a>
-          <a href="http://{{ host_ip }}:30250" target="_blank" class="rp-item">
-            <span class="rp-dot"></span>PoC Playbook<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          <a href="http://{{ host_ip }}:30250" target="_blank" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-clipboard-check" style="color:#0066ff; margin-right:6px;"></span>PoC Playbook</span>
+              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
+            </div>
+            <div class="lm-card-meta">Port 30250</div>
+            <p class="lm-card-desc">Guided playbook for validating the full PoC with pass/fail tracking.</p>
+          </a>
+          <a href="http://{{ host_ip }}:30300" target="_blank" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-heart-pulse" style="color:#16a34a; margin-right:6px;"></span>Uptime Kuma</span>
+              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
+            </div>
+            <div class="lm-card-meta">Port 30300</div>
+            <p class="lm-card-desc">Status monitoring dashboard for all services in the environment.</p>
           </a>
         </div>
-      </div>
 
-      <div class="rp-section">
-        <button class="rp-section-header" onclick="rpToggle(this)">
-          Cisco Solutions <span class="fa-solid fa-chevron-down rp-chevron"></span>
-        </button>
-        <div class="rp-items">
-          <a href="{{ url_for('secure_access') }}" class="rp-item">
-            <span class="rp-dot"></span>Secure Access
+        <p class="lm-section-title">Cisco Solutions</p>
+        <div class="lm-grid">
+          <a href="{{ url_for('secure_access') }}" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-cloud" style="color:#049fd9; margin-right:6px;"></span>Secure Access</span>
+            </div>
+            <div class="lm-card-meta">Cloud service</div>
+            <p class="lm-card-desc">Zero Trust Access with on-prem Connector tunneling traffic to private resources.</p>
           </a>
-          <a href="{{ url_for('duo') }}" class="rp-item">
-            <span class="rp-dot"></span>Duo &amp; Identity Intelligence
+          <a href="{{ url_for('duo') }}" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-user-shield" style="color:#0066ff; margin-right:6px;"></span>Duo &amp; Identity Intelligence</span>
+            </div>
+            <div class="lm-card-meta">Cloud service</div>
+            <p class="lm-card-desc">MFA, device trust, and risk-based authentication integrated with Secure Access.</p>
           </a>
-          <a href="{{ url_for('cilium') }}" class="rp-item">
-            <span class="rp-dot"></span>Cilium
+          <a href="{{ url_for('cilium') }}" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-network-wired" style="color:#0066ff; margin-right:6px;"></span>Cilium</span>
+            </div>
+            <div class="lm-card-meta">k3s DaemonSet</div>
+            <p class="lm-card-desc">eBPF-based L4/L7 network policies and microsegmentation across pods.</p>
           </a>
-          <a href="{{ url_for('tetragon') }}" class="rp-item">
-            <span class="rp-dot"></span>Tetragon
+          <a href="{{ url_for('tetragon') }}" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-shield-halved" style="color:#0066ff; margin-right:6px;"></span>Tetragon</span>
+            </div>
+            <div class="lm-card-meta">k3s DaemonSet</div>
+            <p class="lm-card-desc">eBPF runtime security — process, file, network, and syscall event monitoring.</p>
           </a>
-          <a href="http://{{ host_ip }}:30500" target="_blank" class="rp-item">
-            <span class="rp-dot"></span>Splunk<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          <a href="http://{{ host_ip }}:30500" target="_blank" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-chart-bar" style="color:#0066ff; margin-right:6px;"></span>Splunk</span>
+              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
+            </div>
+            <div class="lm-card-meta">Port 30500</div>
+            <p class="lm-card-desc">SIEM for log aggregation and event correlation across the entire environment.</p>
           </a>
-          <a href="https://github.com/cisco-ai-defense/defenseclaw" target="_blank" rel="noopener" class="rp-item">
-            <span class="rp-dot"></span>DefenseClaw<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          <a href="https://github.com/cisco-ai-defense/defenseclaw" target="_blank" rel="noopener" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-brands fa-github" style="color:#0066ff; margin-right:6px;"></span>DefenseClaw</span>
+              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
+            </div>
+            <div class="lm-card-meta">GitHub · External</div>
+            <p class="lm-card-desc">Enterprise AI governance — scans skills, inspects tool calls, blocks threats.</p>
           </a>
         </div>
-      </div>
 
-      <div class="rp-section">
-        <button class="rp-section-header" onclick="rpToggle(this)">
-          Applications <span class="fa-solid fa-chevron-down rp-chevron"></span>
-        </button>
-        <div class="rp-items">
-          <a href="http://{{ host_ip }}:30550" target="_blank" class="rp-item">
-            <span class="rp-dot"></span>SSE Check<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+        <p class="lm-section-title">Applications</p>
+        <div class="lm-grid">
+          <a href="http://{{ host_ip }}:30550" target="_blank" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-globe" style="color:#0066ff; margin-right:6px;"></span>SSE Check</span>
+              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
+            </div>
+            <div class="lm-card-meta">Port 30550</div>
+            <p class="lm-card-desc">Demo app accessible only through Cisco Secure Access ZTA policies.</p>
           </a>
-          <a href="http://{{ host_ip }}:30400" target="_blank" class="rp-item">
-            <span class="rp-dot"></span>SAML App<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          <a href="http://{{ host_ip }}:30400" target="_blank" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-id-card" style="color:#0066ff; margin-right:6px;"></span>SAML App</span>
+              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
+            </div>
+            <div class="lm-card-meta">Port 30400</div>
+            <p class="lm-card-desc">SAML-protected app demonstrating Duo SSO login and Duo Passport.</p>
           </a>
-          <a href="http://{{ host_ip }}:30800" target="_blank" class="rp-item">
-            <span class="rp-dot"></span>Hubble<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          <a href="http://{{ host_ip }}:30800" target="_blank" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-binoculars" style="color:#0066ff; margin-right:6px;"></span>Hubble</span>
+              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
+            </div>
+            <div class="lm-card-meta">Port 30800</div>
+            <p class="lm-card-desc">Real-time visual graph of network flows between pods (Cilium observability).</p>
           </a>
-          <a href="http://{{ host_ip }}:30300" target="_blank" class="rp-item">
-            <span class="rp-dot"></span>Uptime Kuma<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          <a href="http://{{ host_ip }}:30600" target="_blank" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-skull-crossbones" style="color:#0066ff; margin-right:6px;"></span>Caldera</span>
+              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
+            </div>
+            <div class="lm-card-meta">Port 30600</div>
+            <p class="lm-card-desc">MITRE Caldera adversary emulation for validating detection and enforcement.</p>
           </a>
-          <a href="http://{{ host_ip }}:30600" target="_blank" class="rp-item">
-            <span class="rp-dot"></span>Caldera<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
-          </a>
-          <a href="http://{{ host_ip }}:31789" target="_blank" class="rp-item">
-            <span class="rp-dot"></span>AI Agent<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          <a href="http://{{ host_ip }}:31789" target="_blank" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-robot" style="color:#0066ff; margin-right:6px;"></span>AI Agent</span>
+              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
+            </div>
+            <div class="lm-card-meta">Port 31789</div>
+            <p class="lm-card-desc">OpenClaw AI Agent secured by Cisco DefenseClaw — deploy from PoC Dashboard.</p>
           </a>
         </div>
-      </div>
 
-      <div class="rp-section">
-        <button class="rp-section-header" onclick="rpToggle(this)">
-          Tools <span class="fa-solid fa-chevron-down rp-chevron"></span>
-        </button>
-        <div class="rp-items">
-          <a href="https://policy.test.sse.cisco.com/" target="_blank" rel="noopener" class="rp-item">
-            <span class="rp-dot"></span>SSE Policy Check<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+        <p class="lm-section-title">Tools</p>
+        <div class="lm-grid">
+          <a href="https://policy.test.sse.cisco.com/" target="_blank" rel="noopener" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-shield-check" style="color:#0066ff; margin-right:6px;"></span>SSE Policy Checker</span>
+              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
+            </div>
+            <div class="lm-card-meta">External</div>
+            <p class="lm-card-desc">Validates your SSE policy configuration and enforcement status.</p>
           </a>
-          <a href="https://ifconfig.co/" target="_blank" rel="noopener" class="rp-item">
-            <span class="rp-dot"></span>IP Checker<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          <a href="https://ifconfig.co/" target="_blank" rel="noopener" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-location-dot" style="color:#0066ff; margin-right:6px;"></span>IP Checker</span>
+              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
+            </div>
+            <div class="lm-card-meta">External</div>
+            <p class="lm-card-desc">Shows your egress IP — verify traffic is routing through Secure Access.</p>
           </a>
-          <a href="https://http3.is/" target="_blank" rel="noopener" class="rp-item">
-            <span class="rp-dot"></span>QUIC Checker<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          <a href="https://http3.is/" target="_blank" rel="noopener" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-bolt" style="color:#0066ff; margin-right:6px;"></span>QUIC Checker</span>
+              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
+            </div>
+            <div class="lm-card-meta">External</div>
+            <p class="lm-card-desc">Checks if your browser is using QUIC (HTTP/3) protocol.</p>
           </a>
-          <a href="https://mediatest.ciscospark.com/" target="_blank" rel="noopener" class="rp-item">
-            <span class="rp-dot"></span>Speed Test<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          <a href="https://mediatest.ciscospark.com/" target="_blank" rel="noopener" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-gauge" style="color:#0066ff; margin-right:6px;"></span>Speed Test</span>
+              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
+            </div>
+            <div class="lm-card-meta">External</div>
+            <p class="lm-card-desc">Measures bandwidth — benchmark with and without the SSE tunnel active.</p>
           </a>
-          <a href="https://packetlosstest.com/" target="_blank" rel="noopener" class="rp-item">
-            <span class="rp-dot"></span>Packet Loss Test<span class="fa-solid fa-arrow-up-right-from-square rp-ext"></span>
+          <a href="https://packetlosstest.com/" target="_blank" rel="noopener" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-wave-square" style="color:#0066ff; margin-right:6px;"></span>Packet Loss Test</span>
+              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
+            </div>
+            <div class="lm-card-meta">External</div>
+            <p class="lm-card-desc">Tests packet loss — diagnose SSE tunnel quality and performance issues.</p>
           </a>
         </div>
+
       </div>
-
-    </aside>
-
+    </div>
   </div>
 
   <script>
-    function rpToggle(btn) {
-      btn.classList.toggle('collapsed');
-      btn.nextElementSibling.classList.toggle('hidden');
+    function openLinks() {
+      document.getElementById('linksBackdrop').classList.add('open');
+      document.addEventListener('keydown', escClose);
+    }
+    function closeLinks() {
+      document.getElementById('linksBackdrop').classList.remove('open');
+      document.removeEventListener('keydown', escClose);
+    }
+    function backdropClose(e) {
+      if (e.target === document.getElementById('linksBackdrop')) closeLinks();
+    }
+    function escClose(e) {
+      if (e.key === 'Escape') closeLinks();
     }
   </script>
 
