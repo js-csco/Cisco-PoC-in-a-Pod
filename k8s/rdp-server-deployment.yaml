@@ -1,10 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
-    kompose.version: 1.31.2 (a92241f79)
-  creationTimestamp: null
   labels:
     io.kompose.service: rdp-server
   name: rdp-server
@@ -17,23 +13,14 @@ spec:
   strategy: {}
   template:
     metadata:
-      annotations:
-        kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
-        kompose.version: 1.31.2 (a92241f79)
-      creationTimestamp: null
       labels:
-        io.kompose.network/piap-kind-komp-cisco-pod-network: "true"
         io.kompose.service: rdp-server
         app: rdp-server
     spec:
       containers:
         - env:
-            - name: PASSWORD
-              value: rdp_access
             - name: TZ
               value: Europe/Berlin
-            - name: USER
-              value: remote_user
           image: lscr.io/linuxserver/rdesktop:ubuntu-xfce
           name: rdp-server
           ports:

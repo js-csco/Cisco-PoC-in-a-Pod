@@ -1,6 +1,6 @@
 """
 Caldera C2 API helper.
-All calls use the red-team API key (ADMIN123 by default).
+All calls use the red-team API key (C1scoPoC! by default).
 """
 import os
 import requests
@@ -8,7 +8,7 @@ from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
 CALDERA_URL = os.environ.get("CALDERA_URL", "http://caldera.piap.svc.cluster.local:8888")
-API_KEY = os.environ.get("CALDERA_API_KEY", "ADMIN123")
+API_KEY = os.environ.get("CALDERA_API_KEY", "C1scoPoC!")
 NAMESPACE = "piap"
 NAMESPACE_OLD = "caldera"  # previous broken namespace — cleaned up on deploy
 
@@ -173,8 +173,8 @@ def deploy_caldera():
         "app.contact.http: http://caldera.piap.svc.cluster.local:8888\n"
         "app.contact.html: /beacon\n"
         "app.contact.websocket: 0.0.0.0:7012\n"
-        "api_key_red: ADMIN123\n"
-        "api_key_blue: BLUEADMIN123\n"
+        "api_key_red: C1scoPoC!\n"
+        "api_key_blue: C1scoPoC!\n"
         "users:\n"
         "  red:\n"
         "    admin: admin\n"

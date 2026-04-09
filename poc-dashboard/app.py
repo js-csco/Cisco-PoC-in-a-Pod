@@ -38,7 +38,7 @@ def links():
 
 # Auth
 
-app.secret_key = "supersecret"
+app.secret_key = "cisco-poc-in-a-pod"
 token_cache = {"access_token": None, "expires_at": 0}
 
 
@@ -93,8 +93,8 @@ def secure_access():
         # NEEDS NO AUTHENTICATION
         # Goto CSA Dashboard & manual config
         if action ==  "create_profile":
-            # Link to Dashboard!
-            return redirect("https://dashboard.sse.cisco.com/org/8219751/secure/securityprofiles")
+            # Link to Dashboard — org ID sourced from the SSE API token claims if available
+            return redirect("https://dashboard.sse.cisco.com/secure/securityprofiles")
 
         try:
             token = ensure_valid_token(api_key, api_secret)
@@ -580,7 +580,7 @@ def caldera_status():
         return jsonify({"error": "Caldera offline"})
     try:
         caldera_url = _os.environ.get("CALDERA_URL", "http://caldera.piap.svc.cluster.local:8888")
-        api_key = _os.environ.get("CALDERA_API_KEY", "ADMIN123")
+        api_key = _os.environ.get("CALDERA_API_KEY", "C1scoPoC!")
         r = _requests.get(f"{caldera_url}/api/v2/agents",
                           headers={"KEY": api_key, "Content-Type": "application/json"},
                           timeout=5)

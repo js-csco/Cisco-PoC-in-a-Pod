@@ -39,7 +39,7 @@ spec:
             - name: USER_NAME
               value: remote_user
             - name: USER_PASSWORD
-              value: ssh_access
+              value: C1scoPoC!
           image: lscr.io/linuxserver/openssh-server:latest
           name: openssh-server
           ports:

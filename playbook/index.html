@@ -957,7 +957,7 @@ const TABS = [
             steps: [
               'Ensure Cisco Secure Client (ZTA module) is connected.',
               'Open a terminal and run: <code>ssh remote_user@&lt;VM-IP&gt; -p 30022</code>',
-              'Enter password: <code>ssh_access</code>',
+              'Enter password: <code>C1scoPoC!</code>',
               'Confirm the SSH session opens and you reach the remote shell.',
               'Run <code>whoami</code> to verify you are logged in as <code>remote_user</code>.',
             ],
@@ -1148,7 +1148,7 @@ const TABS = [
             steps: [
               'Using your <strong>SSE-connected client</strong>, open an RDP session to the RDP server (credentials: <code>abc</code> / <code>abc</code>).',
               'Once inside the RDP session, open a terminal and try to <strong>ping</strong> the SSH server\'s cluster IP.',
-              'Also attempt an SSH login to the SSH server: <code>ssh remote_user@&lt;ssh-server-ip&gt;</code> (password: <code>ssh_access</code>).',
+              'Also attempt an SSH login to the SSH server: <code>ssh remote_user@&lt;ssh-server-ip&gt;</code> (password: <code>C1scoPoC!</code>).',
               'Both attempts should <strong>fail</strong> — Cilium microsegmentation blocks east-west traffic that is not explicitly permitted between these pods.',
             ],
           },

@@ -51,7 +51,7 @@ def _build_zero_trust_policy():
             "endpointSelector": {
                 "matchExpressions": [
                     {
-                        "key": "io.kompose.service",
+                        "key": "app",
                         "operator": "NotIn",
                         "values": ["poc-dashboard"],
                     }

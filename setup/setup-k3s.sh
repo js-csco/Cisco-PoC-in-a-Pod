@@ -437,7 +437,7 @@ echo ""
 # ============================================================
 
 # Step 16: Prompt for Splunk admin password (optional)
-echo "  Splunk will be deployed from the Automagic dashboard (requires a valid license)."
+echo "  Splunk will be deployed from the PoC Dashboard (requires a valid license)."
 echo ""
 
 # Step 17: Update configuration files with server IP
