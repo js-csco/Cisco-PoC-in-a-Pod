@@ -159,9 +159,12 @@
       align-items: flex-start;
       justify-content: center;
       padding-top: 64px;
+      opacity: 0;
+      transition: opacity 0.18s ease;
     }
 
     .links-backdrop.open { display: flex; }
+    .links-backdrop.visible { opacity: 1; }
 
     .links-modal {
       background: #fff;
@@ -173,23 +176,55 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      transform: scale(0.96) translateY(-8px);
+      transition: transform 0.18s ease, opacity 0.18s ease;
+      opacity: 0;
+    }
+
+    .links-backdrop.visible .links-modal {
+      transform: scale(1) translateY(0);
+      opacity: 1;
     }
 
     .links-modal-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 18px 24px 14px;
+      gap: 12px;
+      padding: 14px 16px 14px 24px;
       border-bottom: 1px solid #eee;
       flex-shrink: 0;
     }
 
-    .links-modal-header h2 {
-      margin: 0;
-      font-size: 1rem;
-      font-weight: 700;
+    .links-search {
+      flex: 1;
+      border: 1px solid #e2e4e8;
+      border-radius: 7px;
+      padding: 8px 12px 8px 34px;
+      font-size: 0.88em;
       color: #111;
-      letter-spacing: 0.2px;
+      background: #f8f9fb url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .links-search:focus {
+      border-color: #0066ff;
+      box-shadow: 0 0 0 3px rgba(0,102,255,0.1);
+      background-color: #fff;
+    }
+
+    .links-search::placeholder { color: #aaa; }
+
+    .links-kbd {
+      font-size: 0.68em;
+      color: #bbb;
+      background: #f4f4f4;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: monospace;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .links-modal-close {
@@ -201,6 +236,7 @@
       padding: 4px 8px;
       border-radius: 4px;
       transition: background 0.1s, color 0.1s;
+      flex-shrink: 0;
     }
 
     .links-modal-close:hover { background: #f0f0f0; color: #333; }
@@ -208,6 +244,14 @@
     .links-modal-body {
       overflow-y: auto;
       padding: 20px 24px 24px;
+    }
+
+    .lm-no-results {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      color: #aaa;
+      font-size: 0.9em;
     }
 
     /* Section heading inside modal */
@@ -297,8 +341,8 @@
       <img src="https://orionassured.com/wp-content/uploads/2025/01/cisco-logo-white-768x427.png" alt="Cisco Logo">
       <span class="navbar-title">Cisco PoC in a Pod</span>
     </div>
-    <button class="navbar-links-btn" onclick="openLinks()">
-      <span class="fa-solid fa-table-cells-large"></span> Links
+    <button class="navbar-links-btn" onclick="openLinks()" title="Open quick links (Ctrl+K)">
+      <span class="fa-solid fa-table-cells-large"></span> Links <span style="opacity:0.5; font-size:0.8em; margin-left:4px;">Ctrl+K</span>
     </button>
   </header>
 
@@ -353,12 +397,14 @@
   <div class="links-backdrop" id="linksBackdrop" onclick="backdropClose(event)">
     <div class="links-modal">
       <div class="links-modal-header">
-        <h2>Quick Links</h2>
+        <input class="links-search" id="linksSearch" type="text" placeholder="Search links…" oninput="filterLinks()" autocomplete="off">
+        <span class="links-kbd">Ctrl+K</span>
         <button class="links-modal-close" onclick="closeLinks()"><span class="fa-solid fa-xmark"></span></button>
       </div>
-      <div class="links-modal-body">
+      <div class="links-modal-body" id="linksBody">
+        <div class="lm-no-results" id="linksNoResults">No results found.</div>
 
-        <p class="lm-section-title">PoC in a Pod Tools</p>
+        <p class="lm-section-title" data-section>PoC in a Pod Tools</p>
         <div class="lm-grid">
           <a href="http://{{ host_ip }}:30200" target="_blank" class="lm-card">
             <div class="lm-card-top">
@@ -376,21 +422,13 @@
             <div class="lm-card-meta">Port 30250</div>
             <p class="lm-card-desc">Guided playbook for validating the full PoC with pass/fail tracking.</p>
           </a>
-          <a href="http://{{ host_ip }}:30300" target="_blank" class="lm-card">
-            <div class="lm-card-top">
-              <span class="lm-card-name"><span class="fa-solid fa-heart-pulse" style="color:#16a34a; margin-right:6px;"></span>Uptime Kuma</span>
-              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
-            </div>
-            <div class="lm-card-meta">Port 30300</div>
-            <p class="lm-card-desc">Status monitoring dashboard for all services in the environment.</p>
-          </a>
         </div>
 
-        <p class="lm-section-title">Cisco Solutions</p>
+        <p class="lm-section-title" data-section>Cisco Solutions</p>
         <div class="lm-grid">
           <a href="{{ url_for('secure_access') }}" class="lm-card">
             <div class="lm-card-top">
-              <span class="lm-card-name"><span class="fa-solid fa-cloud" style="color:#049fd9; margin-right:6px;"></span>Secure Access</span>
+              <span class="lm-card-name"><span class="fa-solid fa-cloud" style="color:#0066ff; margin-right:6px;"></span>Secure Access</span>
             </div>
             <div class="lm-card-meta">Cloud service</div>
             <p class="lm-card-desc">Zero Trust Access with on-prem Connector tunneling traffic to private resources.</p>
@@ -408,6 +446,14 @@
             </div>
             <div class="lm-card-meta">k3s DaemonSet</div>
             <p class="lm-card-desc">eBPF-based L4/L7 network policies and microsegmentation across pods.</p>
+          </a>
+          <a href="http://{{ host_ip }}:30800" target="_blank" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-binoculars" style="color:#0066ff; margin-right:6px;"></span>Hubble</span>
+              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
+            </div>
+            <div class="lm-card-meta">Port 30800</div>
+            <p class="lm-card-desc">Real-time visual graph of network flows between pods (Cilium observability).</p>
           </a>
           <a href="{{ url_for('tetragon') }}" class="lm-card">
             <div class="lm-card-top">
@@ -434,7 +480,7 @@
           </a>
         </div>
 
-        <p class="lm-section-title">Applications</p>
+        <p class="lm-section-title" data-section>Applications</p>
         <div class="lm-grid">
           <a href="http://{{ host_ip }}:30550" target="_blank" class="lm-card">
             <div class="lm-card-top">
@@ -452,13 +498,21 @@
             <div class="lm-card-meta">Port 30400</div>
             <p class="lm-card-desc">SAML-protected app demonstrating Duo SSO login and Duo Passport.</p>
           </a>
-          <a href="http://{{ host_ip }}:30800" target="_blank" class="lm-card">
+          <a href="http://{{ host_ip }}:30300" target="_blank" class="lm-card">
             <div class="lm-card-top">
-              <span class="lm-card-name"><span class="fa-solid fa-binoculars" style="color:#0066ff; margin-right:6px;"></span>Hubble</span>
+              <span class="lm-card-name"><span class="fa-solid fa-heart-pulse" style="color:#0066ff; margin-right:6px;"></span>Uptime Kuma</span>
               <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
             </div>
-            <div class="lm-card-meta">Port 30800</div>
-            <p class="lm-card-desc">Real-time visual graph of network flows between pods (Cilium observability).</p>
+            <div class="lm-card-meta">Port 30300</div>
+            <p class="lm-card-desc">Status monitoring dashboard tracking availability of all services.</p>
+          </a>
+          <a href="http://{{ host_ip }}:31789" target="_blank" class="lm-card">
+            <div class="lm-card-top">
+              <span class="lm-card-name"><span class="fa-solid fa-robot" style="color:#0066ff; margin-right:6px;"></span>OpenClaw / AI Agent</span>
+              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
+            </div>
+            <div class="lm-card-meta">Port 31789</div>
+            <p class="lm-card-desc">OpenClaw AI Agent — deploy from PoC Dashboard, secured by Cisco DefenseClaw.</p>
           </a>
           <a href="http://{{ host_ip }}:30600" target="_blank" class="lm-card">
             <div class="lm-card-top">
@@ -468,17 +522,9 @@
             <div class="lm-card-meta">Port 30600</div>
             <p class="lm-card-desc">MITRE Caldera adversary emulation for validating detection and enforcement.</p>
           </a>
-          <a href="http://{{ host_ip }}:31789" target="_blank" class="lm-card">
-            <div class="lm-card-top">
-              <span class="lm-card-name"><span class="fa-solid fa-robot" style="color:#0066ff; margin-right:6px;"></span>AI Agent</span>
-              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
-            </div>
-            <div class="lm-card-meta">Port 31789</div>
-            <p class="lm-card-desc">OpenClaw AI Agent secured by Cisco DefenseClaw — deploy from PoC Dashboard.</p>
-          </a>
         </div>
 
-        <p class="lm-section-title">Tools</p>
+        <p class="lm-section-title" data-section>Tools</p>
         <div class="lm-grid">
           <a href="https://policy.test.sse.cisco.com/" target="_blank" rel="noopener" class="lm-card">
             <div class="lm-card-top">
@@ -527,19 +573,73 @@
   </div>
 
   <script>
+    const backdrop = document.getElementById('linksBackdrop');
+    const searchInput = document.getElementById('linksSearch');
+
     function openLinks() {
-      document.getElementById('linksBackdrop').classList.add('open');
+      backdrop.classList.add('open');
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => backdrop.classList.add('visible'));
+      });
+      setTimeout(() => searchInput.focus(), 80);
       document.addEventListener('keydown', escClose);
     }
+
     function closeLinks() {
-      document.getElementById('linksBackdrop').classList.remove('open');
+      backdrop.classList.remove('visible');
+      backdrop.addEventListener('transitionend', function handler() {
+        backdrop.classList.remove('open');
+        searchInput.value = '';
+        filterLinks();
+        backdrop.removeEventListener('transitionend', handler);
+      });
       document.removeEventListener('keydown', escClose);
     }
+
     function backdropClose(e) {
-      if (e.target === document.getElementById('linksBackdrop')) closeLinks();
+      if (e.target === backdrop) closeLinks();
     }
+
     function escClose(e) {
       if (e.key === 'Escape') closeLinks();
+    }
+
+    // Ctrl+K / Cmd+K opens the modal
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        if (backdrop.classList.contains('open')) {
+          closeLinks();
+        } else {
+          openLinks();
+        }
+      }
+    });
+
+    function filterLinks() {
+      const q = searchInput.value.trim().toLowerCase();
+      const cards = document.querySelectorAll('#linksBody .lm-card');
+      const sections = document.querySelectorAll('#linksBody [data-section]');
+      let anyVisible = false;
+
+      // Hide/show cards
+      cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        const match = !q || text.includes(q);
+        card.style.display = match ? '' : 'none';
+        if (match) anyVisible = true;
+      });
+
+      // Hide section headers whose entire grid is hidden
+      sections.forEach(section => {
+        const grid = section.nextElementSibling;
+        if (!grid) return;
+        const visibleCards = [...grid.querySelectorAll('.lm-card')].some(c => c.style.display !== 'none');
+        section.style.display = visibleCards ? '' : 'none';
+        grid.style.display = visibleCards ? '' : 'none';
+      });
+
+      document.getElementById('linksNoResults').style.display = anyVisible ? 'none' : 'block';
     }
   </script>
 
