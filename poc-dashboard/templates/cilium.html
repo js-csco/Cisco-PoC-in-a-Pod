@@ -296,17 +296,16 @@
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
 
       <!-- L7 card -->
-      <div style="border:2px solid {% if l7_active %}#1565c0{% else %}#ddd{% endif %};
+      <div id="l7-card" style="border:2px solid {% if l7_active %}#1565c0{% else %}#ddd{% endif %};
                   border-radius:10px; padding:1.5rem;
                   background:{% if l7_active %}#e3f2fd{% else %}#fafafa{% endif %};
                   display:flex; flex-direction:column; gap:0.9rem;">
         <div style="display:flex; align-items:center; gap:8px;">
           <div style="width:4px; height:20px; background-color:#1976d2; border-radius:2px;"></div>
           <h4 style="margin:0; font-size:1rem; color:#111;">L7 HTTP Policy</h4>
-          {% if l7_active %}
-            <span style="margin-left:auto; background:#1565c0; color:#fff; font-size:0.72rem;
-                         font-weight:600; padding:2px 8px; border-radius:99px;">ACTIVE</span>
-          {% endif %}
+          <span id="l7-badge" style="margin-left:auto; background:#1565c0; color:#fff; font-size:0.72rem;
+                       font-weight:600; padding:2px 8px; border-radius:99px;
+                       display:{% if l7_active %}inline{% else %}none{% endif %};">ACTIVE</span>
         </div>
         <p style="margin:0; color:#555; font-size:0.88em; line-height:1.6;">
           Cilium inspects HTTP at the kernel level. <strong>GET</strong> is allowed;
@@ -319,8 +318,9 @@
           allows GET, blocks POST/PUT/DELETE
         </div>
         {% if not policy_error %}
-          <button type="submit" name="action"
-                  value="{% if l7_active %}remove_l7{% else %}apply_l7{% endif %}"
+          <button id="l7-btn" type="button"
+                  data-action="{% if l7_active %}remove_l7{% else %}deploy_l7{% endif %}"
+                  onclick="runCiliumCmd(this.dataset.action)"
                   style="margin-top:auto;
                          background-color:{% if l7_active %}#607d8b{% else %}#1976d2{% endif %};
                          color:#fff; border:none; padding:9px 20px; border-radius:6px;
@@ -331,17 +331,16 @@
       </div>
 
       <!-- DNS card -->
-      <div style="border:2px solid {% if dns_active %}#1565c0{% else %}#ddd{% endif %};
+      <div id="dns-card" style="border:2px solid {% if dns_active %}#1565c0{% else %}#ddd{% endif %};
                   border-radius:10px; padding:1.5rem;
                   background:{% if dns_active %}#e3f2fd{% else %}#fafafa{% endif %};
                   display:flex; flex-direction:column; gap:0.9rem;">
         <div style="display:flex; align-items:center; gap:8px;">
           <div style="width:4px; height:20px; background-color:#1976d2; border-radius:2px;"></div>
           <h4 style="margin:0; font-size:1rem; color:#111;">DNS Egress Filter</h4>
-          {% if dns_active %}
-            <span style="margin-left:auto; background:#1565c0; color:#fff; font-size:0.72rem;
-                         font-weight:600; padding:2px 8px; border-radius:99px;">ACTIVE</span>
-          {% endif %}
+          <span id="dns-badge" style="margin-left:auto; background:#1565c0; color:#fff; font-size:0.72rem;
+                       font-weight:600; padding:2px 8px; border-radius:99px;
+                       display:{% if dns_active %}inline{% else %}none{% endif %};">ACTIVE</span>
         </div>
         <p style="margin:0; color:#555; font-size:0.88em; line-height:1.6;">
           Cilium intercepts DNS at the kernel. Only <code>*.cisco.com</code> resolves — all other
@@ -354,8 +353,9 @@
           allows *.cisco.com, blocks everything else
         </div>
         {% if not policy_error %}
-          <button type="submit" name="action"
-                  value="{% if dns_active %}remove_dns{% else %}apply_dns{% endif %}"
+          <button id="dns-btn" type="button"
+                  data-action="{% if dns_active %}remove_dns{% else %}deploy_dns{% endif %}"
+                  onclick="runCiliumCmd(this.dataset.action)"
                   style="margin-top:auto;
                          background-color:{% if dns_active %}#607d8b{% else %}#1976d2{% endif %};
                          color:#fff; border:none; padding:9px 20px; border-radius:6px;
@@ -437,7 +437,7 @@
     function runCiliumCmd(action) {
       var terminal = document.getElementById('cilium-terminal');
       var pending = document.createElement('div');
-      pending.style.cssText = 'color:#64b5f6; padding:4px 0; border-bottom:1px solid #21262d;';
+      pending.style.cssText = 'color:#64b5f6; padding:4px 0; border-bottom:1px solid #21262d; margin-bottom:2px;';
       pending.textContent = '> running...';
       terminal.appendChild(pending);
       terminal.scrollTop = terminal.scrollHeight;
@@ -449,17 +449,39 @@
       })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        var cmdColor = '#64b5f6';
         var outColor = data.ok ? '#a5d6a7' : '#ef9a9a';
         pending.innerHTML =
-          '<span style="color:' + cmdColor + '">$ ' + escHtml(data.command) + '</span><br>' +
+          '<span style="color:#64b5f6">$ ' + escHtml(data.command) + '</span><br>' +
           '<span style="color:' + outColor + '">' + escHtml(data.output) + '</span>';
         terminal.scrollTop = terminal.scrollHeight;
+
+        // Update policy card state if this was a deploy/remove action
+        if (data.policy !== undefined && data.ok) {
+          updatePolicyCard(data.policy, data.active);
+        }
       })
       .catch(function(e) {
         pending.innerHTML = '<span style="color:#ef9a9a">Error: ' + escHtml(String(e)) + '</span>';
         terminal.scrollTop = terminal.scrollHeight;
       });
+    }
+
+    function updatePolicyCard(policyName, active) {
+      var prefix = policyName === 'piap-l7-http' ? 'l7' : 'dns';
+      var label  = policyName === 'piap-l7-http' ? 'L7 Policy' : 'DNS Filter';
+      var card   = document.getElementById(prefix + '-card');
+      var badge  = document.getElementById(prefix + '-badge');
+      var btn    = document.getElementById(prefix + '-btn');
+      if (!card) return;
+
+      card.style.borderColor       = active ? '#1565c0' : '#ddd';
+      card.style.backgroundColor   = active ? '#e3f2fd' : '#fafafa';
+      if (badge) badge.style.display = active ? 'inline' : 'none';
+      if (btn) {
+        btn.textContent              = active ? 'Remove ' + label : 'Deploy ' + label;
+        btn.style.backgroundColor    = active ? '#607d8b' : '#1976d2';
+        btn.dataset.action           = active ? 'remove_' + prefix : 'deploy_' + prefix;
+      }
     }
 
     function escHtml(s) {
