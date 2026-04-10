@@ -475,6 +475,64 @@ def cilium():
 
     return render_template('cilium.html', active_policies=active_policies, policy_error=policy_error)
 
+
+@app.route('/cilium/run', methods=['POST'])
+def cilium_run():
+    from flask import jsonify
+    from scripts.cilium_policies import exec_in_httpbin
+    data = request.get_json(force=True)
+    action = data.get('action', '')
+
+    def _run():
+        if action == 'curl_get':
+            cmd = 'curl -s -o /dev/null -w "%{http_code}" http://httpbin/get'
+            try:
+                resp = requests.get('http://httpbin/get', timeout=5)
+                return cmd, f'HTTP {resp.status_code} — {"OK" if resp.status_code == 200 else "see response"}', resp.status_code == 200
+            except Exception as e:
+                return cmd, f'Error: {e}', False
+
+        elif action == 'curl_post':
+            cmd = 'curl -s -o /dev/null -w "%{http_code}" -X POST http://httpbin/post'
+            try:
+                resp = requests.post('http://httpbin/post', timeout=5)
+                ok = resp.status_code == 200
+                note = 'OK — policy not active' if ok else f'HTTP {resp.status_code} — blocked by Cilium L7 policy' if resp.status_code == 403 else f'HTTP {resp.status_code}'
+                return cmd, note, ok
+            except Exception as e:
+                return cmd, f'Error: {e}', False
+
+        elif action in ('dns_cisco', 'dns_badguys'):
+            domain = 'www.cisco.com' if action == 'dns_cisco' else 'www.internetbadguys.com'
+            cmd = f'curl -s -o /dev/null -w "%{{http_code}}" --max-time 5 https://{domain}'
+            code = (
+                'import urllib.request, ssl\n'
+                'ctx = ssl._create_unverified_context()\n'
+                'try:\n'
+                f'    r = urllib.request.urlopen("https://{domain}", timeout=5, context=ctx)\n'
+                '    print("__ok__:" + str(r.status))\n'
+                'except Exception as e:\n'
+                '    print("__fail__:" + str(e))\n'
+            )
+            out = exec_in_httpbin(['python3', '-c', code])
+            if '__notfound__' in out:
+                return cmd, 'httpbin pod not running — deploy a policy first', False
+            reached = '__ok__' in out
+            if action == 'dns_cisco':
+                note = f'{domain} → reachable' if reached else f'{domain} → blocked or unreachable'
+            else:
+                note = f'{domain} → BLOCKED by DNS filter' if not reached else f'{domain} → reachable (DNS filter not active)'
+            return cmd, note, reached if action == 'dns_cisco' else not reached
+
+        return '', 'Unknown action', False
+
+    try:
+        cmd, output, ok = _run()
+        return jsonify({'command': cmd, 'output': output, 'ok': ok})
+    except Exception as e:
+        return jsonify({'command': '', 'output': f'Error: {e}', 'ok': False})
+
+
 @app.route('/tetragon', methods=['GET', 'POST'])
 def tetragon():
     from scripts.tetragon_policies import deploy_policies, remove_policies, get_active_policies
