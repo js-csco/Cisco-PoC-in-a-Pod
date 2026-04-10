@@ -278,168 +278,202 @@
 
   </section>
 
-  <!-- L7 HTTP POLICY -->
+  <!-- ADVANCED POLICIES -->
   <section style="padding-bottom:2.5rem; border-top:1px solid #e0e0e0; padding-top:2.5rem;">
     <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
       <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">L7 HTTP POLICY</h3>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">ADVANCED POLICIES</h3>
     </div>
-    <p style="margin-top:0; margin-bottom:16px; color:#555; font-size:0.9em; line-height:1.6;">
-      Traditional firewalls see IPs and ports — but not what is inside the request. Cilium's eBPF engine
-      inspects HTTP at the kernel level: allow <code>GET</code> but block <code>POST</code>, restrict
-      specific paths, enforce method-level access control — without touching the application.
+    <p style="margin-top:0; margin-bottom:20px; color:#555; font-size:0.9em; line-height:1.6;">
+      Cilium goes beyond IP/port filtering. Deploy these policies against the internal
+      <code>httpbin</code> test pod and run live tests directly from the terminal below.
     </p>
 
     {% set l7_active = ('piap-l7-http' in active_policies) %}
-
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
-
-      <!-- Policy card -->
-      <div style="border:2px solid {% if l7_active %}#7c4dff{% else %}#ddd{% endif %};
-                  border-radius:10px; padding:1.5rem; background:{% if l7_active %}#f5f0ff{% else %}#fafafa{% endif %};
-                  display:flex; flex-direction:column; gap:1rem;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <div style="width:4px; height:20px; background-color:#7c4dff; border-radius:2px;"></div>
-          <h4 style="margin:0; font-size:1rem; color:#5b21b6;">L7 HTTP Policy</h4>
-          {% if l7_active %}
-            <span style="margin-left:auto; background:#7c4dff; color:#fff; font-size:0.75rem;
-                         font-weight:600; padding:2px 8px; border-radius:99px;">ACTIVE</span>
-          {% endif %}
-        </div>
-        <p style="margin:0; color:#555; font-size:0.9em; line-height:1.6;">
-          Applies to the internal <code>httpbin</code> test service. <strong>GET</strong> requests are
-          allowed, <strong>POST</strong> requests return <code>403 Forbidden</code> — enforced by
-          Cilium at the kernel level, not by the application.
-        </p>
-        <div style="background:#ede9fe; border:1px solid #c4b5fd; border-radius:8px; padding:12px 16px; font-size:0.88em; color:#5b21b6;">
-          <strong>Policy: <code>piap-l7-http</code></strong>
-          <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
-            <li>Allows: HTTP <code>GET</code> from any pod</li>
-            <li>Blocks: <code>POST</code>, <code>PUT</code>, <code>DELETE</code> and all other methods</li>
-            <li>Response: <code>403 Access denied</code> from Cilium (not the app)</li>
-          </ul>
-        </div>
-        {% if not policy_error %}
-          <button type="submit" name="action" value="{% if l7_active %}remove_l7{% else %}apply_l7{% endif %}"
-                  style="margin-top:auto; background-color:{% if l7_active %}#888{% else %}#7c4dff{% endif %};
-                         color:#fff; border:none; padding:10px 24px; border-radius:6px;
-                         font-weight:500; cursor:pointer; font-size:0.95rem; width:100%;">
-            {% if l7_active %}Remove L7 Policy{% else %}Apply L7 Policy{% endif %}
-          </button>
-        {% endif %}
-      </div>
-
-      <!-- Test card -->
-      <div style="border:1px solid #e0e0e0; border-radius:10px; padding:1.5rem; display:flex; flex-direction:column; gap:1rem;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <div style="width:4px; height:20px; background-color:#374151; border-radius:2px;"></div>
-          <h4 style="margin:0; font-size:1rem; color:#111;">Test from Dashboard</h4>
-        </div>
-        <p style="margin:0; color:#555; font-size:0.9em; line-height:1.6;">
-          Sends a real HTTP request from this pod to <code>httpbin</code> inside the cluster.
-          The result shows exactly what Cilium permits or blocks.
-        </p>
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; font-size:0.85em; color:#555;">
-          Try <strong>GET</strong> first (should work), then <strong>POST</strong> (blocked once policy is active).
-        </div>
-        <div style="display:flex; flex-direction:column; gap:8px; margin-top:auto;">
-          <button type="submit" name="action" value="test_l7_get"
-                  style="background-color:#1976d2; color:#fff; border:none; padding:10px 16px;
-                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.9rem; width:100%;">
-            Test GET /get
-          </button>
-          <button type="submit" name="action" value="test_l7_post"
-                  style="background-color:#555; color:#fff; border:none; padding:10px 16px;
-                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.9rem; width:100%;">
-            Test POST /post
-          </button>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- DNS EGRESS FILTER -->
-  <section style="padding-bottom:2.5rem; border-top:1px solid #e0e0e0; padding-top:2.5rem;">
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DNS EGRESS FILTER</h3>
-    </div>
-    <p style="margin-top:0; margin-bottom:16px; color:#555; font-size:0.9em; line-height:1.6;">
-      Even if an attacker gets code running inside a pod, they need to reach back out — a C2 server,
-      an exfiltration endpoint, a malware download. Cilium intercepts DNS queries at the kernel level
-      and blocks connections to any domain not on the allow list. Basic protection without EDR and proxy.
-    </p>
-
     {% set dns_active = ('piap-dns-egress' in active_policies) %}
 
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+    <!-- Policy cards -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
 
-      <!-- Policy card -->
-      <div style="border:2px solid {% if dns_active %}#ea580c{% else %}#ddd{% endif %};
-                  border-radius:10px; padding:1.5rem; background:{% if dns_active %}#fff7ed{% else %}#fafafa{% endif %};
-                  display:flex; flex-direction:column; gap:1rem;">
+      <!-- L7 card -->
+      <div style="border:2px solid {% if l7_active %}#1565c0{% else %}#ddd{% endif %};
+                  border-radius:10px; padding:1.5rem;
+                  background:{% if l7_active %}#e3f2fd{% else %}#fafafa{% endif %};
+                  display:flex; flex-direction:column; gap:0.9rem;">
         <div style="display:flex; align-items:center; gap:8px;">
-          <div style="width:4px; height:20px; background-color:#ea580c; border-radius:2px;"></div>
-          <h4 style="margin:0; font-size:1rem; color:#9a3412;">DNS Egress Filter</h4>
-          {% if dns_active %}
-            <span style="margin-left:auto; background:#ea580c; color:#fff; font-size:0.75rem;
+          <div style="width:4px; height:20px; background-color:#1976d2; border-radius:2px;"></div>
+          <h4 style="margin:0; font-size:1rem; color:#111;">L7 HTTP Policy</h4>
+          {% if l7_active %}
+            <span style="margin-left:auto; background:#1565c0; color:#fff; font-size:0.72rem;
                          font-weight:600; padding:2px 8px; border-radius:99px;">ACTIVE</span>
           {% endif %}
         </div>
-        <p style="margin:0; color:#555; font-size:0.9em; line-height:1.6;">
-          Restricts outbound connections from the <code>httpbin</code> pod to <code>*.cisco.com</code>
-          only. All other domains — including the Cisco Umbrella malware test domains — are blocked
-          before the TCP connection is even attempted.
+        <p style="margin:0; color:#555; font-size:0.88em; line-height:1.6;">
+          Cilium inspects HTTP at the kernel level. <strong>GET</strong> is allowed;
+          <strong>POST</strong> returns <code>403</code> from Cilium — not the application.
+          Traditional firewalls cannot do this.
         </p>
-        <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:12px 16px; font-size:0.88em; color:#9a3412;">
-          <strong>Policy: <code>piap-dns-egress</code></strong>
-          <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
-            <li>Allowed outbound: <code>*.cisco.com</code></li>
-            <li>Blocked: everything else (including known malicious domains)</li>
-            <li>Enforced: DNS-level, kernel-level — before TCP connects</li>
-          </ul>
+        <div style="background:#f0f4f8; border:1px solid #cfd8e3; border-radius:8px;
+                    padding:10px 14px; font-size:0.85em; color:#37474f;">
+          <strong><code>piap-l7-http</code></strong> &mdash;
+          allows GET, blocks POST/PUT/DELETE
         </div>
         {% if not policy_error %}
-          <button type="submit" name="action" value="{% if dns_active %}remove_dns{% else %}apply_dns{% endif %}"
-                  style="margin-top:auto; background-color:{% if dns_active %}#888{% else %}#ea580c{% endif %};
-                         color:#fff; border:none; padding:10px 24px; border-radius:6px;
+          <button type="submit" name="action"
+                  value="{% if l7_active %}remove_l7{% else %}apply_l7{% endif %}"
+                  style="margin-top:auto;
+                         background-color:{% if l7_active %}#607d8b{% else %}#1976d2{% endif %};
+                         color:#fff; border:none; padding:9px 20px; border-radius:6px;
                          font-weight:500; cursor:pointer; font-size:0.9rem; width:100%;">
-            {% if dns_active %}Remove DNS Filter{% else %}Apply DNS Filter{% endif %}
+            {% if l7_active %}Remove L7 Policy{% else %}Deploy L7 Policy{% endif %}
           </button>
         {% endif %}
       </div>
 
-      <!-- Test card -->
-      <div style="border:1px solid #e0e0e0; border-radius:10px; padding:1.5rem; display:flex; flex-direction:column; gap:1rem;">
+      <!-- DNS card -->
+      <div style="border:2px solid {% if dns_active %}#1565c0{% else %}#ddd{% endif %};
+                  border-radius:10px; padding:1.5rem;
+                  background:{% if dns_active %}#e3f2fd{% else %}#fafafa{% endif %};
+                  display:flex; flex-direction:column; gap:0.9rem;">
         <div style="display:flex; align-items:center; gap:8px;">
-          <div style="width:4px; height:20px; background-color:#374151; border-radius:2px;"></div>
-          <h4 style="margin:0; font-size:1rem; color:#111;">Test from httpbin pod</h4>
+          <div style="width:4px; height:20px; background-color:#1976d2; border-radius:2px;"></div>
+          <h4 style="margin:0; font-size:1rem; color:#111;">DNS Egress Filter</h4>
+          {% if dns_active %}
+            <span style="margin-left:auto; background:#1565c0; color:#fff; font-size:0.72rem;
+                         font-weight:600; padding:2px 8px; border-radius:99px;">ACTIVE</span>
+          {% endif %}
         </div>
-        <p style="margin:0; color:#555; font-size:0.9em; line-height:1.6;">
-          Runs a real outbound request from inside the <code>httpbin</code> pod.
-          Uses the Cisco Umbrella test domains — the same domains Cisco uses to verify DNS security is working.
+        <p style="margin:0; color:#555; font-size:0.88em; line-height:1.6;">
+          Cilium intercepts DNS at the kernel. Only <code>*.cisco.com</code> resolves — all other
+          domains, including known malicious ones, are blocked before TCP even starts.
+          Basic protection without EDR and proxy.
         </p>
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; font-size:0.85em; color:#555;">
-          With the filter active: <code>www.cisco.com</code> reaches through,
-          <code>internetbadguys.com</code> is blocked before TCP even starts.
+        <div style="background:#f0f4f8; border:1px solid #cfd8e3; border-radius:8px;
+                    padding:10px 14px; font-size:0.85em; color:#37474f;">
+          <strong><code>piap-dns-egress</code></strong> &mdash;
+          allows *.cisco.com, blocks everything else
         </div>
-        <div style="display:flex; flex-direction:column; gap:8px; margin-top:auto;">
-          <button type="submit" name="action" value="test_dns_allow"
-                  style="background-color:#15803d; color:#fff; border:none; padding:10px 16px;
-                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.9rem; width:100%;">
-            Test www.cisco.com
+        {% if not policy_error %}
+          <button type="submit" name="action"
+                  value="{% if dns_active %}remove_dns{% else %}apply_dns{% endif %}"
+                  style="margin-top:auto;
+                         background-color:{% if dns_active %}#607d8b{% else %}#1976d2{% endif %};
+                         color:#fff; border:none; padding:9px 20px; border-radius:6px;
+                         font-weight:500; cursor:pointer; font-size:0.9rem; width:100%;">
+            {% if dns_active %}Remove DNS Filter{% else %}Deploy DNS Filter{% endif %}
           </button>
-          <button type="submit" name="action" value="test_dns_block"
-                  style="background-color:#555; color:#fff; border:none; padding:10px 16px;
-                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.9rem; width:100%;">
-            Test www.internetbadguys.com
-          </button>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- Terminal + test buttons -->
+    <div style="display:grid; grid-template-columns:220px 1fr; gap:1.5rem; align-items:start;">
+
+      <!-- Button panel -->
+      <div style="display:flex; flex-direction:column; gap:1.2rem;">
+
+        <div>
+          <div style="font-size:0.78rem; font-weight:600; color:#888; text-transform:uppercase;
+                      letter-spacing:0.8px; margin-bottom:8px;">L7 HTTP Tests</div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <button type="button" onclick="runCiliumCmd('curl_get')"
+                    style="background:#1976d2; color:#fff; border:none; padding:8px 14px;
+                           border-radius:6px; font-size:0.85rem; font-weight:500;
+                           cursor:pointer; text-align:left;">
+              curl GET /get
+            </button>
+            <button type="button" onclick="runCiliumCmd('curl_post')"
+                    style="background:#455a64; color:#fff; border:none; padding:8px 14px;
+                           border-radius:6px; font-size:0.85rem; font-weight:500;
+                           cursor:pointer; text-align:left;">
+              curl POST /post
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:0.78rem; font-weight:600; color:#888; text-transform:uppercase;
+                      letter-spacing:0.8px; margin-bottom:8px;">DNS Egress Tests</div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <button type="button" onclick="runCiliumCmd('dns_cisco')"
+                    style="background:#1976d2; color:#fff; border:none; padding:8px 14px;
+                           border-radius:6px; font-size:0.85rem; font-weight:500;
+                           cursor:pointer; text-align:left;">
+              curl www.cisco.com
+            </button>
+            <button type="button" onclick="runCiliumCmd('dns_badguys')"
+                    style="background:#b71c1c; color:#fff; border:none; padding:8px 14px;
+                           border-radius:6px; font-size:0.85rem; font-weight:500;
+                           cursor:pointer; text-align:left;">
+              curl internetbadguys.com
+            </button>
+          </div>
+        </div>
+
+        <button type="button" onclick="clearCiliumTerminal()"
+                style="background:none; border:1px solid #ccc; color:#777; padding:6px 14px;
+                       border-radius:6px; font-size:0.8rem; cursor:pointer; margin-top:4px;">
+          Clear terminal
+        </button>
+
+      </div>
+
+      <!-- Terminal -->
+      <div id="cilium-terminal"
+           style="background:#0d1117; border-radius:8px; padding:14px 16px;
+                  height:300px; overflow-y:auto; font-family:'Courier New',Courier,monospace;
+                  font-size:0.82rem; border:1px solid #30363d;">
+        <div style="color:#4a5568; font-style:italic;">
+          # Deploy a policy, then run tests. Results appear here.
         </div>
       </div>
 
     </div>
+
   </section>
+
+  <script>
+    function runCiliumCmd(action) {
+      var terminal = document.getElementById('cilium-terminal');
+      var pending = document.createElement('div');
+      pending.style.cssText = 'color:#64b5f6; padding:4px 0; border-bottom:1px solid #21262d;';
+      pending.textContent = '> running...';
+      terminal.appendChild(pending);
+      terminal.scrollTop = terminal.scrollHeight;
+
+      fetch('/cilium/run', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action: action})
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var cmdColor = '#64b5f6';
+        var outColor = data.ok ? '#a5d6a7' : '#ef9a9a';
+        pending.innerHTML =
+          '<span style="color:' + cmdColor + '">$ ' + escHtml(data.command) + '</span><br>' +
+          '<span style="color:' + outColor + '">' + escHtml(data.output) + '</span>';
+        terminal.scrollTop = terminal.scrollHeight;
+      })
+      .catch(function(e) {
+        pending.innerHTML = '<span style="color:#ef9a9a">Error: ' + escHtml(String(e)) + '</span>';
+        terminal.scrollTop = terminal.scrollHeight;
+      });
+    }
+
+    function escHtml(s) {
+      return String(s)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;');
+    }
+
+    function clearCiliumTerminal() {
+      var terminal = document.getElementById('cilium-terminal');
+      terminal.innerHTML = '<div style="color:#4a5568; font-style:italic;"># Deploy a policy, then run tests. Results appear here.</div>';
+    }
+  </script>
 
 </form>
 {% endblock %}
