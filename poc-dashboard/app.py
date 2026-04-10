@@ -479,29 +479,84 @@ def cilium():
 @app.route('/cilium/run', methods=['POST'])
 def cilium_run():
     from flask import jsonify
-    from scripts.cilium_policies import exec_in_httpbin
+    from scripts.cilium_policies import (
+        exec_in_httpbin, _get_core_api, NAMESPACE,
+        apply_l7_http, remove_l7_http, apply_dns_egress, remove_dns_egress,
+    )
     data = request.get_json(force=True)
     action = data.get('action', '')
 
-    def _run():
-        if action == 'curl_get':
-            cmd = 'curl -s -o /dev/null -w "%{http_code}" http://httpbin/get'
+    def _httpbin_running():
+        try:
+            pods = _get_core_api().list_namespaced_pod(NAMESPACE, label_selector='app=httpbin')
+            return any(p.status.phase == 'Running' for p in pods.items)
+        except Exception:
+            return True  # assume ok if we can't check
+
+    def _http_request(method, url):
+        """Make an HTTP request with one retry on connection failure (Cilium reprogramming window)."""
+        fn = requests.get if method == 'GET' else requests.post
+        for attempt in range(2):
             try:
-                resp = requests.get('http://httpbin/get', timeout=5)
-                return cmd, f'HTTP {resp.status_code} — {"OK" if resp.status_code == 200 else "see response"}', resp.status_code == 200
-            except Exception as e:
-                return cmd, f'Error: {e}', False
+                return fn(url, timeout=4)
+            except requests.exceptions.ConnectionError:
+                if attempt == 0:
+                    time.sleep(2)
+                else:
+                    raise
+
+    def _run():
+        # ── Policy deploy/remove (AJAX, no page reload) ──────────────────────
+        if action == 'deploy_l7':
+            result = apply_l7_http()
+            return {'command': 'Apply L7 HTTP Policy', 'output': str(result),
+                    'ok': True, 'policy': 'piap-l7-http', 'active': True}
+
+        elif action == 'remove_l7':
+            result = remove_l7_http()
+            return {'command': 'Remove L7 HTTP Policy', 'output': str(result),
+                    'ok': True, 'policy': 'piap-l7-http', 'active': False}
+
+        elif action == 'deploy_dns':
+            result = apply_dns_egress()
+            return {'command': 'Apply DNS Egress Filter', 'output': str(result),
+                    'ok': True, 'policy': 'piap-dns-egress', 'active': True}
+
+        elif action == 'remove_dns':
+            result = remove_dns_egress()
+            return {'command': 'Remove DNS Egress Filter', 'output': str(result),
+                    'ok': True, 'policy': 'piap-dns-egress', 'active': False}
+
+        # ── L7 HTTP tests ─────────────────────────────────────────────────────
+        elif action == 'curl_get':
+            cmd = 'curl -s -o /dev/null -w "%{http_code}" http://httpbin/get'
+            if not _httpbin_running():
+                return {'command': cmd, 'output': 'httpbin pod not running — deploy a policy first', 'ok': False}
+            try:
+                resp = _http_request('GET', 'http://httpbin/get')
+                note = 'OK' if resp.status_code == 200 else f'HTTP {resp.status_code}'
+                return {'command': cmd, 'output': f'HTTP {resp.status_code} — {note}', 'ok': resp.status_code == 200}
+            except requests.exceptions.ConnectionError:
+                return {'command': cmd, 'output': 'httpbin not reachable — Cilium may still be reconfiguring, try again', 'ok': False}
 
         elif action == 'curl_post':
             cmd = 'curl -s -o /dev/null -w "%{http_code}" -X POST http://httpbin/post'
+            if not _httpbin_running():
+                return {'command': cmd, 'output': 'httpbin pod not running — deploy a policy first', 'ok': False}
             try:
-                resp = requests.post('http://httpbin/post', timeout=5)
+                resp = _http_request('POST', 'http://httpbin/post')
                 ok = resp.status_code == 200
-                note = 'OK — policy not active' if ok else f'HTTP {resp.status_code} — blocked by Cilium L7 policy' if resp.status_code == 403 else f'HTTP {resp.status_code}'
-                return cmd, note, ok
-            except Exception as e:
-                return cmd, f'Error: {e}', False
+                if resp.status_code == 403:
+                    note = 'HTTP 403 — blocked by Cilium L7 policy'
+                elif ok:
+                    note = 'HTTP 200 — OK (policy not active)'
+                else:
+                    note = f'HTTP {resp.status_code}'
+                return {'command': cmd, 'output': note, 'ok': ok}
+            except requests.exceptions.ConnectionError:
+                return {'command': cmd, 'output': 'httpbin not reachable — Cilium may still be reconfiguring, try again', 'ok': False}
 
+        # ── DNS egress tests ──────────────────────────────────────────────────
         elif action in ('dns_cisco', 'dns_badguys'):
             domain = 'www.cisco.com' if action == 'dns_cisco' else 'www.internetbadguys.com'
             cmd = f'curl -s -o /dev/null -w "%{{http_code}}" --max-time 5 https://{domain}'
@@ -516,19 +571,20 @@ def cilium_run():
             )
             out = exec_in_httpbin(['python3', '-c', code])
             if '__notfound__' in out:
-                return cmd, 'httpbin pod not running — deploy a policy first', False
+                return {'command': cmd, 'output': 'httpbin pod not running — deploy a policy first', 'ok': False}
             reached = '__ok__' in out
             if action == 'dns_cisco':
                 note = f'{domain} → reachable' if reached else f'{domain} → blocked or unreachable'
+                ok = reached
             else:
                 note = f'{domain} → BLOCKED by DNS filter' if not reached else f'{domain} → reachable (DNS filter not active)'
-            return cmd, note, reached if action == 'dns_cisco' else not reached
+                ok = not reached
+            return {'command': cmd, 'output': note, 'ok': ok}
 
-        return '', 'Unknown action', False
+        return {'command': '', 'output': 'Unknown action', 'ok': False}
 
     try:
-        cmd, output, ok = _run()
-        return jsonify({'command': cmd, 'output': output, 'ok': ok})
+        return jsonify(_run())
     except Exception as e:
         return jsonify({'command': '', 'output': f'Error: {e}', 'ok': False})
 
