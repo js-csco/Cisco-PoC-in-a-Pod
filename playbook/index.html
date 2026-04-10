@@ -1165,6 +1165,60 @@ const TABS = [
           },
         ],
       },
+      {
+        title: 'L7 HTTP Policy',
+        cases: [
+          {
+            id: 'cil-l7-1',
+            title: 'Apply L7 Policy — GET Allowed, POST Blocked',
+            desc: 'Traditional firewalls see IPs and ports but not what is inside the HTTP request. Cilium\'s eBPF engine inspects HTTP at the kernel level. This test applies a policy that allows <code>GET</code> but blocks <code>POST</code> on the internal <code>httpbin</code> test service — enforced at the kernel, not the application.',
+            steps: [
+              'Open <strong>PoC Dashboard &rsaquo; Cilium</strong> and scroll to the <strong>L7 HTTP Policy</strong> section.',
+              'Click <strong>Apply L7 Policy</strong>. The first click also deploys the <code>httpbin</code> test pod — wait ~20 seconds for it to start.',
+              'Click <strong>Test GET /get</strong>. The result should show <strong>200 OK</strong> — GET is permitted.',
+              'Click <strong>Test POST /post</strong>. The result should show <strong>403 Forbidden</strong> — blocked by Cilium at the kernel level, not by the application.',
+              'Note: the <code>403</code> is returned by Cilium\'s eBPF proxy, not by httpbin itself. The application never even receives the POST request.',
+            ],
+          },
+          {
+            id: 'cil-l7-2',
+            title: 'Remove L7 Policy — POST Allowed Again',
+            desc: 'Verify that removing the policy restores full access. This confirms the enforcement is entirely in Cilium — no application changes required.',
+            steps: [
+              'In <strong>PoC Dashboard &rsaquo; Cilium &rsaquo; L7 HTTP Policy</strong>, click <strong>Remove L7 Policy</strong>.',
+              'Click <strong>Test POST /post</strong> again.',
+              'The result should now show <strong>200 OK</strong> — the policy is gone, Cilium defaults back to allow-all.',
+            ],
+          },
+        ],
+      },
+      {
+        title: 'DNS Egress Filter',
+        cases: [
+          {
+            id: 'cil-dns-1',
+            title: 'Apply DNS Filter — Only Cisco Domains Permitted',
+            desc: 'If an attacker gets code running inside a pod, they need to reach back out. Cilium intercepts DNS queries at the kernel and blocks connections to any domain not on the allow list — basic protection without EDR and proxy. This test restricts the <code>httpbin</code> pod to <code>*.cisco.com</code> only.',
+            steps: [
+              'Open <strong>PoC Dashboard &rsaquo; Cilium</strong> and scroll to the <strong>DNS Egress Filter</strong> section.',
+              'Click <strong>Apply DNS Filter</strong>.',
+              'Click <strong>Test www.cisco.com</strong>. The result should show <strong>reachable</strong> — cisco.com is on the allow list.',
+              'Click <strong>Test www.internetbadguys.com</strong>. The result should show <strong>blocked</strong> — Cilium filters the DNS lookup before any TCP connection is made.',
+              'Note: <code>www.internetbadguys.com</code> is a Cisco Umbrella test domain for malware simulation — it is the same domain Cisco uses to verify DNS security controls are working.',
+            ],
+          },
+          {
+            id: 'cil-dns-2',
+            title: 'Remove DNS Filter — All Domains Reachable Again',
+            desc: 'Verify that removing the DNS filter restores unrestricted egress from the pod.',
+            steps: [
+              'In <strong>PoC Dashboard &rsaquo; Cilium &rsaquo; DNS Egress Filter</strong>, click <strong>Remove DNS Filter</strong>.',
+              'Click <strong>Test www.internetbadguys.com</strong> again.',
+              'The result should now show <strong>reachable</strong> — the filter is removed, egress is unrestricted.',
+            ],
+          },
+        ],
+      },
     ],
   },
   {
