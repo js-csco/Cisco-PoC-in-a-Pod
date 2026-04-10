@@ -384,7 +384,12 @@ def duo():
 
 @app.route('/cilium', methods=['GET', 'POST'])
 def cilium():
-    from scripts.cilium_policies import apply_zero_trust, apply_allow_all, get_active_policies
+    from scripts.cilium_policies import (
+        apply_zero_trust, apply_allow_all, get_active_policies,
+        apply_l7_http, remove_l7_http,
+        apply_dns_egress, remove_dns_egress,
+        exec_in_httpbin,
+    )
 
     if request.method == 'POST':
         action = request.form.get('action')
@@ -392,9 +397,71 @@ def cilium():
             if action == 'allow_all':
                 apply_allow_all()
                 flash("✅ Allow All Traffic")
+
             elif action == 'zero_trust':
                 apply_zero_trust()
                 flash("✅ Zero Trust Segmentation")
+
+            # ── L7 HTTP ──────────────────────────────────────────────────
+            elif action == 'apply_l7':
+                apply_l7_http()
+                flash("✅ L7 HTTP Policy applied — httpbin accepts GET only")
+            elif action == 'remove_l7':
+                remove_l7_http()
+                flash("✅ L7 HTTP Policy removed")
+            elif action == 'test_l7_get':
+                try:
+                    resp = requests.get("http://httpbin/get", timeout=5)
+                    if resp.status_code == 200:
+                        flash("✅ GET /get → 200 OK")
+                    else:
+                        flash(f"⚠️ GET /get → {resp.status_code}")
+                except requests.exceptions.ConnectionError:
+                    flash("⚠️ httpbin not reachable — pod may still be starting, try again in a few seconds")
+            elif action == 'test_l7_post':
+                try:
+                    resp = requests.post("http://httpbin/post", timeout=5)
+                    if resp.status_code == 403:
+                        flash("🔒 POST /post → 403 Forbidden — blocked by Cilium L7 policy")
+                    elif resp.status_code == 200:
+                        flash("✅ POST /post → 200 OK — policy not active")
+                    else:
+                        flash(f"⚠️ POST /post → {resp.status_code}")
+                except requests.exceptions.ConnectionError:
+                    flash("⚠️ httpbin not reachable — pod may still be starting, try again in a few seconds")
+
+            # ── DNS egress ───────────────────────────────────────────────
+            elif action == 'apply_dns':
+                apply_dns_egress()
+                flash("✅ DNS Egress Filter applied — only *.cisco.com is permitted outbound")
+            elif action == 'remove_dns':
+                remove_dns_egress()
+                flash("✅ DNS Egress Filter removed")
+            elif action in ('test_dns_allow', 'test_dns_block'):
+                domain = "www.cisco.com" if action == 'test_dns_allow' else "www.internetbadguys.com"
+                code = (
+                    "import urllib.request, ssl\n"
+                    "ctx = ssl._create_unverified_context()\n"
+                    "try:\n"
+                    f"    r = urllib.request.urlopen('https://{domain}', timeout=5, context=ctx)\n"
+                    "    print('__ok__:' + str(r.status))\n"
+                    "except Exception as e:\n"
+                    "    print('__fail__:' + str(e))\n"
+                )
+                out = exec_in_httpbin(["python3", "-c", code])
+                if "__notfound__" in out:
+                    flash("⚠️ httpbin pod not running — apply a policy first to deploy it")
+                elif "__ok__" in out:
+                    if action == 'test_dns_allow':
+                        flash(f"✅ {domain} → reachable")
+                    else:
+                        flash(f"⚠️ {domain} → reachable — DNS filter not active")
+                else:
+                    if action == 'test_dns_block':
+                        flash(f"🔒 {domain} → blocked (DNS filtered by Cilium)")
+                    else:
+                        flash(f"⚠️ {domain} → {out[:120]}")
+
         except Exception as e:
             flash(f"⚠️ Error applying Cilium policy: {e}")
         return redirect(url_for('cilium'))
