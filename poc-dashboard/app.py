@@ -480,30 +480,16 @@ def cilium():
 def cilium_run():
     from flask import jsonify
     from scripts.cilium_policies import (
-        exec_in_httpbin, _get_core_api, NAMESPACE,
+        exec_in_httpbin,
         apply_l7_http, remove_l7_http, apply_dns_egress, remove_dns_egress,
     )
     data = request.get_json(force=True)
     action = data.get('action', '')
 
-    def _httpbin_running():
-        try:
-            pods = _get_core_api().list_namespaced_pod(NAMESPACE, label_selector='app=httpbin')
-            return any(p.status.phase == 'Running' for p in pods.items)
-        except Exception:
-            return True  # assume ok if we can't check
-
-    def _http_request(method, url):
-        """Make an HTTP request with one retry on connection failure (Cilium reprogramming window)."""
-        fn = requests.get if method == 'GET' else requests.post
-        for attempt in range(2):
-            try:
-                return fn(url, timeout=4)
-            except requests.exceptions.ConnectionError:
-                if attempt == 0:
-                    time.sleep(2)
-                else:
-                    raise
+    def _exec(cmd_list):
+        """Exec command in httpbin pod. Returns (output_str, not_found_bool)."""
+        out = exec_in_httpbin(cmd_list)
+        return out.replace('__error__: ', 'exec error: ').strip(), '__notfound__' in out
 
     def _run():
         # ── Policy deploy/remove (AJAX, no page reload) ──────────────────────
@@ -527,34 +513,44 @@ def cilium_run():
             return {'command': 'Remove DNS Egress Filter', 'output': str(result),
                     'ok': True, 'policy': 'piap-dns-egress', 'active': False}
 
-        # ── L7 HTTP tests ─────────────────────────────────────────────────────
+        # ── L7 HTTP tests — exec inside httpbin pod so the test is independent
+        #    of whether the dashboard→httpbin TCP path is healthy after policy
+        #    teardown (Cilium L7 proxy reconfiguration can briefly break it).
         elif action == 'curl_get':
             cmd = 'curl -s -o /dev/null -w "%{http_code}" http://httpbin/get'
-            if not _httpbin_running():
+            code = (
+                'import urllib.request\n'
+                'try:\n'
+                '    r = urllib.request.urlopen("http://httpbin/get", timeout=5)\n'
+                '    print("HTTP " + str(r.status))\n'
+                'except urllib.error.HTTPError as e: print("HTTP " + str(e.code))\n'
+                'except Exception as e: print("Error: " + str(e))\n'
+            )
+            out, nf = _exec(['python3', '-c', code])
+            if nf:
                 return {'command': cmd, 'output': 'httpbin pod not running — deploy a policy first', 'ok': False}
-            try:
-                resp = _http_request('GET', 'http://httpbin/get')
-                note = 'OK' if resp.status_code == 200 else f'HTTP {resp.status_code}'
-                return {'command': cmd, 'output': f'HTTP {resp.status_code} — {note}', 'ok': resp.status_code == 200}
-            except requests.exceptions.ConnectionError:
-                return {'command': cmd, 'output': 'httpbin not reachable — Cilium may still be reconfiguring, try again', 'ok': False}
+            ok = 'HTTP 200' in out
+            return {'command': cmd, 'output': out + (' — OK' if ok else ''), 'ok': ok}
 
         elif action == 'curl_post':
             cmd = 'curl -s -o /dev/null -w "%{http_code}" -X POST http://httpbin/post'
-            if not _httpbin_running():
+            code = (
+                'import urllib.request\n'
+                'req = urllib.request.Request("http://httpbin/post", data=b"{}", method="POST")\n'
+                'try:\n'
+                '    r = urllib.request.urlopen(req, timeout=5)\n'
+                '    print("HTTP " + str(r.status))\n'
+                'except urllib.error.HTTPError as e: print("HTTP " + str(e.code))\n'
+                'except Exception as e: print("Error: " + str(e))\n'
+            )
+            out, nf = _exec(['python3', '-c', code])
+            if nf:
                 return {'command': cmd, 'output': 'httpbin pod not running — deploy a policy first', 'ok': False}
-            try:
-                resp = _http_request('POST', 'http://httpbin/post')
-                ok = resp.status_code == 200
-                if resp.status_code == 403:
-                    note = 'HTTP 403 — blocked by Cilium L7 policy'
-                elif ok:
-                    note = 'HTTP 200 — OK (policy not active)'
-                else:
-                    note = f'HTTP {resp.status_code}'
-                return {'command': cmd, 'output': note, 'ok': ok}
-            except requests.exceptions.ConnectionError:
-                return {'command': cmd, 'output': 'httpbin not reachable — Cilium may still be reconfiguring, try again', 'ok': False}
+            if 'HTTP 200' in out:
+                return {'command': cmd, 'output': 'HTTP 200 — OK (policy not active)', 'ok': True}
+            if 'HTTP 403' in out:
+                return {'command': cmd, 'output': 'HTTP 403 — blocked by Cilium L7 policy', 'ok': False}
+            return {'command': cmd, 'output': out or 'No response', 'ok': False}
 
         # ── DNS egress tests ──────────────────────────────────────────────────
         elif action in ('dns_cisco', 'dns_badguys'):
@@ -569,8 +565,8 @@ def cilium_run():
                 'except Exception as e:\n'
                 '    print("__fail__:" + str(e))\n'
             )
-            out = exec_in_httpbin(['python3', '-c', code])
-            if '__notfound__' in out:
+            out, nf = _exec(['python3', '-c', code])
+            if nf:
                 return {'command': cmd, 'output': 'httpbin pod not running — deploy a policy first', 'ok': False}
             reached = '__ok__' in out
             if action == 'dns_cisco':
@@ -580,6 +576,16 @@ def cilium_run():
                 note = f'{domain} → BLOCKED by DNS filter' if not reached else f'{domain} → reachable (DNS filter not active)'
                 ok = not reached
             return {'command': cmd, 'output': note, 'ok': ok}
+
+        # ── Custom command (exec inside httpbin pod) ──────────────────────────
+        elif action == 'custom':
+            cmd_str = data.get('command', '').strip()
+            if not cmd_str:
+                return {'command': '', 'output': 'No command entered', 'ok': False}
+            out, nf = _exec(['sh', '-c', cmd_str])
+            if nf:
+                return {'command': cmd_str, 'output': 'httpbin pod not running — deploy a policy first', 'ok': False}
+            return {'command': cmd_str, 'output': out or '(no output)', 'ok': True}
 
         return {'command': '', 'output': 'Unknown action', 'ok': False}
 
