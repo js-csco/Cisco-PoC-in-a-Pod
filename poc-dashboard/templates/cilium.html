@@ -292,6 +292,18 @@
     {% set l7_active = ('piap-l7-http' in active_policies) %}
     {% set dns_active = ('piap-dns-egress' in active_policies) %}
 
+    <!-- Callout: how Cilium enforces -->
+    <div style="background:#f0f7ff; border-left:4px solid #1976d2; border-radius:0 8px 8px 0;
+                padding:12px 16px; margin-bottom:1.5rem; font-size:0.88em; color:#1a3a5c; line-height:1.6;">
+      Think of Cilium as a kernel firewall distributed across every pod — not a central proxy.
+      The <strong>Zero Trust</strong> policy enforces at the <em>destination</em>: it controls
+      which traffic is allowed to arrive at each pod (ingress). The <strong>DNS Egress</strong>
+      filter enforces at the <em>source</em>: it controls where a pod can dial out to (egress).
+      The <strong>L7 HTTP</strong> policy enforces at both — Cilium reads the HTTP request inside
+      the kernel before the application ever sees it. All without a proxy, without an agent,
+      and without touching the application.
+    </div>
+
     <!-- Policy cards -->
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
 
@@ -417,6 +429,28 @@
           Clear terminal
         </button>
 
+        <!-- Custom command -->
+        <div style="border-top:1px solid #e8e8e8; padding-top:1rem; margin-top:0.4rem;">
+          <div style="font-size:0.78rem; font-weight:600; color:#888; text-transform:uppercase;
+                      letter-spacing:0.8px; margin-bottom:6px;">Custom Command</div>
+          <div style="font-size:0.76rem; color:#999; margin-bottom:6px; line-height:1.4;">
+            Runs inside the httpbin pod.<br>
+            Try: <code style="font-size:0.74rem; color:#555;">nslookup cisco.com</code>
+          </div>
+          <input type="text" id="custom-cmd"
+                 placeholder="e.g. nslookup 1.1.1.1"
+                 style="width:100%; box-sizing:border-box; padding:7px 10px;
+                        border:1px solid #ccc; border-radius:6px; font-size:0.83rem;
+                        font-family:'Courier New',monospace; margin-bottom:5px;"
+                 onkeydown="if(event.key==='Enter') runCustomCmd()">
+          <button type="button" onclick="runCustomCmd()"
+                  style="background:#37474f; color:#fff; border:none; padding:7px 14px;
+                         border-radius:6px; font-size:0.83rem; font-weight:500;
+                         cursor:pointer; width:100%;">
+            Run
+          </button>
+        </div>
+
       </div>
 
       <!-- Terminal -->
@@ -434,14 +468,26 @@
   </section>
 
   <script>
-    function runCiliumCmd(action) {
+    function _termAppend(payload, neutralColor) {
       var terminal = document.getElementById('cilium-terminal');
       var pending = document.createElement('div');
       pending.style.cssText = 'color:#64b5f6; padding:4px 0; border-bottom:1px solid #21262d; margin-bottom:2px;';
       pending.textContent = '> running...';
       terminal.appendChild(pending);
       terminal.scrollTop = terminal.scrollHeight;
+      return {terminal: terminal, pending: pending};
+    }
 
+    function _termResolve(ctx, data, neutralColor) {
+      var outColor = neutralColor ? '#c9d1d9' : (data.ok ? '#a5d6a7' : '#ef9a9a');
+      ctx.pending.innerHTML =
+        '<span style="color:#64b5f6">$ ' + escHtml(data.command) + '</span><br>' +
+        '<span style="color:' + outColor + '">' + escHtmlNl(data.output) + '</span>';
+      ctx.terminal.scrollTop = ctx.terminal.scrollHeight;
+    }
+
+    function runCiliumCmd(action) {
+      var ctx = _termAppend();
       fetch('/cilium/run', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -449,20 +495,32 @@
       })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        var outColor = data.ok ? '#a5d6a7' : '#ef9a9a';
-        pending.innerHTML =
-          '<span style="color:#64b5f6">$ ' + escHtml(data.command) + '</span><br>' +
-          '<span style="color:' + outColor + '">' + escHtml(data.output) + '</span>';
-        terminal.scrollTop = terminal.scrollHeight;
-
-        // Update policy card state if this was a deploy/remove action
+        _termResolve(ctx, data, false);
         if (data.policy !== undefined && data.ok) {
           updatePolicyCard(data.policy, data.active);
         }
       })
       .catch(function(e) {
-        pending.innerHTML = '<span style="color:#ef9a9a">Error: ' + escHtml(String(e)) + '</span>';
-        terminal.scrollTop = terminal.scrollHeight;
+        ctx.pending.innerHTML = '<span style="color:#ef9a9a">Error: ' + escHtml(String(e)) + '</span>';
+        ctx.terminal.scrollTop = ctx.terminal.scrollHeight;
+      });
+    }
+
+    function runCustomCmd() {
+      var input = document.getElementById('custom-cmd');
+      var cmd = input.value.trim();
+      if (!cmd) return;
+      var ctx = _termAppend();
+      fetch('/cilium/run', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action: 'custom', command: cmd})
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) { _termResolve(ctx, data, true); })
+      .catch(function(e) {
+        ctx.pending.innerHTML = '<span style="color:#ef9a9a">Error: ' + escHtml(String(e)) + '</span>';
+        ctx.terminal.scrollTop = ctx.terminal.scrollHeight;
       });
     }
 
@@ -473,27 +531,27 @@
       var badge  = document.getElementById(prefix + '-badge');
       var btn    = document.getElementById(prefix + '-btn');
       if (!card) return;
-
-      card.style.borderColor       = active ? '#1565c0' : '#ddd';
-      card.style.backgroundColor   = active ? '#e3f2fd' : '#fafafa';
+      card.style.borderColor     = active ? '#1565c0' : '#ddd';
+      card.style.backgroundColor = active ? '#e3f2fd' : '#fafafa';
       if (badge) badge.style.display = active ? 'inline' : 'none';
       if (btn) {
-        btn.textContent              = active ? 'Remove ' + label : 'Deploy ' + label;
-        btn.style.backgroundColor    = active ? '#607d8b' : '#1976d2';
-        btn.dataset.action           = active ? 'remove_' + prefix : 'deploy_' + prefix;
+        btn.textContent           = active ? 'Remove ' + label : 'Deploy ' + label;
+        btn.style.backgroundColor = active ? '#607d8b' : '#1976d2';
+        btn.dataset.action        = active ? 'remove_' + prefix : 'deploy_' + prefix;
       }
     }
 
     function escHtml(s) {
-      return String(s)
-        .replace(/&/g,'&amp;')
-        .replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;');
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function escHtmlNl(s) {
+      return escHtml(s).replace(/\n/g,'<br>');
     }
 
     function clearCiliumTerminal() {
-      var terminal = document.getElementById('cilium-terminal');
-      terminal.innerHTML = '<div style="color:#4a5568; font-style:italic;"># Deploy a policy, then run tests. Results appear here.</div>';
+      document.getElementById('cilium-terminal').innerHTML =
+        '<div style="color:#4a5568; font-style:italic;"># Deploy a policy, then run tests. Results appear here.</div>';
     }
   </script>
 
