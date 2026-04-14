@@ -21,9 +21,26 @@
 
 <h1 style="color:#111; margin-bottom:0.4rem;">Splunk — Security Analytics</h1>
 <p style="color:#666; margin-top:0; margin-bottom:1.5rem; font-size:0.95em; line-height:1.6;">
-  Receives logs from Cisco Duo &amp; Identity Intelligence and Cisco Secure Access.
-  The Splunk MCP Server exposes search to Claude and other AI agents.
+  Centralised security logging — receives events from Cisco Duo, Identity Intelligence, and Cisco Secure Access,
+  and exposes search to Claude via the Splunk MCP Server.
 </p>
+
+<div style="background:#f8f9ff; border:1px solid #d0dbff; border-radius:10px; padding:1.4rem 1.5rem; margin-bottom:2rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:5px; height:18px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1rem; letter-spacing:0.3px;">WHAT IS SPLUNK?</h3>
+  </div>
+  <p style="margin:0 0 10px 0; color:#444; font-size:0.92em; line-height:1.75;">
+    <strong>Splunk</strong> is the security analytics platform in this PoC. It ingests structured log data from
+    Cisco Duo MFA, Cisco Identity Intelligence, and Cisco Secure Access — giving you a single place to search,
+    correlate, and visualise authentication events, policy decisions, and network activity.
+  </p>
+  <p style="margin:0; color:#444; font-size:0.92em; line-height:1.75;">
+    The <strong>Splunk MCP Server</strong> running alongside it exposes Splunk search to Claude and other AI agents,
+    enabling natural-language queries over your security logs — for example: <em>"show me all failed Duo authentications
+    in the last hour"</em> or <em>"which users accessed the cluster today via Secure Access?"</em>
+  </p>
+</div>
 
 {% if not splunk_available %}
 <!-- ═══════════════════════════════════════════════════════ DEPLOY SPLUNK -->
@@ -201,6 +218,7 @@
     <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CURRENT STATUS</h3>
   </div>
 
+  <div style="border:1px solid #e0e0e0; border-radius:10px; padding:1.2rem 1.5rem;">
   <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:12px;">
 
     <!-- Splunk UI -->
@@ -243,12 +261,13 @@
     </div>
 
   </div>
+  </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ SPLUNKBASE APPS -->
 <section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;{% if not splunk_available %} opacity:0.45; pointer-events:none;{% endif %}">
   <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-    <div style="width:6px; height:20px; background-color:#6c757d; border-radius:2px;"></div>
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
     <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SPLUNKBASE APPS</h3>
     {% if not splunk_available %}
       <span style="font-size:0.78em; color:#999; background:#f5f5f5; border:1px solid #e0e0e0; border-radius:4px; padding:2px 8px;">Splunk not running</span>
@@ -262,7 +281,7 @@
   <!-- Restart Splunk (standalone — no credentials needed) -->
   <form method="POST" style="margin-bottom:16px;">
     <button type="submit" name="action" value="restart_splunk"
-            style="background-color:#e65100; color:#fff; border:none; padding:8px 18px;
+            style="background-color:#455a64; color:#fff; border:none; padding:8px 18px;
                    border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85em;
                    white-space:nowrap;">
       Restart Splunk
@@ -366,7 +385,7 @@
 <!-- ═══════════════════════════════════════════════════════ LOG SOURCES -->
 <section style="margin-bottom:2.5rem;">
   <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-    <div style="width:6px; height:20px; background-color:#28a745; border-radius:2px;"></div>
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
     <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">LOG SOURCES</h3>
   </div>
   <p style="color:#666; font-size:0.88em; margin:0 0 18px 0;">

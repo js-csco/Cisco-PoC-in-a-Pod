@@ -27,28 +27,29 @@
   and <a href="https://github.com/openclaw/openclaw" target="_blank" style="color:#0066ff;">OpenClaw</a>.
 </p>
 
-<!-- ═══════════════════════════════════════════════════════ THE STORY -->
-<section style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:20px 24px; margin-bottom:2.5rem;">
-  <div style="font-size:0.92em; color:#444; line-height:1.75;">
-    <strong style="color:#111;">AI agents are powerful. That&rsquo;s exactly what makes them dangerous.</strong>
-    <br><br>
-    An LLM-powered agent can call tools, execute code, browse the web, and talk to APIs.
-    Without guardrails, a compromised skill, a prompt-injection attack, or a hallucinated
-    shell command can turn your helpful assistant into a security incident.
-    <br><br>
-    <strong style="color:#111;">DefenseClaw</strong> is Cisco&rsquo;s open-source answer to this problem.
-    It sits between the AI agent and the outside world &mdash; scanning every skill before it loads,
-    inspecting every tool call before it executes, and blocking anything that smells like
-    secrets leakage, injection, or command-and-control.
-    <br><br>
-    <strong style="color:#111;">OpenClaw</strong> is the LLM agent framework that DefenseClaw protects.
-    Think of OpenClaw as the brain (the agent that reasons and acts) and DefenseClaw as the
-    immune system (the gateway that enforces policy, audits behaviour, and stops threats).
-    <br><br>
-    Together they give you an AI agent that can actually do useful work in a production
-    environment &mdash; without keeping your security team up at night.
+<!-- ═══════════════════════════════════════════════════════ WHAT IS DEFENSECLAW -->
+<div style="background:#f8f9ff; border:1px solid #d0dbff; border-radius:10px; padding:1.4rem 1.5rem; margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:5px; height:18px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1rem; letter-spacing:0.3px;">WHAT IS DEFENSECLAW?</h3>
   </div>
-</section>
+  <p style="margin:0 0 10px 0; color:#444; font-size:0.92em; line-height:1.75;">
+    AI agents are powerful — that&rsquo;s exactly what makes them dangerous. An LLM-powered agent can call tools,
+    execute code, browse the web, and talk to APIs. Without guardrails, a compromised skill, a prompt-injection
+    attack, or a hallucinated shell command can turn your helpful assistant into a security incident.
+  </p>
+  <p style="margin:0 0 10px 0; color:#444; font-size:0.92em; line-height:1.75;">
+    <strong>DefenseClaw</strong> is Cisco&rsquo;s open-source answer to this problem. It sits between the AI agent
+    and the outside world &mdash; scanning every skill before it loads, inspecting every tool call before it
+    executes, and blocking anything that smells like secrets leakage, injection, or command-and-control.
+  </p>
+  <p style="margin:0; color:#444; font-size:0.92em; line-height:1.75;">
+    <strong>OpenClaw</strong> is the LLM agent framework that DefenseClaw protects. Think of OpenClaw as the
+    brain (the agent that reasons and acts) and DefenseClaw as the immune system (the gateway that enforces
+    policy, audits behaviour, and stops threats). Together they give you an AI agent that can do useful work
+    in a production environment &mdash; without keeping your security team up at night.
+  </p>
+</div>
 
 <!-- ═══════════════════════════════════════════════════════ ARCHITECTURE -->
 <section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
@@ -69,8 +70,8 @@
       <strong style="font-size:0.85em; color:#1565c0;">OpenClaw Agent</strong>
       <p style="font-size:0.8em; color:#555; margin:6px 0 0;">LLM-powered agent that reasons, plans, and calls tools. Hosts the DefenseClaw plugin which intercepts every tool call via a <code>before_tool_call</code> hook.</p>
     </div>
-    <div style="background:#fff3e0; border-radius:6px; padding:12px;">
-      <strong style="font-size:0.85em; color:#e65100;">DefenseClaw Gateway</strong>
+    <div style="background:#e8f5e9; border-radius:6px; padding:12px;">
+      <strong style="font-size:0.85em; color:#2e7d32;">DefenseClaw Gateway</strong>
       <p style="font-size:0.8em; color:#555; margin:6px 0 0;">Go-based policy engine. Runs CodeGuard static analysis, skill/MCP scanning, tool inspection, and a guardrail LLM proxy. Logs every decision to SQLite and forwards audit events to Splunk via HEC.</p>
     </div>
     <div style="background:#f3e5f5; border-radius:6px; padding:12px;">
@@ -101,7 +102,7 @@
   <!-- API Key input -->
   <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; margin-bottom:18px;">
     <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-      <span class="fa-solid fa-key" style="color:#e65100;"></span>
+      <span class="fa-solid fa-key" style="color:#0066ff;"></span>
       <strong style="font-size:0.9em; color:#111;">Anthropic API Key</strong>
       {% if status.api_key_set %}
         <span style="font-size:0.75em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">configured</span>
@@ -180,7 +181,7 @@
                      cursor:{% if can_deploy %}pointer{% else %}default{% endif %}; font-size:0.95em;"
               {% if not can_deploy %}disabled title="{% if is_running %}Already running{% elif not status.api_key_set %}Save your Anthropic API key first{% endif %}"{% endif %}>
         {% if is_running %}
-          <span class="fa-solid fa-check" style="margin-right:6px;"></span>Deployed
+          Deployed
         {% else %}
           Configure AI Agent Environment
         {% endif %}
@@ -212,7 +213,7 @@
 <!-- ═══════════════════════════════════════════════════════ NETWORK ISOLATION -->
 <section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
   <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-    <div style="width:6px; height:20px; background-color:#d32f2f; border-radius:2px;"></div>
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
     <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">NETWORK ISOLATION</h3>
   </div>
   <p style="color:#666; font-size:0.88em; margin:0 0 18px 0; line-height:1.6;">
@@ -249,7 +250,7 @@
                        color:#fff; border:none; padding:10px 24px; border-radius:6px;
                        font-weight:500; cursor:{% if status.isolated %}pointer{% else %}default{% endif %};
                        font-size:0.95rem; width:100%;">
-          <span class="fa-solid fa-lock-open" style="margin-right:6px;"></span>Switch to Unrestricted
+          Switch to Unrestricted
         </button>
       </div>
 
@@ -283,7 +284,7 @@
                        color:#fff; border:none; padding:10px 24px; border-radius:6px;
                        font-weight:500; cursor:{% if not status.isolated %}pointer{% else %}default{% endif %};
                        font-size:0.95rem; width:100%;">
-          <span class="fa-solid fa-shield-halved" style="margin-right:6px;"></span>Switch to Isolated
+          Switch to Isolated
         </button>
       </div>
 

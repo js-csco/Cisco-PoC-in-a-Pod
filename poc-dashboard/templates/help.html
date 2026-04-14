@@ -3,83 +3,99 @@
 {% block title %}Help — PoC in a Pod{% endblock %}
 
 {% block content %}
-  <h1>Help & Documentation</h1>
-  <p style="color:#555; margin-bottom: 2.5rem;">
-    Resources and support for PoC in a Pod.
+
+<h1 style="color:#111; margin-bottom:0.4rem;">Help &amp; Documentation</h1>
+<p style="color:#666; margin:0 0 2.5rem 0; font-size:0.95em; line-height:1.6;">
+  Resources, support contacts, and external documentation for PoC in a Pod.
+</p>
+
+<!-- Support -->
+<section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SUPPORT</h3>
+  </div>
+  <p style="margin:0 0 16px 0; color:#666; font-size:0.9em; line-height:1.6;">
+    For assistance with PoC in a Pod, reach out to Jonas Schweigert directly.
   </p>
 
-  <!-- Support Section -->
-  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0; margin-bottom: 2.5rem;">
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SUPPORT</h3>
-    </div>
-    <p style="margin-top:0; margin-bottom:20px; color:#666; font-size:0.9em; line-height: 1.6;">
-      For assistance with using the PoC in a Pod environment, please reach out to Jonas Schweigert.
-    </p>
-    
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 3px solid #0066ff;">
-      <div style="margin-bottom: 12px;">
-        <strong style="color: #333; font-size: 0.85em;">Email</strong>
-        <div style="color: #0066ff; margin-top: 4px;">
-          <a href="mailto:joschwei@cisco.com" style="color: #0066ff; text-decoration: none;">joschwei@cisco.com</a>
-        </div>
-      </div>
-      <div>
-        <strong style="color: #333; font-size: 0.85em;">Webex</strong>
-        <div style="color: #0066ff; margin-top: 4px;">
-          <a href="https://cisco.webex.com/meet/joschwei" target="_blank" style="color: #0066ff; text-decoration: none;">cisco.webex.com/meet/joschwei</a>
-        </div>
-      </div>
-    </div>
-  </section>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
 
-  <!-- Documentation Section -->
-  <section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0; margin-bottom: 2.5rem;">
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DOCUMENTATION</h3>
+    <div style="border:1px solid #e0e0e0; border-radius:10px; padding:1.2rem 1.4rem;">
+      <div style="font-size:0.72em; font-weight:700; color:#999; letter-spacing:0.6px; margin-bottom:8px;">EMAIL</div>
+      <a href="mailto:joschwei@cisco.com"
+         style="color:#0066ff; text-decoration:none; font-size:0.95em; font-weight:500;">
+        joschwei@cisco.com
+      </a>
     </div>
-    <p style="margin-top:0; margin-bottom:20px; color:#666; font-size:0.9em; line-height: 1.6;">
-      Complete documentation, setup guides, and technical details are available in the GitHub repository.
-    </p>
-    
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 3px solid #0066ff;">
-      <div>
-        <strong style="color: #333; font-size: 0.85em;">GitHub Repository</strong>
-        <div style="color: #0066ff; margin-top: 4px;">
-          <a href="https://github.com/js-csco/piap-dev" target="_blank" style="color: #0066ff; text-decoration: none;">github.com/js-csco/piap-dev</a>
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- Quick Links Section -->
-  <section style="padding-bottom:2.5rem;">
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">QUICK LINKS</h3>
+    <div style="border:1px solid #e0e0e0; border-radius:10px; padding:1.2rem 1.4rem;">
+      <div style="font-size:0.72em; font-weight:700; color:#999; letter-spacing:0.6px; margin-bottom:8px;">WEBEX</div>
+      <a href="https://cisco.webex.com/meet/joschwei" target="_blank"
+         style="color:#0066ff; text-decoration:none; font-size:0.95em; font-weight:500;">
+        cisco.webex.com/meet/joschwei
+      </a>
     </div>
-    <p style="margin-top:0; margin-bottom:20px; color:#666; font-size:0.9em;">
-      Useful external resources and documentation.
-    </p>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
-      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 3px solid #0066ff;">
-        <div style="color: #333; font-weight: 600; margin-bottom: 4px; font-size: 0.9em;">Cisco Secure Access API</div>
-        <a href="https://developer.cisco.com/docs/secure-access/" target="_blank" style="color: #0066ff; text-decoration: none; font-size: 0.85em;">developer.cisco.com/docs/secure-access</a>
-      </div>
-      
-      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 3px solid #0066ff;">
-        <div style="color: #333; font-weight: 600; margin-bottom: 4px; font-size: 0.9em;">Secure Access Dashboard</div>
-        <a href="https://dashboard.sse.cisco.com" target="_blank" style="color: #0066ff; text-decoration: none; font-size: 0.85em;">dashboard.sse.cisco.com</a>
-      </div>
-      
-      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 3px solid #0066ff;">
-        <div style="color: #333; font-weight: 600; margin-bottom: 4px; font-size: 0.9em;">Cilium Documentation</div>
-        <a href="https://docs.cilium.io" target="_blank" style="color: #0066ff; text-decoration: none; font-size: 0.85em;">docs.cilium.io</a>
-      </div>
+  </div>
+</section>
+
+<!-- Documentation -->
+<section style="padding-bottom:2.5rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DOCUMENTATION</h3>
+  </div>
+  <p style="margin:0 0 16px 0; color:#666; font-size:0.9em; line-height:1.6;">
+    Setup guides, architecture notes, and technical details live in the GitHub repository.
+  </p>
+
+  <div style="border:1px solid #e0e0e0; border-radius:10px; padding:1.2rem 1.4rem;">
+    <div style="font-size:0.72em; font-weight:700; color:#999; letter-spacing:0.6px; margin-bottom:8px;">GITHUB REPOSITORY</div>
+    <a href="https://github.com/js-csco/piap-dev" target="_blank"
+       style="color:#0066ff; text-decoration:none; font-size:0.95em; font-weight:500;">
+      github.com/js-csco/piap-dev
+    </a>
+    <p style="margin:8px 0 0 0; color:#666; font-size:0.85em; line-height:1.5;">
+      Includes deployment instructions, VM setup, network topology, and per-feature configuration guides.
+    </p>
+  </div>
+</section>
+
+<!-- Quick Links -->
+<section>
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">QUICK LINKS</h3>
+  </div>
+  <p style="margin:0 0 16px 0; color:#666; font-size:0.9em; line-height:1.6;">
+    External documentation and admin portals referenced throughout this dashboard.
+  </p>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:12px;">
+
+    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:14px 16px;">
+      <div style="font-weight:600; color:#111; font-size:0.9em; margin-bottom:4px;">Cisco Secure Access API</div>
+      <div style="color:#666; font-size:0.82em; line-height:1.5; margin-bottom:8px;">Developer docs for Secure Access reporting, policy, and management APIs.</div>
+      <a href="https://developer.cisco.com/docs/secure-access/" target="_blank"
+         style="color:#0066ff; text-decoration:none; font-size:0.82em;">developer.cisco.com/docs/secure-access</a>
     </div>
-  </section>
+
+    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:14px 16px;">
+      <div style="font-weight:600; color:#111; font-size:0.9em; margin-bottom:4px;">Secure Access Dashboard</div>
+      <div style="color:#666; font-size:0.82em; line-height:1.5; margin-bottom:8px;">Admin portal for managing network policies, users, and access reports.</div>
+      <a href="https://dashboard.sse.cisco.com" target="_blank"
+         style="color:#0066ff; text-decoration:none; font-size:0.82em;">dashboard.sse.cisco.com</a>
+    </div>
+
+    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:14px 16px;">
+      <div style="font-weight:600; color:#111; font-size:0.9em; margin-bottom:4px;">Cilium Documentation</div>
+      <div style="color:#666; font-size:0.82em; line-height:1.5; margin-bottom:8px;">Reference for CiliumNetworkPolicy, Hubble, Tetragon, and eBPF concepts.</div>
+      <a href="https://docs.cilium.io" target="_blank"
+         style="color:#0066ff; text-decoration:none; font-size:0.82em;">docs.cilium.io</a>
+    </div>
+
+  </div>
+</section>
 
 {% endblock %}
