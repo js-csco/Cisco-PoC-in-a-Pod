@@ -697,6 +697,36 @@ def tetragon_events():
     except Exception as e:
         return jsonify({"events": [], "error": str(e)})
 
+@app.route('/tetragon/run', methods=['POST'])
+def tetragon_run():
+    """JSON endpoint for simulation actions — avoids full page reload."""
+    from flask import jsonify
+    data = request.get_json(force=True)
+    action = data.get('action')
+    try:
+        if action == 'simulate_recon':
+            from scripts.tetragon_policies import simulate_recon
+            job_name = simulate_recon()
+            return jsonify({'ok': True, 'message': f'Recon launched — Job: {job_name}', 'sim': 'recon'})
+        elif action == 'simulate_credentials':
+            from scripts.tetragon_policies import simulate_credentials
+            job_name = simulate_credentials()
+            return jsonify({'ok': True, 'message': f'Credential hunting launched — Job: {job_name}', 'sim': 'credentials'})
+        elif action == 'simulate_persistence':
+            from scripts.tetragon_policies import simulate_persistence
+            job_name = simulate_persistence()
+            return jsonify({'ok': True, 'message': f'Persistence simulation launched — Job: {job_name}', 'sim': 'persistence'})
+        elif action == 'stop_attacks':
+            from scripts.tetragon_policies import stop_attacks
+            deleted = stop_attacks()
+            msg = f'Stopped {len(deleted)} job(s): {", ".join(deleted)}' if deleted else 'No running jobs found.'
+            return jsonify({'ok': True, 'message': msg, 'sim': None})
+        else:
+            return jsonify({'ok': False, 'message': f'Unknown action: {action}'})
+    except Exception as e:
+        return jsonify({'ok': False, 'message': str(e)})
+
+
 @app.route('/caldera', methods=['GET', 'POST'])
 def caldera():
     from scripts.caldera import (is_available, is_deployed, get_agents, get_operations,

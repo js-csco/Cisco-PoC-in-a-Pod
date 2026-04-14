@@ -245,56 +245,24 @@
           <div style="font-size:0.78rem; font-weight:600; color:#888; text-transform:uppercase;
                       letter-spacing:0.8px; margin-bottom:8px;">Simulations</div>
           <div style="display:flex; flex-direction:column; gap:6px;">
-
-            {% if 'recon' in running_sims %}
-              <button type="submit" name="action" value="stop_attacks"
-                      style="background:#c62828; color:#fff; border:none; padding:8px 14px;
-                             border-radius:6px; font-size:0.85rem; font-weight:500;
-                             cursor:pointer; text-align:left;">
-                Stop Recon
-              </button>
-            {% else %}
-              <button type="submit" name="action" value="simulate_recon"
-                      style="background:#1976d2; color:#fff; border:none; padding:8px 14px;
-                             border-radius:6px; font-size:0.85rem; font-weight:500;
-                             cursor:pointer; text-align:left;">
-                Phase 1 — Recon
-              </button>
-            {% endif %}
-
-            {% if 'credentials' in running_sims %}
-              <button type="submit" name="action" value="stop_attacks"
-                      style="background:#c62828; color:#fff; border:none; padding:8px 14px;
-                             border-radius:6px; font-size:0.85rem; font-weight:500;
-                             cursor:pointer; text-align:left;">
-                Stop Credential Hunting
-              </button>
-            {% else %}
-              <button type="submit" name="action" value="simulate_credentials"
-                      style="background:#455a64; color:#fff; border:none; padding:8px 14px;
-                             border-radius:6px; font-size:0.85rem; font-weight:500;
-                             cursor:pointer; text-align:left;">
-                Phase 2 — Credential Hunting
-              </button>
-            {% endif %}
-
-            {% if 'persistence' in running_sims %}
-              <button type="submit" name="action" value="stop_attacks"
-                      style="background:#c62828; color:#fff; border:none; padding:8px 14px;
-                             border-radius:6px; font-size:0.85rem; font-weight:500;
-                             cursor:pointer; text-align:left;">
-                Stop Persistence
-              </button>
-            {% else %}
-              <button type="submit" name="action" value="simulate_persistence"
-                      style="background:#455a64; color:#fff; border:none; padding:8px 14px;
-                             border-radius:6px; font-size:0.85rem; font-weight:500;
-                             cursor:pointer; text-align:left;">
-                Phase 3 — Persistence
-              </button>
-            {% endif %}
-
+            <button type="button" data-sim="recon"
+                    style="color:#fff; border:none; padding:8px 14px; border-radius:6px;
+                           font-size:0.85rem; font-weight:500; cursor:pointer; text-align:left;">
+              Phase 1 — Recon
+            </button>
+            <button type="button" data-sim="credentials"
+                    style="color:#fff; border:none; padding:8px 14px; border-radius:6px;
+                           font-size:0.85rem; font-weight:500; cursor:pointer; text-align:left;">
+              Phase 2 — Credential Hunting
+            </button>
+            <button type="button" data-sim="persistence"
+                    style="color:#fff; border:none; padding:8px 14px; border-radius:6px;
+                           font-size:0.85rem; font-weight:500; cursor:pointer; text-align:left;">
+              Phase 3 — Persistence
+            </button>
           </div>
+          <div id="sim-status" style="display:none; font-size:0.78rem; margin-top:8px;
+                                      line-height:1.4; padding:6px 8px; border-radius:5px;"></div>
         </div>
 
         <!-- Clear -->
@@ -347,8 +315,8 @@
 
         <div id="event-stream"
              style="background:#0d1117; border-radius:8px; padding:14px 16px;
-                    min-height:320px; overflow-y:auto; font-family:'Courier New',Courier,monospace;
-                    font-size:0.82rem; border:1px solid #30363d; flex:1;">
+                    height:260px; overflow-y:auto; font-family:'Courier New',Courier,monospace;
+                    font-size:0.82rem; border:1px solid #30363d;">
           <div id="event-placeholder" style="color:#555; padding-top:60px; text-align:center;">
             Waiting for Tetragon events…<br>
             <span style="font-size:0.9em;">Deploy TracingPolicies, then launch a simulation.</span>
@@ -368,6 +336,79 @@
 
 <script>
 (function () {
+
+  /* ── Simulation buttons ─────────────────────────────────────── */
+
+  var simMeta = {
+    recon:       { label: 'Phase 1 — Recon',             color: '#1976d2', action: 'simulate_recon' },
+    credentials: { label: 'Phase 2 — Credential Hunting', color: '#455a64', action: 'simulate_credentials' },
+    persistence: { label: 'Phase 3 — Persistence',        color: '#455a64', action: 'simulate_persistence' }
+  };
+
+  var runningSims = new Set({{ running_sims | list | tojson }});
+
+  function renderSimButtons() {
+    document.querySelectorAll('[data-sim]').forEach(function(btn) {
+      var sim = btn.dataset.sim;
+      var meta = simMeta[sim];
+      if (runningSims.has(sim)) {
+        btn.textContent        = 'Stop ' + meta.label.split(' — ')[1];
+        btn.style.background   = '#c62828';
+        btn.dataset.simRunning = '1';
+      } else {
+        btn.textContent        = meta.label;
+        btn.style.background   = meta.color;
+        btn.dataset.simRunning = '';
+      }
+      btn.disabled = false;
+    });
+  }
+
+  function showSimStatus(msg, ok) {
+    var el = document.getElementById('sim-status');
+    el.style.display    = 'block';
+    el.style.background = ok ? '#f0faf0' : '#fff5f5';
+    el.style.color      = ok ? '#2e7d32' : '#c62828';
+    el.textContent      = msg;
+  }
+
+  document.querySelectorAll('[data-sim]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var sim        = btn.dataset.sim;
+      var isRunning  = btn.dataset.simRunning === '1';
+      var action     = isRunning ? 'stop_attacks' : simMeta[sim].action;
+
+      btn.disabled    = true;
+      btn.textContent = isRunning ? 'Stopping…' : 'Launching…';
+
+      fetch('/tetragon/run', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action: action})
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        showSimStatus(data.message, data.ok);
+        if (data.ok) {
+          if (action === 'stop_attacks') {
+            runningSims.clear();
+          } else {
+            runningSims.add(sim);
+          }
+        }
+        renderSimButtons();
+      })
+      .catch(function(e) {
+        showSimStatus('Error: ' + String(e), false);
+        renderSimButtons();
+      });
+    });
+  });
+
+  renderSimButtons();
+
+  /* ── Live event stream ──────────────────────────────────────── */
+
   var stream      = document.getElementById('event-stream');
   var placeholder = document.getElementById('event-placeholder');
   var countEl     = document.getElementById('event-count');
