@@ -412,11 +412,6 @@
           <span class="fa-solid fa-robot"></span> AI Agent & DefenseClaw
         </a>
 
-        <div class="nav-section">Red Team</div>
-        <a href="{{ url_for('caldera') }}" class="menu-item {% if active_page == 'caldera' %}active{% endif %}">
-          <span class="fa-solid fa-skull-crossbones"></span> Caldera
-        </a>
-
         <div class="nav-section">Help</div>
         <a href="{{ url_for('help_page') }}" class="menu-item {% if active_page == 'help' %}active{% endif %}">
           <span class="fa-solid fa-circle-info"></span> Help
@@ -552,14 +547,6 @@
             </div>
             <div class="lm-card-meta">Port 31789</div>
             <p class="lm-card-desc">OpenClaw AI Agent — deploy from PoC Dashboard, secured by Cisco DefenseClaw.</p>
-          </a>
-          <a href="http://{{ host_ip }}:30600" target="_blank" class="lm-card">
-            <div class="lm-card-top">
-              <span class="lm-card-name"><span class="fa-solid fa-skull-crossbones" style="color:#0066ff; margin-right:6px;"></span>Caldera</span>
-              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
-            </div>
-            <div class="lm-card-meta">Port 30600</div>
-            <p class="lm-card-desc">MITRE Caldera adversary emulation for validating detection and enforcement.</p>
           </a>
         </div>
 
