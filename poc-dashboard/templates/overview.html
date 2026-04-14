@@ -4,6 +4,19 @@
 {% block title %}Overview — Cisco PoC in a Pod{% endblock %}
 
 {% block content %}
+<style>
+  .step-card {
+    background:#fff; border:1px solid #e2e4e8; border-radius:8px;
+    padding:14px 16px; width:100%; display:block;
+    text-decoration:none; box-sizing:border-box;
+    transition:border-color 0.15s, box-shadow 0.15s;
+  }
+  .step-card:hover {
+    border-color:#0066ff;
+    box-shadow:0 2px 8px rgba(0,102,255,0.1);
+  }
+</style>
+
 <div style="margin-bottom:2.5rem;">
   <h1 style="color:#111; margin-bottom:0.4rem;">Overview</h1>
   <p style="color:#666; margin-top:0; margin-bottom:0; font-size:0.95em; line-height:1.6;">
@@ -221,7 +234,7 @@
   </div>
   <p style="color:#555; font-size:0.9em; line-height:1.7; margin:0 0 2rem 0;">
     Start with the Core steps to stand up and validate Zero Trust Access. Once that's working, layer in
-    Advanced capabilities — or spin up the Red Team environment to test your defences.
+    the Advanced capabilities.
   </p>
 
   <div style="position:relative; padding-left:48px;">
@@ -242,7 +255,7 @@
       <div style="position:absolute; left:-48px; top:50%; transform:translateY(-50%); width:28px; height:28px; border-radius:50%; background:#e8e8e8; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
         <span style="font-size:0.75em; font-weight:700; color:#555;">1</span>
       </div>
-      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; width:100%;">
+      <a href="{{ url_for('duo') }}" class="step-card">
         <div style="font-weight:700; color:#0066ff; font-size:0.85em; margin-bottom:8px;">
           <span class="fa-solid fa-user-shield" style="margin-right:6px;"></span>Duo &amp; Identity Intelligence
         </div>
@@ -251,7 +264,7 @@
           <li>Integrate SAML applications</li>
           <li>Enable Identity Intelligence for risk-based access decisions</li>
         </ul>
-      </div>
+      </a>
     </div>
 
     <!-- Secure Access -->
@@ -259,7 +272,7 @@
       <div style="position:absolute; left:-48px; top:50%; transform:translateY(-50%); width:28px; height:28px; border-radius:50%; background:#e8e8e8; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
         <span style="font-size:0.75em; font-weight:700; color:#555;">2</span>
       </div>
-      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; width:100%;">
+      <a href="{{ url_for('secure_access') }}" class="step-card">
         <div style="font-weight:700; color:#0066ff; font-size:0.85em; margin-bottom:8px;">
           <span class="fa-solid fa-cloud" style="margin-right:6px;"></span>Secure Access
         </div>
@@ -268,7 +281,7 @@
           <li>Configure Internet Security — Security &amp; Content Filtering</li>
           <li>Enable Data Loss Prevention (DLP)</li>
         </ul>
-      </div>
+      </a>
     </div>
 
     <!-- Cilium -->
@@ -276,14 +289,14 @@
       <div style="position:absolute; left:-48px; top:50%; transform:translateY(-50%); width:28px; height:28px; border-radius:50%; background:#e8e8e8; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
         <span style="font-size:0.75em; font-weight:700; color:#555;">3</span>
       </div>
-      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; width:100%;">
+      <a href="{{ url_for('cilium') }}" class="step-card">
         <div style="font-weight:700; color:#0066ff; font-size:0.85em; margin-bottom:8px;">
           <span class="fa-solid fa-network-wired" style="margin-right:6px;"></span>Cilium
         </div>
         <ul style="color:#555; font-size:0.83em; line-height:1.6; margin:0; padding-left:16px;">
           <li>Enable microsegmentation between containers, pods, and workloads</li>
         </ul>
-      </div>
+      </a>
     </div>
 
     <!-- Tetragon -->
@@ -291,14 +304,14 @@
       <div style="position:absolute; left:-48px; top:50%; transform:translateY(-50%); width:28px; height:28px; border-radius:50%; background:#e8e8e8; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
         <span style="font-size:0.75em; font-weight:700; color:#555;">4</span>
       </div>
-      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; width:100%;">
+      <a href="{{ url_for('tetragon') }}" class="step-card">
         <div style="font-weight:700; color:#0066ff; font-size:0.85em; margin-bottom:8px;">
           <span class="fa-solid fa-shield-halved" style="margin-right:6px;"></span>Tetragon
         </div>
         <ul style="color:#555; font-size:0.83em; line-height:1.6; margin:0; padding-left:16px;">
           <li>Enable runtime security policies to detect suspicious process behaviour inside containers</li>
         </ul>
-      </div>
+      </a>
     </div>
 
     <!-- ADVANCED section header -->
@@ -315,7 +328,7 @@
       <div style="position:absolute; left:-48px; top:50%; transform:translateY(-50%); width:28px; height:28px; border-radius:50%; background:#e8e8e8; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
         <span style="font-size:0.75em; font-weight:700; color:#555;">5</span>
       </div>
-      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; width:100%;">
+      <a href="{{ url_for('splunk') }}" class="step-card">
         <div style="font-weight:700; color:#0066ff; font-size:0.85em; margin-bottom:8px;">
           <span class="fa-solid fa-chart-bar" style="margin-right:6px;"></span>Splunk
         </div>
@@ -323,15 +336,15 @@
           <li>Deploy Splunk for centralised visibility and event correlation</li>
           <li>Integrate Security Analytics across all components</li>
         </ul>
-      </div>
+      </a>
     </div>
 
     <!-- AI Agent & DefenseClaw -->
-    <div style="position:relative; margin-bottom:36px; display:flex; align-items:center;">
+    <div style="position:relative; margin-bottom:20px; display:flex; align-items:center;">
       <div style="position:absolute; left:-48px; top:50%; transform:translateY(-50%); width:28px; height:28px; border-radius:50%; background:#e8e8e8; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
         <span style="font-size:0.75em; font-weight:700; color:#555;">6</span>
       </div>
-      <div style="background:#fff; border:1px solid #e2e4e8; border-radius:8px; padding:14px 16px; width:100%;">
+      <a href="{{ url_for('ai_agents') }}" class="step-card">
         <div style="font-weight:700; color:#0066ff; font-size:0.85em; margin-bottom:8px;">
           <span class="fa-solid fa-robot" style="margin-right:6px;"></span>AI Agent &amp; DefenseClaw
         </div>
@@ -339,7 +352,7 @@
           <li>Deploy the OpenClaw AI Agent</li>
           <li>Secure it with Cisco DefenseClaw — Zero Trust Access applied to AI workloads</li>
         </ul>
-      </div>
+      </a>
     </div>
 
   </div>
