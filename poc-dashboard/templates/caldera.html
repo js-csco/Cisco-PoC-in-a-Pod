@@ -20,12 +20,25 @@
 {% endwith %}
 
 <h1 style="color:#111; margin-bottom:0.4rem;">Attack &amp; Detect — Adversary Emulation</h1>
-<p style="color:#666; margin-top:0; margin-bottom:2rem; font-size:0.95em; line-height:1.6;">
+<p style="color:#666; margin-top:0; margin-bottom:1.5rem; font-size:0.95em; line-height:1.6;">
   Launch real MITRE ATT&amp;CK techniques against a victim pod and watch your Zero Trust stack catch every move in real time.
 </p>
 
+<div style="background:#f8f9ff; border:1px solid #d0dbff; border-radius:10px; padding:1.4rem 1.5rem; margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:5px; height:18px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1rem; letter-spacing:0.3px;">WHAT IS CALDERA?</h3>
+  </div>
+  <p style="margin:0 0 10px 0; color:#444; font-size:0.92em; line-height:1.75;">
+    <strong>Caldera</strong> is MITRE's open-source adversary emulation platform. It runs real attack techniques — not simulations — using a lightweight agent called <strong>sandcat</strong> that deploys into a victim pod and executes commands on behalf of the C2 server.
+  </p>
+  <p style="margin:0; color:#444; font-size:0.92em; line-height:1.75;">
+    In this demo, Caldera plays the attacker: it runs structured MITRE ATT&amp;CK techniques (recon, credential theft, persistence) inside the victim pod while <strong>Tetragon</strong> watches every syscall at the kernel level. The goal is to show that even a fully autonomous attacker cannot operate undetected inside this cluster.
+  </p>
+</div>
+
 <!-- ════════════════════════════════════════════ STEP 1: UNDERSTAND THE SCENARIO -->
-<section style="margin-bottom:2.5rem;">
+<section style="margin-bottom:2.5rem; padding-bottom:2rem; border-bottom:1px solid #e0e0e0;">
   <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
     <div style="background:#c0392b; color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85em; flex-shrink:0;">1</div>
     <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">UNDERSTAND THE SCENARIO</h3>
@@ -146,8 +159,8 @@
       </div>
       <div id="agent-wrap">
         {% if agents %}
-          <div style="display:inline-flex; align-items:center; gap:8px; background:#fce4ec; border:1px solid #ef9a9a; border-radius:8px; padding:8px 14px;">
-            <span style="font-weight:600; color:#b71c1c; font-size:0.9em;">{{ agents | length }} agent(s) connected</span>
+          <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:8px; padding:8px 14px;">
+            <span style="font-weight:600; color:#2e7d32; font-size:0.9em;">{{ agents | length }} agent(s) connected</span>
           </div>
           <div style="margin-top:8px;">
             {% for agent in agents %}
@@ -220,7 +233,7 @@
       {
         'phase': 'PHASE 3 - PERSISTENCE',
         'subtitle': 'The attacker tries to stay',
-        'bg': '#f3e5f5', 'border': '#ce93d8', 'bar': '#7b1fa2', 'btn': '#6a1b9a',
+        'bg': '#fce4ec', 'border': '#ef9a9a', 'bar': '#7f0000', 'btn': '#6d0000',
         'watch': 'Tetragon catches the backdoor script drop, cron job installation, and outbound C2 callback attempt. Look for EXEC events with crontab and curl.',
         'tactics': ['Persistence', 'Command and Control']
       }
@@ -382,8 +395,8 @@
           '<code>'+(a.paw||'?')+'</code> · '+(a.host||'?')+' · group: <strong>'+(a.group||'?')+'</strong></div>';
       }).join('');
       agentWrap.innerHTML =
-        '<div style="display:inline-flex;align-items:center;gap:8px;background:#fce4ec;border:1px solid #ef9a9a;border-radius:8px;padding:8px 14px;">' +
-        '<span style="font-weight:600;color:#b71c1c;font-size:0.9em;">'+alive.length+' agent(s) connected</span></div>' +
+        '<div style="display:inline-flex;align-items:center;gap:8px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:8px 14px;">' +
+        '<span style="font-weight:600;color:#2e7d32;font-size:0.9em;">'+alive.length+' agent(s) connected</span></div>' +
         '<div style="margin-top:8px;">'+rows+'</div>';
     } else if (dead.length > 0) {
       var rows = dead.map(function(a) {
