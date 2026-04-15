@@ -219,7 +219,7 @@
   </div>
 
   <div style="border:1px solid #e0e0e0; border-radius:10px; padding:1.2rem 1.5rem;">
-  <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:12px;">
+  <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;">
 
     <!-- Splunk UI -->
     <div style="border:1px solid #e0e0e0; border-radius:10px; padding:16px 20px;">
@@ -256,6 +256,24 @@
       {% else %}
         <div style="display:inline-flex; align-items:center; gap:8px; background:#fce4ec; border:1px solid #ef9a9a; border-radius:8px; padding:8px 14px;">
           <span style="font-weight:600; color:#b71c1c; font-size:0.9em;">Unavailable</span>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- OTel Collector -->
+    <div style="border:1px solid #e0e0e0; border-radius:10px; padding:16px 20px;">
+      <div style="font-size:0.72em; font-weight:700; color:#999; letter-spacing:0.6px; margin-bottom:8px;">OTEL COLLECTOR</div>
+      {% if otel_running %}
+        <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:8px; padding:8px 14px;">
+          <span style="font-weight:600; color:#2e7d32; font-size:0.9em;">Running — shipping metrics</span>
+        </div>
+      {% elif splunk_available %}
+        <div style="display:inline-flex; align-items:center; gap:8px; background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:8px 14px;">
+          <span style="font-weight:600; color:#f57f17; font-size:0.9em;">Starting up…</span>
+        </div>
+      {% else %}
+        <div style="display:inline-flex; align-items:center; gap:8px; background:#fce4ec; border:1px solid #ef9a9a; border-radius:8px; padding:8px 14px;">
+          <span style="font-weight:600; color:#b71c1c; font-size:0.9em;">Not deployed</span>
         </div>
       {% endif %}
     </div>
@@ -427,18 +445,24 @@
     <div style="border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; background:#fff;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
         <div style="font-weight:600; color:#111; font-size:0.95em;">OpenTelemetry — Kubernetes</div>
-        <span style="font-size:0.72em; background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:4px; padding:2px 7px;">Active</span>
+        {% if otel_running %}
+          <span style="font-size:0.72em; background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:4px; padding:2px 7px;">Active</span>
+        {% elif splunk_available %}
+          <span style="font-size:0.72em; background:#fff8e1; color:#f57f17; border:1px solid #ffe082; border-radius:4px; padding:2px 7px;">Starting</span>
+        {% else %}
+          <span style="font-size:0.72em; background:#f5f5f5; color:#999; border:1px solid #e0e0e0; border-radius:4px; padding:2px 7px;">Deploy Splunk to activate</span>
+        {% endif %}
       </div>
       <div style="font-size:0.82em; color:#666; line-height:1.6;">
         Node CPU, memory, disk, and network metrics from every k3s node
         (via the <code>hostmetrics</code> receiver), plus per-pod and per-container
         resource usage (via <code>kubeletstats</code>). Kubernetes cluster events
-        — scheduling failures, OOMKills, CrashLoopBackOffs — arrive from the
-        <code>k8sevents</code> receiver in real time.
-        Ingested as <code>source=otel-k8s-*</code> via HEC — no additional configuration required.
+        — scheduling failures, OOMKills, CrashLoopBackOffs — stream in via the
+        <code>k8sobjects</code> receiver in real time.
+        Ingested as <code>source=otel-k8s-*</code> via HEC.
       </div>
       <div style="margin-top:10px; font-size:0.8em; color:#999;">
-        Collector deployed as DaemonSet + Deployment in the <code>piap</code> namespace.
+        Deployed automatically alongside Splunk — no separate setup required.
       </div>
     </div>
 

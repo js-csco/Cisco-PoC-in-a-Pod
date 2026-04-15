@@ -57,6 +57,114 @@ SPLUNKBASE_APPS = [
 
 NAMESPACE = "piap"
 
+OTEL_IMAGE = "otel/opentelemetry-collector-contrib:0.140.0"
+
+# OTel DaemonSet collector config (node CPU/memory/disk + kubelet pod metrics)
+OTEL_DS_CONFIG = textwrap.dedent("""\
+receivers:
+  hostmetrics:
+    root_path: /hostfs
+    collection_interval: 30s
+    scrapers:
+      cpu:
+      memory:
+      disk:
+      load:
+      paging:
+      network:
+      filesystem:
+        exclude_mount_points:
+          mount_points:
+            - /dev/.*
+            - /proc/.*
+            - /sys/.*
+            - /run/k3s/.*
+            - /var/lib/docker/.*
+            - /var/lib/kubelet/.*
+            - /snap/.*
+          match_type: regexp
+
+  kubeletstats:
+    collection_interval: 30s
+    auth_type: serviceAccount
+    endpoint: "https://${env:K8S_NODE_IP}:10250"
+    insecure_skip_verify: true
+    metric_groups:
+      - node
+      - pod
+      - container
+
+processors:
+  batch:
+    timeout: 10s
+    send_batch_size: 1000
+
+exporters:
+  splunk_hec/node:
+    token: "piap-hec-token"
+    endpoint: "http://splunk.piap.svc.cluster.local:8088/services/collector"
+    source: "otel-k8s-node"
+    sourcetype: "otel:metrics:node"
+
+service:
+  pipelines:
+    metrics:
+      receivers: [hostmetrics, kubeletstats]
+      processors: [batch]
+      exporters: [splunk_hec/node]
+""")
+
+# OTel Deployment collector config (cluster metrics + k8s events)
+OTEL_DEPLOY_CONFIG = textwrap.dedent("""\
+receivers:
+  k8s_cluster:
+    collection_interval: 30s
+    node_conditions_to_report:
+      - Ready
+      - MemoryPressure
+      - DiskPressure
+      - PIDPressure
+    allocatable_types_to_report:
+      - cpu
+      - memory
+      - ephemeral-storage
+
+  k8sobjects:
+    auth_type: serviceAccount
+    objects:
+      - name: events
+        mode: watch
+
+processors:
+  batch:
+    timeout: 10s
+    send_batch_size: 1000
+
+exporters:
+  splunk_hec/cluster:
+    token: "piap-hec-token"
+    endpoint: "http://splunk.piap.svc.cluster.local:8088/services/collector"
+    source: "otel-k8s-cluster"
+    sourcetype: "otel:metrics:cluster"
+
+  splunk_hec/events:
+    token: "piap-hec-token"
+    endpoint: "http://splunk.piap.svc.cluster.local:8088/services/collector"
+    source: "otel-k8s-events"
+    sourcetype: "otel:k8s:events"
+
+service:
+  pipelines:
+    metrics:
+      receivers: [k8s_cluster]
+      processors: [batch]
+      exporters: [splunk_hec/cluster]
+    logs:
+      receivers: [k8sobjects]
+      processors: [batch]
+      exporters: [splunk_hec/events]
+""")
+
 
 def _core():
     config.load_incluster_config()
@@ -273,7 +381,240 @@ def deploy_splunk(license_content: str = "") -> bool:
     )
     core.create_namespaced_service(NAMESPACE, service)
 
+    # ── 5. OTel Collector (always deployed alongside Splunk) ─────────────────
+    _deploy_otel_collector()
+
     return has_license
+
+
+def _deploy_otel_collector():
+    """
+    Idempotently create the OpenTelemetry Collector stack in the piap namespace:
+      - ServiceAccount + ClusterRole + ClusterRoleBinding (read-only k8s access)
+      - DaemonSet  (hostmetrics + kubeletstats — one pod per node)
+      - Deployment (k8s_cluster + k8sobjects — single cluster-wide instance)
+    Called automatically by deploy_splunk(); safe to call multiple times.
+    """
+    config.load_incluster_config()
+    core     = client.CoreV1Api()
+    apps_api = client.AppsV1Api()
+    rbac_api = client.RbacAuthorizationV1Api()
+
+    def _apply_namespaced(create_fn, patch_fn, name, obj):
+        try:
+            create_fn(NAMESPACE, obj)
+        except ApiException as e:
+            if e.status == 409:
+                patch_fn(name, NAMESPACE, obj)
+            else:
+                raise
+
+    def _apply_cluster(create_fn, patch_fn, name, obj):
+        try:
+            create_fn(obj)
+        except ApiException as e:
+            if e.status == 409:
+                patch_fn(name, obj)
+            else:
+                raise
+
+    # ── ServiceAccount ──────────────────────────────────────────────────────
+    _apply_namespaced(
+        core.create_namespaced_service_account,
+        core.patch_namespaced_service_account,
+        "otel-collector",
+        client.V1ServiceAccount(
+            metadata=client.V1ObjectMeta(name="otel-collector", namespace=NAMESPACE),
+        ),
+    )
+
+    # ── ClusterRole ─────────────────────────────────────────────────────────
+    _apply_cluster(
+        rbac_api.create_cluster_role,
+        rbac_api.patch_cluster_role,
+        "otel-collector",
+        client.V1ClusterRole(
+            metadata=client.V1ObjectMeta(name="otel-collector"),
+            rules=[
+                client.V1PolicyRule(
+                    api_groups=[""],
+                    resources=["events", "endpoints", "namespaces", "namespaces/status",
+                               "nodes", "nodes/proxy", "nodes/stats", "pods", "pods/status",
+                               "replicationcontrollers", "replicationcontrollers/status",
+                               "resourcequotas", "services"],
+                    verbs=["get", "list", "watch"],
+                ),
+                client.V1PolicyRule(
+                    api_groups=["apps"],
+                    resources=["daemonsets", "deployments", "replicasets", "statefulsets"],
+                    verbs=["get", "list", "watch"],
+                ),
+                client.V1PolicyRule(
+                    api_groups=["batch"],
+                    resources=["jobs", "cronjobs"],
+                    verbs=["get", "list", "watch"],
+                ),
+                client.V1PolicyRule(
+                    api_groups=["autoscaling"],
+                    resources=["horizontalpodautoscalers"],
+                    verbs=["get", "list", "watch"],
+                ),
+            ],
+        ),
+    )
+
+    # ── ClusterRoleBinding ──────────────────────────────────────────────────
+    _apply_cluster(
+        rbac_api.create_cluster_role_binding,
+        rbac_api.patch_cluster_role_binding,
+        "otel-collector",
+        client.V1ClusterRoleBinding(
+            metadata=client.V1ObjectMeta(name="otel-collector"),
+            subjects=[client.V1Subject(
+                kind="ServiceAccount", name="otel-collector", namespace=NAMESPACE,
+            )],
+            role_ref=client.V1RoleRef(
+                kind="ClusterRole", name="otel-collector",
+                api_group="rbac.authorization.k8s.io",
+            ),
+        ),
+    )
+
+    # ── DaemonSet ConfigMap ─────────────────────────────────────────────────
+    _apply_namespaced(
+        core.create_namespaced_config_map,
+        core.patch_namespaced_config_map,
+        "otel-collector-ds-config",
+        client.V1ConfigMap(
+            metadata=client.V1ObjectMeta(name="otel-collector-ds-config", namespace=NAMESPACE),
+            data={"config.yaml": OTEL_DS_CONFIG},
+        ),
+    )
+
+    # ── DaemonSet ───────────────────────────────────────────────────────────
+    _apply_namespaced(
+        apps_api.create_namespaced_daemon_set,
+        apps_api.patch_namespaced_daemon_set,
+        "otel-collector-ds",
+        client.V1DaemonSet(
+            metadata=client.V1ObjectMeta(
+                name="otel-collector-ds", namespace=NAMESPACE,
+                labels={"app": "otel-collector-ds"},
+            ),
+            spec=client.V1DaemonSetSpec(
+                selector=client.V1LabelSelector(match_labels={"app": "otel-collector-ds"}),
+                template=client.V1PodTemplateSpec(
+                    metadata=client.V1ObjectMeta(labels={"app": "otel-collector-ds"}),
+                    spec=client.V1PodSpec(
+                        service_account_name="otel-collector",
+                        tolerations=[client.V1Toleration(operator="Exists")],
+                        containers=[client.V1Container(
+                            name="otel-collector",
+                            image=OTEL_IMAGE,
+                            args=["--config=/conf/config.yaml"],
+                            env=[
+                                client.V1EnvVar(
+                                    name="K8S_NODE_NAME",
+                                    value_from=client.V1EnvVarSource(
+                                        field_ref=client.V1ObjectFieldSelector(field_path="spec.nodeName"),
+                                    ),
+                                ),
+                                client.V1EnvVar(
+                                    name="K8S_NODE_IP",
+                                    value_from=client.V1EnvVarSource(
+                                        field_ref=client.V1ObjectFieldSelector(field_path="status.hostIP"),
+                                    ),
+                                ),
+                            ],
+                            resources=client.V1ResourceRequirements(
+                                requests={"cpu": "50m", "memory": "128Mi"},
+                                limits={"cpu": "200m", "memory": "256Mi"},
+                            ),
+                            volume_mounts=[
+                                client.V1VolumeMount(name="config", mount_path="/conf"),
+                                client.V1VolumeMount(
+                                    name="hostfs", mount_path="/hostfs",
+                                    read_only=True, mount_propagation="HostToContainer",
+                                ),
+                            ],
+                        )],
+                        volumes=[
+                            client.V1Volume(
+                                name="config",
+                                config_map=client.V1ConfigMapVolumeSource(name="otel-collector-ds-config"),
+                            ),
+                            client.V1Volume(
+                                name="hostfs",
+                                host_path=client.V1HostPathVolumeSource(path="/"),
+                            ),
+                        ],
+                    ),
+                ),
+            ),
+        ),
+    )
+
+    # ── Deployment ConfigMap ────────────────────────────────────────────────
+    _apply_namespaced(
+        core.create_namespaced_config_map,
+        core.patch_namespaced_config_map,
+        "otel-collector-deploy-config",
+        client.V1ConfigMap(
+            metadata=client.V1ObjectMeta(name="otel-collector-deploy-config", namespace=NAMESPACE),
+            data={"config.yaml": OTEL_DEPLOY_CONFIG},
+        ),
+    )
+
+    # ── Deployment ──────────────────────────────────────────────────────────
+    _apply_namespaced(
+        apps_api.create_namespaced_deployment,
+        apps_api.patch_namespaced_deployment,
+        "otel-collector",
+        client.V1Deployment(
+            metadata=client.V1ObjectMeta(
+                name="otel-collector", namespace=NAMESPACE,
+                labels={"app": "otel-collector"},
+            ),
+            spec=client.V1DeploymentSpec(
+                replicas=1,
+                selector=client.V1LabelSelector(match_labels={"app": "otel-collector"}),
+                template=client.V1PodTemplateSpec(
+                    metadata=client.V1ObjectMeta(labels={"app": "otel-collector"}),
+                    spec=client.V1PodSpec(
+                        service_account_name="otel-collector",
+                        containers=[client.V1Container(
+                            name="otel-collector",
+                            image=OTEL_IMAGE,
+                            args=["--config=/conf/config.yaml"],
+                            resources=client.V1ResourceRequirements(
+                                requests={"cpu": "50m", "memory": "128Mi"},
+                                limits={"cpu": "200m", "memory": "256Mi"},
+                            ),
+                            volume_mounts=[
+                                client.V1VolumeMount(name="config", mount_path="/conf"),
+                            ],
+                        )],
+                        volumes=[
+                            client.V1Volume(
+                                name="config",
+                                config_map=client.V1ConfigMapVolumeSource(name="otel-collector-deploy-config"),
+                            ),
+                        ],
+                    ),
+                ),
+            ),
+        ),
+    )
+
+
+def otel_collector_running() -> bool:
+    """Return True if the OTel DaemonSet exists and has at least one ready pod."""
+    try:
+        config.load_incluster_config()
+        ds = client.AppsV1Api().read_namespaced_daemon_set("otel-collector-ds", NAMESPACE)
+        return (ds.status.number_ready or 0) > 0
+    except Exception:
+        return False
 
 
 def get_splunkbase_app_status() -> dict:

@@ -789,7 +789,7 @@ def splunk():
     splunk_available = is_available()
     app_status = get_splunkbase_app_status() if splunk_available else {}
 
-    from scripts.splunk import k8s_dashboard_exists
+    from scripts.splunk import k8s_dashboard_exists, otel_collector_running
     return render_template(
         'splunk.html',
         splunk_available=splunk_available,
@@ -798,6 +798,7 @@ def splunk():
         splunkbase_apps=SPLUNKBASE_APPS,
         app_status=app_status,
         k8s_dashboard_exists=k8s_dashboard_exists() if splunk_available else False,
+        otel_running=otel_collector_running() if splunk_available else False,
     )
 
 @app.route('/splunk/status')
