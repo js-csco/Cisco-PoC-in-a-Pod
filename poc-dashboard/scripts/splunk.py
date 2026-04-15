@@ -411,6 +411,107 @@ def install_splunkbase_app(app_id: int, splunkbase_username: str, splunkbase_pas
     return f"App v{latest_version} installed successfully"
 
 
+def configure_duo_input(ikey: str, skey: str, api_hostname: str, input_name: str = "poc_duo") -> str:
+    """
+    Create or update a Cisco Duo modular input in the Cisco Security Cloud Splunk app.
+
+    Calls the Splunk management REST API at:
+      /servicesNS/nobody/cisco_security_cloud/data/inputs/cisco_duo
+    """
+    mgmt_url = SPLUNK_API_URL.replace("http://", "https://")
+    endpoint = f"{mgmt_url}/servicesNS/nobody/cisco_security_cloud/data/inputs/cisco_duo"
+    data = {
+        "name":    input_name,
+        "ikey":    ikey,
+        "skey":    skey,
+        "host":    api_hostname.strip().rstrip("/"),
+    }
+
+    r = requests.post(
+        endpoint,
+        auth=("admin", SPLUNK_PASSWORD),
+        data=data,
+        verify=False,
+        timeout=15,
+    )
+
+    if r.status_code == 409:
+        # Input already exists — update it
+        r = requests.post(
+            f"{endpoint}/{input_name}",
+            auth=("admin", SPLUNK_PASSWORD),
+            data={k: v for k, v in data.items() if k != "name"},
+            verify=False,
+            timeout=15,
+        )
+
+    if r.status_code not in (200, 201):
+        raise RuntimeError(
+            f"Splunk returned {r.status_code} — make sure the "
+            "Cisco Security Cloud app is installed and restarted."
+        )
+
+    return f"Duo input '{input_name}' configured — data will start flowing within a few minutes."
+
+
+def get_duo_input_status(input_name: str = "poc_duo") -> bool:
+    """Return True if the named Duo modular input exists in the Cisco Security Cloud app."""
+    mgmt_url = SPLUNK_API_URL.replace("http://", "https://")
+    try:
+        r = requests.get(
+            f"{mgmt_url}/servicesNS/nobody/cisco_security_cloud/data/inputs/cisco_duo/{input_name}",
+            auth=("admin", SPLUNK_PASSWORD),
+            verify=False,
+            timeout=5,
+        )
+        return r.status_code == 200
+    except Exception:
+        return False
+
+
+def send_test_hec_event() -> bool:
+    """
+    POST a synthetic test event to the HEC endpoint.
+    Returns True on success, raises RuntimeError on failure.
+    """
+    payload = {
+        "event": {
+            "source":    "piap-dashboard",
+            "eventtype": "hec_connectivity_test",
+            "message":   "Identity Intelligence webhook connectivity test from PoC Dashboard",
+        },
+        "sourcetype": "cisco:cii",
+        "index":      "main",
+    }
+
+    def _try(url):
+        return requests.post(
+            f"{url}/services/collector/event",
+            headers={"Authorization": f"Splunk {HEC_TOKEN}"},
+            json=payload,
+            verify=False,
+            timeout=10,
+        )
+
+    try:
+        r = _try(SPLUNK_HEC_URL)
+        if r.status_code == 200:
+            return True
+    except Exception:
+        pass
+
+    # Retry over HTTPS
+    try:
+        r = _try(SPLUNK_HEC_URL.replace("http://", "https://"))
+        if r.status_code == 200:
+            return True
+        raise RuntimeError(f"HEC returned {r.status_code}: {r.text[:200]}")
+    except RuntimeError:
+        raise
+    except Exception as exc:
+        raise RuntimeError(str(exc)) from exc
+
+
 def get_pod_status() -> dict:
     """
     Check the Splunk pod status in Kubernetes.

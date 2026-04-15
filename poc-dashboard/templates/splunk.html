@@ -382,50 +382,257 @@
   </form>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════ LOG SOURCES -->
-<section style="margin-bottom:2.5rem;">
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+<!-- ═══════════════════════════════════════════════════════ CONFIGURE INTEGRATIONS -->
+<section style="margin-bottom:2.5rem;{% if not splunk_available %} opacity:0.45; pointer-events:none;{% endif %}">
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
     <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">LOG SOURCES</h3>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CONFIGURE INTEGRATIONS</h3>
+    {% if not splunk_available %}
+      <span style="font-size:0.78em; color:#999; background:#f5f5f5; border:1px solid #e0e0e0; border-radius:4px; padding:2px 8px;">Splunk not running</span>
+    {% endif %}
   </div>
-  <p style="color:#666; font-size:0.88em; margin:0 0 18px 0;">
-    Splunk receives logs from these sources.
-    Configure each in the relevant admin portal or deploy the collector agent.
+  <p style="color:#666; font-size:0.88em; margin:0 0 18px 0; line-height:1.6;">
+    Connect log sources to Splunk. Requires the <strong>Cisco Security Cloud</strong> app to be installed above.
   </p>
 
-  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px;">
+  <!-- ─── CISCO DUO ─────────────────────────────────────────────────────────── -->
+  <div style="border:1px solid #e0e0e0; border-radius:10px; padding:20px 22px; background:#fff; margin-bottom:14px;">
 
-    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; background:#fff;">
-      <div style="font-weight:600; color:#111; margin-bottom:4px; font-size:0.95em;">Cisco Duo &amp; Identity Intelligence</div>
-      <div style="font-size:0.82em; color:#666; line-height:1.6;">
-        Authentication logs, admin actions, telephony events, and trust assessments
-        from Duo MFA and Identity Intelligence risk scoring.
-        Configure the Duo Admin API integration in the Cisco Security Cloud app
-        with your <strong>API hostname</strong>, <strong>integration key</strong>,
-        and <strong>secret key</strong> from the Duo Admin Panel.
+    <!-- Header row -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:36px; height:36px; background:#e8f0ff; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+          <i class="fa-solid fa-shield-halved" style="color:#0066ff; font-size:1em;"></i>
+        </div>
+        <div>
+          <div style="font-weight:700; color:#111; font-size:0.95em;">Cisco Duo</div>
+          <div style="font-size:0.78em; color:#888; margin-top:1px;">Authentication, admin actions &amp; telephony logs</div>
+        </div>
       </div>
-      <div style="margin-top:10px;">
-        <a href="https://duo.com/docs/adminapi" target="_blank"
-           style="color:#0066ff; font-size:0.8em;">Duo Admin API docs</a>
-      </div>
+      {% if splunk_available %}
+        {% if duo_input_configured %}
+          <span style="font-size:0.75em; background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:4px; padding:3px 10px; font-weight:600; white-space:nowrap;">Configured</span>
+        {% else %}
+          <span style="font-size:0.75em; background:#fce4ec; color:#b71c1c; border:1px solid #ef9a9a; border-radius:4px; padding:3px 10px; font-weight:600; white-space:nowrap;">Not configured</span>
+        {% endif %}
+      {% endif %}
     </div>
 
-    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; background:#fff;">
-      <div style="font-weight:600; color:#111; margin-bottom:4px; font-size:0.95em;">Cisco Secure Access</div>
-      <div style="font-size:0.82em; color:#666; line-height:1.6;">
-        DNS, web proxy, firewall, and DLP logs from Cisco Secure Access (formerly Umbrella).
-        Configure the Secure Access Reporting API integration in the Cisco Security Cloud app
-        with your <strong>API key</strong> and <strong>key secret</strong>
-        from the Secure Access dashboard.
-      </div>
-      <div style="margin-top:10px;">
-        <a href="https://docs.sse.cisco.com/sse-user-guide/docs/about-reports" target="_blank"
-           style="color:#0066ff; font-size:0.8em;">Secure Access reporting docs</a>
-      </div>
+    <!-- Explainer -->
+    <p style="font-size:0.83em; color:#555; margin:12px 0; line-height:1.65;">
+      The Cisco Security Cloud app polls the <strong>Duo Admin API</strong> to pull authentication logs,
+      admin events, and telephony records directly into Splunk.
+      {% if duo_prefill.integration_key %}
+        Your Duo Admin API credentials are pre-filled from the Duo tab.
+      {% else %}
+        Obtain credentials from the <strong>Duo Admin Panel → Applications → Protect an Application → Admin API</strong>.
+      {% endif %}
+    </p>
+
+    <!-- Inline required app notice -->
+    {% if splunk_available and not app_status.get('cisco_security_cloud', false) %}
+    <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:6px; padding:9px 13px; margin-bottom:14px; font-size:0.81em; color:#6d4c00; line-height:1.6;">
+      <strong>Cisco Security Cloud app not installed.</strong>
+      Install it from the <strong>Splunkbase Apps</strong> section above, then restart Splunk before configuring.
     </div>
+    {% endif %}
 
+    <form method="POST">
+      <input type="hidden" name="action" value="configure_duo_splunk">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
 
+        <div>
+          <label style="display:block; font-size:0.78em; font-weight:600; color:#666; margin-bottom:4px; letter-spacing:0.2px;">INPUT NAME</label>
+          <input type="text" name="duo_input_name" value="poc_duo"
+                 style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:0.85em; color:#333; box-sizing:border-box;">
+        </div>
+
+        <div>
+          <label style="display:block; font-size:0.78em; font-weight:600; color:#666; margin-bottom:4px; letter-spacing:0.2px;">API HOSTNAME</label>
+          <input type="text" name="duo_api_hostname"
+                 value="{{ duo_prefill.api_hostname }}"
+                 placeholder="api-XXXXXXXX.duosecurity.com"
+                 style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:0.85em; color:#333; box-sizing:border-box; font-family:monospace;">
+        </div>
+
+        <div>
+          <label style="display:block; font-size:0.78em; font-weight:600; color:#666; margin-bottom:4px; letter-spacing:0.2px;">INTEGRATION KEY (ikey)</label>
+          <input type="text" name="duo_ikey"
+                 value="{{ duo_prefill.integration_key }}"
+                 placeholder="DIXXXXXXXXXXXXXXXXXX"
+                 style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:0.85em; color:#333; box-sizing:border-box; font-family:monospace;">
+        </div>
+
+        <div>
+          <label style="display:block; font-size:0.78em; font-weight:600; color:#666; margin-bottom:4px; letter-spacing:0.2px;">SECRET KEY (skey)</label>
+          <input type="password" name="duo_skey"
+                 value="{{ duo_prefill.secret_key }}"
+                 placeholder="••••••••••••••••••••••••••••••••••••••••"
+                 style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:0.85em; color:#333; box-sizing:border-box; font-family:monospace;">
+        </div>
+
+      </div>
+
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button type="submit"
+                style="background-color:#0066ff; color:#fff; border:none; padding:9px 22px;
+                       border-radius:6px; font-weight:700; cursor:pointer; font-size:0.88em;">
+          {% if duo_input_configured %}Update Duo Input{% else %}Configure Duo in Splunk{% endif %}
+        </button>
+        <span style="font-size:0.8em; color:#999;">
+          Creates a modular input in the Cisco Security Cloud app
+        </span>
+      </div>
+    </form>
   </div>
+
+  <!-- ─── CISCO IDENTITY INTELLIGENCE ──────────────────────────────────────── -->
+  <div style="border:1px solid #e0e0e0; border-radius:10px; padding:20px 22px; background:#fff;">
+
+    <!-- Header row -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:36px; height:36px; background:#e8f0ff; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+          <i class="fa-solid fa-user-magnifying-glass" style="color:#0066ff; font-size:1em;"></i>
+        </div>
+        <div>
+          <div style="font-weight:700; color:#111; font-size:0.95em;">Cisco Identity Intelligence</div>
+          <div style="font-size:0.78em; color:#888; margin-top:1px;">Identity risk scores, user activity &amp; threat assessments</div>
+        </div>
+      </div>
+      {% if hec_healthy %}
+        <span style="font-size:0.75em; background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:4px; padding:3px 10px; font-weight:600; white-space:nowrap;">HEC ready</span>
+      {% elif splunk_available %}
+        <span style="font-size:0.75em; background:#fff8e1; color:#f57f17; border:1px solid #ffe082; border-radius:4px; padding:3px 10px; font-weight:600; white-space:nowrap;">HEC not ready</span>
+      {% endif %}
+    </div>
+
+    <!-- Explainer -->
+    <p style="font-size:0.83em; color:#555; margin:12px 0 16px; line-height:1.65;">
+      Identity Intelligence pushes events to Splunk via a <strong>Webhook (HTTP Event Collector)</strong>.
+      Copy the endpoint and token below, then add a <em>Notification Target</em> in the CII portal.
+    </p>
+
+    <!-- ── Webhook details box ── -->
+    <div style="background:#f8f9ff; border:1px solid #d0dbff; border-radius:8px; padding:14px 16px; margin-bottom:16px;">
+      <div style="font-size:0.75em; font-weight:700; color:#0066ff; letter-spacing:0.6px; margin-bottom:10px;">WEBHOOK DETAILS — PASTE THESE INTO CISCO IDENTITY INTELLIGENCE</div>
+
+      <!-- URL row -->
+      <div style="margin-bottom:10px;">
+        <div style="font-size:0.75em; font-weight:600; color:#666; margin-bottom:4px; letter-spacing:0.2px;">WEBHOOK URL</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <code id="cii-hec-url"
+                style="flex:1; background:#fff; border:1px solid #ddd; border-radius:5px; padding:7px 10px;
+                       font-size:0.83em; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            http://{{ server_ip }}:30501/services/collector/event
+          </code>
+          <button type="button" onclick="copyToClipboard('cii-hec-url', this)"
+                  style="flex-shrink:0; background:#f0f4ff; border:1px solid #d0dbff; color:#0066ff;
+                         padding:7px 12px; border-radius:5px; font-size:0.8em; font-weight:600;
+                         cursor:pointer; white-space:nowrap;">
+            <i class="fa-regular fa-copy" style="margin-right:4px;"></i>Copy
+          </button>
+        </div>
+      </div>
+
+      <!-- Token row -->
+      <div>
+        <div style="font-size:0.75em; font-weight:600; color:#666; margin-bottom:4px; letter-spacing:0.2px;">AUTHORIZATION HEADER VALUE</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <code id="cii-hec-token"
+                style="flex:1; background:#fff; border:1px solid #ddd; border-radius:5px; padding:7px 10px;
+                       font-size:0.83em; color:#111; font-family:monospace;">
+            Splunk piap-hec-token
+          </code>
+          <button type="button" onclick="copyToClipboard('cii-hec-token', this)"
+                  style="flex-shrink:0; background:#f0f4ff; border:1px solid #d0dbff; color:#0066ff;
+                         padding:7px 12px; border-radius:5px; font-size:0.8em; font-weight:600;
+                         cursor:pointer; white-space:nowrap;">
+            <i class="fa-regular fa-copy" style="margin-right:4px;"></i>Copy
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Step-by-step guide ── -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:0.75em; font-weight:700; color:#555; letter-spacing:0.6px; margin-bottom:10px;">CONFIGURATION STEPS IN CISCO IDENTITY INTELLIGENCE</div>
+      <ol style="margin:0; padding-left:18px; display:flex; flex-direction:column; gap:6px;">
+        <li style="font-size:0.83em; color:#444; line-height:1.6;">
+          Navigate to <strong>Integrations</strong> in the CII portal.
+        </li>
+        <li style="font-size:0.83em; color:#444; line-height:1.6;">
+          Under <strong>Notification Targets</strong>, click <strong>Create New Target</strong> and select <strong>Webhook</strong>.
+        </li>
+        <li style="font-size:0.83em; color:#444; line-height:1.6;">
+          Paste the <strong>Webhook URL</strong> above. Set the <strong>Authorization</strong> header to the value above.
+          Use <code style="background:#f5f5f5; padding:1px 5px; border-radius:3px; font-size:0.95em;">test_splunk_demo</code> as the input name.
+        </li>
+        <li style="font-size:0.83em; color:#444; line-height:1.6;">
+          Click <strong>Save</strong>, then click the <strong>⋯ menu</strong> next to the integration and select
+          <strong>Test Connectivity</strong>. A <em>Success</em> popup confirms the connection.
+        </li>
+        <li style="font-size:0.83em; color:#444; line-height:1.6;">
+          In Splunk, go to <strong>App Analytics → Cisco Identity Intelligence Dashboard</strong> and confirm the test event appears.
+        </li>
+      </ol>
+    </div>
+
+    <!-- ── Test HEC button ── -->
+    <form method="POST" style="display:inline;">
+      <input type="hidden" name="action" value="test_hec">
+      <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+        <button type="submit"
+                style="background-color:#455a64; color:#fff; border:none; padding:9px 22px;
+                       border-radius:6px; font-weight:700; cursor:pointer; font-size:0.88em;">
+          Send Test Event
+        </button>
+        <span style="font-size:0.8em; color:#999;">Sends a synthetic event to HEC — verify with
+          <code style="background:#f5f5f5; padding:1px 5px; border-radius:3px; font-size:0.9em;">index=main sourcetype="cisco:cii"</code>
+        </span>
+      </div>
+    </form>
+
+    <!-- ── AWS S3 callout ── -->
+    <div style="margin-top:16px; background:#f5f5f5; border:1px solid #e0e0e0; border-radius:6px; padding:10px 14px;">
+      <div style="font-size:0.75em; font-weight:700; color:#888; letter-spacing:0.5px; margin-bottom:4px;">ALTERNATIVE: AWS S3 BUCKET (BATCH)</div>
+      <p style="font-size:0.8em; color:#666; margin:0; line-height:1.6;">
+        CII can also forward events to an <strong>S3 bucket</strong> which Splunk ingests via the Splunk Add-on for AWS.
+        This method is better for large data volumes but requires an AWS account and S3 bucket configuration.
+        See the <a href="https://docs.sse.cisco.com" target="_blank" style="color:#0066ff;">CII documentation</a> for setup details.
+      </p>
+    </div>
+  </div>
+
 </section>
+
+<script>
+function copyToClipboard(elementId, btn) {
+  var el = document.getElementById(elementId);
+  if (!el) return;
+  var text = el.textContent.trim();
+  navigator.clipboard.writeText(text).then(function() {
+    var orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-check" style="margin-right:4px;"></i>Copied';
+    btn.style.background = '#e8f5e9';
+    btn.style.borderColor = '#a5d6a7';
+    btn.style.color = '#2e7d32';
+    setTimeout(function() {
+      btn.innerHTML = orig;
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+    }, 2000);
+  }).catch(function() {
+    // Fallback for older browsers
+    var range = document.createRange();
+    range.selectNode(el);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    window.getSelection().removeAllRanges();
+  });
+}
+</script>
 
 {% endblock %}

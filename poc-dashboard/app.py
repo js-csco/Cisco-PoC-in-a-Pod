@@ -772,13 +772,51 @@ def splunk():
                     app_name = next((a['display'] for a in SPLUNKBASE_APPS if str(a['id']) == aid), aid)
                     try:
                         install_splunkbase_app(int(aid), sb_user, sb_pass)
-                        flash(f"{app_name} installed — restart Splunk to activate.")
+                        flash(f"✅ {app_name} installed — restart Splunk to activate.")
                     except Exception as e:
-                        flash(f"{app_name} install failed: {e}")
+                        flash(f"⚠️ {app_name} install failed: {e}")
+            return redirect(url_for('splunk'))
+
+        if action == 'configure_duo_splunk':
+            from scripts.splunk import configure_duo_input
+            ikey         = request.form.get('duo_ikey', '').strip()
+            skey         = request.form.get('duo_skey', '').strip()
+            api_hostname = request.form.get('duo_api_hostname', '').strip()
+            input_name   = request.form.get('duo_input_name', 'poc_duo').strip() or 'poc_duo'
+            if not all([ikey, skey, api_hostname]):
+                flash("⚠️ Integration Key, Secret Key, and API Hostname are all required.")
+            else:
+                try:
+                    msg = configure_duo_input(ikey, skey, api_hostname, input_name)
+                    flash(f"✅ {msg}")
+                except Exception as e:
+                    flash(f"⚠️ Duo configuration failed: {e}")
+            return redirect(url_for('splunk'))
+
+        if action == 'test_hec':
+            from scripts.splunk import send_test_hec_event
+            try:
+                send_test_hec_event()
+                flash("✅ Test event sent to HEC — check Splunk search: index=main sourcetype=\"cisco:cii\"")
+            except Exception as e:
+                flash(f"⚠️ HEC test failed: {e}")
             return redirect(url_for('splunk'))
 
     splunk_available = is_available()
     app_status = get_splunkbase_app_status() if splunk_available else {}
+
+    # Pre-fill Duo credentials from session so they appear in the integration form
+    duo_prefill = {
+        'api_hostname':    session.get('duo_api_hostname', ''),
+        'integration_key': session.get('duo_integration_key', ''),
+        'secret_key':      session.get('duo_secret_key', ''),
+    }
+
+    # Check whether the Duo input is already configured in Splunk
+    duo_input_configured = False
+    if splunk_available:
+        from scripts.splunk import get_duo_input_status
+        duo_input_configured = get_duo_input_status()
 
     return render_template(
         'splunk.html',
@@ -787,6 +825,8 @@ def splunk():
         server_ip=request.host.split(':')[0],
         splunkbase_apps=SPLUNKBASE_APPS,
         app_status=app_status,
+        duo_prefill=duo_prefill,
+        duo_input_configured=duo_input_configured,
     )
 
 @app.route('/splunk/status')
