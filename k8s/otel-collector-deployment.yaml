@@ -1,0 +1,100 @@
+# ── OpenTelemetry Collector — Deployment (single instance, cluster-level) ────
+# Collects cluster-wide Kubernetes data via:
+#   - k8s_cluster receiver  → node/pod/deployment counts, node conditions,
+#                             allocatable CPU/memory, resource limits/requests
+#   - k8sevents receiver    → Kubernetes Event objects (OOMKilled, BackOff, …)
+# Ships directly to the in-cluster Splunk HEC — not exposed to users.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-deploy-config
+  namespace: piap
+data:
+  config.yaml: |
+    receivers:
+      k8s_cluster:
+        collection_interval: 30s
+        node_conditions_to_report:
+          - Ready
+          - MemoryPressure
+          - DiskPressure
+          - PIDPressure
+        allocatable_types_to_report:
+          - cpu
+          - memory
+          - storage
+
+      k8sevents:
+        auth_type: serviceAccount
+        # empty = watch all namespaces
+
+    processors:
+      batch:
+        timeout: 10s
+        send_batch_size: 1000
+
+    exporters:
+      splunk_hec/cluster:
+        token: "piap-hec-token"
+        endpoint: "http://splunk.piap.svc.cluster.local:8088/services/collector"
+        source: "otel-k8s-cluster"
+        sourcetype: "otel:metrics:cluster"
+        tls:
+          insecure_skip_verify: true
+
+      splunk_hec/events:
+        token: "piap-hec-token"
+        endpoint: "http://splunk.piap.svc.cluster.local:8088/services/collector"
+        source: "otel-k8s-events"
+        sourcetype: "otel:k8s:events"
+        tls:
+          insecure_skip_verify: true
+
+    service:
+      pipelines:
+        metrics:
+          receivers: [k8s_cluster]
+          processors: [batch]
+          exporters: [splunk_hec/cluster]
+        logs:
+          receivers: [k8sevents]
+          processors: [batch]
+          exporters: [splunk_hec/events]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: piap
+  labels:
+    app: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      serviceAccountName: otel-collector
+      containers:
+        - name: otel-collector
+          image: otel/opentelemetry-collector-contrib:0.115.0
+          args: ["--config=/conf/config.yaml"]
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          volumeMounts:
+            - name: config
+              mountPath: /conf
+      volumes:
+        - name: config
+          configMap:
+            name: otel-collector-deploy-config

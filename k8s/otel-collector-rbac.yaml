@@ -1,0 +1,63 @@
+# ── OpenTelemetry Collector RBAC ─────────────────────────────────────────────
+# Cluster-wide read access needed by:
+#   - kubeletstats receiver  → nodes/proxy, nodes/stats
+#   - k8s_cluster receiver   → pods, nodes, namespaces, deployments, …
+#   - k8sevents receiver     → events
+#   - k8sattributes processor → pods, namespaces, replicasets
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: otel-collector
+  namespace: piap
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: otel-collector
+rules:
+- apiGroups: [""]
+  resources:
+    - events
+    - endpoints
+    - namespaces
+    - namespaces/status
+    - nodes
+    - nodes/proxy
+    - nodes/stats
+    - pods
+    - pods/status
+    - replicationcontrollers
+    - replicationcontrollers/status
+    - resourcequotas
+    - services
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources:
+    - daemonsets
+    - deployments
+    - replicasets
+    - statefulsets
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources:
+    - jobs
+    - cronjobs
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["autoscaling"]
+  resources:
+    - horizontalpodautoscalers
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: otel-collector
+subjects:
+- kind: ServiceAccount
+  name: otel-collector
+  namespace: piap
+roleRef:
+  kind: ClusterRole
+  name: otel-collector
+  apiGroup: rbac.authorization.k8s.io
