@@ -1,8 +1,9 @@
 # ── OpenTelemetry Collector — Deployment (single instance, cluster-level) ────
 # Collects cluster-wide Kubernetes data via:
-#   - k8s_cluster receiver  → node/pod/deployment counts, node conditions,
-#                             allocatable CPU/memory, resource limits/requests
-#   - k8sevents receiver    → Kubernetes Event objects (OOMKilled, BackOff, …)
+#   - k8s_cluster receiver   → node/pod/deployment counts, node conditions,
+#                              allocatable CPU/memory, resource limits/requests
+#   - k8sobjects receiver    → Kubernetes Event objects streamed in real time
+#                              (OOMKilled, BackOff, scheduling failures, …)
 # Ships directly to the in-cluster Splunk HEC — not exposed to users.
 ---
 apiVersion: v1
@@ -23,11 +24,13 @@ data:
         allocatable_types_to_report:
           - cpu
           - memory
-          - storage
+          - ephemeral-storage
 
-      k8sevents:
+      k8sobjects:
         auth_type: serviceAccount
-        # empty = watch all namespaces
+        objects:
+          - name: events
+            mode: watch  # stream events in real time, all namespaces
 
     processors:
       batch:
@@ -40,16 +43,12 @@ data:
         endpoint: "http://splunk.piap.svc.cluster.local:8088/services/collector"
         source: "otel-k8s-cluster"
         sourcetype: "otel:metrics:cluster"
-        tls:
-          insecure_skip_verify: true
 
       splunk_hec/events:
         token: "piap-hec-token"
         endpoint: "http://splunk.piap.svc.cluster.local:8088/services/collector"
         source: "otel-k8s-events"
         sourcetype: "otel:k8s:events"
-        tls:
-          insecure_skip_verify: true
 
     service:
       pipelines:
@@ -58,7 +57,7 @@ data:
           processors: [batch]
           exporters: [splunk_hec/cluster]
         logs:
-          receivers: [k8sevents]
+          receivers: [k8sobjects]
           processors: [batch]
           exporters: [splunk_hec/events]
 ---
@@ -82,7 +81,7 @@ spec:
       serviceAccountName: otel-collector
       containers:
         - name: otel-collector
-          image: otel/opentelemetry-collector-contrib:0.115.0
+          image: otel/opentelemetry-collector-contrib:0.140.0
           args: ["--config=/conf/config.yaml"]
           resources:
             requests:

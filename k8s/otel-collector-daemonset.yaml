@@ -57,8 +57,6 @@ data:
         endpoint: "http://splunk.piap.svc.cluster.local:8088/services/collector"
         source: "otel-k8s-node"
         sourcetype: "otel:metrics:node"
-        tls:
-          insecure_skip_verify: true
 
     service:
       pipelines:
@@ -88,7 +86,7 @@ spec:
         - operator: Exists  # run on all nodes including control-plane
       containers:
         - name: otel-collector
-          image: otel/opentelemetry-collector-contrib:0.115.0
+          image: otel/opentelemetry-collector-contrib:0.140.0
           args: ["--config=/conf/config.yaml"]
           env:
             - name: K8S_NODE_NAME

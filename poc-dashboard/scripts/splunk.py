@@ -514,7 +514,7 @@ K8S_DASHBOARD_XML = textwrap.dedent("""\
       <title>Warning Events (Last 1h)</title>
       <single>
         <search>
-          <query>source="otel-k8s-events" type=Warning | stats count</query>
+          <query>source="otel-k8s-events" | spath | search type=Warning | stats count</query>
           <earliest>-1h</earliest>
           <latest>now</latest>
         </search>
@@ -529,7 +529,7 @@ K8S_DASHBOARD_XML = textwrap.dedent("""\
       <title>Active Namespaces (Last 1h)</title>
       <single>
         <search>
-          <query>source="otel-k8s-events" | stats dc("k8s.namespace.name") as namespaces</query>
+          <query>source="otel-k8s-events" | spath | stats dc("involvedObject.namespace") as namespaces</query>
           <earliest>-1h</earliest>
           <latest>now</latest>
         </search>
@@ -543,7 +543,7 @@ K8S_DASHBOARD_XML = textwrap.dedent("""\
       <title>Events Over Time (24h)</title>
       <chart>
         <search>
-          <query>source="otel-k8s-events"
+          <query>source="otel-k8s-events" | spath
 | eval event_type=if(type="Warning","Warning","Normal")
 | timechart span=10m count by event_type</query>
           <earliest>-24h@h</earliest>
@@ -558,11 +558,10 @@ K8S_DASHBOARD_XML = textwrap.dedent("""\
       <title>Top Event Reasons (24h)</title>
       <chart>
         <search>
-          <query>source="otel-k8s-events"
-| stats count by "k8s.event.reason"
+          <query>source="otel-k8s-events" | spath
+| stats count by reason
 | sort -count
-| head 10
-| rename "k8s.event.reason" as Reason</query>
+| head 10</query>
           <earliest>-24h@h</earliest>
           <latest>now</latest>
         </search>
@@ -577,10 +576,10 @@ K8S_DASHBOARD_XML = textwrap.dedent("""\
       <title>Events by Namespace (24h)</title>
       <chart>
         <search>
-          <query>source="otel-k8s-events"
-| stats count by "k8s.namespace.name"
+          <query>source="otel-k8s-events" | spath
+| stats count by "involvedObject.namespace"
 | sort -count
-| rename "k8s.namespace.name" as Namespace</query>
+| rename "involvedObject.namespace" as Namespace</query>
           <earliest>-24h@h</earliest>
           <latest>now</latest>
         </search>
@@ -591,10 +590,10 @@ K8S_DASHBOARD_XML = textwrap.dedent("""\
       <title>Events by Object Kind (24h)</title>
       <chart>
         <search>
-          <query>source="otel-k8s-events"
-| stats count by "k8s.object.kind"
+          <query>source="otel-k8s-events" | spath
+| stats count by "involvedObject.kind"
 | sort -count
-| rename "k8s.object.kind" as Kind</query>
+| rename "involvedObject.kind" as Kind</query>
           <earliest>-24h@h</earliest>
           <latest>now</latest>
         </search>
@@ -608,10 +607,10 @@ K8S_DASHBOARD_XML = textwrap.dedent("""\
       <title>Warning Events (Last 24h)</title>
       <table>
         <search>
-          <query>source="otel-k8s-events" type=Warning
-| table _time, "k8s.namespace.name", "k8s.object.kind", "k8s.object.name", "k8s.event.reason", message
-| rename "k8s.namespace.name" as Namespace, "k8s.object.kind" as Kind,
-         "k8s.object.name" as Object, "k8s.event.reason" as Reason, message as Message
+          <query>source="otel-k8s-events" | spath | search type=Warning
+| table _time, "involvedObject.namespace", "involvedObject.kind", "involvedObject.name", reason, message
+| rename "involvedObject.namespace" as Namespace, "involvedObject.kind" as Kind,
+         "involvedObject.name" as Object, reason as Reason, message as Message
 | sort -_time
 | head 50</query>
           <earliest>-24h@h</earliest>
@@ -628,11 +627,10 @@ K8S_DASHBOARD_XML = textwrap.dedent("""\
       <title>All Recent Events (Last 1h)</title>
       <table>
         <search>
-          <query>source="otel-k8s-events"
-| table _time, type, "k8s.namespace.name", "k8s.object.kind", "k8s.object.name", "k8s.event.reason", message
-| rename "k8s.namespace.name" as Namespace, "k8s.object.kind" as Kind,
-         "k8s.object.name" as Object, "k8s.event.reason" as Reason,
-         type as Type, message as Message
+          <query>source="otel-k8s-events" | spath
+| table _time, type, "involvedObject.namespace", "involvedObject.kind", "involvedObject.name", reason, message
+| rename "involvedObject.namespace" as Namespace, "involvedObject.kind" as Kind,
+         "involvedObject.name" as Object, reason as Reason, type as Type, message as Message
 | sort -_time
 | head 100</query>
           <earliest>-1h</earliest>
