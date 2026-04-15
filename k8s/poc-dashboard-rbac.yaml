@@ -101,10 +101,13 @@ rules:
 - apiGroups: ["batch"]
   resources: ["jobs", "cronjobs"]
   verbs: ["get", "list", "watch"]
-# RBAC management for Collectord ClusterRole/Binding
+# RBAC management — ClusterRole/Binding for Collectord and OTel Collector.
+# "escalate" allows creating ClusterRoles that grant permissions this SA
+# doesn't itself hold. "bind" allows creating ClusterRoleBindings to those
+# roles. Both are required for on-demand RBAC provisioning from the dashboard.
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["clusterroles", "clusterrolebindings"]
-  verbs: ["get", "create", "patch", "update"]
+  verbs: ["get", "create", "patch", "update", "escalate", "bind"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

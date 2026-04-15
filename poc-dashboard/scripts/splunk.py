@@ -382,7 +382,12 @@ def deploy_splunk(license_content: str = "") -> bool:
     core.create_namespaced_service(NAMESPACE, service)
 
     # ── 5. OTel Collector (always deployed alongside Splunk) ─────────────────
-    _deploy_otel_collector()
+    # Errors are intentionally non-fatal: Splunk is already running at this
+    # point, and the OTel status card on the dashboard will show the real state.
+    try:
+        _deploy_otel_collector()
+    except Exception:
+        pass
 
     return has_license
 
