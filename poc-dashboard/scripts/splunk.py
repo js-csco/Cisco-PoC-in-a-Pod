@@ -2,9 +2,11 @@
 Splunk helper — availability checks, HEC health, on-demand deployment,
 and Splunkbase app installation from the dashboard.
 
-Log sources: Cisco Duo / Identity Intelligence, Cisco Secure Access.
+Log sources: Cisco Duo / Identity Intelligence, Cisco Secure Access,
+             OpenTelemetry Collector (k8s node/pod metrics + cluster events).
 """
 import os
+import textwrap
 import requests
 import urllib3
 from kubernetes import client, config
@@ -487,3 +489,206 @@ def get_pod_status() -> dict:
     return {"state": "pending", "message": f"Pod phase: {phase}", "restart_count": restarts, "logs": ""}
 
 
+# ── Kubernetes Infrastructure Dashboard ──────────────────────────────────────
+
+K8S_DASHBOARD_NAME = "k8s_infrastructure"
+
+K8S_DASHBOARD_XML = textwrap.dedent("""\
+<dashboard version="1.1" theme="light">
+  <label>Kubernetes Infrastructure</label>
+  <description>Powered by OpenTelemetry Collector — cluster events, node health, and pod activity from k3s.</description>
+
+  <row>
+    <panel>
+      <title>Cluster Events (Last 1h)</title>
+      <single>
+        <search>
+          <query>source="otel-k8s-events" | stats count</query>
+          <earliest>-1h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Warning Events (Last 1h)</title>
+      <single>
+        <search>
+          <query>source="otel-k8s-events" type=Warning | stats count</query>
+          <earliest>-1h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xd93f3c"]</option>
+        <option name="rangeValues">[1]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Active Namespaces (Last 1h)</title>
+      <single>
+        <search>
+          <query>source="otel-k8s-events" | stats dc("k8s.namespace.name") as namespaces</query>
+          <earliest>-1h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events Over Time (24h)</title>
+      <chart>
+        <search>
+          <query>source="otel-k8s-events"
+| eval event_type=if(type="Warning","Warning","Normal")
+| timechart span=10m count by event_type</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.fieldColors">{"Warning": "#d32f2f", "Normal": "#2e7d32"}</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top Event Reasons (24h)</title>
+      <chart>
+        <search>
+          <query>source="otel-k8s-events"
+| stats count by "k8s.event.reason"
+| sort -count
+| head 10
+| rename "k8s.event.reason" as Reason</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events by Namespace (24h)</title>
+      <chart>
+        <search>
+          <query>source="otel-k8s-events"
+| stats count by "k8s.namespace.name"
+| sort -count
+| rename "k8s.namespace.name" as Namespace</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Events by Object Kind (24h)</title>
+      <chart>
+        <search>
+          <query>source="otel-k8s-events"
+| stats count by "k8s.object.kind"
+| sort -count
+| rename "k8s.object.kind" as Kind</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Warning Events (Last 24h)</title>
+      <table>
+        <search>
+          <query>source="otel-k8s-events" type=Warning
+| table _time, "k8s.namespace.name", "k8s.object.kind", "k8s.object.name", "k8s.event.reason", message
+| rename "k8s.namespace.name" as Namespace, "k8s.object.kind" as Kind,
+         "k8s.object.name" as Object, "k8s.event.reason" as Reason, message as Message
+| sort -_time
+| head 50</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>All Recent Events (Last 1h)</title>
+      <table>
+        <search>
+          <query>source="otel-k8s-events"
+| table _time, type, "k8s.namespace.name", "k8s.object.kind", "k8s.object.name", "k8s.event.reason", message
+| rename "k8s.namespace.name" as Namespace, "k8s.object.kind" as Kind,
+         "k8s.object.name" as Object, "k8s.event.reason" as Reason,
+         type as Type, message as Message
+| sort -_time
+| head 100</query>
+          <earliest>-1h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="count">25</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>
+""")
+
+
+def k8s_dashboard_exists() -> bool:
+    """Return True if the k8s infrastructure dashboard has been provisioned in Splunk."""
+    try:
+        mgmt_url = SPLUNK_API_URL.replace("http://", "https://")
+        r = requests.get(
+            f"{mgmt_url}/servicesNS/admin/search/data/ui/views/{K8S_DASHBOARD_NAME}",
+            auth=("admin", SPLUNK_PASSWORD),
+            verify=False,
+            timeout=5,
+        )
+        return r.status_code == 200
+    except Exception:
+        return False
+
+
+def provision_k8s_dashboard() -> str:
+    """
+    Create (or update) the Kubernetes Infrastructure dashboard in Splunk.
+    Returns the relative URL path to open the dashboard.
+    """
+    mgmt_url = SPLUNK_API_URL.replace("http://", "https://")
+    endpoint = f"{mgmt_url}/servicesNS/admin/search/data/ui/views"
+
+    resp = requests.post(
+        endpoint,
+        auth=("admin", SPLUNK_PASSWORD),
+        data={"name": K8S_DASHBOARD_NAME, "eai:data": K8S_DASHBOARD_XML},
+        verify=False,
+        timeout=15,
+    )
+
+    if resp.status_code == 409:
+        # Already exists — update it
+        resp = requests.post(
+            f"{endpoint}/{K8S_DASHBOARD_NAME}",
+            auth=("admin", SPLUNK_PASSWORD),
+            data={"eai:data": K8S_DASHBOARD_XML},
+            verify=False,
+            timeout=15,
+        )
+
+    if resp.status_code not in (200, 201):
+        raise RuntimeError(f"Failed to provision dashboard ({resp.status_code}): {resp.text[:300]}")
+
+    return f"/app/search/{K8S_DASHBOARD_NAME}"
