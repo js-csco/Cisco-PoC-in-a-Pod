@@ -802,6 +802,15 @@ def splunk():
                 flash(f"⚠️ HEC test failed: {e}")
             return redirect(url_for('splunk'))
 
+        if action == 'create_dns_alert':
+            from scripts.splunk import create_dns_block_alert
+            try:
+                msg = create_dns_block_alert()
+                flash(f"✅ {msg}")
+            except Exception as e:
+                flash(f"⚠️ Alert creation failed: {e}")
+            return redirect(url_for('splunk'))
+
     splunk_available = is_available()
     app_status = get_splunkbase_app_status() if splunk_available else {}
 
@@ -835,6 +844,11 @@ def splunk():
         'org_id':     csa_org_id,
     }
 
+    dns_alert_exists = False
+    if splunk_available:
+        from scripts.splunk import get_dns_alert_status
+        dns_alert_exists = get_dns_alert_status()
+
     return render_template(
         'splunk.html',
         splunk_available=splunk_available,
@@ -845,6 +859,7 @@ def splunk():
         duo_prefill=duo_prefill,
         duo_input_configured=duo_input_configured,
         csa_prefill=csa_prefill,
+        dns_alert_exists=dns_alert_exists,
     )
 
 @app.route('/splunk/status')
@@ -855,6 +870,13 @@ def splunk_status():
     status["hec_healthy"] = hec_is_healthy() if status["splunk_available"] else False
     from flask import jsonify
     return jsonify(status)
+
+@app.route('/splunk/csa-logs-check')
+def splunk_csa_logs_check():
+    from scripts.splunk import check_csa_logs_flowing
+    from flask import jsonify
+    result = check_csa_logs_flowing()
+    return jsonify(result)
 
 @app.route('/ai-agents', methods=['GET', 'POST'])
 def ai_agents():

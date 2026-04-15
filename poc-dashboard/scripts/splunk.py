@@ -336,6 +336,92 @@ def get_splunkbase_app_status() -> dict:
     return status
 
 
+def check_csa_logs_flowing() -> dict:
+    """
+    Run a oneshot Splunk search for Cisco Secure Access events in the last hour.
+    Returns {"flowing": bool, "count": int, "sourcetypes": list[str], "error": str|None}
+    """
+    mgmt_url = SPLUNK_API_URL.replace("http://", "https://")
+    try:
+        r = requests.post(
+            f"{mgmt_url}/services/search/jobs/oneshot",
+            auth=("admin", SPLUNK_PASSWORD),
+            data={
+                "search":        "search index=main sourcetype=cisco:sse:* | stats count by sourcetype | sort -count",
+                "earliest_time": "-1h",
+                "latest_time":   "now",
+                "output_mode":   "json",
+                "count":         "20",
+            },
+            verify=False,
+            timeout=30,
+        )
+        if r.status_code != 200:
+            return {"flowing": False, "count": 0, "sourcetypes": [], "error": f"Search API returned {r.status_code}"}
+
+        results    = r.json().get("results", [])
+        total      = sum(int(row.get("count", 0)) for row in results)
+        sourcetypes = [row["sourcetype"] for row in results if row.get("sourcetype")]
+        return {"flowing": total > 0, "count": total, "sourcetypes": sourcetypes, "error": None}
+
+    except Exception as exc:
+        return {"flowing": False, "count": 0, "sourcetypes": [], "error": str(exc)}
+
+
+def get_dns_alert_status(alert_name: str = "piap-dns-block") -> bool:
+    """Return True if the DNS block saved-search alert already exists."""
+    mgmt_url = SPLUNK_API_URL.replace("http://", "https://")
+    try:
+        r = requests.get(
+            f"{mgmt_url}/servicesNS/admin/search/saved/searches/{alert_name}",
+            auth=("admin", SPLUNK_PASSWORD),
+            verify=False,
+            timeout=5,
+        )
+        return r.status_code == 200
+    except Exception:
+        return False
+
+
+def create_dns_block_alert(alert_name: str = "piap-dns-block") -> str:
+    """
+    Create a Splunk scheduled alert that fires every 5 minutes when
+    Cisco Secure Access has blocked events (e.g. from internetbadguys.com).
+    """
+    mgmt_url = SPLUNK_API_URL.replace("http://", "https://")
+    data = {
+        "name":                   alert_name,
+        "search":                 'index=main (sourcetype="cisco:sse:dns" OR sourcetype="cisco:sse:proxy") action=blocked',
+        "description":            "Fires when Cisco Secure Access blocks a DNS or proxy request. "
+                                  "Trigger by visiting internetbadguys.com with Secure Client connected.",
+        "cron_schedule":          "*/5 * * * *",
+        "is_scheduled":           "1",
+        "alert_type":             "number of events",
+        "alert_comparator":       "greater than",
+        "alert_threshold":        "0",
+        "dispatch.earliest_time": "-5m",
+        "dispatch.latest_time":   "now",
+        "alert.suppress":         "0",
+        "alert.track":            "1",
+    }
+    r = requests.post(
+        f"{mgmt_url}/servicesNS/admin/search/saved/searches",
+        auth=("admin", SPLUNK_PASSWORD),
+        data=data,
+        verify=False,
+        timeout=15,
+    )
+    if r.status_code == 409:
+        return f"Alert '{alert_name}' already exists — check Splunk › Activity › Triggered Alerts."
+    if r.status_code not in (200, 201):
+        raise RuntimeError(f"Failed to create alert ({r.status_code}): {r.text[:300]}")
+    return (
+        f"Alert '{alert_name}' created — runs every 5 min. "
+        "Trigger it: connect Secure Client and visit internetbadguys.com, "
+        "then check Splunk › Activity › Triggered Alerts."
+    )
+
+
 def fetch_csa_org_id(api_key: str, api_secret: str) -> str:
     """
     Fetch the Cisco Secure Access organization ID using the API credentials.
