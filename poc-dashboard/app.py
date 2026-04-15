@@ -737,6 +737,15 @@ def splunk():
     if request.method == 'POST':
         action = request.form.get('action')
 
+        if action == 'provision_k8s_dashboard':
+            from scripts.splunk import provision_k8s_dashboard
+            try:
+                provision_k8s_dashboard()
+                flash("✅ Kubernetes Infrastructure dashboard provisioned — click 'Open Dashboard' to view it.")
+            except Exception as e:
+                flash(f"⚠️ Dashboard provisioning failed: {e}")
+            return redirect(url_for('splunk'))
+
         if action == 'deploy_splunk':
             from scripts.splunk import deploy_splunk
             license_content = request.form.get('license_content', '').strip()
@@ -780,6 +789,7 @@ def splunk():
     splunk_available = is_available()
     app_status = get_splunkbase_app_status() if splunk_available else {}
 
+    from scripts.splunk import k8s_dashboard_exists, otel_collector_running
     return render_template(
         'splunk.html',
         splunk_available=splunk_available,
@@ -787,6 +797,8 @@ def splunk():
         server_ip=request.host.split(':')[0],
         splunkbase_apps=SPLUNKBASE_APPS,
         app_status=app_status,
+        k8s_dashboard_exists=k8s_dashboard_exists() if splunk_available else False,
+        otel_running=otel_collector_running() if splunk_available else False,
     )
 
 @app.route('/splunk/status')
