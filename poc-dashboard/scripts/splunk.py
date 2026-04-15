@@ -336,6 +336,51 @@ def get_splunkbase_app_status() -> dict:
     return status
 
 
+def fetch_csa_org_id(api_key: str, api_secret: str) -> str:
+    """
+    Fetch the Cisco Secure Access organization ID using the API credentials.
+    Obtains an OAuth 2.0 token, then calls the organizations endpoint.
+    Returns the organization ID as a string, or raises RuntimeError.
+    """
+    import base64
+
+    encoded = base64.b64encode(f"{api_key}:{api_secret}".encode()).decode()
+    token_resp = requests.post(
+        "https://api.sse.cisco.com/auth/v2/token",
+        headers={"Authorization": f"Basic {encoded}"},
+        timeout=10,
+    )
+    if token_resp.status_code != 200:
+        raise RuntimeError(f"Authentication failed ({token_resp.status_code})")
+
+    token = token_resp.json().get("access_token", "")
+    if not token:
+        raise RuntimeError("No access token in response")
+
+    org_resp = requests.get(
+        "https://api.sse.cisco.com/admin/v2/organizations",
+        headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+        timeout=10,
+    )
+    if org_resp.status_code != 200:
+        raise RuntimeError(f"Could not fetch organizations ({org_resp.status_code})")
+
+    payload = org_resp.json()
+    orgs = payload.get("data") or payload.get("organizations") or []
+    if not orgs:
+        raise RuntimeError("No organizations returned by API")
+
+    org_id = str(
+        orgs[0].get("organizationId")
+        or orgs[0].get("id")
+        or ""
+    )
+    if not org_id:
+        raise RuntimeError("Organization ID not found in API response")
+
+    return org_id
+
+
 def restart_splunk():
     """Restart the Splunk deployment by rolling out a new pod."""
     apps_api = _apps()

@@ -818,6 +818,23 @@ def splunk():
         from scripts.splunk import get_duo_input_status
         duo_input_configured = get_duo_input_status()
 
+    # Pre-fill CSA credentials and attempt to auto-fetch the org ID
+    csa_api_key    = session.get('csa_api_key', '')
+    csa_api_secret = session.get('csa_api_secret', '')
+    csa_org_id = ''
+    if csa_api_key and csa_api_secret:
+        try:
+            from scripts.splunk import fetch_csa_org_id
+            csa_org_id = fetch_csa_org_id(csa_api_key, csa_api_secret)
+        except Exception:
+            pass  # credentials may be expired; user can enter manually
+
+    csa_prefill = {
+        'api_key':    csa_api_key,
+        'api_secret': csa_api_secret,
+        'org_id':     csa_org_id,
+    }
+
     return render_template(
         'splunk.html',
         splunk_available=splunk_available,
@@ -827,6 +844,7 @@ def splunk():
         app_status=app_status,
         duo_prefill=duo_prefill,
         duo_input_configured=duo_input_configured,
+        csa_prefill=csa_prefill,
     )
 
 @app.route('/splunk/status')

@@ -392,7 +392,9 @@
     {% endif %}
   </div>
   <p style="color:#666; font-size:0.88em; margin:0 0 18px 0; line-height:1.6;">
-    Connect log sources to Splunk. Requires the <strong>Cisco Security Cloud</strong> app to be installed above.
+    Connect log sources to Splunk. <strong>Cisco Duo</strong> and <strong>Identity Intelligence</strong> use the
+    Cisco Security Cloud app (7404). <strong>Cisco Secure Access</strong> uses the Cisco Secure Access App (5558)
+    and Add-on (7569) — both must be installed above first.
   </p>
 
   <!-- ─── CISCO DUO ─────────────────────────────────────────────────────────── -->
@@ -602,6 +604,196 @@
         See the <a href="https://docs.sse.cisco.com" target="_blank" style="color:#0066ff;">CII documentation</a> for setup details.
       </p>
     </div>
+  </div>
+
+  <!-- ─── CISCO SECURE ACCESS ──────────────────────────────────────────────── -->
+  <div style="border:1px solid #e0e0e0; border-radius:10px; padding:20px 22px; background:#fff; margin-top:14px;">
+
+    <!-- Header row -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:36px; height:36px; background:#e8f0ff; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+          <i class="fa-solid fa-cloud" style="color:#0066ff; font-size:1em;"></i>
+        </div>
+        <div>
+          <div style="font-weight:700; color:#111; font-size:0.95em;">Cisco Secure Access</div>
+          <div style="font-size:0.78em; color:#888; margin-top:1px;">DNS, proxy, firewall, DLP, RAVPN, ZTNA &amp; IPS logs</div>
+        </div>
+      </div>
+      {% if splunk_available %}
+        {% set sa_apps_ok = app_status.get('cisco_secure_access', false) and app_status.get('cisco_secure_access_add_on', false) %}
+        {% if sa_apps_ok %}
+          <span style="font-size:0.75em; background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:4px; padding:3px 10px; font-weight:600; white-space:nowrap;">Apps installed</span>
+        {% else %}
+          <span style="font-size:0.75em; background:#fff8e1; color:#f57f17; border:1px solid #ffe082; border-radius:4px; padding:3px 10px; font-weight:600; white-space:nowrap;">Apps required</span>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <!-- Explainer -->
+    <p style="font-size:0.83em; color:#555; margin:12px 0 14px; line-height:1.65;">
+      Cisco Secure Access writes event logs (DNS, proxy, firewall, DLP, RAVPN, ZTNA, IPS) to a
+      <strong>Cisco-managed AWS S3 bucket</strong>. The Add-on polls that bucket on a configurable interval
+      and indexes the data into Splunk. Configuration is done inside the Splunk app UI — the values
+      below are pre-filled where available from your Secure Access tab credentials.
+    </p>
+
+    <!-- Required apps notice -->
+    {% if splunk_available and not sa_apps_ok %}
+    <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:6px; padding:9px 13px; margin-bottom:14px; font-size:0.81em; color:#6d4c00; line-height:1.6;">
+      <strong>Install required first:</strong> both the <strong>Cisco Secure Access App</strong> (5558) and
+      <strong>Add-on</strong> (7569) must be installed and Splunk restarted before configuring.
+    </div>
+    {% endif %}
+
+    <!-- ── Credentials reference box ── -->
+    <div style="background:#f8f9ff; border:1px solid #d0dbff; border-radius:8px; padding:14px 16px; margin-bottom:16px;">
+      <div style="font-size:0.75em; font-weight:700; color:#0066ff; letter-spacing:0.6px; margin-bottom:12px;">YOUR CREDENTIALS — COPY THESE INTO THE SPLUNK APP SETTINGS</div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+
+        <!-- Org ID -->
+        <div>
+          <div style="font-size:0.75em; font-weight:600; color:#666; margin-bottom:4px; letter-spacing:0.2px;">ORGANIZATION ID</div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            {% if csa_prefill.org_id %}
+              <code id="csa-org-id"
+                    style="flex:1; background:#fff; border:1px solid #ddd; border-radius:5px; padding:7px 10px;
+                           font-size:0.83em; color:#111; font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ csa_prefill.org_id }}</code>
+              <button type="button" onclick="copyToClipboard('csa-org-id', this)"
+                      style="flex-shrink:0; background:#f0f4ff; border:1px solid #d0dbff; color:#0066ff;
+                             padding:6px 10px; border-radius:5px; font-size:0.78em; font-weight:600; cursor:pointer; white-space:nowrap;">
+                <i class="fa-regular fa-copy"></i>
+              </button>
+            {% else %}
+              <input id="csa-org-id-input" type="text" placeholder="Auto-fetch requires Secure Access tab auth"
+                     style="flex:1; padding:7px 10px; border:1px solid #ddd; border-radius:5px; font-size:0.83em;
+                            color:#333; font-family:monospace; background:#fff;">
+            {% endif %}
+          </div>
+          {% if not csa_prefill.org_id %}
+          <div style="font-size:0.75em; color:#999; margin-top:3px;">
+            Find in: <strong>Secure Access Dashboard → Admin → Account Info</strong>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Storage Region -->
+        <div>
+          <div style="font-size:0.75em; font-weight:600; color:#666; margin-bottom:4px; letter-spacing:0.2px;">STORAGE REGION</div>
+          <select id="csa-region"
+                  style="width:100%; padding:7px 10px; border:1px solid #ddd; border-radius:5px;
+                         font-size:0.83em; color:#333; background:#fff;">
+            <option value="us">Americas (US)</option>
+            <option value="eu">Europe (EU)</option>
+            <option value="apjc">Asia-Pacific (APJC)</option>
+          </select>
+        </div>
+
+        <!-- API Key -->
+        <div>
+          <div style="font-size:0.75em; font-weight:600; color:#666; margin-bottom:4px; letter-spacing:0.2px;">API KEY</div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <code id="csa-api-key"
+                  style="flex:1; background:#fff; border:1px solid #ddd; border-radius:5px; padding:7px 10px;
+                         font-size:0.83em; color:{% if csa_prefill.api_key %}#111{% else %}#aaa{% endif %};
+                         font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+              {% if csa_prefill.api_key %}{{ csa_prefill.api_key }}{% else %}Not available — authenticate on Secure Access tab first{% endif %}
+            </code>
+            {% if csa_prefill.api_key %}
+            <button type="button" onclick="copyToClipboard('csa-api-key', this)"
+                    style="flex-shrink:0; background:#f0f4ff; border:1px solid #d0dbff; color:#0066ff;
+                           padding:6px 10px; border-radius:5px; font-size:0.78em; font-weight:600; cursor:pointer; white-space:nowrap;">
+              <i class="fa-regular fa-copy"></i>
+            </button>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Key Secret -->
+        <div>
+          <div style="font-size:0.75em; font-weight:600; color:#666; margin-bottom:4px; letter-spacing:0.2px;">KEY SECRET</div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <code id="csa-key-secret"
+                  style="flex:1; background:#fff; border:1px solid #ddd; border-radius:5px; padding:7px 10px;
+                         font-size:0.83em; color:{% if csa_prefill.api_secret %}#111{% else %}#aaa{% endif %};
+                         font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+              {% if csa_prefill.api_secret %}{{ csa_prefill.api_secret }}{% else %}Not available — authenticate on Secure Access tab first{% endif %}
+            </code>
+            {% if csa_prefill.api_secret %}
+            <button type="button" onclick="copyToClipboard('csa-key-secret', this)"
+                    style="flex-shrink:0; background:#f0f4ff; border:1px solid #d0dbff; color:#0066ff;
+                           padding:6px 10px; border-radius:5px; font-size:0.78em; font-weight:600; cursor:pointer; white-space:nowrap;">
+              <i class="fa-regular fa-copy"></i>
+            </button>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Step-by-step guide ── -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:0.75em; font-weight:700; color:#555; letter-spacing:0.6px; margin-bottom:10px;">CONFIGURATION STEPS IN SPLUNK</div>
+      <ol style="margin:0; padding-left:18px; display:flex; flex-direction:column; gap:6px;">
+        <li style="font-size:0.83em; color:#444; line-height:1.6;">
+          Click <strong>Open Secure Access App Settings</strong> below — it opens the Add-on configuration page inside Splunk.
+        </li>
+        <li style="font-size:0.83em; color:#444; line-height:1.6;">
+          Log in to Splunk as <code style="background:#f5f5f5; padding:1px 5px; border-radius:3px; font-size:0.95em;">admin / C1scoPoC!</code>,
+          then navigate to <strong>Cisco Secure Access Add-on → Configuration → Add-on Settings</strong> or click <strong>Add Input</strong>.
+        </li>
+        <li style="font-size:0.83em; color:#444; line-height:1.6;">
+          Select <strong>Event Logs</strong> as the input type. Enter the <strong>Organization ID</strong>,
+          <strong>API Key</strong>, and <strong>Key Secret</strong> from the box above.
+        </li>
+        <li style="font-size:0.83em; color:#444; line-height:1.6;">
+          Set the <strong>Storage Region</strong> to match your Secure Access tenant, choose an
+          <strong>Index</strong> (e.g. <code style="background:#f5f5f5; padding:1px 5px; border-radius:3px; font-size:0.95em;">main</code>),
+          and set <strong>Interval</strong> to <code style="background:#f5f5f5; padding:1px 5px; border-radius:3px; font-size:0.95em;">600</code> seconds.
+        </li>
+        <li style="font-size:0.83em; color:#444; line-height:1.6;">
+          Enable all event types: <code style="background:#f5f5f5; padding:1px 5px; border-radius:3px; font-size:0.95em;">dns, proxy, firewall, audit, dlp, ravpn, ztna, ips</code>.
+          Click <strong>Save</strong>. Logs appear in Splunk within the first poll interval.
+        </li>
+        <li style="font-size:0.83em; color:#444; line-height:1.6;">
+          Verify with the Splunk search:
+          <code style="background:#f5f5f5; padding:1px 5px; border-radius:3px; font-size:0.95em;">index=main sourcetype=cisco:sse:*</code>
+        </li>
+      </ol>
+    </div>
+
+    <!-- ── Open Splunk app button ── -->
+    <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+      <a href="http://{{ server_ip }}:30500/en-US/app/cisco_secure_access_add_on/configuration"
+         target="_blank"
+         style="display:inline-block; background-color:#0066ff; color:#fff; text-decoration:none;
+                padding:9px 22px; border-radius:6px; font-weight:700; font-size:0.88em;">
+        Open Secure Access Add-on Settings
+        <i class="fa-solid fa-arrow-up-right-from-square" style="margin-left:6px; font-size:0.85em;"></i>
+      </a>
+      <a href="http://{{ server_ip }}:30500/en-US/app/cisco_secure_access/overview"
+         target="_blank"
+         style="display:inline-block; background:#f0f4ff; border:1px solid #d0dbff; color:#0066ff;
+                text-decoration:none; padding:9px 18px; border-radius:6px; font-weight:600; font-size:0.88em;">
+        Open Secure Access Dashboard
+        <i class="fa-solid fa-arrow-up-right-from-square" style="margin-left:6px; font-size:0.85em;"></i>
+      </a>
+    </div>
+
+    <!-- ── API key creation hint ── -->
+    <div style="margin-top:14px; background:#f5f5f5; border:1px solid #e0e0e0; border-radius:6px; padding:10px 14px;">
+      <div style="font-size:0.75em; font-weight:700; color:#888; letter-spacing:0.5px; margin-bottom:4px;">WHERE TO CREATE THE API KEY</div>
+      <p style="font-size:0.8em; color:#666; margin:0; line-height:1.6;">
+        If you need a dedicated Splunk reporting API key, go to the
+        <a href="https://dashboard.sse.cisco.com" target="_blank" style="color:#0066ff;">Secure Access dashboard</a>
+        → <strong>Admin → API Keys</strong> → <strong>Add API Key</strong>.
+        Select the <strong>Reporting</strong> scope. The Org ID is shown under
+        <strong>Admin → Account Info</strong>.
+      </p>
+    </div>
+
   </div>
 
 </section>
