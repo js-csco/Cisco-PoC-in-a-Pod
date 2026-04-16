@@ -2,7 +2,7 @@
 # Cluster-wide read access needed by:
 #   - kubeletstats receiver  → nodes/proxy, nodes/stats
 #   - k8s_cluster receiver   → pods, nodes, namespaces, deployments, …
-#   - k8sevents receiver     → events
+#   - k8sobjects receiver    → events (watch mode)
 #   - k8sattributes processor → pods, namespaces, replicasets
 ---
 apiVersion: v1
