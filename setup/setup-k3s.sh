@@ -451,7 +451,7 @@ echo ""
 # Pulling via Docker (which has its own credential chain) and importing
 # into k3s containerd is more reliable than letting k3s pull directly.
 echo "Step 16.2: Pre-pulling container images via Docker..."
-for img in "louislam/uptime-kuma:1" "outcoldsolutions/collectorforkubernetes:5.24.444" "node:24-slim" "python:3.11-slim"; do
+for img in "louislam/uptime-kuma:1" "outcoldsolutions/collectorforkubernetes:5.24.444" "node:24-slim" "python:3.11-slim" "otel/opentelemetry-collector-contrib:0.140.0"; do
     echo "  Pulling $img ..."
     docker pull "$img" && docker save "$img" | k3s ctr images import - \
         && echo "  ✓ $img imported into k3s" \
@@ -589,7 +589,8 @@ kubectl get svc -n piap -o wide
 echo ""
 echo "Hubble UI: http://$SERVER_IP:30800"
 echo ""
-echo "  Splunk: Deploy from the Automagic dashboard with your Enterprise license."
+echo "  Splunk: Deploy from the PoC Dashboard with your Enterprise license."
+echo "  OTel:   OpenTelemetry Collector is running — will ship k8s metrics to Splunk once it is deployed."
 echo ""
 echo "================================================"
 echo "  Useful Commands"
