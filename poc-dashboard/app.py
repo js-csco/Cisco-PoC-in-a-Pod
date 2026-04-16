@@ -126,20 +126,11 @@ def secure_access():
                     flash("⚠️ IP address missing.")
                     return redirect(url_for("secure_access"))
 
-                # this always gets the first connector in the list - array[0]
-                # reason: in this PoC tenant should only be one resouce connector
                 connector_id, connector_name = get_first_connector_id(token)
-                flash(f"🔗 Using Connector: {connector_name} (ID: {connector_id})")
-
-                # creation of private resource group
-                # this can then be used for the private access policy
                 group = create_private_resource_group(token, vm_ip, connector_id)
-                flash(f"✅ Resource Group '{group.get('name')}' ready.")
-
-                # create a private resource for each container
                 group_id = group.get("id") or group.get("resourceGroupId")
                 created = create_private_resources(token, vm_ip, group_id)
-                flash(f"✅ {len(created)} Private Resources created.")
+                flash(f"✅ Private resources created.")
 
 
             # Action: CREATE PRIVATE ACCESS
