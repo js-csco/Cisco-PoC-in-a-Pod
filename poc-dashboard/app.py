@@ -179,10 +179,8 @@ def secure_access():
                     return redirect(url_for("secure_access"))
 
                 create_ai_guardrail_rule(token)
-                flash("✅ AI Guardrails rule created: Security, Safety & Privacy Guardrails blocked for AI Apps.")
-
                 create_realtime_dlp_rule(token)
-                flash("✅ Real-Time DLP rule created: PCI & PII Classification blocked across all proxied traffic.")
+                flash("✅ DLP rules created.")
 
             # Action: CREATE INTERNET ACCESS
             elif action == "create_internet":
@@ -204,7 +202,7 @@ def secure_access():
                 # allow all
                 allow_all = create_allow_all_policy(token)
 
-                flash(f"✅ Internet Access polcies successfully created.")
+                flash("✅ Internet Access policies created.")
 
 
         except Exception as e:

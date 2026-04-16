@@ -1,4 +1,3 @@
-from flask import flash
 import requests
 import json
 
@@ -33,8 +32,6 @@ def follow_recom(token):
 
     if r.status_code not in (200, 201):
         raise Exception(f"Failed to update global settings (MSFT365 Bypass).")
-
-    flash(f"✅ Cisco Recommendations applied.")
 
     # potential adjustment to none value
     return None
