@@ -14,7 +14,7 @@ from kubernetes.client.exceptions import ApiException
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-SPLUNK_PASSWORD = "C1scoPoC!"
+SPLUNK_PASSWORD = os.environ.get("SPLUNK_PASSWORD", "C1scoPoC!")
 
 SPLUNK_URL     = os.environ.get("SPLUNK_URL",      "http://splunk.piap.svc.cluster.local:8000")
 SPLUNK_HEC_URL = os.environ.get("SPLUNK_HEC_URL",  "http://splunk.piap.svc.cluster.local:8088")
