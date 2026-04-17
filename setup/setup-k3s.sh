@@ -437,14 +437,22 @@ if [ -d "$REPO_ROOT/poc-dashboard/templates" ]; then
 fi
 echo ""
 
-# Step 16.1: Build PoC Dashboard image and import into k3s containerd
-# The poc-dashboard deployment uses ghcr.io/js-csco/piap-k3s-poc-dashboard:latest which is
-# built by CI. On a fresh install without that image, build it locally instead.
-echo "Step 16.1: Building PoC Dashboard image..."
-docker pull python:3.11-slim
-docker build --network=host -t ghcr.io/js-csco/piap-k3s-poc-dashboard:latest "$REPO_ROOT/poc-dashboard/"
-docker save ghcr.io/js-csco/piap-k3s-poc-dashboard:latest | k3s ctr images import -
-echo "  ✓ PoC Dashboard image built and imported into k3s"
+# Step 16.1: Load PoC Dashboard image into k3s containerd
+# CI builds and pushes ghcr.io/js-csco/piap-k3s-poc-dashboard:latest on every merge.
+# App code is mounted from a hostPath volume at runtime, so the GHCR image is always
+# current enough — only Python + pip packages need to be in the image.
+# Pull directly into k3s containerd; fall back to a local Docker build only if GHCR
+# is unreachable (avoids pip install issues caused by Docker ip-masq=false networking).
+echo "Step 16.1: Loading PoC Dashboard image into k3s..."
+if k3s ctr images pull ghcr.io/js-csco/piap-k3s-poc-dashboard:latest 2>/dev/null; then
+    echo "  ✓ PoC Dashboard image pulled from GHCR into k3s"
+else
+    echo "  GHCR unavailable — building image locally (this may take a few minutes)..."
+    docker pull python:3.11-slim
+    docker build --network=host -t ghcr.io/js-csco/piap-k3s-poc-dashboard:latest "$REPO_ROOT/poc-dashboard/"
+    docker save ghcr.io/js-csco/piap-k3s-poc-dashboard:latest | k3s ctr images import -
+    echo "  ✓ PoC Dashboard image built and imported into k3s"
+fi
 echo ""
 
 # Step 16.2: Pre-pull images that k3s containerd may struggle to fetch
