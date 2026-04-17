@@ -400,6 +400,22 @@ kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=tetragon -n kub
 echo "  ✓ Tetragon installed"
 echo ""
 
+# Step 14.1: Fix CoreDNS upstream DNS
+# On Ubuntu 24.04, /etc/resolv.conf points to 127.0.0.53 (systemd-resolved).
+# CoreDNS inherits this as its upstream, but 127.0.0.53 is unreachable from
+# inside pods — causing all external DNS lookups to fail. Force 8.8.8.8 instead.
+echo "Step 14.1: Configuring CoreDNS to use 8.8.8.8 upstream..."
+kubectl patch configmap coredns -n kube-system --type merge -p '
+{
+  "data": {
+    "Corefile": ".:53 {\n    errors\n    health\n    ready\n    kubernetes cluster.local in-addr.arpa ip6.arpa {\n      pods insecure\n      fallthrough in-addr.arpa ip6.arpa\n    }\n    hosts /etc/coredns/NodeHosts {\n      ttl 60\n      fallthrough\n    }\n    prometheus :9153\n    forward . 8.8.8.8 8.8.4.4\n    cache 30\n    loop\n    reload\n    loadbalance\n}\n"
+  }
+}'
+kubectl rollout restart deployment/coredns -n kube-system
+kubectl rollout status deployment/coredns -n kube-system --timeout=60s || true
+echo "  ✓ CoreDNS configured to use 8.8.8.8"
+echo ""
+
 # Step 15: Verify DNS and connectivity
 echo "Step 15: Verifying DNS and internet connectivity..."
 kubectl run test-dns --image=busybox --rm -i --restart=Never --timeout=30s -- nslookup google.com > /dev/null 2>&1 \
