@@ -441,6 +441,7 @@ echo ""
 # The poc-dashboard deployment uses ghcr.io/js-csco/piap-k3s-poc-dashboard:latest which is
 # built by CI. On a fresh install without that image, build it locally instead.
 echo "Step 16.1: Building PoC Dashboard image..."
+docker pull python:3.11-slim
 docker build -t ghcr.io/js-csco/piap-k3s-poc-dashboard:latest "$REPO_ROOT/poc-dashboard/"
 docker save ghcr.io/js-csco/piap-k3s-poc-dashboard:latest | k3s ctr images import -
 echo "  ✓ PoC Dashboard image built and imported into k3s"
