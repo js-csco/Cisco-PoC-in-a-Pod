@@ -447,10 +447,19 @@ echo "Step 16.1: Loading PoC Dashboard image into k3s..."
 if k3s ctr images pull ghcr.io/js-csco/piap-k3s-poc-dashboard:latest 2>/dev/null; then
     echo "  ✓ PoC Dashboard image pulled from GHCR into k3s"
 else
-    echo "  GHCR unavailable — building image locally (this may take a few minutes)..."
+    echo "  GHCR unavailable — building image locally..."
+    # Download pip packages using host networking (bypasses Docker bridge ip-masq=false isolation)
     docker pull python:3.11-slim
-    docker build --network=host -t ghcr.io/js-csco/piap-k3s-poc-dashboard:latest "$REPO_ROOT/poc-dashboard/"
+    docker run --rm --network=host \
+        -v "$REPO_ROOT/poc-dashboard:/work" \
+        python:3.11-slim \
+        pip download --quiet --no-cache-dir -r /work/requirements.txt -d /work/.packages
+    # Build offline using pre-downloaded packages — no network access needed inside the build
+    docker build -f "$REPO_ROOT/poc-dashboard/Dockerfile.local" \
+        -t ghcr.io/js-csco/piap-k3s-poc-dashboard:latest \
+        "$REPO_ROOT/poc-dashboard/"
     docker save ghcr.io/js-csco/piap-k3s-poc-dashboard:latest | k3s ctr images import -
+    rm -rf "$REPO_ROOT/poc-dashboard/.packages"
     echo "  ✓ PoC Dashboard image built and imported into k3s"
 fi
 echo ""
