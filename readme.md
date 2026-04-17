@@ -110,6 +110,17 @@ docker ps | grep connector
 | Connector not connecting | Check `docker logs $(docker ps --format '{{.Names}}' \| grep connector)` |
 | NodePorts unreachable | Check `sudo ufw status` or switch to bridged networking |
 | Cilium not Ready | Some hypervisors need bridged mode for native routing |
+| Uptime-Kuma monitors missing | Seed job timed out during setup — re-run manually (see below) |
+
+**Re-seeding Uptime-Kuma monitors**
+
+If the setup script reported a seed job timeout, run:
+
+```bash
+kubectl delete job uptime-kuma-seed -n piap --ignore-not-found=true
+kubectl apply -f ~/piap-k3s/k8s/uptime-kuma-seed-job.yaml -n piap
+kubectl wait --for=condition=Complete job/uptime-kuma-seed -n piap --timeout=600s
+```
 
 ---
 

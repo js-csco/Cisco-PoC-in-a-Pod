@@ -351,7 +351,7 @@ spec:
             - /bin/sh
             - -c
             - |
-              pip install --quiet 'python-socketio[client]~=5.11.0' websocket-client && \
+              pip install --quiet --disable-pip-version-check 'python-socketio[client]~=5.11.0' websocket-client && \
               python /scripts/seed.py
           resources:
             requests:

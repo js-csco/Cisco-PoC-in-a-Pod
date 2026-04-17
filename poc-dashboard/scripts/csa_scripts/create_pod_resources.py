@@ -1,4 +1,3 @@
-from flask import flash
 import requests
 import json
 
@@ -146,7 +145,7 @@ def create_private_resources(token, vm_ip, resource_group_id):
         if r.status_code not in (200, 201):
             raise Exception(f"Failed to create private resource: {r.status_code} - {r.text}")
 
-        flash(f"✅ Created private resource '{res['name']}'")
+        print(f"✅ Created private resource '{res['name']}'")
         created.append(r.json())
 
     return created

@@ -501,14 +501,14 @@ echo ""
 echo "Step 18a: Waiting for Uptime-Kuma to be fully ready..."
 kubectl wait --for=condition=Ready pod -l app=uptime-kuma -n piap --timeout=120s || true
 # Uptime-Kuma needs extra time after the pod is "Ready" for Socket.IO to initialize
-sleep 10
+sleep 30
 
 # Step 18b: Seed Uptime-Kuma monitors
 echo "Step 18b: Seeding Uptime-Kuma monitors (dark mode, disable auth, add monitors)..."
 kubectl delete job uptime-kuma-seed -n piap --ignore-not-found=true
 kubectl apply -f "$REPO_ROOT/k8s/uptime-kuma-seed-job.yaml" -n piap
-echo "  Waiting for seed job to complete (up to 5 min)..."
-if kubectl wait --for=condition=Complete job/uptime-kuma-seed -n piap --timeout=300s; then
+echo "  Waiting for seed job to complete (up to 10 min)..."
+if kubectl wait --for=condition=Complete job/uptime-kuma-seed -n piap --timeout=600s; then
     echo "  ✓ Uptime-Kuma monitors seeded successfully"
 else
     echo "  ✗ Uptime-Kuma seed job failed. Logs:"

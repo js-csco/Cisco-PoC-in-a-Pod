@@ -126,20 +126,11 @@ def secure_access():
                     flash("⚠️ IP address missing.")
                     return redirect(url_for("secure_access"))
 
-                # this always gets the first connector in the list - array[0]
-                # reason: in this PoC tenant should only be one resouce connector
                 connector_id, connector_name = get_first_connector_id(token)
-                flash(f"🔗 Using Connector: {connector_name} (ID: {connector_id})")
-
-                # creation of private resource group
-                # this can then be used for the private access policy
                 group = create_private_resource_group(token, vm_ip, connector_id)
-                flash(f"✅ Resource Group '{group.get('name')}' ready.")
-
-                # create a private resource for each container
                 group_id = group.get("id") or group.get("resourceGroupId")
                 created = create_private_resources(token, vm_ip, group_id)
-                flash(f"✅ {len(created)} Private Resources created.")
+                flash(f"✅ Private resources created.")
 
 
             # Action: CREATE PRIVATE ACCESS
@@ -188,10 +179,8 @@ def secure_access():
                     return redirect(url_for("secure_access"))
 
                 create_ai_guardrail_rule(token)
-                flash("✅ AI Guardrails rule created: Security, Safety & Privacy Guardrails blocked for AI Apps.")
-
                 create_realtime_dlp_rule(token)
-                flash("✅ Real-Time DLP rule created: PCI & PII Classification blocked across all proxied traffic.")
+                flash("✅ DLP rules created.")
 
             # Action: CREATE INTERNET ACCESS
             elif action == "create_internet":
@@ -213,7 +202,7 @@ def secure_access():
                 # allow all
                 allow_all = create_allow_all_policy(token)
 
-                flash(f"✅ Internet Access polcies successfully created.")
+                flash("✅ Internet Access policies created.")
 
 
         except Exception as e:
@@ -282,27 +271,8 @@ def duo():
                     secret_key=secret_key,
                     users_list=users_list
                 )
-                
-                # Display results
-                for user in result['users_created']:
-                    flash(f"✅ User '{user['username']}' created (ID: {user['user_id']})")
 
-                for user in result['users_existing']:
-                    flash(f"ℹ️ User '{user['username']}' already exists (ID: {user['user_id']})")
-
-                if result['group_created']:
-                    flash(f"✅ Group 'PoC Users' created (ID: {result['group_id']})")
-                else:
-                    flash(f"ℹ️ Using existing 'PoC Users' group (ID: {result['group_id']})")
-
-                if result['users_added_to_group'] > 0:
-                    flash(f"✅ {result['users_added_to_group']} user(s) added to 'PoC Users' group")
-                
-                # Next step: enrollment guidance
-                if result['users_created']:
-                    flash("📋 Next step: Go to the Duo Admin Dashboard → Users and share the enrollment link and code with the user. Enrollment works best in an incognito window.")
-
-                # Display any errors
+                flash("✅ Duo setup complete.")
                 if result['errors']:
                     for error in result['errors']:
                         flash(f"⚠️ {error}")
@@ -316,7 +286,7 @@ def duo():
                     secret_key=secret_key
                 )
                 if result['success']:
-                    flash("✅ Global Policy configured — New User Policy set to require enrollment, authentication methods set to recommended only, risk-based factor selection disabled")
+                    flash("✅ Global policy configured.")
                 else:
                     flash(f"⚠️ {result['error']}")
 
@@ -344,15 +314,8 @@ def duo():
                 )
                 if result['success']:
                     app_ikey = result['integration_key']
-                    if result.get('already_exists'):
-                        flash(f"ℹ️ SAML App already exists — Integration Key: {app_ikey}")
-                    else:
-                        flash(f"✅ SAML App created — Integration Key: {app_ikey}")
+                    session['saml_app_ikey'] = app_ikey
 
-                    if result.get('sso_error'):
-                        flash(f"⚠️ SSO config could not be set via API: {result['sso_error']}. You may need to configure ACS URL and Entity ID manually in the Duo Admin Panel.")
-
-                    # Try to auto-configure the SAML app with Duo IdP metadata
                     meta_result = get_integration_metadata_url(
                         api_hostname, integration_key, secret_key, app_ikey
                     )
@@ -361,16 +324,14 @@ def duo():
                             meta_result['metadata_url'], sp_base_url
                         )
                         if push_result['success']:
-                            flash(f"✅ SAML App auto-configured with Duo IdP metadata — ready to test!")
+                            flash("✅ SAML App created and auto-configured — ready to test.")
                             session['saml_app_configured'] = True
                         else:
-                            flash(f"⚠️ Could not auto-configure SAML app: {push_result['error']}. Download the IdP metadata XML from Duo and upload it manually.")
+                            flash("✅ SAML App created — download IdP metadata XML from Duo and upload manually.")
                             session['saml_app_configured'] = False
                     else:
-                        flash(f"⚠️ Could not retrieve metadata URL from Duo. Download the IdP metadata XML from the Duo Admin Panel and upload it to the SAML app.")
+                        flash("✅ SAML App created — download IdP metadata XML from Duo Admin Panel and upload manually.")
                         session['saml_app_configured'] = False
-
-                    session['saml_app_ikey'] = app_ikey
                 else:
                     flash(f"⚠️ {result['error']}")
 
