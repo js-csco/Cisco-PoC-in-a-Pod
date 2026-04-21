@@ -434,7 +434,13 @@ def cilium():
     except Exception as e:
         policy_error = str(e)
 
-    return render_template('cilium.html', active_policies=active_policies, policy_error=policy_error)
+    from scripts.cilium_policies import _PIAP_RESTRICTED_SERVICES
+    return render_template(
+        'cilium.html',
+        active_policies=active_policies,
+        policy_error=policy_error,
+        zero_trust_targets=list(_PIAP_RESTRICTED_SERVICES),
+    )
 
 
 @app.route('/cilium/run', methods=['POST'])
@@ -554,6 +560,41 @@ def cilium_run():
         return jsonify(_run())
     except Exception as e:
         return jsonify({'command': '', 'output': f'Error: {e}', 'ok': False})
+
+
+@app.route('/api/cilium/nodes')
+def cilium_nodes():
+    from flask import jsonify
+    from scripts.cilium_policies import get_diagram_nodes
+    return jsonify(get_diagram_nodes())
+
+
+@app.route('/api/cilium/custom-policies')
+def cilium_custom_policies_api():
+    from flask import jsonify
+    from scripts.cilium_policies import get_custom_policies
+    return jsonify(get_custom_policies())
+
+
+@app.route('/api/cilium/apply-custom', methods=['POST'])
+def cilium_apply_custom():
+    from flask import jsonify
+    from scripts.cilium_policies import apply_custom_policies
+    data = request.get_json(force=True)
+    result = apply_custom_policies(data.get('policies', []))
+    ok = all(r.get('ok') for r in result)
+    return jsonify({'ok': ok, 'results': result})
+
+
+@app.route('/api/cilium/delete-custom/<name>', methods=['DELETE'])
+def cilium_delete_custom(name):
+    from flask import jsonify
+    from scripts.cilium_policies import delete_custom_policy
+    try:
+        msg = delete_custom_policy(name)
+        return jsonify({'ok': True, 'result': msg})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)})
 
 
 @app.route('/tetragon', methods=['GET', 'POST'])

@@ -339,3 +339,139 @@ def apply_dns_egress():
 
 def remove_dns_egress():
     return _delete_policy(_get_api(), "piap-dns-egress", NAMESPACE)
+
+
+# ---------------------------------------------------------------------------
+# Network Policy Map — custom fine-grained policies
+# ---------------------------------------------------------------------------
+
+CUSTOM_LABEL = "poc-dashboard-custom"
+PROTECTED_SERVICES = {"poc-dashboard", "playbook", "hubble-ui"}
+
+# Ordered list used for the chord diagram.  The Resource Connector is virtual
+# (not a K8s service) but participates as a policy source/destination.
+_DIAGRAM_SERVICES = [
+    {"id": "resource-connector", "label": "Resource Connector", "cidr": DOCKER_BRIDGE_CIDR, "protected": False},
+    {"id": "poc-dashboard",      "label": "PoC Dashboard",       "protected": True},
+    {"id": "ssh-server",         "label": "SSH Server",          "protected": False},
+    {"id": "rdp-server",         "label": "RDP Server",          "protected": False},
+    {"id": "saml-app",           "label": "SAML App",            "protected": False},
+    {"id": "kubectl-mcp",        "label": "Kubectl MCP",         "protected": False},
+    {"id": "playbook",           "label": "PoC Playbook",        "protected": True},
+    {"id": "sse-check",          "label": "SSE Check",           "protected": False},
+    {"id": "uptime-kuma",        "label": "Uptime Kuma",         "protected": False},
+    {"id": "hubble-ui",          "label": "Hubble UI",           "protected": True},
+]
+
+# Services that get the Zero Trust treatment (mirroring _PIAP_RESTRICTED_SERVICES)
+_ZERO_TRUST_TARGETS = set(_PIAP_RESTRICTED_SERVICES)
+
+
+def get_diagram_nodes():
+    """Return node list for the chord diagram, supplemented with live K8s service data."""
+    core = _get_core_api()
+    try:
+        live = {s.metadata.name for s in core.list_namespaced_service(NAMESPACE).items}
+    except Exception:
+        live = set()
+
+    nodes = []
+    for svc in _DIAGRAM_SERVICES:
+        sid = svc["id"]
+        exists = sid == "resource-connector" or sid in live
+        if exists:
+            nodes.append(dict(svc))
+    return nodes
+
+
+def get_custom_policies():
+    """Return custom CiliumNetworkPolicies created by this tool."""
+    api = _get_api()
+    try:
+        items = api.list_namespaced_custom_object(GROUP, VERSION, NAMESPACE, PLURAL).get("items", [])
+    except Exception:
+        return []
+    result = []
+    for item in items:
+        if item.get("metadata", {}).get("labels", {}).get("managed-by") == CUSTOM_LABEL:
+            ann = item.get("metadata", {}).get("annotations", {})
+            result.append({
+                "name":        item["metadata"]["name"],
+                "source":      ann.get("piap/source", "?"),
+                "destination": ann.get("piap/destination", "?"),
+                "port":        ann.get("piap/port", "*"),
+                "protocol":    ann.get("piap/protocol", "TCP"),
+                "action":      ann.get("piap/action", "allow"),
+            })
+    return result
+
+
+def _custom_policy_name(source, destination, port, action):
+    raw = f"piap-adv-{source[:10]}-{destination[:10]}-{str(port).replace('*','any')}-{action}"
+    return raw.replace("/", "-")[:63].rstrip("-")
+
+
+def apply_custom_policies(policies):
+    """Apply a list of policy dicts.  Returns list of result dicts."""
+    api = _get_api()
+    results = []
+    for p in policies:
+        src  = p.get("source", "")
+        dst  = p.get("destination", "")
+        port = str(p.get("port", "*"))
+        proto = p.get("protocol", "TCP").upper()
+        action = p.get("action", "allow").lower()
+
+        if dst in PROTECTED_SERVICES and action == "deny":
+            results.append({"ok": False, "name": f"{src}→{dst}", "error": f"{dst} is protected — deny not allowed"})
+            continue
+
+        name = _custom_policy_name(src, dst, port, action)
+        policy = {
+            "apiVersion": "cilium.io/v2",
+            "kind": "CiliumNetworkPolicy",
+            "metadata": {
+                "name": name,
+                "namespace": NAMESPACE,
+                "labels": {"managed-by": CUSTOM_LABEL},
+                "annotations": {
+                    "piap/source":      src,
+                    "piap/destination": dst,
+                    "piap/port":        port,
+                    "piap/protocol":    proto,
+                    "piap/action":      action,
+                },
+            },
+            "spec": {},
+        }
+
+        # endpointSelector: select destination pod
+        policy["spec"]["endpointSelector"] = {"matchLabels": {"app": dst}}
+
+        # ingress rule — source
+        ingress = {}
+        if src == "resource-connector":
+            ingress["fromCIDR"] = [DOCKER_BRIDGE_CIDR]
+        else:
+            ingress["fromEndpoints"] = [{"matchLabels": {"app": src}}]
+
+        # port filter (optional)
+        if port not in ("*", "any", ""):
+            ingress["toPorts"] = [{"ports": [{"port": port, "protocol": proto}]}]
+
+        if action == "allow":
+            policy["spec"]["ingress"] = [ingress]
+        else:
+            policy["spec"]["ingressDeny"] = [ingress]
+
+        try:
+            msg = _apply_policy(api, policy)
+            results.append({"ok": True, "name": name, "result": msg})
+        except Exception as e:
+            results.append({"ok": False, "name": name, "error": str(e)})
+
+    return results
+
+
+def delete_custom_policy(name):
+    return _delete_policy(_get_api(), name, NAMESPACE)
