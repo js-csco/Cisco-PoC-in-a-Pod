@@ -756,8 +756,9 @@
     const BOX_H = 26;    // label box height
     const SVG_NS = "http://www.w3.org/2000/svg";
 
-    const ZERO_TRUST_ACTIVE = {{ 'true' if 'piap-zero-trust' in active_policies else 'false' }};
-    const ZERO_TRUST_SRVC   = {{ zero_trust_targets | tojson }};
+    const ZERO_TRUST_ACTIVE  = {{ 'true' if 'piap-zero-trust' in active_policies else 'false' }};
+    const ZERO_TRUST_SRVC    = {{ zero_trust_targets | tojson }};
+    const LAN_ALWAYS_REACHABLE = {{ lan_always_reachable | tojson }};
 
     /* ── state ───────────────────────────────────────────────────── */
     let nodes   = [];   // [{id, label, protected, deg, x, y}, …]
@@ -802,7 +803,7 @@
       const svg = document.getElementById('npm-svg');
       svg.innerHTML = '';
 
-      // layer 0: background lines (mode indicator)
+      // layer 0a: mode-specific background lines
       if (ZERO_TRUST_ACTIVE) {
         const conn = nodeById('resource-connector');
         if (conn) {
@@ -815,6 +816,15 @@
         for (let i = 0; i < nodes.length; i++)
           for (let j = i + 1; j < nodes.length; j++)
             drawLine(svg, nodes[i], nodes[j], '#bfdbfe', 1, false, false);
+      }
+
+      // layer 0b: LAN always-reachable lines (green, shown in all modes)
+      const lan = nodeById('lan');
+      if (lan) {
+        LAN_ALWAYS_REACHABLE.forEach(id => {
+          const nd = nodeById(id);
+          if (nd) drawLine(svg, lan, nd, '#16a34a', 2, false, false);
+        });
       }
 
       // layer 1: active custom policies
@@ -838,13 +848,13 @@
           stroke: '#d1d5db', 'stroke-width': 1 }));
       });
 
-      // layer 4: label boxes + text
+      // layer 4: label boxes + text (uniform color, selection highlight only)
       nodes.forEach(nd => {
         const [bx, by] = pt(R_BOX, nd.deg);
         const sel = nd.id === selSrc;
-        const bg  = sel ? '#fef9c3' : (nd.protected ? '#dcfce7' : '#dbeafe');
-        const br  = sel ? '#ca8a04' : (nd.protected ? '#86efac' : '#93c5fd');
-        const tc  = sel ? '#854d0e' : (nd.protected ? '#166534' : '#1e40af');
+        const bg  = sel ? '#fef9c3' : '#dbeafe';
+        const br  = sel ? '#ca8a04' : '#93c5fd';
+        const tc  = sel ? '#854d0e' : '#1e40af';
 
         const rect = el('rect', {
           x: bx - BOX_W / 2, y: by - BOX_H / 2,
@@ -862,7 +872,7 @@
           fill: tc, 'font-size': '10', 'font-family': 'Inter,-apple-system,sans-serif',
           'font-weight': '600', 'pointer-events': 'none',
         });
-        txt.textContent = nd.protected ? '🔒 ' + nd.label : nd.label;
+        txt.textContent = nd.label;
         svg.appendChild(txt);
       });
 

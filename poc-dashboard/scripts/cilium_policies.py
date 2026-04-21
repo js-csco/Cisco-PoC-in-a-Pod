@@ -348,19 +348,28 @@ def remove_dns_egress():
 CUSTOM_LABEL = "poc-dashboard-custom"
 PROTECTED_SERVICES = {"poc-dashboard", "playbook", "hubble-ui"}
 
-# Ordered list used for the chord diagram.  The Resource Connector is virtual
-# (not a K8s service) but participates as a policy source/destination.
+# Virtual nodes that are not K8s services in the piap namespace but always appear.
+# - resource-connector: Docker bridge (external, 240.0.0.x)
+# - hubble-ui:          lives in kube-system, not piap
+# - lan:                represents direct LAN clients (no K8s object at all)
+_VIRTUAL_NODES = {"resource-connector", "hubble-ui", "lan"}
+
+# Services that are always reachable from LAN regardless of Zero Trust mode.
+LAN_ALWAYS_REACHABLE = ["poc-dashboard", "playbook", "hubble-ui"]
+
+# Ordered list used for the diagram.
 _DIAGRAM_SERVICES = [
-    {"id": "resource-connector", "label": "Resource Connector", "cidr": DOCKER_BRIDGE_CIDR, "protected": False},
-    {"id": "poc-dashboard",      "label": "PoC Dashboard",       "protected": True},
-    {"id": "ssh-server",         "label": "SSH Server",          "protected": False},
-    {"id": "rdp-server",         "label": "RDP Server",          "protected": False},
-    {"id": "saml-app",           "label": "SAML App",            "protected": False},
-    {"id": "kubectl-mcp",        "label": "Kubectl MCP",         "protected": False},
-    {"id": "playbook",           "label": "PoC Playbook",        "protected": True},
-    {"id": "sse-check",          "label": "SSE Check",           "protected": False},
-    {"id": "uptime-kuma",        "label": "Uptime Kuma",         "protected": False},
-    {"id": "hubble-ui",          "label": "Hubble UI",           "protected": True},
+    {"id": "lan",                "label": "LAN",                  "protected": False},
+    {"id": "resource-connector", "label": "Resource Connector",   "cidr": DOCKER_BRIDGE_CIDR, "protected": False},
+    {"id": "poc-dashboard",      "label": "PoC Dashboard",        "protected": True},
+    {"id": "ssh-server",         "label": "SSH Server",           "protected": False},
+    {"id": "rdp-server",         "label": "RDP Server",           "protected": False},
+    {"id": "saml-app",           "label": "SAML App",             "protected": False},
+    {"id": "kubectl-mcp",        "label": "Kubectl MCP",          "protected": False},
+    {"id": "playbook",           "label": "PoC Playbook",         "protected": True},
+    {"id": "sse-check",          "label": "SSE Check",            "protected": False},
+    {"id": "uptime-kuma",        "label": "Uptime Kuma",          "protected": False},
+    {"id": "hubble-ui",          "label": "Hubble UI",            "protected": True},
 ]
 
 # Services that get the Zero Trust treatment (mirroring _PIAP_RESTRICTED_SERVICES)
@@ -378,8 +387,7 @@ def get_diagram_nodes():
     nodes = []
     for svc in _DIAGRAM_SERVICES:
         sid = svc["id"]
-        exists = sid == "resource-connector" or sid in live
-        if exists:
+        if sid in _VIRTUAL_NODES or sid in live:
             nodes.append(dict(svc))
     return nodes
 

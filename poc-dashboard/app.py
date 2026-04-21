@@ -434,12 +434,13 @@ def cilium():
     except Exception as e:
         policy_error = str(e)
 
-    from scripts.cilium_policies import _PIAP_RESTRICTED_SERVICES
+    from scripts.cilium_policies import _PIAP_RESTRICTED_SERVICES, LAN_ALWAYS_REACHABLE
     return render_template(
         'cilium.html',
         active_policies=active_policies,
         policy_error=policy_error,
         zero_trust_targets=list(_PIAP_RESTRICTED_SERVICES),
+        lan_always_reachable=LAN_ALWAYS_REACHABLE,
     )
 
 
