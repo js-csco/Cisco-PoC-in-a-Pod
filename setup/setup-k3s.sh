@@ -250,10 +250,22 @@ echo ""
 
 # Step 5: Install k3s
 echo "Step 5: Installing k3s (without default CNI and kube-proxy)..."
+
+# On Ubuntu 18.04+ systemd-resolved configures /etc/resolv.conf to point at
+# 127.0.0.53 (the stub listener).  Pods can't reach a loopback address on the
+# host, so CoreDNS gets a broken upstream and all in-cluster DNS lookups fail.
+# Fix: tell K3s to seed pod resolv.conf from the full resolver file instead.
+K3S_RESOLV_CONF_FLAG=""
+if [ -f /run/systemd/resolve/resolv.conf ] && \
+   grep -qE '127\.0\.0\.(1|53)' /etc/resolv.conf 2>/dev/null; then
+    echo "  Detected systemd-resolved stub resolver — using /run/systemd/resolve/resolv.conf for pods"
+    K3S_RESOLV_CONF_FLAG="--resolv-conf=/run/systemd/resolve/resolv.conf"
+fi
+
 if command -v k3s &>/dev/null; then
     echo "  k3s already installed, skipping..."
 else
-    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--flannel-backend=none --disable-network-policy --disable-kube-proxy" sh -
+    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--flannel-backend=none --disable-network-policy --disable-kube-proxy ${K3S_RESOLV_CONF_FLAG}" sh -
     echo "  ✓ k3s installed"
 fi
 echo ""
@@ -402,6 +414,8 @@ echo ""
 
 # Step 15: Verify DNS and connectivity
 echo "Step 15: Verifying DNS and internet connectivity..."
+echo "  Waiting for CoreDNS to be ready..."
+kubectl wait --for=condition=Ready pod -l k8s-app=kube-dns -n kube-system --timeout=120s || true
 kubectl run test-dns --image=busybox --rm -i --restart=Never --timeout=30s -- nslookup google.com > /dev/null 2>&1 \
     && echo "  ✓ DNS is working" \
     || echo "  ⚠ DNS test failed (you may need to check your network)"
@@ -485,10 +499,10 @@ kubectl create namespace piap --dry-run=client -o yaml | kubectl apply -f -
 for manifest in "$REPO_ROOT/k8s/"*.yaml; do
     case "$manifest" in
         *splunk*)
-            echo "  Skipping $(basename $manifest) — deploy from the Automagic dashboard with a license"
+            echo "  Skipping $(basename $manifest) — deploy from the PoC Dashboard with a license"
             ;;
         *caldera*)
-            echo "  Skipping $(basename $manifest) — deploy from the Automagic dashboard"
+            echo "  Skipping $(basename $manifest) — deploy from the PoC Dashboard"
             ;;
         *uptime-kuma-seed*)
             echo "  Skipping $(basename $manifest) — will run after pods are ready"
@@ -525,8 +539,8 @@ sleep 30
 echo "Step 18b: Seeding Uptime-Kuma monitors (dark mode, disable auth, add monitors)..."
 kubectl delete job uptime-kuma-seed -n piap --ignore-not-found=true
 kubectl apply -f "$REPO_ROOT/k8s/uptime-kuma-seed-job.yaml" -n piap
-echo "  Waiting for seed job to complete (up to 10 min)..."
-if kubectl wait --for=condition=Complete job/uptime-kuma-seed -n piap --timeout=600s; then
+echo "  Waiting for seed job to complete (up to 3 min)..."
+if kubectl wait --for=condition=Complete job/uptime-kuma-seed -n piap --timeout=180s; then
     echo "  ✓ Uptime-Kuma monitors seeded successfully"
 else
     echo "  ✗ Uptime-Kuma seed job failed. Logs:"

@@ -3,3 +3,4 @@ requests
 duo-client
 kubernetes
 websocket-client
+python-socketio[client]~=5.11.0

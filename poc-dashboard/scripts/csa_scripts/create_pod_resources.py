@@ -91,7 +91,7 @@ def create_private_resources(token, vm_ip, resource_group_id):
     # browser=True adds clientless browser access in addition to Secure Client access.
     # fqdn_prefix is the subdomain used for the browser access URL.
     resources = [
-        {"name": "Automagic Server",   "port": 30200, "protocol": "HTTP/HTTPS", "browser": True},
+        {"name": "PoC Dashboard",      "port": 30200, "protocol": "HTTP/HTTPS", "browser": True},
         {"name": "PoC Playbook",       "port": 30250, "protocol": "HTTP/HTTPS", "browser": True},
         {"name": "OpenSSH Server",     "port": 30022, "protocol": "SSH",        "browser": False},
         {"name": "Splunk Dashboard",   "port": 30500, "protocol": "HTTP/HTTPS", "browser": True},

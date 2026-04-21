@@ -94,5 +94,5 @@ else
 fi
 
 echo ""
-echo "Done. Access Automagic at: http://$SERVER_IP:30200"
+echo "Done. Access PoC Dashboard at: http://$SERVER_IP:30200"
 echo "      SSE Check at:        http://$SERVER_IP:30550"
