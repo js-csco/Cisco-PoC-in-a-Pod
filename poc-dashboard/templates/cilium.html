@@ -105,6 +105,83 @@
     </div>
   </section>
 
+  <!-- TRAFFIC FLOW TABLE -->
+  <section style="padding-bottom:2.5rem; border-top:1px solid #e0e0e0; padding-top:2.5rem;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">TRAFFIC FLOW</h3>
+    </div>
+    <p style="margin-top:0; margin-bottom:16px; color:#555; font-size:0.9em; line-height:1.6;">
+      Three scenarios — how each behaves under Allow All versus Zero Trust Segmentation.
+    </p>
+
+    <table style="width:100%; border-collapse:collapse; font-size:0.88em; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
+      <thead>
+        <tr style="background:#f1f5f9;">
+          <th style="padding:11px 16px; text-align:left; color:#374151; font-weight:600; font-size:0.9em; border-bottom:2px solid #e2e8f0; width:36%;">Scenario</th>
+          <th style="padding:11px 16px; text-align:left; color:#1565c0; font-weight:600; font-size:0.9em; border-bottom:2px solid #1976d2; width:32%;">Allow All</th>
+          <th style="padding:11px 16px; text-align:left; color:#15803d; font-weight:600; font-size:0.9em; border-bottom:2px solid #4caf50; width:32%;">Zero Trust Segmentation</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- Row 1: Direct LAN Access -->
+        <tr style="border-bottom:1px solid #e9ecef;">
+          <td style="padding:14px 16px; vertical-align:top;">
+            <div style="font-weight:600; color:#111; margin-bottom:4px;">Direct LAN Access</div>
+            <div style="color:#666; font-size:0.91em; line-height:1.55;">User or attacker on the network reaches an app directly — no login required.</div>
+          </td>
+          <td style="padding:14px 16px; vertical-align:top; background:#fffbeb;">
+            <div style="font-weight:700; color:#92400e; margin-bottom:6px;">⚠ Exposed</div>
+            <ul style="margin:0; padding-left:16px; color:#78350f; line-height:1.7; font-size:0.91em;">
+              <li>No user verification</li>
+              <li>No granular access control</li>
+              <li>All ports reachable</li>
+            </ul>
+          </td>
+          <td style="padding:14px 16px; vertical-align:top; background:#f0fdf4;">
+            <div style="font-weight:700; color:#15803d; margin-bottom:6px;">Protected</div>
+            <div style="color:#166534; font-size:0.91em; line-height:1.55;">No access. Cilium drops the connection before it reaches the pod.</div>
+          </td>
+        </tr>
+
+        <!-- Row 2: Verified Access -->
+        <tr style="border-bottom:1px solid #e9ecef;">
+          <td style="padding:14px 16px; vertical-align:top;">
+            <div style="font-weight:600; color:#111; margin-bottom:4px;">Verified User via Secure Access</div>
+            <div style="color:#666; font-size:0.91em; line-height:1.55;">Authenticated user reaches the app through Cisco Secure Access and the Resource Connector.</div>
+          </td>
+          <td style="padding:14px 16px; vertical-align:top; background:#f8fafc;">
+            <div style="font-weight:700; color:#374151; margin-bottom:6px;">✓ Works</div>
+            <div style="color:#4b5563; font-size:0.91em; line-height:1.55;">But so does unauthenticated LAN access — Secure Access is not enforced as the only path.</div>
+          </td>
+          <td style="padding:14px 16px; vertical-align:top; background:#f0fdf4;">
+            <div style="font-weight:700; color:#15803d; margin-bottom:6px;">✓ Works</div>
+            <div style="color:#166534; font-size:0.91em; line-height:1.55;">The only permitted path in. Central policy enforcement point for all access.</div>
+          </td>
+        </tr>
+
+        <!-- Row 3: Lateral Movement -->
+        <tr>
+          <td style="padding:14px 16px; vertical-align:top;">
+            <div style="font-weight:600; color:#111; margin-bottom:4px;">Lateral Movement</div>
+            <div style="color:#666; font-size:0.91em; line-height:1.55;">A compromised pod attempts to reach another service inside the cluster.</div>
+          </td>
+          <td style="padding:14px 16px; vertical-align:top; background:#fffbeb;">
+            <div style="font-weight:700; color:#92400e; margin-bottom:6px;">⚠ Exposed</div>
+            <div style="color:#78350f; font-size:0.91em; line-height:1.55;">Pods communicate freely. An attacker can move between services undetected.</div>
+          </td>
+          <td style="padding:14px 16px; vertical-align:top; background:#f0fdf4;">
+            <div style="font-weight:700; color:#15803d; margin-bottom:6px;">Isolated</div>
+            <div style="color:#166534; font-size:0.91em; line-height:1.55;">Pods cannot reach each other. Lateral movement is blocked at the kernel level.</div>
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+
+  </section>
+
   <!-- NETWORK POLICY TOGGLE — side by side cards -->
   <section style="padding-bottom:2.5rem;">
     <div style="display:flex; align-items:center; gap:8px; margin-bottom:1.5rem;">
@@ -202,7 +279,7 @@
   </section>
 
   <!-- ══════════════════════════════════════════════════════════════════════
-       NETWORK POLICY MAP — chord diagram + custom policy builder
+       NETWORK POLICY MAP — dot diagram + custom policy builder
        ══════════════════════════════════════════════════════════════════════ -->
   <section id="npm-section" style="border-top:1px solid #e0e0e0; padding-top:2.5rem; padding-bottom:2.5rem;">
 
@@ -212,8 +289,8 @@
     </div>
     <p style="margin:0 0 1.5rem; color:#555; font-size:0.9em; line-height:1.6;">
       Visualise the current access topology and build fine-grained ingress policies between pods.
-      Click a source arc, then a destination arc to define a rule.
-      Staged rules (dashed) are not active until you click <strong>Apply Policies</strong>.
+      Click a source node, then a destination node to define a rule.
+      Staged rules are shown dashed and are not active until you click <strong>Apply Policies</strong>.
     </p>
 
     <!-- 3-column card row ──────────────────────────────────────── -->
@@ -232,27 +309,27 @@
            border:2px solid {% if 'piap-zero-trust' in active_policies %}#4caf50{% else %}#e0e0e0{% endif %};
            background:{% if 'piap-zero-trust' in active_policies %}#f0faf0{% else %}#fafafa{% endif %};">
         <div style="font-size:0.72rem; font-weight:700; letter-spacing:.05em; color:#4caf50; text-transform:uppercase; margin-bottom:4px;">Zero Trust Active</div>
-        <div style="font-size:0.82em; color:#555; line-height:1.5;">Only the Resource Connector may reach pods. Shown as green ribbons.</div>
+        <div style="font-size:0.82em; color:#555; line-height:1.5;">Only the Resource Connector may reach pods. Shown as green lines.</div>
       </div>
 
       <!-- Advanced Policies card -->
       <div style="border-radius:10px; padding:1rem 1.2rem; border:2px solid #0066ff; background:#f0f4ff;">
         <div style="font-size:0.72rem; font-weight:700; letter-spacing:.05em; color:#0066ff; text-transform:uppercase; margin-bottom:4px;">Advanced Policies</div>
-        <div style="font-size:0.82em; color:#555; line-height:1.5;">Custom rules you draw below. <span style="color:#4caf50; font-weight:600;">Green</span> = allow, <span style="color:#e53935; font-weight:600;">Red</span> = deny. Dashed = staged.</div>
+        <div style="font-size:0.82em; color:#555; line-height:1.5;">Custom rules you draw below. <span style="color:#16a34a; font-weight:600;">Green</span> = allow, <span style="color:#dc2626; font-weight:600;">Red</span> = deny. Dashed = staged.</div>
       </div>
 
     </div>
 
-    <!-- Chord diagram + staging panel ─────────────────────────── -->
+    <!-- Diagram + staging panel ─────────────────────────── -->
     <div style="display:grid; grid-template-columns:1fr 320px; gap:1.5rem; align-items:start;">
 
       <!-- SVG diagram -->
       <div style="background:#fafbfc; border:1px solid #e4e7ec; border-radius:12px;
                   padding:1rem; display:flex; flex-direction:column; align-items:center;">
         <div id="npm-hint" style="font-size:0.8em; color:#888; margin-bottom:8px; text-align:center; height:1.2em;">
-          Click a pod arc to start a policy rule
+          Click a pod node to start a policy rule
         </div>
-        <svg id="npm-svg" viewBox="0 0 560 560" style="width:100%; max-width:520px;"></svg>
+        <svg id="npm-svg" viewBox="0 0 740 680" style="width:100%; max-width:680px;"></svg>
       </div>
 
       <!-- Right panel: staged + active policies -->
@@ -272,7 +349,7 @@
             No staged policies
           </div>
           <div style="padding:8px 12px; border-top:1px solid #f0f0f0;">
-            <button id="npm-apply-btn" onclick="npmApplyPolicies()"
+            <button type="button" id="npm-apply-btn" onclick="npmApplyPolicies()"
                     style="width:100%; background:#0066ff; color:#fff; border:none; padding:9px 14px;
                            border-radius:6px; font-weight:600; font-size:0.88rem; cursor:pointer;
                            opacity:0.4; pointer-events:none;" disabled>
@@ -372,12 +449,12 @@
 
           <!-- Buttons -->
           <div style="display:flex; gap:10px; margin-top:4px;">
-            <button onclick="npmModalConfirm()"
+            <button type="button" onclick="npmModalConfirm()"
                     style="flex:1; background:#0066ff; color:#fff; border:none; padding:10px;
                            border-radius:7px; font-weight:600; font-size:0.9rem; cursor:pointer;">
               Stage Policy
             </button>
-            <button onclick="npmModalCancel()"
+            <button type="button" onclick="npmModalCancel()"
                     style="flex:1; background:#f0f0f0; color:#555; border:none; padding:10px;
                            border-radius:7px; font-weight:600; font-size:0.9rem; cursor:pointer;">
               Cancel
@@ -389,83 +466,6 @@
     </div>
 
   </section><!-- end NETWORK POLICY MAP -->
-
-  <!-- TRAFFIC FLOW TABLE -->
-  <section style="padding-bottom:2.5rem; border-top:1px solid #e0e0e0; padding-top:2.5rem;">
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">TRAFFIC FLOW</h3>
-    </div>
-    <p style="margin-top:0; margin-bottom:16px; color:#555; font-size:0.9em; line-height:1.6;">
-      Three scenarios — how each behaves under Allow All versus Zero Trust Segmentation.
-    </p>
-
-    <table style="width:100%; border-collapse:collapse; font-size:0.88em; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
-      <thead>
-        <tr style="background:#f1f5f9;">
-          <th style="padding:11px 16px; text-align:left; color:#374151; font-weight:600; font-size:0.9em; border-bottom:2px solid #e2e8f0; width:36%;">Scenario</th>
-          <th style="padding:11px 16px; text-align:left; color:#1565c0; font-weight:600; font-size:0.9em; border-bottom:2px solid #1976d2; width:32%;">Allow All</th>
-          <th style="padding:11px 16px; text-align:left; color:#15803d; font-weight:600; font-size:0.9em; border-bottom:2px solid #4caf50; width:32%;">Zero Trust Segmentation</th>
-        </tr>
-      </thead>
-      <tbody>
-
-        <!-- Row 1: Direct LAN Access -->
-        <tr style="border-bottom:1px solid #e9ecef;">
-          <td style="padding:14px 16px; vertical-align:top;">
-            <div style="font-weight:600; color:#111; margin-bottom:4px;">Direct LAN Access</div>
-            <div style="color:#666; font-size:0.91em; line-height:1.55;">User or attacker on the network reaches an app directly — no login required.</div>
-          </td>
-          <td style="padding:14px 16px; vertical-align:top; background:#fffbeb;">
-            <div style="font-weight:700; color:#92400e; margin-bottom:6px;">⚠ Exposed</div>
-            <ul style="margin:0; padding-left:16px; color:#78350f; line-height:1.7; font-size:0.91em;">
-              <li>No user verification</li>
-              <li>No granular access control</li>
-              <li>All ports reachable</li>
-            </ul>
-          </td>
-          <td style="padding:14px 16px; vertical-align:top; background:#f0fdf4;">
-            <div style="font-weight:700; color:#15803d; margin-bottom:6px;">Protected</div>
-            <div style="color:#166534; font-size:0.91em; line-height:1.55;">No access. Cilium drops the connection before it reaches the pod.</div>
-          </td>
-        </tr>
-
-        <!-- Row 2: Verified Access -->
-        <tr style="border-bottom:1px solid #e9ecef;">
-          <td style="padding:14px 16px; vertical-align:top;">
-            <div style="font-weight:600; color:#111; margin-bottom:4px;">Verified User via Secure Access</div>
-            <div style="color:#666; font-size:0.91em; line-height:1.55;">Authenticated user reaches the app through Cisco Secure Access and the Resource Connector.</div>
-          </td>
-          <td style="padding:14px 16px; vertical-align:top; background:#f8fafc;">
-            <div style="font-weight:700; color:#374151; margin-bottom:6px;">✓ Works</div>
-            <div style="color:#4b5563; font-size:0.91em; line-height:1.55;">But so does unauthenticated LAN access — Secure Access is not enforced as the only path.</div>
-          </td>
-          <td style="padding:14px 16px; vertical-align:top; background:#f0fdf4;">
-            <div style="font-weight:700; color:#15803d; margin-bottom:6px;">✓ Works</div>
-            <div style="color:#166534; font-size:0.91em; line-height:1.55;">The only permitted path in. Central policy enforcement point for all access.</div>
-          </td>
-        </tr>
-
-        <!-- Row 3: Lateral Movement -->
-        <tr>
-          <td style="padding:14px 16px; vertical-align:top;">
-            <div style="font-weight:600; color:#111; margin-bottom:4px;">Lateral Movement</div>
-            <div style="color:#666; font-size:0.91em; line-height:1.55;">A compromised pod attempts to reach another service inside the cluster.</div>
-          </td>
-          <td style="padding:14px 16px; vertical-align:top; background:#fffbeb;">
-            <div style="font-weight:700; color:#92400e; margin-bottom:6px;">⚠ Exposed</div>
-            <div style="color:#78350f; font-size:0.91em; line-height:1.55;">Pods communicate freely. An attacker can move between services undetected.</div>
-          </td>
-          <td style="padding:14px 16px; vertical-align:top; background:#f0fdf4;">
-            <div style="font-weight:700; color:#15803d; margin-bottom:6px;">Isolated</div>
-            <div style="color:#166534; font-size:0.91em; line-height:1.55;">Pods cannot reach each other. Lateral movement is blocked at the kernel level.</div>
-          </td>
-        </tr>
-
-      </tbody>
-    </table>
-
-  </section>
 
   <!-- ADVANCED POLICIES -->
   <section style="padding-bottom:2.5rem; border-top:1px solid #e0e0e0; padding-top:2.5rem;">
@@ -747,197 +747,154 @@
   <!-- ── Network Policy Map JS ── -->
   <script>
   (function () {
-    /* ── constants ───────────────────────────────────────────────────────── */
-    const W = 560, H = 560, CX = 280, CY = 280;
-    const R_OUT  = 215;   // outer arc radius
-    const R_IN   = 188;   // inner arc radius
-    const R_RIB  = 184;   // ribbon attachment radius (just inside arc)
-    const R_LBL  = 228;   // label radius
-    const GAP    = 3.5;   // degrees gap between arcs
+    /* ── constants ────────────────────────────────────────────────── */
+    const CX = 370, CY = 340;
+    const R_DOT = 155;   // radius where dots sit
+    const R_BOX = 270;   // radius where label boxes are centred
+    const DOT_R = 5;     // dot circle radius
+    const BOX_W = 128;   // label box width
+    const BOX_H = 26;    // label box height
     const SVG_NS = "http://www.w3.org/2000/svg";
-
-    // Node colours — index matches position in node list
-    const PALETTE = [
-      "#00bcd4","#1976d2","#7b1fa2","#e64a19",
-      "#f57c00","#388e3c","#0097a7","#5d4037",
-      "#455a64","#c2185b","#303f9f","#00796b",
-    ];
 
     const ZERO_TRUST_ACTIVE = {{ 'true' if 'piap-zero-trust' in active_policies else 'false' }};
     const ZERO_TRUST_SRVC   = {{ zero_trust_targets | tojson }};
 
-    /* ── state ────────────────────────────────────────────────────────────── */
-    let nodes    = [];      // [{id, label, protected, color, startDeg, endDeg}, …]
-    let staged   = [];      // [{source, destination, port, protocol, action}, …]
-    let active   = [];      // [{name, source, destination, port, protocol, action}, …]
-    let selSrc   = null;    // id of selected source node
-    let tooltip  = null;
+    /* ── state ───────────────────────────────────────────────────── */
+    let nodes   = [];   // [{id, label, protected, deg, x, y}, …]
+    let staged  = [];
+    let active  = [];
+    let selSrc  = null;
+    let tooltip = null;
 
-    /* ── SVG helpers ─────────────────────────────────────────────────────── */
-    function el(tag, attrs = {}) {
+    /* ── SVG helpers ─────────────────────────────────────────────── */
+    function el(tag, attrs) {
       const e = document.createElementNS(SVG_NS, tag);
-      for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+      for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v);
       return e;
     }
 
-    // Polar → Cartesian  (0° = 12 o'clock, clockwise)
     function pt(r, deg) {
       const rad = (deg - 90) * Math.PI / 180;
       return [CX + r * Math.cos(rad), CY + r * Math.sin(rad)];
     }
 
-    // SVG arc flag: large-arc if span > 180°
-    function arc(r, a1, a2, sweep = 1) {
-      const [x1, y1] = pt(r, a1);
-      const [x2, y2] = pt(r, a2);
-      const large = (a2 - a1 + 360) % 360 > 180 ? 1 : 0;
-      return `A ${r},${r} 0 ${large},${sweep} ${x2},${y2}`;
+    function curvePath(x1, y1, x2, y2) {
+      const t = 0.38;
+      const cx1 = x1 + (CX - x1) * t, cy1 = y1 + (CY - y1) * t;
+      const cx2 = x2 + (CX - x2) * t, cy2 = y2 + (CY - y2) * t;
+      return `M ${x1},${y1} C ${cx1},${cy1} ${cx2},${cy2} ${x2},${y2}`;
     }
 
-    // Solid arc-band path for a node
-    function nodePath(s, e) {
-      const [x1, y1] = pt(R_OUT, s);
-      const [x2, y2] = pt(R_IN,  e);
-      const [x3, y3] = pt(R_IN,  s);
-      return `M ${x1},${y1} ${arc(R_OUT, s, e)} L ${x2},${y2} ${arc(R_IN, e, s, 0)} Z`;
-    }
-
-    // Asymmetric ribbon: wide at source arc, narrow point at destination mid
-    function ribbonPath(srcStart, srcEnd, dstStart, dstEnd) {
-      const [lx, ly] = pt(R_RIB, srcStart);
-      const [rx, ry] = pt(R_RIB, srcEnd);
-      const dstMid   = (dstStart + dstEnd) / 2;
-      const [dx, dy] = pt(R_RIB * 0.28, dstMid);     // destination tip near centre
-      const large    = (srcEnd - srcStart + 360) % 360 > 180 ? 1 : 0;
-
-      return `M ${lx},${ly}
-              Q ${CX},${CY} ${dx},${dy}
-              Q ${CX},${CY} ${rx},${ry}
-              A ${R_RIB},${R_RIB} 0 ${large},0 ${lx},${ly} Z`;
-    }
-
-    /* ── node layout ─────────────────────────────────────────────────────── */
+    /* ── layout ──────────────────────────────────────────────────── */
     function layoutNodes(rawNodes) {
       const n = rawNodes.length;
-      const span = (360 - GAP * n) / n;
-      let cursor = 0;
       return rawNodes.map((nd, i) => {
-        const start = cursor;
-        const end   = cursor + span;
-        cursor      = end + GAP;
-        return { ...nd, color: PALETTE[i % PALETTE.length], startDeg: start, endDeg: end };
+        const deg = (i / n) * 360;
+        const [x, y] = pt(R_DOT, deg);
+        return { ...nd, deg, x, y };
       });
     }
 
     function nodeById(id) { return nodes.find(n => n.id === id); }
 
-    /* ── draw ────────────────────────────────────────────────────────────── */
+    /* ── draw ────────────────────────────────────────────────────── */
     function draw() {
       const svg = document.getElementById('npm-svg');
       svg.innerHTML = '';
 
-      // ── background circle
-      svg.appendChild(el('circle', { cx: CX, cy: CY, r: R_IN - 2,
-        fill: '#f8f9fc', stroke: '#e4e7ec', 'stroke-width': 1 }));
-
-      // ── mode-based background ribbons (Zero Trust or Allow All)
+      // layer 0: background lines (mode indicator)
       if (ZERO_TRUST_ACTIVE) {
-        const connector = nodeById('resource-connector');
-        if (connector) {
+        const conn = nodeById('resource-connector');
+        if (conn) {
           nodes.forEach(nd => {
-            if (nd.id === 'resource-connector') return;
-            if (!ZERO_TRUST_SRVC.includes(nd.id)) return;
-            drawRibbon(svg, connector, nd, '#4caf50', 0.18, false, false);
+            if (nd.id === 'resource-connector' || !ZERO_TRUST_SRVC.includes(nd.id)) return;
+            drawLine(svg, conn, nd, '#86efac', 1.5, false, false);
           });
         }
       } else {
-        // Allow All: draw a very faint mesh
-        for (let i = 0; i < nodes.length; i++) {
-          for (let j = i + 1; j < nodes.length; j++) {
-            drawRibbon(svg, nodes[i], nodes[j], '#90caf9', 0.12, false, false);
-          }
-        }
+        for (let i = 0; i < nodes.length; i++)
+          for (let j = i + 1; j < nodes.length; j++)
+            drawLine(svg, nodes[i], nodes[j], '#bfdbfe', 1, false, false);
       }
 
-      // ── applied custom policies
+      // layer 1: active custom policies
       active.forEach(p => {
-        const src = nodeById(p.source);
-        const dst = nodeById(p.destination);
-        if (src && dst) {
-          const col = p.action === 'allow' ? '#4caf50' : '#e53935';
-          const g = drawRibbon(svg, src, dst, col, 0.45, false, true, p);
-        }
+        const src = nodeById(p.source), dst = nodeById(p.destination);
+        if (src && dst)
+          drawLine(svg, src, dst, p.action === 'allow' ? '#16a34a' : '#dc2626', 2.5, false, true, p);
       });
 
-      // ── staged (dashed)
+      // layer 2: staged (dashed)
       staged.forEach(p => {
-        const src = nodeById(p.source);
-        const dst = nodeById(p.destination);
-        if (src && dst) {
-          const col = p.action === 'allow' ? '#4caf50' : '#e53935';
-          drawRibbon(svg, src, dst, col, 0.3, true, false, p);
-        }
+        const src = nodeById(p.source), dst = nodeById(p.destination);
+        if (src && dst)
+          drawLine(svg, src, dst, p.action === 'allow' ? '#16a34a' : '#dc2626', 2, true, false, p);
       });
 
-      // ── arc segments
+      // layer 3: connector lines from dot to box
       nodes.forEach(nd => {
-        const isSelected = nd.id === selSrc;
-        const path = el('path', {
-          d:      nodePath(nd.startDeg, nd.endDeg),
-          fill:   nd.color,
-          stroke: isSelected ? '#111' : '#fff',
-          'stroke-width': isSelected ? 2.5 : 1,
-          opacity: isSelected ? 1 : 0.85,
-          cursor: 'pointer',
-          'data-id': nd.id,
-        });
-        path.addEventListener('click',      () => npmArcClick(nd.id));
-        path.addEventListener('mouseenter', () => npmArcHover(nd.id, true));
-        path.addEventListener('mouseleave', () => npmArcHover(nd.id, false));
-        svg.appendChild(path);
+        const [bx, by] = pt(R_BOX, nd.deg);
+        svg.appendChild(el('line', { x1: nd.x, y1: nd.y, x2: bx, y2: by,
+          stroke: '#d1d5db', 'stroke-width': 1 }));
+      });
 
-        // label
-        const midDeg  = (nd.startDeg + nd.endDeg) / 2;
-        const [lx, ly] = pt(R_LBL, midDeg);
-        const anchor   = (midDeg > 90 && midDeg < 270) ? 'end' : 'start';
-        const rotate   = (midDeg > 90 && midDeg < 270) ? midDeg - 90 + 180 : midDeg - 90;
-        const txt = el('text', {
-          x: lx, y: ly,
-          'text-anchor': anchor,
-          'dominant-baseline': 'middle',
-          transform: `rotate(${rotate},${lx},${ly})`,
-          fill: '#333',
-          'font-size': '10',
-          'font-family': 'Inter,-apple-system,sans-serif',
-          'font-weight': '600',
+      // layer 4: label boxes + text
+      nodes.forEach(nd => {
+        const [bx, by] = pt(R_BOX, nd.deg);
+        const sel = nd.id === selSrc;
+        const bg  = sel ? '#fef9c3' : (nd.protected ? '#dcfce7' : '#dbeafe');
+        const br  = sel ? '#ca8a04' : (nd.protected ? '#86efac' : '#93c5fd');
+        const tc  = sel ? '#854d0e' : (nd.protected ? '#166534' : '#1e40af');
+
+        const rect = el('rect', {
+          x: bx - BOX_W / 2, y: by - BOX_H / 2,
+          width: BOX_W, height: BOX_H, rx: 5, ry: 5,
+          fill: bg, stroke: br, 'stroke-width': sel ? 2 : 1.5,
           cursor: 'pointer',
-          'pointer-events': 'all',
-          'data-id': nd.id,
+        });
+        rect.addEventListener('click',      () => npmNodeClick(nd.id));
+        rect.addEventListener('mouseenter', () => npmNodeHover(nd.id, true));
+        rect.addEventListener('mouseleave', () => npmNodeHover(nd.id, false));
+        svg.appendChild(rect);
+
+        const txt = el('text', {
+          x: bx, y: by, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+          fill: tc, 'font-size': '10', 'font-family': 'Inter,-apple-system,sans-serif',
+          'font-weight': '600', 'pointer-events': 'none',
         });
         txt.textContent = nd.protected ? '🔒 ' + nd.label : nd.label;
-        txt.addEventListener('click', () => npmArcClick(nd.id));
         svg.appendChild(txt);
       });
 
-      // ── centre label
-      const cTxt = el('text', { x: CX, y: CY - 8, 'text-anchor': 'middle',
-        fill: '#aaa', 'font-size': '10', 'font-family': 'Inter,sans-serif' });
-      cTxt.textContent = ZERO_TRUST_ACTIVE ? 'Zero Trust' : 'Allow All';
-      const cTxt2 = el('text', { x: CX, y: CY + 8, 'text-anchor': 'middle',
-        fill: '#bbb', 'font-size': '9', 'font-family': 'Inter,sans-serif' });
-      cTxt2.textContent = 'mode active';
-      svg.appendChild(cTxt);
-      svg.appendChild(cTxt2);
+      // layer 5: dots
+      nodes.forEach(nd => {
+        const sel = nd.id === selSrc;
+        const dot = el('circle', {
+          cx: nd.x, cy: nd.y, r: DOT_R,
+          fill: sel ? '#fbbf24' : '#6b7280',
+          stroke: sel ? '#92400e' : '#fff',
+          'stroke-width': sel ? 2 : 1.5,
+          cursor: 'pointer',
+        });
+        dot.addEventListener('click',      () => npmNodeClick(nd.id));
+        dot.addEventListener('mouseenter', () => npmNodeHover(nd.id, true));
+        dot.addEventListener('mouseleave', () => npmNodeHover(nd.id, false));
+        svg.appendChild(dot);
+      });
+
+      // centre mode label
+      const lbl = el('text', { x: CX, y: CY, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+        fill: '#d1d5db', 'font-size': '11', 'font-family': 'Inter,sans-serif', 'font-weight': '500' });
+      lbl.textContent = ZERO_TRUST_ACTIVE ? 'Zero Trust' : 'Allow All';
+      svg.appendChild(lbl);
     }
 
-    function drawRibbon(svg, src, dst, color, opacity, dashed, hoverable, policyData) {
+    function drawLine(svg, src, dst, color, width, dashed, hoverable, policyData) {
       const path = el('path', {
-        d:       ribbonPath(src.startDeg, src.endDeg, dst.startDeg, dst.endDeg),
-        fill:    color,
-        opacity: opacity,
-        'stroke': dashed ? color : 'none',
-        'stroke-width': dashed ? 1.5 : 0,
-        'stroke-dasharray': dashed ? '5,3' : 'none',
+        d: curvePath(src.x, src.y, dst.x, dst.y),
+        fill: 'none', stroke: color, 'stroke-width': width,
+        'stroke-dasharray': dashed ? '6,4' : 'none',
+        opacity: dashed ? '0.8' : '1',
       });
       if (hoverable && policyData) {
         path.style.cursor = 'pointer';
@@ -949,53 +906,53 @@
       return path;
     }
 
-    /* ── tooltip ─────────────────────────────────────────────────────────── */
+    /* ── tooltip ─────────────────────────────────────────────────── */
     function showTooltip(e, p) {
       hideTooltip();
       tooltip = document.createElement('div');
-      tooltip.style.cssText = `position:fixed;background:#222;color:#fff;padding:8px 12px;
-        border-radius:7px;font-size:0.78rem;line-height:1.6;pointer-events:none;z-index:9000;
-        box-shadow:0 4px 16px rgba(0,0,0,0.3);max-width:220px;`;
+      tooltip.style.cssText = 'position:fixed;background:#222;color:#fff;padding:8px 12px;' +
+        'border-radius:7px;font-size:0.78rem;line-height:1.6;pointer-events:none;z-index:9000;' +
+        'box-shadow:0 4px 16px rgba(0,0,0,0.3);max-width:220px;';
       const action = p.action === 'allow'
-        ? '<span style="color:#81c784">● Allow</span>'
-        : '<span style="color:#ef9a9a">● Deny</span>';
+        ? '<span style="color:#86efac">● Allow</span>'
+        : '<span style="color:#fca5a5">● Deny</span>';
       const port = p.port && p.port !== '*' ? `${p.protocol} ${p.port}` : 'all ports';
-      tooltip.innerHTML = `<strong>${p.source}</strong> → <strong>${p.destination}</strong><br>${action} &nbsp;·&nbsp; ${port}${p.name ? `<br><span style="color:#aaa;font-size:0.72rem;">${p.name}</span>` : ''}`;
+      tooltip.innerHTML = `<strong>${p.source}</strong> → <strong>${p.destination}</strong><br>${action} · ${port}` +
+        (p.name ? `<br><span style="color:#aaa;font-size:0.72rem;">${p.name}</span>` : '');
       document.body.appendChild(tooltip);
       moveTooltip(e);
     }
     function moveTooltip(e) {
-      if (!tooltip) return;
-      tooltip.style.left = (e.clientX + 14) + 'px';
-      tooltip.style.top  = (e.clientY - 10) + 'px';
+      if (tooltip) { tooltip.style.left = (e.clientX + 14) + 'px'; tooltip.style.top = (e.clientY - 10) + 'px'; }
     }
     function hideTooltip() {
       if (tooltip) { tooltip.remove(); tooltip = null; }
     }
 
-    /* ── interaction ─────────────────────────────────────────────────────── */
-    function npmArcClick(id) {
+    /* ── interaction ─────────────────────────────────────────────── */
+    function npmNodeClick(id) {
       if (!selSrc) {
         selSrc = id;
-        document.getElementById('npm-hint').textContent = `Source: ${nodeById(id).label} — now click a destination arc`;
+        document.getElementById('npm-hint').textContent =
+          `Source: ${nodeById(id).label} — now click a destination node`;
         draw();
       } else if (selSrc === id) {
         selSrc = null;
-        document.getElementById('npm-hint').textContent = 'Click a pod arc to start a policy rule';
+        document.getElementById('npm-hint').textContent = 'Click a pod node to start a policy rule';
         draw();
       } else {
         openModal(selSrc, id);
       }
     }
 
-    function npmArcHover(id, on) {
+    function npmNodeHover(id, on) {
       if (!selSrc) {
         document.getElementById('npm-hint').textContent =
-          on ? `Source: ${nodeById(id).label} — click to select` : 'Click a pod arc to start a policy rule';
+          on ? `Source: ${nodeById(id).label} — click to select` : 'Click a pod node to start a policy rule';
       }
     }
 
-    /* ── modal ───────────────────────────────────────────────────────────── */
+    /* ── modal ───────────────────────────────────────────────────── */
     function openModal(srcId, dstId) {
       const dst = nodeById(dstId);
       document.getElementById('npm-modal-src').textContent = nodeById(srcId).label;
@@ -1013,26 +970,23 @@
         denyLbl.style.opacity = '1';
         denyLbl.style.pointerEvents = 'auto';
       }
-      document.getElementById('npm-modal-backdrop').style.display = 'flex';
-      document.getElementById('npm-modal-backdrop')._src = srcId;
-      document.getElementById('npm-modal-backdrop')._dst = dstId;
+      const bd = document.getElementById('npm-modal-backdrop');
+      bd.style.display = 'flex';
+      bd._src = srcId;
+      bd._dst = dstId;
     }
 
     window.npmModalConfirm = function () {
-      const backdrop = document.getElementById('npm-modal-backdrop');
-      const src    = backdrop._src;
-      const dst    = backdrop._dst;
+      const bd     = document.getElementById('npm-modal-backdrop');
+      const src    = bd._src, dst = bd._dst;
       const port   = document.getElementById('npm-modal-port').value.trim() || '*';
       const proto  = document.getElementById('npm-modal-proto').value;
       const action = document.querySelector('input[name="npm-action"]:checked').value;
-
-      // Deduplicate
-      const dup = staged.find(p => p.source === src && p.destination === dst && p.port === port);
-      if (!dup) staged.push({ source: src, destination: dst, port, protocol: proto, action });
-
-      backdrop.style.display = 'none';
+      if (!staged.find(p => p.source === src && p.destination === dst && p.port === port))
+        staged.push({ source: src, destination: dst, port, protocol: proto, action });
+      bd.style.display = 'none';
       selSrc = null;
-      document.getElementById('npm-hint').textContent = 'Click a pod arc to start a policy rule';
+      document.getElementById('npm-hint').textContent = 'Click a pod node to start a policy rule';
       renderStagedList();
       draw();
     };
@@ -1040,20 +994,19 @@
     window.npmModalCancel = function () {
       document.getElementById('npm-modal-backdrop').style.display = 'none';
       selSrc = null;
-      document.getElementById('npm-hint').textContent = 'Click a pod arc to start a policy rule';
+      document.getElementById('npm-hint').textContent = 'Click a pod node to start a policy rule';
       draw();
     };
 
-    // Close modal on backdrop click
     document.getElementById('npm-modal-backdrop').addEventListener('click', function (e) {
       if (e.target === this) npmModalCancel();
     });
 
-    /* ── staged list UI ──────────────────────────────────────────────────── */
+    /* ── staged list UI ──────────────────────────────────────────── */
     function renderStagedList() {
-      const list  = document.getElementById('npm-staged-list');
+      const list = document.getElementById('npm-staged-list');
       const count = document.getElementById('npm-staged-count');
-      const btn   = document.getElementById('npm-apply-btn');
+      const btn = document.getElementById('npm-apply-btn');
 
       if (!staged.length) {
         list.innerHTML = '<span style="color:#bbb;font-style:italic;">No staged policies</span>';
@@ -1061,19 +1014,18 @@
         btn.disabled = true; btn.style.opacity = '0.4'; btn.style.pointerEvents = 'none';
         return;
       }
-
       count.textContent = staged.length;
       count.style.display = 'inline';
       btn.disabled = false; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
 
       list.innerHTML = staged.map((p, i) => {
-        const col  = p.action === 'allow' ? '#2e7d32' : '#b71c1c';
+        const col  = p.action === 'allow' ? '#16a34a' : '#dc2626';
         const port = p.port && p.port !== '*' ? `${p.protocol} ${p.port}` : 'all';
         return `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #f0f0f0;">
           <span style="color:${col};font-size:0.75rem;font-weight:700;min-width:40px;">${p.action.toUpperCase()}</span>
           <span style="flex:1;font-size:0.8rem;color:#333;">${p.source} → ${p.destination}</span>
           <span style="font-size:0.72rem;color:#888;">${port}</span>
-          <button onclick="npmRemoveStaged(${i})"
+          <button type="button" onclick="npmRemoveStaged(${i})"
                   style="background:none;border:none;color:#aaa;cursor:pointer;font-size:0.9rem;padding:0 2px;"
                   title="Remove">✕</button>
         </div>`;
@@ -1086,7 +1038,7 @@
       draw();
     };
 
-    /* ── active custom policies ──────────────────────────────────────────── */
+    /* ── active custom policies ──────────────────────────────────── */
     function renderActiveList() {
       const list = document.getElementById('npm-active-list');
       if (!active.length) {
@@ -1094,13 +1046,13 @@
         return;
       }
       list.innerHTML = active.map(p => {
-        const col  = p.action === 'allow' ? '#2e7d32' : '#b71c1c';
+        const col  = p.action === 'allow' ? '#16a34a' : '#dc2626';
         const port = p.port && p.port !== '*' ? `${p.protocol}:${p.port}` : 'all';
         return `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #f0f0f0;">
           <span style="color:${col};font-size:0.75rem;font-weight:700;min-width:40px;">${p.action.toUpperCase()}</span>
           <span style="flex:1;font-size:0.8rem;color:#333;">${p.source} → ${p.destination}</span>
           <span style="font-size:0.72rem;color:#888;">${port}</span>
-          <button onclick="npmDeleteActive('${p.name}')"
+          <button type="button" onclick="npmDeleteActive('${p.name}')"
                   style="background:none;border:none;color:#e53935;cursor:pointer;font-size:0.9rem;padding:0 2px;"
                   title="Delete">✕</button>
         </div>`;
@@ -1111,27 +1063,21 @@
       fetch(`/api/cilium/delete-custom/${encodeURIComponent(name)}`, { method: 'DELETE' })
         .then(r => r.json())
         .then(d => {
-          if (d.ok) {
-            active = active.filter(p => p.name !== name);
-            renderActiveList();
-            draw();
-          } else {
-            showStatus('⚠️ ' + (d.error || 'Delete failed'), false);
-          }
+          if (d.ok) { active = active.filter(p => p.name !== name); renderActiveList(); draw(); }
+          else showStatus('⚠️ ' + (d.error || 'Delete failed'), false);
         });
     };
 
-    /* ── apply staged ────────────────────────────────────────────────────── */
+    /* ── apply staged ────────────────────────────────────────────── */
     window.npmApplyPolicies = function () {
       if (!staged.length) return;
       const btn = document.getElementById('npm-apply-btn');
       btn.textContent = 'Applying…';
       btn.disabled = true;
-
       fetch('/api/cilium/apply-custom', {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ policies: staged }),
+        body: JSON.stringify({ policies: staged }),
       })
       .then(r => r.json())
       .then(data => {
@@ -1144,7 +1090,6 @@
           const errs = (data.results || []).filter(r => !r.ok).map(r => r.error).join('; ');
           showStatus('⚠️ ' + (errs || 'Some policies failed to apply'), false);
         }
-        // Reload active policies
         loadActive();
         renderStagedList();
         draw();
@@ -1156,30 +1101,26 @@
       });
     };
 
-    /* ── status message ──────────────────────────────────────────────────── */
+    /* ── status message ──────────────────────────────────────────── */
     function showStatus(msg, ok) {
-      const el = document.getElementById('npm-status');
-      el.textContent = msg;
-      el.style.display = 'block';
-      el.style.background  = ok ? '#f0f8f0' : '#fff8e1';
-      el.style.border      = `1px solid ${ok ? '#c8e6c9' : '#ffe082'}`;
-      el.style.color       = ok ? '#2e7d32' : '#6d4c00';
-      clearTimeout(el._timer);
-      el._timer = setTimeout(() => { el.style.display = 'none'; }, 5000);
+      const s = document.getElementById('npm-status');
+      s.textContent = msg;
+      s.style.display = 'block';
+      s.style.background = ok ? '#f0f8f0' : '#fff8e1';
+      s.style.border     = `1px solid ${ok ? '#c8e6c9' : '#ffe082'}`;
+      s.style.color      = ok ? '#2e7d32' : '#6d4c00';
+      clearTimeout(s._timer);
+      s._timer = setTimeout(() => { s.style.display = 'none'; }, 5000);
     }
 
-    /* ── data loading ────────────────────────────────────────────────────── */
+    /* ── data loading ────────────────────────────────────────────── */
     function loadNodes() {
       fetch('/api/cilium/nodes')
         .then(r => r.json())
-        .then(raw => {
-          nodes = layoutNodes(raw);
-          draw();
-        })
+        .then(raw => { nodes = layoutNodes(raw); draw(); })
         .catch(() => {
-          // Fallback: show a placeholder so page doesn't break
           document.getElementById('npm-svg').innerHTML =
-            '<text x="280" y="280" text-anchor="middle" fill="#aaa" font-size="13">Could not load services</text>';
+            '<text x="370" y="340" text-anchor="middle" fill="#aaa" font-size="13">Could not load services</text>';
         });
     }
 
@@ -1190,7 +1131,7 @@
         .catch(() => {});
     }
 
-    /* ── init ────────────────────────────────────────────────────────────── */
+    /* ── init ────────────────────────────────────────────────────── */
     loadNodes();
     loadActive();
   })();
