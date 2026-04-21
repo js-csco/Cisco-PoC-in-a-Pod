@@ -201,6 +201,195 @@
     </div>
   </section>
 
+  <!-- ══════════════════════════════════════════════════════════════════════
+       NETWORK POLICY MAP — chord diagram + custom policy builder
+       ══════════════════════════════════════════════════════════════════════ -->
+  <section id="npm-section" style="border-top:1px solid #e0e0e0; padding-top:2.5rem; padding-bottom:2.5rem;">
+
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+      <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+      <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">NETWORK POLICY MAP</h3>
+    </div>
+    <p style="margin:0 0 1.5rem; color:#555; font-size:0.9em; line-height:1.6;">
+      Visualise the current access topology and build fine-grained ingress policies between pods.
+      Click a source arc, then a destination arc to define a rule.
+      Staged rules (dashed) are not active until you click <strong>Apply Policies</strong>.
+    </p>
+
+    <!-- 3-column card row ──────────────────────────────────────── -->
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.2rem; margin-bottom:1.8rem;">
+
+      <!-- Allow All indicator -->
+      <div id="npm-mode-allow" style="border-radius:10px; padding:1rem 1.2rem;
+           border:2px solid {% if not active_policies or 'piap-zero-trust' not in active_policies %}#1976d2{% else %}#e0e0e0{% endif %};
+           background:{% if not active_policies or 'piap-zero-trust' not in active_policies %}#e3f2fd{% else %}#fafafa{% endif %};">
+        <div style="font-size:0.72rem; font-weight:700; letter-spacing:.05em; color:#1976d2; text-transform:uppercase; margin-bottom:4px;">Allow All Traffic</div>
+        <div style="font-size:0.82em; color:#555; line-height:1.5;">All paths open — no Cilium policies active. Diagram shows full mesh.</div>
+      </div>
+
+      <!-- Zero Trust indicator -->
+      <div id="npm-mode-zt" style="border-radius:10px; padding:1rem 1.2rem;
+           border:2px solid {% if 'piap-zero-trust' in active_policies %}#4caf50{% else %}#e0e0e0{% endif %};
+           background:{% if 'piap-zero-trust' in active_policies %}#f0faf0{% else %}#fafafa{% endif %};">
+        <div style="font-size:0.72rem; font-weight:700; letter-spacing:.05em; color:#4caf50; text-transform:uppercase; margin-bottom:4px;">Zero Trust Active</div>
+        <div style="font-size:0.82em; color:#555; line-height:1.5;">Only the Resource Connector may reach pods. Shown as green ribbons.</div>
+      </div>
+
+      <!-- Advanced Policies card -->
+      <div style="border-radius:10px; padding:1rem 1.2rem; border:2px solid #0066ff; background:#f0f4ff;">
+        <div style="font-size:0.72rem; font-weight:700; letter-spacing:.05em; color:#0066ff; text-transform:uppercase; margin-bottom:4px;">Advanced Policies</div>
+        <div style="font-size:0.82em; color:#555; line-height:1.5;">Custom rules you draw below. <span style="color:#4caf50; font-weight:600;">Green</span> = allow, <span style="color:#e53935; font-weight:600;">Red</span> = deny. Dashed = staged.</div>
+      </div>
+
+    </div>
+
+    <!-- Chord diagram + staging panel ─────────────────────────── -->
+    <div style="display:grid; grid-template-columns:1fr 320px; gap:1.5rem; align-items:start;">
+
+      <!-- SVG diagram -->
+      <div style="background:#fafbfc; border:1px solid #e4e7ec; border-radius:12px;
+                  padding:1rem; display:flex; flex-direction:column; align-items:center;">
+        <div id="npm-hint" style="font-size:0.8em; color:#888; margin-bottom:8px; text-align:center; height:1.2em;">
+          Click a pod arc to start a policy rule
+        </div>
+        <svg id="npm-svg" viewBox="0 0 560 560" style="width:100%; max-width:520px;"></svg>
+      </div>
+
+      <!-- Right panel: staged + active policies -->
+      <div style="display:flex; flex-direction:column; gap:1rem;">
+
+        <!-- Staged policies -->
+        <div style="border:1px solid #e4e7ec; border-radius:10px; overflow:hidden;">
+          <div style="background:#f5f5f5; padding:10px 14px; font-size:0.78rem; font-weight:700;
+                      color:#555; text-transform:uppercase; letter-spacing:.05em; display:flex; align-items:center; gap:6px;">
+            <span>Staged Policies</span>
+            <span id="npm-staged-count"
+                  style="background:#0066ff; color:#fff; font-size:0.7rem; font-weight:700;
+                         padding:1px 7px; border-radius:99px; display:none;">0</span>
+          </div>
+          <div id="npm-staged-list"
+               style="padding:10px 12px; min-height:60px; font-size:0.82em; color:#999; font-style:italic;">
+            No staged policies
+          </div>
+          <div style="padding:8px 12px; border-top:1px solid #f0f0f0;">
+            <button id="npm-apply-btn" onclick="npmApplyPolicies()"
+                    style="width:100%; background:#0066ff; color:#fff; border:none; padding:9px 14px;
+                           border-radius:6px; font-weight:600; font-size:0.88rem; cursor:pointer;
+                           opacity:0.4; pointer-events:none;" disabled>
+              Apply Policies
+            </button>
+          </div>
+        </div>
+
+        <!-- Active custom policies -->
+        <div style="border:1px solid #e4e7ec; border-radius:10px; overflow:hidden;">
+          <div style="background:#f5f5f5; padding:10px 14px; font-size:0.78rem; font-weight:700;
+                      color:#555; text-transform:uppercase; letter-spacing:.05em;">
+            Active Custom Policies
+          </div>
+          <div id="npm-active-list"
+               style="padding:10px 12px; min-height:40px; font-size:0.82em; color:#999; font-style:italic;">
+            Loading…
+          </div>
+        </div>
+
+        <!-- Status message -->
+        <div id="npm-status" style="display:none; font-size:0.82em; padding:8px 12px;
+             border-radius:7px; line-height:1.4;"></div>
+
+      </div>
+    </div>
+
+    <!-- Policy creation modal ─────────────────────────────────── -->
+    <div id="npm-modal-backdrop"
+         style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4);
+                z-index:1000; align-items:center; justify-content:center;">
+      <div style="background:#fff; border-radius:14px; padding:1.8rem 2rem; width:400px;
+                  box-shadow:0 8px 40px rgba(0,0,0,0.18); max-width:95vw;">
+        <h3 style="margin:0 0 1.2rem; font-size:1.05rem; color:#111;">Define Policy Rule</h3>
+
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+
+          <!-- Source & dest (read-only display) -->
+          <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px;">
+            <div style="background:#f0f4ff; border:1px solid #c0d0ff; border-radius:7px;
+                        padding:8px 12px; font-size:0.85em; font-weight:600; color:#1a3a7c; text-align:center;">
+              <div style="font-size:0.68em; color:#888; font-weight:400; margin-bottom:2px;">SOURCE</div>
+              <div id="npm-modal-src"></div>
+            </div>
+            <div style="color:#aaa; font-size:1.1rem;">→</div>
+            <div style="background:#f0fff4; border:1px solid #b2dfdb; border-radius:7px;
+                        padding:8px 12px; font-size:0.85em; font-weight:600; color:#1b5e20; text-align:center;">
+              <div style="font-size:0.68em; color:#888; font-weight:400; margin-bottom:2px;">DESTINATION</div>
+              <div id="npm-modal-dst"></div>
+            </div>
+          </div>
+
+          <!-- Protocol -->
+          <div>
+            <label style="font-size:0.8rem; font-weight:600; color:#555; display:block; margin-bottom:4px;">Protocol</label>
+            <select id="npm-modal-proto"
+                    style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:0.88em;">
+              <option value="TCP">TCP</option>
+              <option value="UDP">UDP</option>
+              <option value="ANY">ANY (all protocols)</option>
+            </select>
+          </div>
+
+          <!-- Port -->
+          <div>
+            <label style="font-size:0.8rem; font-weight:600; color:#555; display:block; margin-bottom:4px;">
+              Port <span style="font-weight:400; color:#999;">(number, range 80-443, or * for all)</span>
+            </label>
+            <input id="npm-modal-port" type="text" value="*" placeholder="e.g. 80, 443, 8080, *"
+                   style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #ddd;
+                          border-radius:6px; font-size:0.88em;">
+          </div>
+
+          <!-- Allow / Deny -->
+          <div>
+            <label style="font-size:0.8rem; font-weight:600; color:#555; display:block; margin-bottom:6px;">Action</label>
+            <div style="display:flex; gap:10px;">
+              <label style="flex:1; display:flex; align-items:center; gap:8px; padding:9px 12px;
+                            border:2px solid #4caf50; border-radius:7px; cursor:pointer; background:#f0fff4;">
+                <input type="radio" name="npm-action" value="allow" checked style="accent-color:#4caf50;">
+                <span style="font-size:0.88em; font-weight:600; color:#2e7d32;">Allow</span>
+              </label>
+              <label id="npm-deny-label" style="flex:1; display:flex; align-items:center; gap:8px; padding:9px 12px;
+                            border:2px solid #e0e0e0; border-radius:7px; cursor:pointer;">
+                <input type="radio" name="npm-action" value="deny" style="accent-color:#e53935;">
+                <span style="font-size:0.88em; font-weight:600; color:#b71c1c;">Deny</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Protected warning -->
+          <div id="npm-modal-warn"
+               style="display:none; background:#fff8e1; border:1px solid #ffe082; border-radius:7px;
+                      padding:8px 12px; font-size:0.82em; color:#6d4c00;">
+            ⚠️ This service is protected. Deny policies are blocked to prevent lockout.
+          </div>
+
+          <!-- Buttons -->
+          <div style="display:flex; gap:10px; margin-top:4px;">
+            <button onclick="npmModalConfirm()"
+                    style="flex:1; background:#0066ff; color:#fff; border:none; padding:10px;
+                           border-radius:7px; font-weight:600; font-size:0.9rem; cursor:pointer;">
+              Stage Policy
+            </button>
+            <button onclick="npmModalCancel()"
+                    style="flex:1; background:#f0f0f0; color:#555; border:none; padding:10px;
+                           border-radius:7px; font-weight:600; font-size:0.9rem; cursor:pointer;">
+              Cancel
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </section><!-- end NETWORK POLICY MAP -->
+
   <!-- TRAFFIC FLOW TABLE -->
   <section style="padding-bottom:2.5rem; border-top:1px solid #e0e0e0; padding-top:2.5rem;">
     <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
@@ -553,6 +742,458 @@
       document.getElementById('cilium-terminal').innerHTML =
         '<div style="color:#4a5568; font-style:italic;"># Deploy a policy, then run tests. Results appear here.</div>';
     }
+  </script>
+
+  <!-- ── Network Policy Map JS ── -->
+  <script>
+  (function () {
+    /* ── constants ───────────────────────────────────────────────────────── */
+    const W = 560, H = 560, CX = 280, CY = 280;
+    const R_OUT  = 215;   // outer arc radius
+    const R_IN   = 188;   // inner arc radius
+    const R_RIB  = 184;   // ribbon attachment radius (just inside arc)
+    const R_LBL  = 228;   // label radius
+    const GAP    = 3.5;   // degrees gap between arcs
+    const SVG_NS = "http://www.w3.org/2000/svg";
+
+    // Node colours — index matches position in node list
+    const PALETTE = [
+      "#00bcd4","#1976d2","#7b1fa2","#e64a19",
+      "#f57c00","#388e3c","#0097a7","#5d4037",
+      "#455a64","#c2185b","#303f9f","#00796b",
+    ];
+
+    const ZERO_TRUST_ACTIVE = {{ 'true' if 'piap-zero-trust' in active_policies else 'false' }};
+    const ZERO_TRUST_SRVC   = {{ zero_trust_targets | tojson }};
+
+    /* ── state ────────────────────────────────────────────────────────────── */
+    let nodes    = [];      // [{id, label, protected, color, startDeg, endDeg}, …]
+    let staged   = [];      // [{source, destination, port, protocol, action}, …]
+    let active   = [];      // [{name, source, destination, port, protocol, action}, …]
+    let selSrc   = null;    // id of selected source node
+    let tooltip  = null;
+
+    /* ── SVG helpers ─────────────────────────────────────────────────────── */
+    function el(tag, attrs = {}) {
+      const e = document.createElementNS(SVG_NS, tag);
+      for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+      return e;
+    }
+
+    // Polar → Cartesian  (0° = 12 o'clock, clockwise)
+    function pt(r, deg) {
+      const rad = (deg - 90) * Math.PI / 180;
+      return [CX + r * Math.cos(rad), CY + r * Math.sin(rad)];
+    }
+
+    // SVG arc flag: large-arc if span > 180°
+    function arc(r, a1, a2, sweep = 1) {
+      const [x1, y1] = pt(r, a1);
+      const [x2, y2] = pt(r, a2);
+      const large = (a2 - a1 + 360) % 360 > 180 ? 1 : 0;
+      return `A ${r},${r} 0 ${large},${sweep} ${x2},${y2}`;
+    }
+
+    // Solid arc-band path for a node
+    function nodePath(s, e) {
+      const [x1, y1] = pt(R_OUT, s);
+      const [x2, y2] = pt(R_IN,  e);
+      const [x3, y3] = pt(R_IN,  s);
+      return `M ${x1},${y1} ${arc(R_OUT, s, e)} L ${x2},${y2} ${arc(R_IN, e, s, 0)} Z`;
+    }
+
+    // Asymmetric ribbon: wide at source arc, narrow point at destination mid
+    function ribbonPath(srcStart, srcEnd, dstStart, dstEnd) {
+      const [lx, ly] = pt(R_RIB, srcStart);
+      const [rx, ry] = pt(R_RIB, srcEnd);
+      const dstMid   = (dstStart + dstEnd) / 2;
+      const [dx, dy] = pt(R_RIB * 0.28, dstMid);     // destination tip near centre
+      const large    = (srcEnd - srcStart + 360) % 360 > 180 ? 1 : 0;
+
+      return `M ${lx},${ly}
+              Q ${CX},${CY} ${dx},${dy}
+              Q ${CX},${CY} ${rx},${ry}
+              A ${R_RIB},${R_RIB} 0 ${large},0 ${lx},${ly} Z`;
+    }
+
+    /* ── node layout ─────────────────────────────────────────────────────── */
+    function layoutNodes(rawNodes) {
+      const n = rawNodes.length;
+      const span = (360 - GAP * n) / n;
+      let cursor = 0;
+      return rawNodes.map((nd, i) => {
+        const start = cursor;
+        const end   = cursor + span;
+        cursor      = end + GAP;
+        return { ...nd, color: PALETTE[i % PALETTE.length], startDeg: start, endDeg: end };
+      });
+    }
+
+    function nodeById(id) { return nodes.find(n => n.id === id); }
+
+    /* ── draw ────────────────────────────────────────────────────────────── */
+    function draw() {
+      const svg = document.getElementById('npm-svg');
+      svg.innerHTML = '';
+
+      // ── background circle
+      svg.appendChild(el('circle', { cx: CX, cy: CY, r: R_IN - 2,
+        fill: '#f8f9fc', stroke: '#e4e7ec', 'stroke-width': 1 }));
+
+      // ── mode-based background ribbons (Zero Trust or Allow All)
+      if (ZERO_TRUST_ACTIVE) {
+        const connector = nodeById('resource-connector');
+        if (connector) {
+          nodes.forEach(nd => {
+            if (nd.id === 'resource-connector') return;
+            if (!ZERO_TRUST_SRVC.includes(nd.id)) return;
+            drawRibbon(svg, connector, nd, '#4caf50', 0.18, false, false);
+          });
+        }
+      } else {
+        // Allow All: draw a very faint mesh
+        for (let i = 0; i < nodes.length; i++) {
+          for (let j = i + 1; j < nodes.length; j++) {
+            drawRibbon(svg, nodes[i], nodes[j], '#90caf9', 0.12, false, false);
+          }
+        }
+      }
+
+      // ── applied custom policies
+      active.forEach(p => {
+        const src = nodeById(p.source);
+        const dst = nodeById(p.destination);
+        if (src && dst) {
+          const col = p.action === 'allow' ? '#4caf50' : '#e53935';
+          const g = drawRibbon(svg, src, dst, col, 0.45, false, true, p);
+        }
+      });
+
+      // ── staged (dashed)
+      staged.forEach(p => {
+        const src = nodeById(p.source);
+        const dst = nodeById(p.destination);
+        if (src && dst) {
+          const col = p.action === 'allow' ? '#4caf50' : '#e53935';
+          drawRibbon(svg, src, dst, col, 0.3, true, false, p);
+        }
+      });
+
+      // ── arc segments
+      nodes.forEach(nd => {
+        const isSelected = nd.id === selSrc;
+        const path = el('path', {
+          d:      nodePath(nd.startDeg, nd.endDeg),
+          fill:   nd.color,
+          stroke: isSelected ? '#111' : '#fff',
+          'stroke-width': isSelected ? 2.5 : 1,
+          opacity: isSelected ? 1 : 0.85,
+          cursor: 'pointer',
+          'data-id': nd.id,
+        });
+        path.addEventListener('click',      () => npmArcClick(nd.id));
+        path.addEventListener('mouseenter', () => npmArcHover(nd.id, true));
+        path.addEventListener('mouseleave', () => npmArcHover(nd.id, false));
+        svg.appendChild(path);
+
+        // label
+        const midDeg  = (nd.startDeg + nd.endDeg) / 2;
+        const [lx, ly] = pt(R_LBL, midDeg);
+        const anchor   = (midDeg > 90 && midDeg < 270) ? 'end' : 'start';
+        const rotate   = (midDeg > 90 && midDeg < 270) ? midDeg - 90 + 180 : midDeg - 90;
+        const txt = el('text', {
+          x: lx, y: ly,
+          'text-anchor': anchor,
+          'dominant-baseline': 'middle',
+          transform: `rotate(${rotate},${lx},${ly})`,
+          fill: '#333',
+          'font-size': '10',
+          'font-family': 'Inter,-apple-system,sans-serif',
+          'font-weight': '600',
+          cursor: 'pointer',
+          'pointer-events': 'all',
+          'data-id': nd.id,
+        });
+        txt.textContent = nd.protected ? '🔒 ' + nd.label : nd.label;
+        txt.addEventListener('click', () => npmArcClick(nd.id));
+        svg.appendChild(txt);
+      });
+
+      // ── centre label
+      const cTxt = el('text', { x: CX, y: CY - 8, 'text-anchor': 'middle',
+        fill: '#aaa', 'font-size': '10', 'font-family': 'Inter,sans-serif' });
+      cTxt.textContent = ZERO_TRUST_ACTIVE ? 'Zero Trust' : 'Allow All';
+      const cTxt2 = el('text', { x: CX, y: CY + 8, 'text-anchor': 'middle',
+        fill: '#bbb', 'font-size': '9', 'font-family': 'Inter,sans-serif' });
+      cTxt2.textContent = 'mode active';
+      svg.appendChild(cTxt);
+      svg.appendChild(cTxt2);
+    }
+
+    function drawRibbon(svg, src, dst, color, opacity, dashed, hoverable, policyData) {
+      const path = el('path', {
+        d:       ribbonPath(src.startDeg, src.endDeg, dst.startDeg, dst.endDeg),
+        fill:    color,
+        opacity: opacity,
+        'stroke': dashed ? color : 'none',
+        'stroke-width': dashed ? 1.5 : 0,
+        'stroke-dasharray': dashed ? '5,3' : 'none',
+      });
+      if (hoverable && policyData) {
+        path.style.cursor = 'pointer';
+        path.addEventListener('mouseenter', e => showTooltip(e, policyData));
+        path.addEventListener('mousemove',  e => moveTooltip(e));
+        path.addEventListener('mouseleave', hideTooltip);
+      }
+      svg.appendChild(path);
+      return path;
+    }
+
+    /* ── tooltip ─────────────────────────────────────────────────────────── */
+    function showTooltip(e, p) {
+      hideTooltip();
+      tooltip = document.createElement('div');
+      tooltip.style.cssText = `position:fixed;background:#222;color:#fff;padding:8px 12px;
+        border-radius:7px;font-size:0.78rem;line-height:1.6;pointer-events:none;z-index:9000;
+        box-shadow:0 4px 16px rgba(0,0,0,0.3);max-width:220px;`;
+      const action = p.action === 'allow'
+        ? '<span style="color:#81c784">● Allow</span>'
+        : '<span style="color:#ef9a9a">● Deny</span>';
+      const port = p.port && p.port !== '*' ? `${p.protocol} ${p.port}` : 'all ports';
+      tooltip.innerHTML = `<strong>${p.source}</strong> → <strong>${p.destination}</strong><br>${action} &nbsp;·&nbsp; ${port}${p.name ? `<br><span style="color:#aaa;font-size:0.72rem;">${p.name}</span>` : ''}`;
+      document.body.appendChild(tooltip);
+      moveTooltip(e);
+    }
+    function moveTooltip(e) {
+      if (!tooltip) return;
+      tooltip.style.left = (e.clientX + 14) + 'px';
+      tooltip.style.top  = (e.clientY - 10) + 'px';
+    }
+    function hideTooltip() {
+      if (tooltip) { tooltip.remove(); tooltip = null; }
+    }
+
+    /* ── interaction ─────────────────────────────────────────────────────── */
+    function npmArcClick(id) {
+      if (!selSrc) {
+        selSrc = id;
+        document.getElementById('npm-hint').textContent = `Source: ${nodeById(id).label} — now click a destination arc`;
+        draw();
+      } else if (selSrc === id) {
+        selSrc = null;
+        document.getElementById('npm-hint').textContent = 'Click a pod arc to start a policy rule';
+        draw();
+      } else {
+        openModal(selSrc, id);
+      }
+    }
+
+    function npmArcHover(id, on) {
+      if (!selSrc) {
+        document.getElementById('npm-hint').textContent =
+          on ? `Source: ${nodeById(id).label} — click to select` : 'Click a pod arc to start a policy rule';
+      }
+    }
+
+    /* ── modal ───────────────────────────────────────────────────────────── */
+    function openModal(srcId, dstId) {
+      const dst = nodeById(dstId);
+      document.getElementById('npm-modal-src').textContent = nodeById(srcId).label;
+      document.getElementById('npm-modal-dst').textContent = dst.label;
+      document.getElementById('npm-modal-port').value = '*';
+      document.querySelector('input[name="npm-action"][value="allow"]').checked = true;
+      const warn = document.getElementById('npm-modal-warn');
+      const denyLbl = document.getElementById('npm-deny-label');
+      if (dst.protected) {
+        warn.style.display = 'block';
+        denyLbl.style.opacity = '0.4';
+        denyLbl.style.pointerEvents = 'none';
+      } else {
+        warn.style.display = 'none';
+        denyLbl.style.opacity = '1';
+        denyLbl.style.pointerEvents = 'auto';
+      }
+      document.getElementById('npm-modal-backdrop').style.display = 'flex';
+      document.getElementById('npm-modal-backdrop')._src = srcId;
+      document.getElementById('npm-modal-backdrop')._dst = dstId;
+    }
+
+    window.npmModalConfirm = function () {
+      const backdrop = document.getElementById('npm-modal-backdrop');
+      const src    = backdrop._src;
+      const dst    = backdrop._dst;
+      const port   = document.getElementById('npm-modal-port').value.trim() || '*';
+      const proto  = document.getElementById('npm-modal-proto').value;
+      const action = document.querySelector('input[name="npm-action"]:checked').value;
+
+      // Deduplicate
+      const dup = staged.find(p => p.source === src && p.destination === dst && p.port === port);
+      if (!dup) staged.push({ source: src, destination: dst, port, protocol: proto, action });
+
+      backdrop.style.display = 'none';
+      selSrc = null;
+      document.getElementById('npm-hint').textContent = 'Click a pod arc to start a policy rule';
+      renderStagedList();
+      draw();
+    };
+
+    window.npmModalCancel = function () {
+      document.getElementById('npm-modal-backdrop').style.display = 'none';
+      selSrc = null;
+      document.getElementById('npm-hint').textContent = 'Click a pod arc to start a policy rule';
+      draw();
+    };
+
+    // Close modal on backdrop click
+    document.getElementById('npm-modal-backdrop').addEventListener('click', function (e) {
+      if (e.target === this) npmModalCancel();
+    });
+
+    /* ── staged list UI ──────────────────────────────────────────────────── */
+    function renderStagedList() {
+      const list  = document.getElementById('npm-staged-list');
+      const count = document.getElementById('npm-staged-count');
+      const btn   = document.getElementById('npm-apply-btn');
+
+      if (!staged.length) {
+        list.innerHTML = '<span style="color:#bbb;font-style:italic;">No staged policies</span>';
+        count.style.display = 'none';
+        btn.disabled = true; btn.style.opacity = '0.4'; btn.style.pointerEvents = 'none';
+        return;
+      }
+
+      count.textContent = staged.length;
+      count.style.display = 'inline';
+      btn.disabled = false; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
+
+      list.innerHTML = staged.map((p, i) => {
+        const col  = p.action === 'allow' ? '#2e7d32' : '#b71c1c';
+        const port = p.port && p.port !== '*' ? `${p.protocol} ${p.port}` : 'all';
+        return `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #f0f0f0;">
+          <span style="color:${col};font-size:0.75rem;font-weight:700;min-width:40px;">${p.action.toUpperCase()}</span>
+          <span style="flex:1;font-size:0.8rem;color:#333;">${p.source} → ${p.destination}</span>
+          <span style="font-size:0.72rem;color:#888;">${port}</span>
+          <button onclick="npmRemoveStaged(${i})"
+                  style="background:none;border:none;color:#aaa;cursor:pointer;font-size:0.9rem;padding:0 2px;"
+                  title="Remove">✕</button>
+        </div>`;
+      }).join('');
+    }
+
+    window.npmRemoveStaged = function (idx) {
+      staged.splice(idx, 1);
+      renderStagedList();
+      draw();
+    };
+
+    /* ── active custom policies ──────────────────────────────────────────── */
+    function renderActiveList() {
+      const list = document.getElementById('npm-active-list');
+      if (!active.length) {
+        list.innerHTML = '<span style="color:#bbb;font-style:italic;">None</span>';
+        return;
+      }
+      list.innerHTML = active.map(p => {
+        const col  = p.action === 'allow' ? '#2e7d32' : '#b71c1c';
+        const port = p.port && p.port !== '*' ? `${p.protocol}:${p.port}` : 'all';
+        return `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #f0f0f0;">
+          <span style="color:${col};font-size:0.75rem;font-weight:700;min-width:40px;">${p.action.toUpperCase()}</span>
+          <span style="flex:1;font-size:0.8rem;color:#333;">${p.source} → ${p.destination}</span>
+          <span style="font-size:0.72rem;color:#888;">${port}</span>
+          <button onclick="npmDeleteActive('${p.name}')"
+                  style="background:none;border:none;color:#e53935;cursor:pointer;font-size:0.9rem;padding:0 2px;"
+                  title="Delete">✕</button>
+        </div>`;
+      }).join('');
+    }
+
+    window.npmDeleteActive = function (name) {
+      fetch(`/api/cilium/delete-custom/${encodeURIComponent(name)}`, { method: 'DELETE' })
+        .then(r => r.json())
+        .then(d => {
+          if (d.ok) {
+            active = active.filter(p => p.name !== name);
+            renderActiveList();
+            draw();
+          } else {
+            showStatus('⚠️ ' + (d.error || 'Delete failed'), false);
+          }
+        });
+    };
+
+    /* ── apply staged ────────────────────────────────────────────────────── */
+    window.npmApplyPolicies = function () {
+      if (!staged.length) return;
+      const btn = document.getElementById('npm-apply-btn');
+      btn.textContent = 'Applying…';
+      btn.disabled = true;
+
+      fetch('/api/cilium/apply-custom', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ policies: staged }),
+      })
+      .then(r => r.json())
+      .then(data => {
+        btn.textContent = 'Apply Policies';
+        btn.disabled = false;
+        if (data.ok) {
+          staged = [];
+          showStatus('✅ Policies applied successfully.', true);
+        } else {
+          const errs = (data.results || []).filter(r => !r.ok).map(r => r.error).join('; ');
+          showStatus('⚠️ ' + (errs || 'Some policies failed to apply'), false);
+        }
+        // Reload active policies
+        loadActive();
+        renderStagedList();
+        draw();
+      })
+      .catch(e => {
+        btn.textContent = 'Apply Policies';
+        btn.disabled = false;
+        showStatus('⚠️ Network error: ' + e, false);
+      });
+    };
+
+    /* ── status message ──────────────────────────────────────────────────── */
+    function showStatus(msg, ok) {
+      const el = document.getElementById('npm-status');
+      el.textContent = msg;
+      el.style.display = 'block';
+      el.style.background  = ok ? '#f0f8f0' : '#fff8e1';
+      el.style.border      = `1px solid ${ok ? '#c8e6c9' : '#ffe082'}`;
+      el.style.color       = ok ? '#2e7d32' : '#6d4c00';
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => { el.style.display = 'none'; }, 5000);
+    }
+
+    /* ── data loading ────────────────────────────────────────────────────── */
+    function loadNodes() {
+      fetch('/api/cilium/nodes')
+        .then(r => r.json())
+        .then(raw => {
+          nodes = layoutNodes(raw);
+          draw();
+        })
+        .catch(() => {
+          // Fallback: show a placeholder so page doesn't break
+          document.getElementById('npm-svg').innerHTML =
+            '<text x="280" y="280" text-anchor="middle" fill="#aaa" font-size="13">Could not load services</text>';
+        });
+    }
+
+    function loadActive() {
+      fetch('/api/cilium/custom-policies')
+        .then(r => r.json())
+        .then(data => { active = data; renderActiveList(); draw(); })
+        .catch(() => {});
+    }
+
+    /* ── init ────────────────────────────────────────────────────────────── */
+    loadNodes();
+    loadActive();
+  })();
   </script>
 
 </form>
