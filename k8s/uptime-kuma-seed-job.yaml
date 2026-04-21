@@ -20,7 +20,7 @@ data:
 
     MONITORS = [
         {
-            "name": "Automagic",
+            "name": "PoC Dashboard",
             "type": "http",
             "url": "http://poc-dashboard.piap.svc.cluster.local:9200",
             "interval": 60,
@@ -141,7 +141,7 @@ data:
         },
     ]
 
-    def wait_for_kuma(max_retries=30, delay=10):
+    def wait_for_kuma(max_retries=24, delay=5):
         """Wait for uptime-kuma to be reachable via HTTP."""
         import urllib.request
         for i in range(max_retries):
@@ -154,7 +154,7 @@ data:
                 time.sleep(delay)
         return False
 
-    def connect_socketio(max_retries=5, delay=10):
+    def connect_socketio(max_retries=5, delay=5):
         """Connect to Uptime-Kuma via Socket.IO with retries."""
         for attempt in range(max_retries):
             try:
@@ -194,9 +194,9 @@ data:
             print("ERROR: Uptime-Kuma not reachable after retries. Exiting.")
             sys.exit(1)
 
-        # Extra delay — HTTP may be up but Socket.IO needs more time
-        print("Waiting 15s for Socket.IO to be fully ready...")
-        time.sleep(15)
+        # Short extra delay — HTTP may be up but Socket.IO needs a moment more
+        print("Waiting 5s for Socket.IO to be fully ready...")
+        time.sleep(5)
 
         sio = connect_socketio()
         if not sio:
@@ -338,7 +338,7 @@ metadata:
     app: uptime-kuma-seed
 spec:
   ttlSecondsAfterFinished: 3600
-  backoffLimit: 5
+  backoffLimit: 3
   template:
     metadata:
       labels:
@@ -346,13 +346,10 @@ spec:
     spec:
       containers:
         - name: seed
-          image: python:3.11-slim
+          image: ghcr.io/js-csco/piap-k3s-poc-dashboard:latest
           command:
-            - /bin/sh
-            - -c
-            - |
-              pip install --quiet --disable-pip-version-check 'python-socketio[client]~=5.11.0' websocket-client && \
-              python /scripts/seed.py
+            - python
+            - /scripts/seed.py
           resources:
             requests:
               cpu: "50m"

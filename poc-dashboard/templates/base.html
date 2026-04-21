@@ -366,10 +366,66 @@
       margin: 0;
     }
 
+    /* === LOADING OVERLAY === */
+    #page-loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.6);
+      backdrop-filter: blur(2px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 14px;
+    }
+    #page-loading-overlay.active { display: flex; }
+
+    .plo-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #e0e7ff;
+      border-top-color: #0066ff;
+      border-radius: 50%;
+      animation: plo-spin 0.7s linear infinite;
+    }
+    .plo-label {
+      font-size: 0.85em;
+      font-weight: 600;
+      color: #333;
+      letter-spacing: 0.2px;
+    }
+    @keyframes plo-spin { to { transform: rotate(360deg); } }
+
+    /* Inline button spinner */
+    .btn-loading {
+      opacity: 0.75;
+      pointer-events: none;
+      position: relative;
+    }
+    .btn-loading::after {
+      content: '';
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-left: 8px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      vertical-align: middle;
+      animation: plo-spin 0.6s linear infinite;
+    }
+
   </style>
 </head>
 
 <body>
+  <!-- Global loading overlay — shown while a form POST is in flight -->
+  <div id="page-loading-overlay">
+    <div class="plo-spinner"></div>
+    <div class="plo-label" id="plo-label-text">Working…</div>
+  </div>
+
   {% set host_ip = request.host.split(':')[0] %}
 
   <!-- Header -->
@@ -597,6 +653,67 @@
       </div>
     </div>
   </div>
+
+  <script>
+    /* ── Global loading feedback ────────────────────────────────────────────
+     * Shows a spinner overlay whenever a form is submitted.
+     * The overlay disappears automatically on page reload (server response).
+     * Button-level feedback: the clicked button gets "btn-loading" while
+     * waiting, giving immediate visual confirmation of the click.
+     */
+    (function () {
+      const overlay  = document.getElementById('page-loading-overlay');
+      const label    = document.getElementById('plo-label-text');
+
+      // Button label → friendly loading message mapping
+      const LABELS = {
+        'authenticate':               'Authenticating…',
+        'create pod resources':       'Creating pod resources…',
+        'create private access policy': 'Creating private access policy…',
+        'follow recommendations':     'Applying recommendations…',
+        'change security profile':    'Updating security profile…',
+        'create internet access policies': 'Creating internet access policies…',
+        'create dlp rules':           'Creating DLP rules…',
+        'deploy':                     'Deploying…',
+        'apply':                      'Applying…',
+        'remove':                     'Removing…',
+        'delete':                     'Deleting…',
+        'restart':                    'Restarting…',
+        'save':                       'Saving…',
+      };
+
+      function getLabel(btn) {
+        if (!btn) return 'Working…';
+        const text = btn.textContent.trim().toLowerCase();
+        for (const [key, msg] of Object.entries(LABELS)) {
+          if (text.includes(key)) return msg;
+        }
+        return 'Working…';
+      }
+
+      function showLoading(btn) {
+        if (overlay.classList.contains('active')) return;
+        label.textContent = getLabel(btn);
+        overlay.classList.add('active');
+        if (btn) btn.classList.add('btn-loading');
+      }
+
+      // Intercept all form submits on the page
+      document.addEventListener('submit', function (e) {
+        const form = e.target;
+        // Skip forms that open in a new tab (formtarget="_blank")
+        const submitter = e.submitter;
+        if (submitter && submitter.getAttribute('formtarget') === '_blank') return;
+        if (form.getAttribute('target') === '_blank') return;
+        showLoading(submitter || form.querySelector('[type="submit"]'));
+      }, true);
+
+      // Hide overlay on back-forward navigation (bfcache restore)
+      window.addEventListener('pageshow', function (e) {
+        if (e.persisted) overlay.classList.remove('active');
+      });
+    })();
+  </script>
 
   <script>
     const backdrop = document.getElementById('linksBackdrop');
