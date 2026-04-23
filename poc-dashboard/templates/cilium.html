@@ -61,25 +61,45 @@
           </p>
         {% else %}
           {% set zero_trust_active = ('piap-zero-trust' in active_policies) %}
-          {% if zero_trust_active %}
-            <div style="display:inline-flex; align-items:center; gap:8px; background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:10px 16px;">
-              <span style="font-size:1.2rem;">🔒</span>
-              <span style="font-weight:600; color:#2e7d32;">Zero Trust Application Access — active</span>
-            </div>
-            <p style="color:#666; font-size:0.88em; margin-top:8px; margin-bottom:0;">
-              Active policies: {{ active_policies | join(', ') }}
+          {% set ns = namespace(adv_count=0) %}
+          {% for p in active_policies %}{% if p != 'piap-zero-trust' %}{% set ns.adv_count = ns.adv_count + 1 %}{% endif %}{% endfor %}
+          {% set advanced_active = ns.adv_count > 0 %}
+
+          <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
+
+            <!-- Base mode pill -->
+            {% if zero_trust_active %}
+              <div style="display:inline-flex; align-items:center; gap:7px;
+                          background:#e8f5e9; border:1.5px solid #4caf50; border-radius:8px; padding:8px 14px;">
+                <span style="width:8px; height:8px; border-radius:50%; background:#4caf50; flex-shrink:0;"></span>
+                <span style="font-weight:600; color:#2e7d32; font-size:0.9em;">Zero Trust</span>
+              </div>
+            {% else %}
+              <div style="display:inline-flex; align-items:center; gap:7px;
+                          background:#e3f2fd; border:1.5px solid #42a5f5; border-radius:8px; padding:8px 14px;">
+                <span style="width:8px; height:8px; border-radius:50%; background:#42a5f5; flex-shrink:0;"></span>
+                <span style="font-weight:600; color:#1565c0; font-size:0.9em;">Allow All</span>
+              </div>
+            {% endif %}
+
+            <!-- Advanced Policies pill (only when extra policies exist) -->
+            {% if advanced_active %}
+              <span style="color:#bbb; font-size:1rem; line-height:1;">+</span>
+              <div style="display:inline-flex; align-items:center; gap:7px;
+                          background:#f0f4ff; border:1.5px solid #0066ff; border-radius:8px; padding:8px 14px;">
+                <span style="width:8px; height:8px; border-radius:50%; background:#0066ff; flex-shrink:0;"></span>
+                <span style="font-weight:600; color:#0044cc; font-size:0.9em;">Advanced Policies ({{ ns.adv_count }})</span>
+              </div>
+            {% endif %}
+
+          </div>
+
+          {% if active_policies %}
+            <p style="color:#aaa; font-size:0.75em; margin:8px 0 0; line-height:1.5;">
+              Active: {{ active_policies | join(', ') }}
             </p>
-          {% elif active_policies %}
-            <div style="display:inline-flex; align-items:center; gap:8px; background:#fff8e1; border:1px solid #ccc; border-radius:8px; padding:10px 16px;">
-              <span style="font-size:1.2rem;">⚙️</span>
-              <span style="font-weight:600; color:#555;">Custom policies active: {{ active_policies | join(', ') }}</span>
-            </div>
-          {% else %}
-            <div style="display:inline-flex; align-items:center; gap:8px; background:#e3f2fd; border:1px solid #42a5f5; border-radius:8px; padding:10px 16px;">
-              <span style="font-size:1.2rem;">🟢</span>
-              <span style="font-weight:600; color:#1565c0;">Allow All Traffic</span>
-            </div>
           {% endif %}
+
         {% endif %}
       </div>
 
