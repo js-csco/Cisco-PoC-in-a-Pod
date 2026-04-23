@@ -360,7 +360,7 @@ LAN_ALWAYS_REACHABLE = ["poc-dashboard", "playbook", "hubble-ui"]
 # Ordered list used for the diagram.
 _DIAGRAM_SERVICES = [
     {"id": "lan",                "label": "LAN",                  "protected": False},
-    {"id": "resource-connector", "label": "Secure Access RC",     "cidr": DOCKER_BRIDGE_CIDR, "protected": False},
+    {"id": "resource-connector", "label": "Secure Access\nResource Connector", "cidr": DOCKER_BRIDGE_CIDR, "protected": False},
     {"id": "poc-dashboard",      "label": "PoC Dashboard",        "protected": True},
     {"id": "ssh-server",         "label": "SSH Server",           "protected": False},
     {"id": "rdp-server",         "label": "RDP Server",           "protected": False},
