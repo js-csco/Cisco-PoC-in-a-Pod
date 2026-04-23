@@ -208,11 +208,7 @@
            background:{% if not zero_trust_active %}#e3f2fd{% else %}#fafafa{% endif %};">
         <div>
           <div style="font-size:0.72rem; font-weight:700; letter-spacing:.05em; color:#1976d2; text-transform:uppercase; margin-bottom:4px;">Allow All Traffic</div>
-          <div style="font-size:0.82em; color:#555; line-height:1.5;">No Cilium policies active — all pods reachable from anywhere on the network.</div>
-          <ul style="margin:6px 0 0 0; padding-left:1.1rem; font-size:0.78em; color:#666; line-height:1.7;">
-            <li>Full mesh shown in diagram</li>
-            <li>No CIDR or identity restrictions</li>
-          </ul>
+          <div style="font-size:0.82em; color:#555; line-height:1.5;">No Cilium policies active — all pods are reachable from the LAN and through Cisco Secure Access.</div>
         </div>
         <div style="margin-top:auto;">
           <button name="action" value="allow_all" type="submit"
@@ -232,10 +228,10 @@
            background:{% if zero_trust_active %}#f0faf0{% else %}#fafafa{% endif %};">
         <div>
           <div style="font-size:0.72rem; font-weight:700; letter-spacing:.05em; color:#4caf50; text-transform:uppercase; margin-bottom:4px;">Zero Trust</div>
-          <div style="font-size:0.82em; color:#555; line-height:1.5;">Only the Secure Access RC may reach restricted pods.</div>
+          <div style="font-size:0.82em; color:#555; line-height:1.5;">Pods are only reachable through Cisco Secure Access and the Resource Connector.</div>
           <ul style="margin:6px 0 0 0; padding-left:1.1rem; font-size:0.78em; color:#666; line-height:1.7;">
-            <li>Dashboard, Playbook, Hubble UI remain open to LAN</li>
-            <li>All others: connector only (240.0.0.0/29)</li>
+            <li>PoC Dashboard, PoC Playbook and Hubble UI remain accessible from LAN</li>
+            <li>All other pods are only reachable if the Source IP is 240.0.0.0/29 (Resource Connector)</li>
           </ul>
         </div>
         <div style="margin-top:auto;">
@@ -762,7 +758,7 @@
         const conn = nodeById('resource-connector');
         if (conn) {
           nodes.forEach(nd => {
-            if (nd.id === 'resource-connector' || !ZERO_TRUST_SRVC.includes(nd.id)) return;
+            if (nd.id === 'resource-connector' || nd.id === 'lan') return;
             drawLine(svg, conn, nd, '#86efac', 1.5, false, false);
           });
         }
@@ -803,14 +799,16 @@
 
       // layer 4: label boxes + text (uniform color, selection highlight only)
       nodes.forEach(nd => {
-        const sel = nd.id === selSrc;
-        const bg  = sel ? '#fef9c3' : '#dbeafe';
-        const br  = sel ? '#ca8a04' : '#93c5fd';
-        const tc  = sel ? '#854d0e' : '#1e40af';
+        const sel   = nd.id === selSrc;
+        const bg    = sel ? '#fef9c3' : '#dbeafe';
+        const br    = sel ? '#ca8a04' : '#93c5fd';
+        const tc    = sel ? '#854d0e' : '#1e40af';
+        const lines = (nd.label || '').split('\n');
+        const bh    = lines.length > 1 ? BOX_H + 14 : BOX_H;
 
         const rect = el('rect', {
-          x: nd.bx - BOX_W / 2, y: nd.by - BOX_H / 2,
-          width: BOX_W, height: BOX_H, rx: 5, ry: 5,
+          x: nd.bx - BOX_W / 2, y: nd.by - bh / 2,
+          width: BOX_W, height: bh, rx: 5, ry: 5,
           fill: bg, stroke: br, 'stroke-width': sel ? 2 : 1.5,
           cursor: 'pointer',
         });
@@ -819,13 +817,27 @@
         rect.addEventListener('mouseleave', () => npmNodeHover(nd.id, false));
         svg.appendChild(rect);
 
-        const txt = el('text', {
-          x: nd.bx, y: nd.by, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
-          fill: tc, 'font-size': '10', 'font-family': 'Inter,-apple-system,sans-serif',
-          'font-weight': '600', 'pointer-events': 'none',
-        });
-        txt.textContent = nd.label;
-        svg.appendChild(txt);
+        if (lines.length > 1) {
+          lines.forEach((line, i) => {
+            const dy = (i - (lines.length - 1) / 2) * 11;
+            const t = el('text', {
+              x: nd.bx, y: nd.by + dy,
+              'text-anchor': 'middle', 'dominant-baseline': 'middle',
+              fill: tc, 'font-size': '9', 'font-family': 'Inter,-apple-system,sans-serif',
+              'font-weight': '600', 'pointer-events': 'none',
+            });
+            t.textContent = line;
+            svg.appendChild(t);
+          });
+        } else {
+          const txt = el('text', {
+            x: nd.bx, y: nd.by, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+            fill: tc, 'font-size': '10', 'font-family': 'Inter,-apple-system,sans-serif',
+            'font-weight': '600', 'pointer-events': 'none',
+          });
+          txt.textContent = nd.label;
+          svg.appendChild(txt);
+        }
       });
 
       // layer 5: dots
