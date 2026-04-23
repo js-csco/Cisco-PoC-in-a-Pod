@@ -365,11 +365,11 @@ _DIAGRAM_SERVICES = [
     {"id": "ssh-server",         "label": "SSH Server",           "protected": False},
     {"id": "rdp-server",         "label": "RDP Server",           "protected": False},
     {"id": "saml-app",           "label": "SAML App",             "protected": False},
+    {"id": "httpbin",            "label": "httpbin",              "protected": False},
     {"id": "playbook",           "label": "PoC Playbook",         "protected": True},
     {"id": "sse-check",          "label": "SSE Check",            "protected": False},
     {"id": "uptime-kuma",        "label": "Uptime Kuma",          "protected": False},
     {"id": "hubble-ui",          "label": "Hubble UI",            "protected": True},
-    {"id": "httpbin",            "label": "httpbin",              "protected": False},
 ]
 
 # Services that get the Zero Trust treatment (mirroring _PIAP_RESTRICTED_SERVICES)

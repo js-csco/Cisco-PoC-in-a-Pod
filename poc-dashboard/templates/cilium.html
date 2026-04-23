@@ -322,7 +322,7 @@
       <div id="npm-hint" style="font-size:0.8em; color:#888; margin-bottom:8px; text-align:center; height:1.2em;">
         Click a pod node to start a policy rule
       </div>
-      <svg id="npm-svg" viewBox="0 0 1000 610" style="width:100%; max-width:920px;"></svg>
+      <svg id="npm-svg" viewBox="0 0 1100 680" style="width:100%; max-width:1020px;"></svg>
     </div>
 
     <!-- Policy creation modal ─────────────────────────────────── -->
@@ -697,22 +697,22 @@
   <script>
   (function () {
     /* ── constants ────────────────────────────────────────────────── */
-    const CX = 500, CY = 305;
-    const R_DOT = 135, R_BOX = 195, DOT_R = 5, BOX_W = 128, BOX_H = 26;
+    const CX = 550, CY = 340;
+    const R_DOT = 170, R_BOX = 260, DOT_R = 5, BOX_W = 118, BOX_H = 25;
     const SVG_NS = "http://www.w3.org/2000/svg";
 
     // Entry points: fixed left-side positions (dot x/y, label box bx/by)
     const ENTRY_LAYOUT = {
-      'lan':                { x: 185, y: 175, bx: 90, by: 175 },
-      'resource-connector': { x: 185, y: 435, bx: 90, by: 435 },
+      'lan':                { x: 185, y: 200, bx: 90, by: 200 },
+      'resource-connector': { x: 185, y: 480, bx: 90, by: 480 },
     };
     const ENTRY_IDS = new Set(Object.keys(ENTRY_LAYOUT));
     const SVC_ARC_START = 310, SVC_ARC_SPAN = 260;
 
     // Internet zone: fixed right-side positions (dot x/y, label box bx/by)
     const INTERNET_LAYOUT = {
-      'cisco.com': { x: 785, y: 175, bx: 895, by: 175 },
-      'hp.com':    { x: 785, y: 425, bx: 895, by: 425 },
+      'cisco.com': { x: 900, y: 200, bx: 985, by: 200 },
+      'hp.com':    { x: 900, y: 480, bx: 985, by: 480 },
     };
 
     const ZERO_TRUST_ACTIVE  = {{ 'true' if 'piap-zero-trust' in active_policies else 'false' }};
@@ -779,23 +779,23 @@
       svg.innerHTML = '';
 
       // entry zone: background + label + separator
-      svg.appendChild(el('rect', { x: 0, y: 0, width: 215, height: 610, fill: '#eef6ff' }));
+      svg.appendChild(el('rect', { x: 0, y: 0, width: 215, height: 680, fill: '#eef6ff' }));
       const _zl = el('text', { x: 107, y: 22, 'text-anchor': 'middle', fill: '#94a3b8',
         'font-size': '8', 'letter-spacing': '1.5', 'font-weight': '700',
         'font-family': 'Inter,-apple-system,sans-serif' });
       _zl.textContent = 'ENTRY POINTS';
       svg.appendChild(_zl);
-      svg.appendChild(el('line', { x1: 215, y1: 35, x2: 215, y2: 575,
+      svg.appendChild(el('line', { x1: 215, y1: 35, x2: 215, y2: 645,
         stroke: '#cbd5e1', 'stroke-width': 1, 'stroke-dasharray': '4,3' }));
 
       // internet zone: background + label + separator
-      svg.appendChild(el('rect', { x: 785, y: 0, width: 215, height: 610, fill: '#f0fff8' }));
-      const _il = el('text', { x: 892, y: 22, 'text-anchor': 'middle', fill: '#94a3b8',
+      svg.appendChild(el('rect', { x: 885, y: 0, width: 215, height: 680, fill: '#f0fff8' }));
+      const _il = el('text', { x: 992, y: 22, 'text-anchor': 'middle', fill: '#94a3b8',
         'font-size': '8', 'letter-spacing': '1.5', 'font-weight': '700',
         'font-family': 'Inter,-apple-system,sans-serif' });
       _il.textContent = 'INTERNET';
       svg.appendChild(_il);
-      svg.appendChild(el('line', { x1: 785, y1: 35, x2: 785, y2: 575,
+      svg.appendChild(el('line', { x1: 885, y1: 35, x2: 885, y2: 645,
         stroke: '#cbd5e1', 'stroke-width': 1, 'stroke-dasharray': '4,3' }));
 
       // layer 0a: mode-specific background lines
@@ -1194,7 +1194,7 @@
         .then(raw => { nodes = layoutNodes(raw); draw(); })
         .catch(() => {
           document.getElementById('npm-svg').innerHTML =
-            '<text x="500" y="305" text-anchor="middle" fill="#aaa" font-size="13">Could not load services</text>';
+            '<text x="550" y="340" text-anchor="middle" fill="#aaa" font-size="13">Could not load services</text>';
         });
     }
 
