@@ -664,13 +664,8 @@
         btn.style.backgroundColor = active ? '#607d8b' : '#1976d2';
         btn.dataset.action        = active ? 'remove_' + prefix : 'deploy_' + prefix;
       }
-      // Sync diagram: DNS policy controls the internet-zone arrows and node colours.
-      // L7 deploy also creates the httpbin pod, so reload nodes for both.
-      if (policyName === 'piap-dns-egress') {
-        DNS_EGRESS_ACTIVE = active;
-        draw();
-      }
-      loadNodes();
+      // Sync diagram via bridge into the IIFE scope where draw/loadNodes live.
+      if (window._npmRefreshPolicy) window._npmRefreshPolicy(policyName, active);
     }
 
     function escHtml(s) {
@@ -1202,6 +1197,15 @@
     /* ── init ────────────────────────────────────────────────────── */
     loadNodes();
     loadActive();
+
+    // Bridge for the outer script block — updates DNS state and redraws
+    window._npmRefreshPolicy = function(policyName, active) {
+      if (policyName === 'piap-dns-egress') {
+        DNS_EGRESS_ACTIVE = active;
+        draw();
+      }
+      loadNodes();
+    };
   })();
   </script>
 
