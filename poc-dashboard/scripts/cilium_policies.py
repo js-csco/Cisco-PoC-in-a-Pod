@@ -12,7 +12,7 @@ POLICY_NAMES = ["piap-zero-trust"]
 # poc-dashboard, playbook, and httpbin (test tool) are excluded — always reachable from LAN.
 # Hubble UI is in kube-system and unaffected by this namespace policy.
 _PIAP_RESTRICTED_SERVICES = [
-    "splunk", "rdp-server", "ssh-server", "sse-check", "kubectl-mcp", "saml-app",
+    "splunk", "rdp-server", "ssh-server", "sse-check", "saml-app",
 ]
 
 # Docker bridge subnet assigned via daemon.json bip=240.0.0.1/29.
@@ -360,12 +360,11 @@ LAN_ALWAYS_REACHABLE = ["poc-dashboard", "playbook", "hubble-ui"]
 # Ordered list used for the diagram.
 _DIAGRAM_SERVICES = [
     {"id": "lan",                "label": "LAN",                  "protected": False},
-    {"id": "resource-connector", "label": "Resource Connector",   "cidr": DOCKER_BRIDGE_CIDR, "protected": False},
+    {"id": "resource-connector", "label": "Secure Access RC",     "cidr": DOCKER_BRIDGE_CIDR, "protected": False},
     {"id": "poc-dashboard",      "label": "PoC Dashboard",        "protected": True},
     {"id": "ssh-server",         "label": "SSH Server",           "protected": False},
     {"id": "rdp-server",         "label": "RDP Server",           "protected": False},
     {"id": "saml-app",           "label": "SAML App",             "protected": False},
-    {"id": "kubectl-mcp",        "label": "Kubectl MCP",          "protected": False},
     {"id": "playbook",           "label": "PoC Playbook",         "protected": True},
     {"id": "sse-check",          "label": "SSE Check",            "protected": False},
     {"id": "uptime-kuma",        "label": "Uptime Kuma",          "protected": False},
