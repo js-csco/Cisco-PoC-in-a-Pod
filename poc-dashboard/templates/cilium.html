@@ -322,7 +322,7 @@
       <div id="npm-hint" style="font-size:0.8em; color:#888; margin-bottom:8px; text-align:center; height:1.2em;">
         Click a pod node to start a policy rule
       </div>
-      <svg id="npm-svg" viewBox="0 0 820 610" style="width:100%; max-width:760px;"></svg>
+      <svg id="npm-svg" viewBox="0 0 1000 610" style="width:100%; max-width:920px;"></svg>
     </div>
 
     <!-- Policy creation modal ─────────────────────────────────── -->
@@ -544,7 +544,7 @@
                     style="background:#b71c1c; color:#fff; border:none; padding:8px 14px;
                            border-radius:6px; font-size:0.85rem; font-weight:500;
                            cursor:pointer; text-align:left;">
-              curl internetbadguys.com
+              curl hp.com
             </button>
           </div>
         </div>
@@ -697,8 +697,8 @@
   <script>
   (function () {
     /* ── constants ────────────────────────────────────────────────── */
-    const CX = 490, CY = 305;
-    const R_DOT = 140, R_BOX = 215, DOT_R = 5, BOX_W = 128, BOX_H = 26;
+    const CX = 500, CY = 305;
+    const R_DOT = 135, R_BOX = 195, DOT_R = 5, BOX_W = 128, BOX_H = 26;
     const SVG_NS = "http://www.w3.org/2000/svg";
 
     // Entry points: fixed left-side positions (dot x/y, label box bx/by)
@@ -707,9 +707,16 @@
       'resource-connector': { x: 185, y: 435, bx: 90, by: 435 },
     };
     const ENTRY_IDS = new Set(Object.keys(ENTRY_LAYOUT));
-    const SVC_ARC_START = 310, SVC_ARC_SPAN = 265;
+    const SVC_ARC_START = 310, SVC_ARC_SPAN = 260;
+
+    // Internet zone: fixed right-side positions (dot x/y, label box bx/by)
+    const INTERNET_LAYOUT = {
+      'cisco.com': { x: 785, y: 175, bx: 895, by: 175 },
+      'hp.com':    { x: 785, y: 425, bx: 895, by: 425 },
+    };
 
     const ZERO_TRUST_ACTIVE  = {{ 'true' if 'piap-zero-trust' in active_policies else 'false' }};
+    const DNS_EGRESS_ACTIVE  = {{ 'true' if 'piap-dns-egress' in active_policies else 'false' }};
     const ZERO_TRUST_SRVC    = {{ zero_trust_targets | tojson }};
     const LAN_ALWAYS_REACHABLE = {{ lan_always_reachable | tojson }};
 
@@ -736,6 +743,14 @@
       const t = 0.38;
       const cx1 = x1 + (CX - x1) * t, cy1 = y1 + (CY - y1) * t;
       const cx2 = x2 + (CX - x2) * t, cy2 = y2 + (CY - y2) * t;
+      return `M ${x1},${y1} C ${cx1},${cy1} ${cx2},${cy2} ${x2},${y2}`;
+    }
+
+    // Rightward curve for service → internet zone (avoids leftward dip toward CX)
+    function curvePathRight(x1, y1, x2, y2) {
+      const dx = x2 - x1, dy = y2 - y1;
+      const cx1 = x1 + dx * 0.5,  cy1 = y1 + dy * 0.1;
+      const cx2 = x2 - dx * 0.2,  cy2 = y2 - dy * 0.1;
       return `M ${x1},${y1} C ${cx1},${cy1} ${cx2},${cy2} ${x2},${y2}`;
     }
 
@@ -771,6 +786,16 @@
       _zl.textContent = 'ENTRY POINTS';
       svg.appendChild(_zl);
       svg.appendChild(el('line', { x1: 215, y1: 35, x2: 215, y2: 575,
+        stroke: '#cbd5e1', 'stroke-width': 1, 'stroke-dasharray': '4,3' }));
+
+      // internet zone: background + label + separator
+      svg.appendChild(el('rect', { x: 785, y: 0, width: 215, height: 610, fill: '#f0fff8' }));
+      const _il = el('text', { x: 892, y: 22, 'text-anchor': 'middle', fill: '#94a3b8',
+        'font-size': '8', 'letter-spacing': '1.5', 'font-weight': '700',
+        'font-family': 'Inter,-apple-system,sans-serif' });
+      _il.textContent = 'INTERNET';
+      svg.appendChild(_il);
+      svg.appendChild(el('line', { x1: 785, y1: 35, x2: 785, y2: 575,
         stroke: '#cbd5e1', 'stroke-width': 1, 'stroke-dasharray': '4,3' }));
 
       // layer 0a: mode-specific background lines
@@ -811,9 +836,32 @@
           drawLine(svg, src, dst, p.action === 'allow' ? '#16a34a' : '#dc2626', 2, true, false, p);
       });
 
-      // layer 3: connector lines from dot to box
+      // layer 2.5: DNS egress lines — httpbin → internet nodes
+      if (DNS_EGRESS_ACTIVE) {
+        const httpbin = nodeById('httpbin');
+        if (httpbin) {
+          const cisco = INTERNET_LAYOUT['cisco.com'];
+          const hp    = INTERNET_LAYOUT['hp.com'];
+          svg.appendChild(el('path', {
+            d: curvePathRight(httpbin.x, httpbin.y, cisco.x, cisco.y),
+            fill: 'none', stroke: '#16a34a', 'stroke-width': 2, 'stroke-dasharray': 'none', opacity: '1',
+          }));
+          svg.appendChild(el('path', {
+            d: curvePathRight(httpbin.x, httpbin.y, hp.x, hp.y),
+            fill: 'none', stroke: '#dc2626', 'stroke-width': 2, 'stroke-dasharray': '6,4', opacity: '0.8',
+          }));
+        }
+      }
+
+      // layer 3: connector lines from dot to box (service nodes)
       nodes.forEach(nd => {
         svg.appendChild(el('line', { x1: nd.x, y1: nd.y, x2: nd.bx, y2: nd.by,
+          stroke: '#d1d5db', 'stroke-width': 1 }));
+      });
+
+      // layer 3.5: internet node connector lines
+      Object.values(INTERNET_LAYOUT).forEach(pos => {
+        svg.appendChild(el('line', { x1: pos.x, y1: pos.y, x2: pos.bx, y2: pos.by,
           stroke: '#d1d5db', 'stroke-width': 1 }));
       });
 
@@ -860,7 +908,28 @@
         }
       });
 
-      // layer 5: dots
+      // layer 4.5: internet node boxes + labels
+      Object.entries(INTERNET_LAYOUT).forEach(([id, pos]) => {
+        const allowed = DNS_EGRESS_ACTIVE && id === 'cisco.com';
+        const blocked = DNS_EGRESS_ACTIVE && id === 'hp.com';
+        const bg = allowed ? '#f0fff4' : blocked ? '#fff1f2' : '#f5f5f5';
+        const br = allowed ? '#86efac' : blocked ? '#fca5a5' : '#e0e0e0';
+        const tc = allowed ? '#166534' : blocked ? '#991b1b' : '#9ca3af';
+        svg.appendChild(el('rect', {
+          x: pos.bx - BOX_W / 2, y: pos.by - BOX_H / 2,
+          width: BOX_W, height: BOX_H, rx: 5, ry: 5,
+          fill: bg, stroke: br, 'stroke-width': 1.5,
+        }));
+        const itxt = el('text', {
+          x: pos.bx, y: pos.by, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+          fill: tc, 'font-size': '10', 'font-family': 'Inter,-apple-system,sans-serif',
+          'font-weight': '600', 'pointer-events': 'none',
+        });
+        itxt.textContent = id;
+        svg.appendChild(itxt);
+      });
+
+      // layer 5: dots (service nodes)
       nodes.forEach(nd => {
         const sel = nd.id === selSrc;
         const dot = el('circle', {
@@ -874,6 +943,17 @@
         dot.addEventListener('mouseenter', () => npmNodeHover(nd.id, true));
         dot.addEventListener('mouseleave', () => npmNodeHover(nd.id, false));
         svg.appendChild(dot);
+      });
+
+      // layer 5.5: internet node dots
+      Object.entries(INTERNET_LAYOUT).forEach(([id, pos]) => {
+        const allowed = DNS_EGRESS_ACTIVE && id === 'cisco.com';
+        const blocked = DNS_EGRESS_ACTIVE && id === 'hp.com';
+        svg.appendChild(el('circle', {
+          cx: pos.x, cy: pos.y, r: DOT_R,
+          fill: allowed ? '#86efac' : blocked ? '#fca5a5' : '#d1d5db',
+          stroke: '#fff', 'stroke-width': 1.5,
+        }));
       });
 
       // centre mode label
@@ -1114,7 +1194,7 @@
         .then(raw => { nodes = layoutNodes(raw); draw(); })
         .catch(() => {
           document.getElementById('npm-svg').innerHTML =
-            '<text x="490" y="305" text-anchor="middle" fill="#aaa" font-size="13">Could not load services</text>';
+            '<text x="500" y="305" text-anchor="middle" fill="#aaa" font-size="13">Could not load services</text>';
         });
     }
 

@@ -399,7 +399,7 @@ def cilium():
                 remove_dns_egress()
                 flash("✅ DNS Egress Filter removed")
             elif action in ('test_dns_allow', 'test_dns_block'):
-                domain = "www.cisco.com" if action == 'test_dns_allow' else "www.internetbadguys.com"
+                domain = "www.cisco.com" if action == 'test_dns_allow' else "hp.com"
                 code = (
                     "import urllib.request, ssl\n"
                     "ctx = ssl._create_unverified_context()\n"
@@ -522,7 +522,7 @@ def cilium_run():
 
         # ── DNS egress tests ──────────────────────────────────────────────────
         elif action in ('dns_cisco', 'dns_badguys'):
-            domain = 'www.cisco.com' if action == 'dns_cisco' else 'www.internetbadguys.com'
+            domain = 'www.cisco.com' if action == 'dns_cisco' else 'hp.com'
             cmd = f'curl -s -o /dev/null -w "%{{http_code}}" --max-time 5 https://{domain}'
             code = (
                 'import urllib.request, ssl\n'
