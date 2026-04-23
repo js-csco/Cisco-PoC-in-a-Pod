@@ -4,20 +4,7 @@
 
 {% block content %}
 
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <div style="margin-bottom:1.5rem;">
-      {% for message in messages %}
-        <div style="padding:10px 14px; border-radius:8px; margin-bottom:6px; font-size:0.9em;
-          {% if '⚠️' in message %}background:#fff8e1; border:1px solid #ffe082; color:#6d4c00;
-          {% elif '✅' in message %}background:#f0f8f0; border:1px solid #c8e6c9; color:#2e7d32;
-          {% else %}background:#f0f4ff; border:1px solid #c0d0ff; color:#1a3a6b;{% endif %}">
-          {{ message }}
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-{% endwith %}
+{% with messages = get_flashed_messages() %}{% endwith %}
 
 <form method="POST" style="display:flex; flex-direction:column; gap:3rem;">
   <div>
@@ -677,6 +664,13 @@
         btn.style.backgroundColor = active ? '#607d8b' : '#1976d2';
         btn.dataset.action        = active ? 'remove_' + prefix : 'deploy_' + prefix;
       }
+      // Sync diagram: DNS policy controls the internet-zone arrows and node colours.
+      // L7 deploy also creates the httpbin pod, so reload nodes for both.
+      if (policyName === 'piap-dns-egress') {
+        DNS_EGRESS_ACTIVE = active;
+        draw();
+      }
+      loadNodes();
     }
 
     function escHtml(s) {
@@ -716,7 +710,7 @@
     };
 
     const ZERO_TRUST_ACTIVE  = {{ 'true' if 'piap-zero-trust' in active_policies else 'false' }};
-    const DNS_EGRESS_ACTIVE  = {{ 'true' if 'piap-dns-egress' in active_policies else 'false' }};
+    let DNS_EGRESS_ACTIVE    = {{ 'true' if 'piap-dns-egress' in active_policies else 'false' }};
     const ZERO_TRUST_SRVC    = {{ zero_trust_targets | tojson }};
     const LAN_ALWAYS_REACHABLE = {{ lan_always_reachable | tojson }};
 
