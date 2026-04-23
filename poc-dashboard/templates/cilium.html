@@ -1198,13 +1198,14 @@
     loadNodes();
     loadActive();
 
-    // Bridge for the outer script block — updates DNS state and redraws
+    // Bridge for the outer script block — updates DNS arrow state and redraws.
+    // loadNodes() is intentionally omitted: httpbin takes ~60s to start so
+    // an immediate refetch won't show it, and a failed fetch would wipe the SVG.
     window._npmRefreshPolicy = function(policyName, active) {
       if (policyName === 'piap-dns-egress') {
         DNS_EGRESS_ACTIVE = active;
         draw();
       }
-      loadNodes();
     };
   })();
   </script>
