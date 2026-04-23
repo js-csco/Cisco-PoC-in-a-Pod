@@ -58,15 +58,6 @@ data:
             "accepted_statuscodes": ["200-299"],
         },
         {
-            "name": "Kubectl MCP",
-            "type": "http",
-            "url": "http://kubectl-mcp.piap.svc.cluster.local:8080/healthz",
-            "interval": 60,
-            "maxretries": 3,
-            "notificationIDList": [],
-            "accepted_statuscodes": ["200-299"],
-        },
-        {
             "name": "SSE Check",
             "type": "http",
             "url": "http://sse-check.piap.svc.cluster.local:9550",

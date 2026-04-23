@@ -96,7 +96,6 @@ def create_private_resources(token, vm_ip, resource_group_id):
         {"name": "OpenSSH Server",     "port": 30022, "protocol": "SSH",        "browser": False},
         {"name": "Splunk Dashboard",   "port": 30500, "protocol": "HTTP/HTTPS", "browser": True},
         {"name": "RDP Server",         "port": 30389, "protocol": "RDP-TCP",    "browser": False},
-        {"name": "Kubectl MCP Server", "port": 30050, "protocol": "TCP",        "browser": False},
         {"name": "Hubble UI",          "port": 30800, "protocol": "HTTP/HTTPS", "browser": False},
         {"name": "SSE Check",          "port": 30550, "protocol": "HTTP/HTTPS", "browser": False},
         {"name": "Caldera C2",         "port": 30600, "protocol": "HTTP/HTTPS", "browser": False},
