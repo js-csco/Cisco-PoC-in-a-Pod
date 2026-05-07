@@ -532,24 +532,14 @@
         <h4>Security Profile</h4>
       </div>
 
-      <div class="sa-info sa-info-yellow" style="margin-bottom:14px;">
-        <div class="sa-todo">
-          <span class="sa-todo-icon">&#9745;</span>
-          <span><strong>To do:</strong> Enable HTTPS Decryption on the existing system profile and add it to all Internet Access Policies.</span>
-        </div>
-      </div>
+      <p style="color:#666; font-size:0.9em; margin:0 0 15px; line-height:1.5;">
+        Creates a security profile named <strong>Piap Decryption</strong> with HTTPS decryption enabled and sets it as the default profile. This profile will be automatically attached to all Internet Access Policies.
+      </p>
 
-      <ol class="sa-steps" style="margin-bottom:15px;">
-        <li>Go to <strong>Secure &rarr; Security Profiles</strong></li>
-        <li>Click <strong>Edit</strong> on the <em>System Provided - Internet Access</em> profile</li>
-        <li>Enable the <strong>Enable Decryption</strong> setting and save</li>
-        <li>Add this profile to each of the Internet Access Policies created above</li>
-      </ol>
-
-      <button type="submit" name="action" value="create_profile" formtarget="_blank"
+      <button type="submit" name="action" value="create_security_profile"
               class="sa-btn {% if session.get('authenticated') %}sa-btn-primary{% else %}sa-btn-disabled{% endif %}"
               {% if not session.get('authenticated') %}disabled{% endif %}>
-        Change Security Profile
+        Create Security Profile
       </button>
     </div>
 

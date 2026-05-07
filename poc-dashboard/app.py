@@ -90,11 +90,18 @@ def secure_access():
             session["csa_api_key"] = api_key
             session["csa_api_secret"] = api_secret
 
-        # NEEDS NO AUTHENTICATION
-        # Goto CSA Dashboard & manual config
-        if action ==  "create_profile":
-            # Link to Dashboard — org ID sourced from the SSE API token claims if available
-            return redirect("https://dashboard.sse.cisco.com/secure/securityprofiles")
+        # TODO: implement create_security_profile action
+        # Action: CREATE SECURITY PROFILE
+        # if action == "create_security_profile":
+        #     if not session.get("authenticated"):
+        #         flash("⚠️ Please authenticate first.")
+        #         return redirect(url_for("secure_access"))
+        #     token = token_cache.get("access_token")
+        #     if not token:
+        #         flash("⚠️ Missing token — please re-authenticate.")
+        #         return redirect(url_for("secure_access"))
+        #     profile = create_security_profile(token)
+        #     flash(f"✅ Security profile 'Piap Decryption' created and set as default.")
 
         try:
             token = ensure_valid_token(api_key, api_secret)
