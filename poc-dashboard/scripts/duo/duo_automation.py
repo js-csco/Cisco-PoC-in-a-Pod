@@ -29,8 +29,9 @@ def setup_duo_complete(api_hostname, integration_key, secret_key, users_list):
         api_hostname: Duo API hostname (e.g., api-xxxxx.duosecurity.com)
         integration_key: Duo integration key
         secret_key: Duo secret key
-        users_list: List of dicts with 'username' and 'email' keys
-                   e.g., [{'username': 'user1', 'email': 'user1@example.com'}]
+        users_list: List of dicts with 'username' and 'email' keys.
+                   Email address is used as the username so both fields hold the
+                   same value, e.g. [{'username': 'u@example.com', 'email': 'u@example.com'}]
     
     Returns:
         dict: Contains user_ids, group_id, and success status
@@ -70,7 +71,7 @@ def setup_duo_complete(api_hostname, integration_key, secret_key, users_list):
         username = user_data['username']
         email = user_data['email']
         
-        print(f"Processing user: {username} with email: {email}")
+        print(f"Processing user: {email}")
         
         try:
             # Check if user already exists

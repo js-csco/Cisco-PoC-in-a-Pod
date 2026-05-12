@@ -471,6 +471,12 @@
         <input type="text" name="vm_ip" value="{{ request.host.split(':')[0] }}" class="sa-input" style="max-width:320px;">
       </div>
 
+      <div class="sa-field" style="margin-bottom:15px;">
+        <label class="sa-label">Connector Group Name <span style="font-weight:400; color:#999;">(optional — required if you have multiple connector groups)</span></label>
+        <input type="text" name="connector_group_name" placeholder="e.g. My PoC Connector" class="sa-input" style="max-width:320px;">
+        <div style="font-size:0.78em; color:#888; margin-top:4px;">Leave blank to auto-select when only one connector group exists.</div>
+      </div>
+
       <button type="submit" name="action" value="create_pod"
               class="sa-btn {% if session.get('authenticated') %}sa-btn-primary{% else %}sa-btn-disabled{% endif %}"
               {% if not session.get('authenticated') %}disabled{% endif %}>

@@ -8,9 +8,12 @@ BASE_URL = "https://api.sse.cisco.com"  # use your regional endpoint
 #  Helper Functions
 # --------------------------
 
-def get_first_connector_id(token):
+def get_first_connector_id(token, connector_group_name=None):
     """
-    Returns the first connector group ID.
+    Returns the connector group ID matching connector_group_name, or the only
+    available connector group when no name is given.  Raises a descriptive
+    exception if the name doesn't match or if multiple groups exist and no
+    name was provided.
     """
     url = f"{BASE_URL}/deployments/v2/connectorGroups"
     headers = {
@@ -22,9 +25,27 @@ def get_first_connector_id(token):
     r.raise_for_status()
     data = r.json().get("data") or r.json().get("items") or []
     if not data:
-        raise Exception("No connector groups found.")
-    
-    connector = data[0]
+        raise Exception("No connector groups found in your SSE organization. "
+                        "Make sure the Resource Connector is installed and has registered.")
+
+    if connector_group_name:
+        matches = [c for c in data if c.get("name") == connector_group_name]
+        if not matches:
+            available = ", ".join(c.get("name", "?") for c in data)
+            raise Exception(
+                f"Connector group '{connector_group_name}' not found. "
+                f"Available groups: {available}"
+            )
+        connector = matches[0]
+    elif len(data) == 1:
+        connector = data[0]
+    else:
+        names = ", ".join(c.get("name", "?") for c in data)
+        raise Exception(
+            f"Multiple connector groups found ({names}). "
+            "Please specify the Connector Group Name in the form."
+        )
+
     connector_id = connector.get("id") or connector.get("connectorGroupId")
     connector_name = connector.get("name")
     print(f"✅ Connector found: {connector_name} (ID: {connector_id})")
