@@ -510,18 +510,21 @@ def fetch_and_push_idp_metadata(metadata_url, saml_app_base_url):
     result = {'success': False, 'entity_id': None, 'sso_url': None, 'error': None}
 
     try:
-        # Step 1: Fetch the IdP metadata XML from Duo
+        # Step 1: Fetch the IdP metadata XML from Duo as raw bytes to avoid
+        # charset mis-detection (requests defaults text/xml to ISO-8859-1 per
+        # RFC 2616, which can corrupt the byte stream when re-encoded)
         print(f"\n=== Fetching IdP metadata from {metadata_url} ===")
         resp = requests.get(metadata_url, timeout=15)
         resp.raise_for_status()
-        metadata_xml = resp.text
-        print(f"✅ Fetched metadata XML ({len(metadata_xml)} bytes)")
+        metadata_bytes = resp.content
+        print(f"✅ Fetched metadata XML ({len(metadata_bytes)} bytes)")
 
-        # Step 2: Push it to the SAML app
-        print(f"Pushing metadata to {saml_app_base_url}/api/configure-idp ...")
+        # Step 2: Push raw bytes via multipart upload — same path the browser
+        # uses — avoiding any JSON string encoding/decoding of the XML
+        print(f"Pushing metadata to {saml_app_base_url}/upload-idp-metadata ...")
         push_resp = requests.post(
-            f"{saml_app_base_url}/api/configure-idp",
-            json={'metadata_xml': metadata_xml},
+            f"{saml_app_base_url}/upload-idp-metadata",
+            files={'idp_metadata': ('idp-metadata.xml', metadata_bytes, 'application/xml')},
             timeout=10,
         )
         push_resp.raise_for_status()

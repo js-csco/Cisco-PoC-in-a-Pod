@@ -6,7 +6,6 @@ Duo Passport (remembered device across browsers).
 """
 import os
 import json
-import xml.etree.ElementTree as ET
 from flask import (
     Flask, request, redirect, session, render_template,
     url_for, make_response, jsonify
@@ -14,6 +13,7 @@ from flask import (
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
+from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "saml-demo-secret-key")
@@ -97,30 +97,30 @@ def _is_configured():
     return bool(idp["sso_url"])
 
 
-def _parse_idp_metadata(xml_string):
-    """Extract IDP entity_id, sso_url, slo_url, cert from SAML metadata XML."""
-    ns = {
-        "md": "urn:oasis:names:tc:SAML:2.0:metadata",
-        "ds": "http://www.w3.org/2000/09/xmldsig#",
-    }
-    root = ET.fromstring(xml_string)
+def _parse_idp_metadata(xml_bytes):
+    """Extract IDP entity_id, sso_url, slo_url, cert from SAML metadata XML.
 
-    entity_id = root.attrib.get("entityID", "")
+    Uses python3-saml's IdPMetadataParser (lxml-backed) so it handles any valid
+    SAML metadata regardless of namespace prefix conventions or BOM/encoding quirks.
+    """
+    if isinstance(xml_bytes, str):
+        xml_bytes = xml_bytes.encode("utf-8")
+    # Strip UTF-8 BOM if present — lxml tolerates it but be safe
+    xml_bytes = xml_bytes.lstrip(b"\xef\xbb\xbf")
 
-    sso_url = ""
-    sso_el = root.find(".//md:IDPSSODescriptor/md:SingleSignOnService[@Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect']", ns)
-    if sso_el is not None:
-        sso_url = sso_el.attrib.get("Location", "")
+    parsed = OneLogin_Saml2_IdPMetadataParser.parse(xml_bytes)
 
-    slo_url = ""
-    slo_el = root.find(".//md:IDPSSODescriptor/md:SingleLogoutService[@Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect']", ns)
-    if slo_el is not None:
-        slo_url = slo_el.attrib.get("Location", "")
+    idp = parsed.get("idp", {})
+    sso = idp.get("singleSignOnService", {})
+    slo = idp.get("singleLogoutService", {})
 
-    cert = ""
-    cert_el = root.find(".//md:IDPSSODescriptor/md:KeyDescriptor/ds:KeyInfo/ds:X509Data/ds:X509Certificate", ns)
-    if cert_el is not None and cert_el.text:
-        cert = cert_el.text.strip().replace("\n", "").replace("\r", "")
+    entity_id = idp.get("entityId", "")
+    sso_url = sso.get("url", "") if isinstance(sso, dict) else ""
+    slo_url = slo.get("url", "") if isinstance(slo, dict) else ""
+    cert = idp.get("x509cert", "") or ""
+    if isinstance(cert, list):
+        cert = cert[0] if cert else ""
+    cert = cert.strip().replace("\n", "").replace("\r", "")
 
     return {
         "entity_id": entity_id,
@@ -157,8 +157,8 @@ def upload_idp_metadata():
             return jsonify({"ok": False, "error": "Could not find SSO URL in metadata XML"}), 400
         _idp_config.update(parsed)
         return jsonify({"ok": True, "entity_id": parsed["entity_id"], "sso_url": parsed["sso_url"]})
-    except ET.ParseError as e:
-        return jsonify({"ok": False, "error": f"Invalid XML: {e}"}), 400
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"Invalid IdP metadata: {e}"}), 400
 
 
 @app.route("/api/configure-idp", methods=["POST"])
@@ -177,8 +177,8 @@ def api_configure_idp():
                 return jsonify({"ok": False, "error": "Could not find SSO URL in metadata XML"}), 400
             _idp_config.update(parsed)
             return jsonify({"ok": True, "entity_id": parsed["entity_id"], "sso_url": parsed["sso_url"]})
-        except ET.ParseError as e:
-            return jsonify({"ok": False, "error": f"Invalid XML: {e}"}), 400
+        except Exception as e:
+            return jsonify({"ok": False, "error": f"Invalid IdP metadata: {e}"}), 400
 
     # Fallback: accept individual fields
     entity_id = data.get("entity_id", "")
