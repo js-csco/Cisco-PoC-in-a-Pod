@@ -254,13 +254,12 @@ def duo():
                 users_list = []
                 for i in range(1, 4):
                     email = request.form.get(f'user_email_{i}', '').strip()
-                    username = request.form.get(f'user_username_{i}', '').strip()
-                    if email and username:
-                        users_list.append({'email': email, 'username': username})
+                    if email:
+                        users_list.append({'email': email, 'username': email})
 
                 # Validate at least one user is provided
                 if not users_list:
-                    flash("⚠️ Please provide at least one email and username")
+                    flash("⚠️ Please provide at least one email address")
                     return redirect(url_for('duo'))
                 
                 # Import and call the complete setup function

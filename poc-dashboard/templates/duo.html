@@ -496,29 +496,26 @@
       <!-- User 1 (required) -->
       <div class="duo-user-row">
         <span class="duo-user-label required">User 1 <span style="color:#cc0000;">*</span></span>
-        <input type="email" name="user_email_1" placeholder="Email" class="duo-input">
-        <input type="text" name="user_username_1" placeholder="Username" class="duo-input">
+        <input type="email" name="user_email_1" placeholder="Email address" class="duo-input">
       </div>
 
       <!-- User 2 (optional) -->
       <div class="duo-user-row">
         <span class="duo-user-label optional">User 2</span>
-        <input type="email" name="user_email_2" placeholder="Email (optional)" class="duo-input" style="border-color:#e0e0e0;">
-        <input type="text" name="user_username_2" placeholder="Username (optional)" class="duo-input" style="border-color:#e0e0e0;">
+        <input type="email" name="user_email_2" placeholder="Email address (optional)" class="duo-input" style="border-color:#e0e0e0;">
       </div>
 
       <!-- User 3 (optional) -->
       <div class="duo-user-row">
         <span class="duo-user-label optional">User 3</span>
-        <input type="email" name="user_email_3" placeholder="Email (optional)" class="duo-input" style="border-color:#e0e0e0;">
-        <input type="text" name="user_username_3" placeholder="Username (optional)" class="duo-input" style="border-color:#e0e0e0;">
+        <input type="email" name="user_email_3" placeholder="Email address (optional)" class="duo-input" style="border-color:#e0e0e0;">
       </div>
     </div>
 
     <div class="duo-info duo-info-green" style="margin: 20px 0;">
       <strong>Add Users and Groups will perform the following:</strong>
       <ul>
-        <li>Create each provided user with email and username</li>
+        <li>Create each provided user (email address used as username)</li>
         <li>Create "PoC Users" group (if it doesn't exist)</li>
         <li>Add all users to "PoC Users" group</li>
         <li>Send enrollment email to each new user</li>
