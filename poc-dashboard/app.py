@@ -462,9 +462,10 @@ def cilium_run():
     def _run():
         # ── Policy deploy/remove (AJAX, no page reload) ──────────────────────
         if action == 'deploy_l7':
-            result = apply_l7_http()
-            return {'command': 'Apply L7 HTTP Policy', 'output': str(result),
-                    'ok': True, 'policy': 'piap-l7-http', 'active': True}
+            result, httpbin_status = apply_l7_http()
+            note = '\nhttpbin pod starting — image pull takes ~60 s. Run tests once the pod is ready.' if httpbin_status == 'created' else ''
+            return {'command': 'Apply L7 HTTP Policy', 'output': str(result) + note,
+                    'ok': True, 'policy': 'piap-l7-http', 'active': True, 'httpbin_created': httpbin_status == 'created'}
 
         elif action == 'remove_l7':
             result = remove_l7_http()
@@ -472,9 +473,10 @@ def cilium_run():
                     'ok': True, 'policy': 'piap-l7-http', 'active': False}
 
         elif action == 'deploy_dns':
-            result = apply_dns_egress()
-            return {'command': 'Apply DNS Egress Filter', 'output': str(result),
-                    'ok': True, 'policy': 'piap-dns-egress', 'active': True}
+            result, httpbin_status = apply_dns_egress()
+            note = '\nhttpbin pod starting — image pull takes ~60 s. Run tests once the pod is ready.' if httpbin_status == 'created' else ''
+            return {'command': 'Apply DNS Egress Filter', 'output': str(result) + note,
+                    'ok': True, 'policy': 'piap-dns-egress', 'active': True, 'httpbin_created': httpbin_status == 'created'}
 
         elif action == 'remove_dns':
             result = remove_dns_egress()

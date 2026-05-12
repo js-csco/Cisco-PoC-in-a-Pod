@@ -1199,11 +1199,16 @@
     loadActive();
 
     // Bridge for the outer script block — updates DNS arrow state and redraws.
-    // loadNodes() is intentionally omitted: httpbin takes ~60s to start so
-    // an immediate refetch won't show it, and a failed fetch would wipe the SVG.
+    // When a policy is deployed we also reload nodes because _ensure_httpbin()
+    // creates the httpbin Service immediately (the pod takes ~60s, but the
+    // Service is available right away so it shows up in the diagram).
     window._npmRefreshPolicy = function(policyName, active) {
       if (policyName === 'piap-dns-egress') {
         DNS_EGRESS_ACTIVE = active;
+      }
+      if (active) {
+        loadNodes();
+      } else {
         draw();
       }
     };
