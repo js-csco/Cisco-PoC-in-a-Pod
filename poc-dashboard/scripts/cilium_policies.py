@@ -173,9 +173,13 @@ def _get_apps_api():
 
 
 def _ensure_httpbin():
-    """Create httpbin deployment and ClusterIP service if they do not already exist."""
+    """Create httpbin deployment and ClusterIP service if they do not already exist.
+
+    Returns 'created' if the deployment was just created, 'exists' if it was already present.
+    """
     apps_v1 = _get_apps_api()
     core_v1 = _get_core_api()
+    deployed = False
 
     try:
         apps_v1.read_namespaced_deployment("httpbin", NAMESPACE)
@@ -209,6 +213,7 @@ def _ensure_httpbin():
                     ),
                 ),
             )
+            deployed = True
         else:
             raise
 
@@ -231,6 +236,8 @@ def _ensure_httpbin():
             )
         else:
             raise
+
+    return 'created' if deployed else 'exists'
 
 
 def exec_in_httpbin(command):
@@ -280,8 +287,9 @@ def _build_l7_http_policy():
 
 
 def apply_l7_http():
-    _ensure_httpbin()
-    return _apply_policy(_get_api(), _build_l7_http_policy())
+    httpbin_status = _ensure_httpbin()
+    policy_result = _apply_policy(_get_api(), _build_l7_http_policy())
+    return policy_result, httpbin_status
 
 
 def remove_l7_http():
@@ -333,8 +341,9 @@ def _build_dns_egress_policy():
 
 
 def apply_dns_egress():
-    _ensure_httpbin()
-    return _apply_policy(_get_api(), _build_dns_egress_policy())
+    httpbin_status = _ensure_httpbin()
+    policy_result = _apply_policy(_get_api(), _build_dns_egress_policy())
+    return policy_result, httpbin_status
 
 
 def remove_dns_egress():
