@@ -126,7 +126,8 @@ def secure_access():
                     flash("⚠️ IP address missing.")
                     return redirect(url_for("secure_access"))
 
-                connector_id, connector_name = get_first_connector_id(token)
+                connector_group_name = request.form.get("connector_group_name", "").strip() or None
+                connector_id, connector_name = get_first_connector_id(token, connector_group_name)
                 group = create_private_resource_group(token, vm_ip, connector_id)
                 group_id = group.get("id") or group.get("resourceGroupId")
                 created = create_private_resources(token, vm_ip, group_id)
