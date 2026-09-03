@@ -16,10 +16,12 @@ from scripts.csa_scripts.create_int_policy import (
     create_inet_isolate_policy,
     create_int_block_content_policy,
     create_int_block_apps_policy,
-    create_allow_all_policy
+    create_allow_all_policy,
+    create_url_filtering_policies
 )
 from scripts.csa_scripts.create_dlp_rules import (
     create_ai_guardrail_rule,
+    create_scoped_ai_guardrail_rule,
     create_realtime_dlp_rule
 )
 
@@ -180,6 +182,7 @@ def secure_access():
                     return redirect(url_for("secure_access"))
 
                 create_ai_guardrail_rule(token)
+                create_scoped_ai_guardrail_rule(token)
                 create_realtime_dlp_rule(token)
                 flash("✅ DLP rules created.")
 
@@ -200,7 +203,10 @@ def secure_access():
                 # block apps
                 block_app = create_int_block_apps_policy(token)
 
-                # allow all
+                # URL filtering (SWG) — Allow r/Cisco (prio 5) + Block Reddit (prio 6)
+                url_filtering = create_url_filtering_policies(token)
+
+                # allow all (prio 7 — must stay below the URL rules above)
                 allow_all = create_allow_all_policy(token)
 
                 flash("✅ Internet Access policies created.")

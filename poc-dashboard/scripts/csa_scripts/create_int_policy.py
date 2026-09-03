@@ -302,7 +302,7 @@ def create_allow_all_policy(token):
                 "settingValue": "PUBLIC_INTERNET"
             }
         ],
-        "rulePriority": 5,
+        "rulePriority": 7,
         "ruleIName": None,
         "ruleAction": "allow",
         "ruleIsEnabled": True,
@@ -319,5 +319,219 @@ def create_allow_all_policy(token):
 
     print(f"✅ Created private access policy.")
     return r.json()
+
+
+# --------------------------
+#  URL Filtering (SWG) — Destination Lists
+# --------------------------
+#
+# Specific URLs (e.g. reddit.com, reddit.com/r/Cisco/) cannot be matched by the
+# content-category attribute used above. They require a Destination List:
+#   1. POST /policies/v2/destinationlists           -> create the list, read its "id"
+#   2. POST /policies/v2/destinationlists/{id}/destinations -> add the URLs
+#   3. POST /policies/v2/rules                       -> rule condition references the list id
+#
+# The tenant is empty when the dashboard button is pressed, so the lists are
+# created on the fly and their ids are fed straight into the rules below.
+
+def _create_url_destination_list(token, name, access, destinations):
+    """
+    Creates a Destination List and populates it with URL/domain destinations.
+
+    access:        "allow" or "block"
+    destinations:  list of URL/domain strings, e.g. ["reddit.com"]
+
+    Returns the new destination list id.
+    """
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+
+    # 1️⃣ Create the (empty) destination list
+    create_url = f"{BASE_URL}/policies/v2/destinationlists"
+    create_payload = {
+        "access": access,       # "allow" | "block"
+        "isGlobal": False,
+        "name": name
+    }
+    r = requests.post(create_url, headers=headers, json=create_payload, timeout=15)
+    print("Destination List Response:", r.status_code, r.text)
+    if r.status_code not in (200, 201):
+        raise Exception(f"Failed to create destination list: {r.status_code} - {r.text}")
+
+    body = r.json()
+    # Response may be the object itself or wrapped in {"data": {...}}
+    data = body.get("data", body)
+    list_id = data.get("id") or data.get("destinationListId")
+    if not list_id:
+        raise Exception(f"Could not read destination list id from response: {body}")
+
+    # 2️⃣ Add the URL destinations to the list
+    dest_url = f"{BASE_URL}/policies/v2/destinationlists/{list_id}/destinations"
+    dest_payload = [{"destination": d, "comment": name} for d in destinations]
+    r = requests.post(dest_url, headers=headers, json=dest_payload, timeout=15)
+    print("Add Destinations Response:", r.status_code, r.text)
+    if r.status_code not in (200, 201):
+        raise Exception(f"Failed to add destinations to list {list_id}: {r.status_code} - {r.text}")
+
+    print(f"✅ Created destination list '{name}' (id={list_id}) with {len(destinations)} destination(s).")
+    return list_id
+
+
+# Policy 6 — URL Allow (more specific, must sit ABOVE the block rule)
+def create_url_allow_policy(token, allow_list_id):
+    """
+    Creates a Secure Web Gateway URL Allow rule for the r/Cisco subreddit.
+    Priority 5 so it is evaluated before the Reddit block (priority 6) and the
+    Allow-all (priority 7) — otherwise the broader rules would swallow it.
+    """
+    url = f"{BASE_URL}/policies/v2/rules"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "ruleName": "Roaming Devices - Allow - Reddit r/Cisco - Decryption required",
+        "ruleDescription": "Allow Access for Roaming Devices to the r/Cisco subreddit while the rest of Reddit is blocked. Decryption in Security Profile is required.",
+        "ruleIsEnabled": True,
+        "ruleIsDefault": False,
+        "ruleIName": None,
+        "ruleExternalId": None,
+        "rulePriority": 5,
+        "ruleAction": "allow",
+        "ruleAccess": "public_internet",
+        "ruleSettings": [
+            {
+                "settingId": 5,
+                "settingName": "umbrella.logLevel",
+                "settingValue": "LOG_ALL"
+            },
+            {
+                "settingId": 9,
+                "settingName": "umbrella.default.traffic",
+                "settingValue": "PUBLIC_INTERNET"
+            }
+        ],
+        "ruleConditions": [
+            {
+                "attributeId": 5,
+                "attributeName": "umbrella.source.identity_type_ids",
+                "attributeOperator": "INTERSECT",
+                "attributeValue": [34, 9]
+            },
+            {
+                # NOTE: attributeId 8 / umbrella.destination.destination_list_ids is
+                # the best-known value for referencing a destination list in a rule
+                # condition. Verify against the tenant (GET /policies/v2/rules on a
+                # rule that uses a destination list) — a wrong id returns a clear 400.
+                "attributeId": 8,
+                "attributeName": "umbrella.destination.destination_list_ids",
+                "attributeOperator": "INTERSECT",
+                "attributeValue": [allow_list_id]
+            }
+        ]
+    }
+
+    r = requests.post(url, headers=headers, json=payload, timeout=15)
+    print("Response:", r.status_code, r.text)
+
+    if r.status_code not in (200, 201):
+        raise Exception(f"Failed to create internet access policy: {r.status_code} - {r.text}")
+
+    print(f"✅ Created URL Allow policy (r/Cisco).")
+    return r.json()
+
+
+# Policy 7 — URL Block (broad, sits BELOW the allow rule)
+def create_url_block_policy(token, block_list_id):
+    """
+    Creates a Secure Web Gateway URL Block rule for Reddit.
+    Priority 6 so the r/Cisco allow (priority 5) wins for that sub-path while the
+    rest of reddit.com is blocked.
+    """
+    url = f"{BASE_URL}/policies/v2/rules"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "ruleName": "Roaming Devices - Block - Reddit - Decryption required",
+        "ruleDescription": "Block Access for Roaming Devices to Reddit. Decryption in Security Profile is required for the Block Page.",
+        "ruleIsEnabled": True,
+        "ruleIsDefault": False,
+        "ruleIName": None,
+        "ruleExternalId": None,
+        "rulePriority": 6,
+        "ruleAction": "block",
+        "ruleAccess": "public_internet",
+        "ruleSettings": [
+            {
+                "settingId": 5,
+                "settingName": "umbrella.logLevel",
+                "settingValue": "LOG_ALL"
+            },
+            {
+                "settingId": 9,
+                "settingName": "umbrella.default.traffic",
+                "settingValue": "PUBLIC_INTERNET"
+            }
+        ],
+        "ruleConditions": [
+            {
+                "attributeId": 5,
+                "attributeName": "umbrella.source.identity_type_ids",
+                "attributeOperator": "INTERSECT",
+                "attributeValue": [34, 9]
+            },
+            {
+                # See note in create_url_allow_policy about attributeId 8.
+                "attributeId": 8,
+                "attributeName": "umbrella.destination.destination_list_ids",
+                "attributeOperator": "INTERSECT",
+                "attributeValue": [block_list_id]
+            }
+        ]
+    }
+
+    r = requests.post(url, headers=headers, json=payload, timeout=15)
+    print("Response:", r.status_code, r.text)
+
+    if r.status_code not in (200, 201):
+        raise Exception(f"Failed to create internet access policy: {r.status_code} - {r.text}")
+
+    print(f"✅ Created URL Block policy (Reddit).")
+    return r.json()
+
+
+# Orchestrator — create both destination lists, then both URL rules in order
+def create_url_filtering_policies(token):
+    """
+    Creates the Reddit URL filtering demo:
+      • Allow destination list  -> reddit.com/r/Cisco/  -> Allow rule (priority 5)
+      • Block destination list  -> reddit.com           -> Block rule (priority 6)
+
+    Net effect for AD users + roaming devices: only r/Cisco is reachable on Reddit.
+    """
+    allow_list_id = _create_url_destination_list(
+        token,
+        name="PoC - Allow - Reddit r/Cisco",
+        access="allow",
+        destinations=["reddit.com/r/Cisco/"]
+    )
+    block_list_id = _create_url_destination_list(
+        token,
+        name="PoC - Block - Reddit",
+        access="block",
+        destinations=["reddit.com"]
+    )
+
+    allow_rule = create_url_allow_policy(token, allow_list_id)
+    block_rule = create_url_block_policy(token, block_list_id)
+
+    return {"allow_rule": allow_rule, "block_rule": block_rule}
 
 
