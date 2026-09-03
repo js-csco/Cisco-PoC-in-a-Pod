@@ -178,10 +178,10 @@ def deploy_environment():
         },
         "agents": {
             "defaults": {
-                "model": {"primary": "anthropic/claude-sonnet-4-6"},
+                "model": {"primary": "anthropic/claude-sonnet-5"},
                 "models": {
-                    "anthropic/claude-sonnet-4-6": {"alias": "Sonnet"},
-                    "anthropic/claude-opus-4-6": {"alias": "Opus"},
+                    "anthropic/claude-sonnet-5": {"alias": "Sonnet"},
+                    "anthropic/claude-opus-5": {"alias": "Opus"},
                 },
             }
         }
@@ -259,7 +259,7 @@ def deploy_environment():
         args=[textwrap.dedent("""\
             set -e
             echo "[openclaw] Installing OpenClaw..."
-            npm install -g openclaw@latest 2>&1 | tail -5
+            npm install -g openclaw@2026.8.2 2>&1 | tail -5
 
             # Seed config into shared home dir
             mkdir -p /openclaw-home
