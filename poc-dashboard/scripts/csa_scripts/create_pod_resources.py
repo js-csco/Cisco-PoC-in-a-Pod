@@ -110,10 +110,9 @@ def create_private_resources(token, vm_ip, resource_group_id):
 
 
     # fqdn_prefix is the subdomain used for the browser access URL.
-    # Browser-based (clientless) access is enabled automatically for every
-    # HTTP/HTTPS resource — Cisco Secure Access only permits browser-based ZTNA
-    # when all resource addresses use the HTTP or HTTPS protocols. SSH and RDP
-    # resources therefore get Secure Client access only.
+    # Browser-based (clientless) access is enabled for every resource. The proxy
+    # protocol is derived from the resource protocol: HTTP/HTTPS -> HTTP,
+    # SSH -> SSH, RDP -> RDP (Secure Access supports browser-based SSH and RDP).
     resources = [
         {"name": "PoC Dashboard",      "port": 30200, "protocol": "HTTP/HTTPS"},
         {"name": "PoC Playbook",       "port": 30250, "protocol": "HTTP/HTTPS"},
@@ -138,16 +137,25 @@ def create_private_resources(token, vm_ip, resource_group_id):
             print(f"✅ Resource '{res['name']}' already exists.")
             continue
 
-        # Browser-based access requires HTTP/HTTPS; enable it for every such resource.
-        browser_enabled = "HTTP" in res["protocol"].upper()
+        # Browser-based (clientless ZTNA) access for every resource. The proxy
+        # protocol maps from the resource protocol.
+        proto = res["protocol"].upper()
+        if "SSH" in proto:
+            browser_protocol = "SSH"
+        elif "RDP" in proto:
+            browser_protocol = "RDP"
+        elif "HTTP" in proto:
+            browser_protocol = "HTTP"
+        else:
+            browser_protocol = None
 
         access_types = [{"type": "client", "reachableAddresses": [vm_ip]}]
-        if browser_enabled:
+        if browser_protocol:
             fqdn_prefix = res["name"].lower().replace(" ", "-")
             access_types.insert(0, {
                 "type": "browser",
                 "externalFQDNPrefix": fqdn_prefix,
-                "protocol": "HTTP"
+                "protocol": browser_protocol
             })
 
         payload = {
