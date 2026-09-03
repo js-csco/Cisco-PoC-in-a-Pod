@@ -3,7 +3,8 @@ import requests, base64, time
 from scripts.csa_scripts.create_pod_resources import (
     get_first_connector_id,
     create_private_resource_group,
-    create_private_resources
+    create_private_resources,
+    get_browser_access_table
 )
 from scripts.csa_scripts.create_priv_policy import (
     create_private_access_policy
@@ -218,6 +219,34 @@ def secure_access():
         return redirect(url_for("secure_access"))
 
     return render_template('secure-access.html')
+
+
+@app.route('/api/secure-access/browser-resources')
+def secure_access_browser_resources():
+    """
+    Returns the private resources with their internal address and browser-based
+    (clientless ZTNA) external URL, for the popup next to the Create Pod
+    Resources button.
+    """
+    from flask import jsonify
+
+    token = token_cache.get("access_token")
+    if not token:
+        stored_key = session.get("csa_api_key")
+        stored_secret = session.get("csa_api_secret")
+        if stored_key and stored_secret:
+            try:
+                token = ensure_valid_token(stored_key, stored_secret)
+            except Exception:
+                token = None
+    if not token:
+        return jsonify({"ok": False, "error": "Not authenticated — please authenticate first.", "resources": []}), 401
+
+    try:
+        rows = get_browser_access_table(token)
+        return jsonify({"ok": True, "resources": rows})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e), "resources": []}), 500
 
 
 ############# App.Route Duo ##############

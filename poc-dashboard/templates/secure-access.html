@@ -279,6 +279,51 @@
     .sa-stepper { flex-wrap: wrap; gap: 8px; }
     .sa-step::after { display: none; }
   }
+
+  /* ── Secondary button ── */
+  .sa-btn-secondary { background: #eef2f7; color: #0066ff; box-shadow: inset 0 0 0 1px #cfd8e3; }
+  .sa-btn-secondary:hover { background: #e2e8f1; }
+
+  /* ── Browser Access URLs modal ── */
+  .sa-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1000;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 60px 16px;
+  }
+  .sa-modal-overlay.open { display: flex; }
+  .sa-modal {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    max-width: 780px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 24px 26px;
+  }
+  .sa-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .sa-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.6em;
+    line-height: 1;
+    color: #999;
+    cursor: pointer;
+    padding: 0 4px;
+  }
+  .sa-modal-close:hover { color: #333; }
+  #sa-browser-table td { vertical-align: top; word-break: break-word; }
+  .sa-browser-none { color: #999; font-style: italic; }
 </style>
 
 <form method="POST" class="sa-page">
@@ -477,11 +522,47 @@
         <div style="font-size:0.78em; color:#888; margin-top:4px;">Leave blank to auto-select when only one connector group exists.</div>
       </div>
 
-      <button type="submit" name="action" value="create_pod"
-              class="sa-btn {% if session.get('authenticated') %}sa-btn-primary{% else %}sa-btn-disabled{% endif %}"
-              {% if not session.get('authenticated') %}disabled{% endif %}>
-        Create Pod Resources
-      </button>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button type="submit" name="action" value="create_pod"
+                class="sa-btn {% if session.get('authenticated') %}sa-btn-primary{% else %}sa-btn-disabled{% endif %}"
+                {% if not session.get('authenticated') %}disabled{% endif %}>
+          Create Pod Resources
+        </button>
+
+        <button type="button" id="sa-browser-urls-btn"
+                class="sa-btn {% if session.get('authenticated') %}sa-btn-secondary{% else %}sa-btn-disabled{% endif %}"
+                {% if not session.get('authenticated') %}disabled{% endif %}
+                onclick="openBrowserUrls()">
+          Show Browser Access URLs
+        </button>
+      </div>
+    </div>
+
+    <!-- Browser Access URLs popup -->
+    <div id="sa-browser-modal" class="sa-modal-overlay" onclick="if(event.target===this)closeBrowserUrls()">
+      <div class="sa-modal">
+        <div class="sa-modal-head">
+          <h4 style="margin:0;">Browser-based Access URLs</h4>
+          <button type="button" class="sa-modal-close" onclick="closeBrowserUrls()" aria-label="Close">&times;</button>
+        </div>
+        <p style="color:#666; font-size:0.85em; margin:0 0 12px; line-height:1.5;">
+          Clientless ZTNA URLs for each private resource, pulled live from Secure Access.
+          HTTP/HTTPS resources expose a browser address; SSH/RDP are Secure Client only.
+        </p>
+        <div id="sa-browser-status" style="font-size:0.88em; color:#888; margin-bottom:10px;">Loading&hellip;</div>
+        <div style="overflow-x:auto;">
+          <table class="sa-table" id="sa-browser-table" style="display:none; width:100%;">
+            <thead>
+              <tr>
+                <th>Resource</th>
+                <th>Internal address</th>
+                <th>Browser-based address</th>
+              </tr>
+            </thead>
+            <tbody id="sa-browser-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- Private Access Policy -->
@@ -659,4 +740,82 @@
 
   {{ super() }}
 </form>
+
+<script>
+  function openBrowserUrls() {
+    var modal = document.getElementById('sa-browser-modal');
+    modal.classList.add('open');
+    loadBrowserUrls();
+  }
+
+  function closeBrowserUrls() {
+    document.getElementById('sa-browser-modal').classList.remove('open');
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeBrowserUrls();
+  });
+
+  function loadBrowserUrls() {
+    var status = document.getElementById('sa-browser-status');
+    var table = document.getElementById('sa-browser-table');
+    var tbody = document.getElementById('sa-browser-tbody');
+    status.style.color = '#888';
+    status.textContent = 'Loading…';
+    table.style.display = 'none';
+    tbody.innerHTML = '';
+
+    fetch('/api/secure-access/browser-resources')
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, body: d }; }); })
+      .then(function (res) {
+        var data = res.body || {};
+        if (!res.ok || !data.ok) {
+          status.style.color = '#c0392b';
+          status.textContent = '⚠️ ' + (data.error || 'Could not load resources.');
+          return;
+        }
+        var rows = data.resources || [];
+        if (rows.length === 0) {
+          status.textContent = 'No private resources found yet. Create them first.';
+          return;
+        }
+        rows.forEach(function (row) {
+          var tr = document.createElement('tr');
+
+          var tdName = document.createElement('td');
+          tdName.textContent = row.name || '';
+          tr.appendChild(tdName);
+
+          var tdInternal = document.createElement('td');
+          tdInternal.textContent = row.internal_address || '';
+          tr.appendChild(tdInternal);
+
+          var tdBrowser = document.createElement('td');
+          if (row.browser_address) {
+            var a = document.createElement('a');
+            a.href = row.browser_address;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            a.textContent = row.browser_address;
+            tdBrowser.appendChild(a);
+          } else {
+            var span = document.createElement('span');
+            span.className = 'sa-browser-none';
+            span.textContent = 'Secure Client only';
+            tdBrowser.appendChild(span);
+          }
+          tr.appendChild(tdBrowser);
+
+          tbody.appendChild(tr);
+        });
+        status.textContent = rows.length + ' resource(s).';
+        status.style.color = '#888';
+        table.style.display = 'table';
+      })
+      .catch(function (err) {
+        status.style.color = '#c0392b';
+        status.textContent = '⚠️ ' + err;
+      });
+  }
+</script>
 {% endblock %}
