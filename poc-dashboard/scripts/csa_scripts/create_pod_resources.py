@@ -187,3 +187,54 @@ def get_private_resources(token):
     r.raise_for_status()
     return r.json().get("items", []) or r.json().get("data", [])
 
+
+def get_browser_access_table(token):
+    """
+    Builds a table of private resources with their internal address and, when
+    browser-based (clientless ZTNA) access is enabled, the external browser URL.
+
+    Returns a list of dicts:
+        {"name", "internal_address", "browser_address"}
+
+    The browser address is buried in the Secure Access dashboard under each
+    resource's accessTypes -> browserBasedAccessResponse.externalFQDN; this
+    surfaces it so it can be shown next to the "Create Pod Resources" button.
+    """
+    rows = []
+    for res in get_private_resources(token):
+        name = res.get("name", "?")
+
+        # Internal address: destinationAddr[:port] from the first resource address.
+        internal = ""
+        addresses = res.get("resourceAddresses") or []
+        if addresses:
+            first = addresses[0] or {}
+            dests = first.get("destinationAddr") or []
+            host = dests[0] if dests else ""
+            ports = ""
+            proto_ports = first.get("protocolPorts") or []
+            if proto_ports:
+                ports = str(proto_ports[0].get("ports", "")).strip()
+            internal = f"{host}:{ports}" if host and ports else host
+
+        # Browser address: externalFQDN on the browser access type (if enabled).
+        browser = ""
+        for at in (res.get("accessTypes") or []):
+            if not isinstance(at, dict):
+                continue
+            if at.get("type") == "browser" or "externalFQDN" in at or "externalFQDNPrefix" in at:
+                fqdn = at.get("externalFQDN") or at.get("externalFQDNPrefix") or ""
+                if fqdn:
+                    browser = fqdn if fqdn.startswith("http") else f"https://{fqdn}"
+                break
+
+        rows.append({
+            "name": name,
+            "internal_address": internal,
+            "browser_address": browser,
+        })
+
+    # Sort alphabetically for a stable, readable table.
+    rows.sort(key=lambda r: r["name"].lower())
+    return rows
+
