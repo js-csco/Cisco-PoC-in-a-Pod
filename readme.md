@@ -62,7 +62,6 @@ sudo ./setup-k3s.sh
 | 30200 | PoC Dashboard | Central demo dashboard + CSA automation | Core |
 | 30022 | SSH Server | SSH target workload | Core |
 | 30389 | RDP Server | RDP target workload | Core |
-| 30050 | Kubectl MCP | Kubernetes MCP server (read-only) | Core |
 | 30250 | PoC Playbook | Guided test playbook | Core |
 | 30400 | SAML Demo | Duo SSO SAML demo app | Core |
 | 30550 | SSE Check | SSE access path verification | Core |
