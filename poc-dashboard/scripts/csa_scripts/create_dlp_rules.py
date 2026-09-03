@@ -117,6 +117,73 @@ def create_ai_guardrail_rule(token):
     return r.json()
 
 
+def create_scoped_ai_guardrail_rule(token):
+    """
+    Creates a second, narrowly-scoped AI Guardrails rule that only applies to
+    ChatGPT traffic (destination scoped by URL), modelled on the Cisco docs
+    example. Reuses the confirmed guardrail classification UUIDs from the tenant
+    (the docs example's originId / classification UUID / application ids are
+    placeholders that would 400).
+    """
+    # Same confirmed high-level guardrail classification UUIDs as the broad rule.
+    GUARDRAIL_CLASSIFICATION_IDS = [
+        "7e27f96e-b6fe-11ef-a825-0242ac120002",  # Security Guardrail
+        "ae792674-b6fe-11ef-a825-0242ac120002",  # Safety Guardrail
+        "d309239a-b6fd-11ef-a825-0242ac120002",  # Privacy Guardrail
+    ]
+
+    url = f"{BASE_URL}/policies/v2/dlp/aiGuardrails/rules"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+
+    payload = {
+        "name": "DLP Rule - AI Guardrails - ChatGPT",
+        "description": "Blocks sensitive prompts (security, safety, privacy) sent specifically to ChatGPT.",
+        "enabled": True,
+        "action": "BLOCK",
+        "severity": "ALERT",
+        "type": "AI_DEFENSE",
+        "secureIcapEnabled": False,
+        "identities": [
+            {
+                "originId": 0,
+                "originTypeId": 7,
+                "details": "{\"id\":7,\"name\":\"directory_user\",\"label\":\"AD Users\",\"description\":\"Active Directory user\",\"children\":2}"
+            },
+            {
+                "originId": 0,
+                "originTypeId": 9,
+                "details": "{\"id\":9,\"name\":\"roaming\",\"label\":\"Roaming Computers\",\"description\":\"Roaming devices\",\"children\":1}"
+            }
+        ],
+        "applications": [],
+        "classifications": GUARDRAIL_CLASSIFICATION_IDS,
+        # Scope the rule to ChatGPT only, rather than all AI destinations.
+        "allDestinationsScope": "NONE",
+        "destinations": {
+            "type": "url",
+            "address": "chatgpt.com"
+        },
+        "scannableContexts": ["FILENAME", "CONTENT"],
+        "mipTags": [],
+        "notifyOwner": False,
+        "notifyActor": False,
+        "labels": []
+    }
+
+    r = requests.post(url, headers=headers, json=payload, timeout=15)
+    print("Scoped AI Guardrail Rule Response:", r.status_code, r.text)
+
+    if r.status_code not in (200, 201):
+        raise Exception(f"Failed to create scoped AI Guardrail rule: {r.status_code} - {r.text}")
+
+    print("✅ Scoped AI Guardrail DLP rule created (ChatGPT only).")
+    return r.json()
+
+
 def create_realtime_dlp_rule(token):
     """
     Creates a Real-Time DLP rule using built-in classification UUIDs confirmed

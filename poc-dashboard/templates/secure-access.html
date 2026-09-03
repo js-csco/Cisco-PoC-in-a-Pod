@@ -568,6 +568,8 @@
 
       <p style="color:#666; font-size:0.9em; margin:0 0 15px; line-height:1.5;">
         Generate Internet Access policies for basic use cases: browsing, warning, isolation, blocking and more.
+        Also creates SWG URL filtering with destination lists &mdash; <strong>Block</strong> Reddit while
+        <strong>Allowing</strong> the <em>r/Cisco</em> subreddit (allow rule ordered above the block).
       </p>
 
       <button type="submit" name="action" value="create_internet"
@@ -586,7 +588,7 @@
       <div class="sa-section-bar"></div>
       <h3>DATA LOSS PREVENTION</h3>
     </div>
-    <p class="desc">Creates two DLP rules: AI Guardrails block sensitive prompts sent to AI applications, and Real-Time DLP blocks uploads or pastes of PCI and PII data across all proxied web traffic.</p>
+    <p class="desc">Creates three DLP rules: a broad AI Guardrails rule and a ChatGPT-scoped AI Guardrails rule that block sensitive prompts sent to AI applications, plus Real-Time DLP that blocks uploads or pastes of PCI and PII data across all proxied web traffic.</p>
 
     <table class="sa-table" style="margin-bottom:20px;">
       <thead>
