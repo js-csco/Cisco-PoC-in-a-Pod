@@ -70,7 +70,6 @@ sudo ./setup-k3s.sh
 | 30800 | Hubble UI | Network flow observability (Cilium) | Core |
 | 30500 | Splunk Web | SIEM (deploy on setup) | Optional |
 | 30501 | Splunk HEC | HTTP Event Collector | Optional |
-| 30600 | Caldera C2 | MITRE Caldera (deploy from PoC Dashboard) | Optional |
 | 31789 | AI Agent | DefenseClaw AI agent (deploy from PoC Dashboard) | Optional |
 
 Access any service at `http://<server-ip>:<port>`

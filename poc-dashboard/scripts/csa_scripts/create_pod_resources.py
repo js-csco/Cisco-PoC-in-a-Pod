@@ -121,7 +121,6 @@ def create_private_resources(token, vm_ip, resource_group_id):
         {"name": "RDP Server",         "port": 30389, "protocol": "RDP-TCP"},
         {"name": "Hubble UI",          "port": 30800, "protocol": "HTTP/HTTPS"},
         {"name": "SSE Check",          "port": 30550, "protocol": "HTTP/HTTPS"},
-        {"name": "Caldera C2",         "port": 30600, "protocol": "HTTP/HTTPS"},
         {"name": "Uptime Kuma",        "port": 30300, "protocol": "HTTP/HTTPS"},
         {"name": "SAML App",           "port": 30400, "protocol": "HTTP/HTTPS"},
         {"name": "AI Agent",           "port": 31789, "protocol": "HTTP/HTTPS"},
