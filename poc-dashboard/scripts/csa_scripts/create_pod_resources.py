@@ -109,20 +109,23 @@ def create_private_resources(token, vm_ip, resource_group_id):
 
 
 
-    # browser=True adds clientless browser access in addition to Secure Client access.
     # fqdn_prefix is the subdomain used for the browser access URL.
+    # Browser-based (clientless) access is enabled automatically for every
+    # HTTP/HTTPS resource — Cisco Secure Access only permits browser-based ZTNA
+    # when all resource addresses use the HTTP or HTTPS protocols. SSH and RDP
+    # resources therefore get Secure Client access only.
     resources = [
-        {"name": "PoC Dashboard",      "port": 30200, "protocol": "HTTP/HTTPS", "browser": True},
-        {"name": "PoC Playbook",       "port": 30250, "protocol": "HTTP/HTTPS", "browser": True},
-        {"name": "OpenSSH Server",     "port": 30022, "protocol": "SSH",        "browser": False},
-        {"name": "Splunk Dashboard",   "port": 30500, "protocol": "HTTP/HTTPS", "browser": True},
-        {"name": "RDP Server",         "port": 30389, "protocol": "RDP-TCP",    "browser": False},
-        {"name": "Hubble UI",          "port": 30800, "protocol": "HTTP/HTTPS", "browser": False},
-        {"name": "SSE Check",          "port": 30550, "protocol": "HTTP/HTTPS", "browser": False},
-        {"name": "Caldera C2",         "port": 30600, "protocol": "HTTP/HTTPS", "browser": False},
-        {"name": "Uptime Kuma",        "port": 30300, "protocol": "HTTP/HTTPS", "browser": True},
-        {"name": "SAML App",           "port": 30400, "protocol": "HTTP/HTTPS", "browser": True},
-        {"name": "AI Agent",           "port": 31789, "protocol": "HTTP/HTTPS", "browser": True},
+        {"name": "PoC Dashboard",      "port": 30200, "protocol": "HTTP/HTTPS"},
+        {"name": "PoC Playbook",       "port": 30250, "protocol": "HTTP/HTTPS"},
+        {"name": "OpenSSH Server",     "port": 30022, "protocol": "SSH"},
+        {"name": "Splunk Dashboard",   "port": 30500, "protocol": "HTTP/HTTPS"},
+        {"name": "RDP Server",         "port": 30389, "protocol": "RDP-TCP"},
+        {"name": "Hubble UI",          "port": 30800, "protocol": "HTTP/HTTPS"},
+        {"name": "SSE Check",          "port": 30550, "protocol": "HTTP/HTTPS"},
+        {"name": "Caldera C2",         "port": 30600, "protocol": "HTTP/HTTPS"},
+        {"name": "Uptime Kuma",        "port": 30300, "protocol": "HTTP/HTTPS"},
+        {"name": "SAML App",           "port": 30400, "protocol": "HTTP/HTTPS"},
+        {"name": "AI Agent",           "port": 31789, "protocol": "HTTP/HTTPS"},
     ]
 
 
@@ -135,8 +138,11 @@ def create_private_resources(token, vm_ip, resource_group_id):
             print(f"✅ Resource '{res['name']}' already exists.")
             continue
 
+        # Browser-based access requires HTTP/HTTPS; enable it for every such resource.
+        browser_enabled = "HTTP" in res["protocol"].upper()
+
         access_types = [{"type": "client", "reachableAddresses": [vm_ip]}]
-        if res.get("browser"):
+        if browser_enabled:
             fqdn_prefix = res["name"].lower().replace(" ", "-")
             access_types.insert(0, {
                 "type": "browser",
