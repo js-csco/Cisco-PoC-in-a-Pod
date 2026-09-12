@@ -25,6 +25,9 @@ from scripts.csa_scripts.create_int_policy import (
 from scripts.csa_scripts.create_ai_int_policy import (
     create_ai_proposed_policies
 )
+from scripts.csa_scripts.create_steve_policies import (
+    create_steve_policies
+)
 from scripts.csa_scripts.create_dlp_rules import (
     create_ai_guardrail_rule,
     create_scoped_ai_guardrail_rule,
@@ -234,6 +237,19 @@ def secure_access():
 
                 create_ai_proposed_policies(token)
                 flash("✅ AI-Proposed Internet Access policies created.")
+
+            # Action: CREATE ALL POLICIES FROM THE TEST-CASE LIST ("Steve")
+            elif action == "create_steve":
+                if not session.get("authenticated"):
+                    flash("⚠️ Please authenticate first.")
+                    return redirect(url_for("secure_access"))
+
+                results = create_steve_policies(token)
+                created = [r for r in results if r["status"] == "created"]
+                failed = [r for r in results if r["status"] != "created"]
+                flash(f"✅ Steve created {len(created)} of {len(results)} policies.")
+                for r in failed:
+                    flash(f"⚠️ {r['policy']}: {r.get('error', 'failed')}")
 
 
         except Exception as e:
