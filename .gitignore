@@ -1,2 +1,7 @@
 __pycache__/
 *.pyc
+
+# Python virtual environments (created by the Cloud Agent dev environment)
+.venv/
+venv/
+
