@@ -13,7 +13,9 @@ from scripts.csa_scripts.create_recom import (
     follow_recom
 )
 from scripts.csa_scripts.create_int_policy import (
+    create_int_block_malicious_policy,
     create_int_warn_policy,
+    create_int_warn_shopping_policy,
     create_inet_isolate_policy,
     create_int_block_content_policy,
     create_int_block_apps_policy,
@@ -192,22 +194,31 @@ def secure_access():
                 if not session.get("authenticated"):
                     flash("⚠️ Please authenticate first.")
                     return redirect(url_for("secure_access"))
-                # warn
+
+                # Rules are created low-to-high priority number (evaluated top-down).
+
+                # block malicious sites (prio 1)
+                block_malicious = create_int_block_malicious_policy(token)
+
+                # warn — Gen AI (prio 2)
                 warn = create_int_warn_policy(token)
 
-                # isolate
+                # warn — Shopping (prio 3)
+                warn_shopping = create_int_warn_shopping_policy(token)
+
+                # isolate — News (prio 4)
                 isolate = create_inet_isolate_policy(token)
 
-                # block content
+                # block content — Alcohol & Gambling (prio 5)
                 block_content = create_int_block_content_policy(token)
 
-                # block apps
+                # block apps — DeepSeek (prio 6)
                 block_app = create_int_block_apps_policy(token)
 
-                # URL filtering (SWG) — Allow r/Cisco (prio 5) + Block Reddit (prio 6)
+                # URL filtering (SWG) — Allow cisco.reddit.com (prio 7) + Block Reddit (prio 8)
                 url_filtering = create_url_filtering_policies(token)
 
-                # allow all (prio 7 — must stay below the URL rules above)
+                # allow all (prio 9 — must stay below the URL rules above)
                 allow_all = create_allow_all_policy(token)
 
                 flash("✅ Internet Access policies created.")
