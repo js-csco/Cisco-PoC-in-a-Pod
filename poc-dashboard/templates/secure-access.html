@@ -792,6 +792,119 @@
         </div>
       </div>
     </div>
+
+    <!-- AI-Proposed Internet Access Policies -->
+    <div class="sa-sub" style="margin-top:28px;">
+      <div class="sa-sub-head">
+        <div class="sa-sub-bar"></div>
+        <h4>AI-Proposed Internet Access Policies</h4>
+      </div>
+
+      <p style="color:#666; font-size:0.9em; margin:0 0 15px; line-height:1.5;">
+        An AI-curated set of high-value web-filtering use cases &mdash; all configurable via the Secure Access
+        Policies API and scoped to the test client (Roaming Devices + AD Users), just like the rules above:
+      </p>
+      <ol style="color:#555; font-size:0.86em; margin:0 0 15px 18px; padding:0; line-height:1.6;">
+        <li><strong>Block</strong> anonymizers, proxies, personal VPNs &amp; tunneling (evasion prevention)</li>
+        <li><strong>Isolate</strong> newly seen / dynamic-DNS / potentially-harmful domains (zero-day phishing)</li>
+        <li><strong>Block</strong> file sharing &amp; piracy sites (data-exfil / IP loss)</li>
+        <li><strong>Block</strong> unacceptable-use content (adult, weapons, drugs, hate)</li>
+        <li><strong>Allow</strong> sanctioned AI (OpenAI/ChatGPT) while <strong>Blocking</strong> all other Gen AI</li>
+      </ol>
+      <p style="color:#888; font-size:0.82em; margin:0 0 15px; line-height:1.5;">
+        Rules are inserted at the top of the Access policy (priorities 1&ndash;6) and require HTTPS Decryption on
+        the Internet Access security profile.
+      </p>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button type="submit" name="action" value="create_ai_internet"
+                class="sa-btn {% if session.get('authenticated') %}sa-btn-primary{% else %}sa-btn-disabled{% endif %}"
+                {% if not session.get('authenticated') %}disabled{% endif %}>
+          AI-Proposed Internet Access Policies
+        </button>
+
+        <button type="button" id="sa-ai-testurls-btn" class="sa-btn sa-btn-secondary"
+                onclick="openAiTestUrls()">
+          Show Test URLs
+        </button>
+      </div>
+    </div>
+
+    <!-- AI-Proposed test-cases popup -->
+    <div id="sa-ai-testurls-modal" class="sa-modal-overlay" onclick="if(event.target===this)closeAiTestUrls()">
+      <div class="sa-modal">
+        <div class="sa-modal-head">
+          <h4 style="margin:0;">AI-Proposed Internet Access &mdash; Test URLs</h4>
+          <button type="button" class="sa-modal-close" onclick="closeAiTestUrls()" aria-label="Close">&times;</button>
+        </div>
+        <p style="color:#666; font-size:0.85em; margin:0 0 14px; line-height:1.5;">
+          Open these from a device behind Secure Access (roaming/AD user) to verify each AI-proposed rule.
+          Links open in a new tab. Expected outcomes assume HTTPS Decryption is enabled.
+        </p>
+        <div style="overflow-x:auto;">
+          <table class="sa-table" style="width:100%;">
+            <thead>
+              <tr>
+                <th>Use case</th>
+                <th>Expected</th>
+                <th>Test destinations</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Anonymizers &amp; evasion</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td>
+                  <a href="https://www.proxysite.com" target="_blank" rel="noopener noreferrer">proxysite.com</a><br>
+                  <a href="https://hide.me/en/proxy" target="_blank" rel="noopener noreferrer">hide.me proxy</a><br>
+                  <a href="https://www.torproject.org" target="_blank" rel="noopener noreferrer">torproject.org</a>
+                </td>
+              </tr>
+              <tr>
+                <td>Unknown / risky domains</td>
+                <td><span class="sa-tag sa-tag-isolate">Isolate</span></td>
+                <td>
+                  <a href="https://www.noip.com" target="_blank" rel="noopener noreferrer">noip.com (Dynamic DNS)</a><br>
+                  <a href="https://www.duckdns.org" target="_blank" rel="noopener noreferrer">duckdns.org (Dynamic DNS)</a>
+                  <div style="color:#999; font-size:0.92em;">Newly-seen domains have no fixed test URL &mdash; any freshly registered domain triggers this rule.</div>
+                </td>
+              </tr>
+              <tr>
+                <td>File sharing &amp; piracy</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td>
+                  <a href="https://thepiratebay.org" target="_blank" rel="noopener noreferrer">thepiratebay.org</a><br>
+                  <a href="https://www.mediafire.com" target="_blank" rel="noopener noreferrer">mediafire.com</a><br>
+                  <a href="https://wetransfer.com" target="_blank" rel="noopener noreferrer">wetransfer.com</a>
+                </td>
+              </tr>
+              <tr>
+                <td>Unacceptable use (AUP)</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td>
+                  <span class="sa-browser-none">Adult / weapons / drugs / hate content &mdash; not linked here for
+                  appropriateness. Browse any site in these categories to verify the block page.</span>
+                </td>
+              </tr>
+              <tr>
+                <td>Sanctioned AI</td>
+                <td><span class="sa-tag sa-tag-allow">Allow</span></td>
+                <td><a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer">chatgpt.com</a></td>
+              </tr>
+              <tr>
+                <td>Other Gen AI</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td>
+                  <a href="https://gemini.google.com" target="_blank" rel="noopener noreferrer">gemini.google.com</a><br>
+                  <a href="https://claude.ai" target="_blank" rel="noopener noreferrer">claude.ai</a><br>
+                  <a href="https://www.deepseek.com" target="_blank" rel="noopener noreferrer">deepseek.com</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ══════════════════════════════════════════ -->
@@ -893,13 +1006,24 @@
     document.getElementById('sa-testurls-modal').classList.remove('open');
   }
 
+  function openAiTestUrls() {
+    document.getElementById('sa-ai-testurls-modal').classList.add('open');
+  }
+
+  function closeAiTestUrls() {
+    document.getElementById('sa-ai-testurls-modal').classList.remove('open');
+  }
+
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') { closeBrowserUrls(); closeTestUrls(); }
+    if (e.key === 'Escape') { closeBrowserUrls(); closeTestUrls(); closeAiTestUrls(); }
   });
 
-  // Deep link: /secure-access#test-urls opens the test-cases popup directly.
+  // Deep links: open the matching popup directly.
   if (window.location.hash === '#test-urls') {
     document.addEventListener('DOMContentLoaded', openTestUrls);
+  }
+  if (window.location.hash === '#ai-test-urls') {
+    document.addEventListener('DOMContentLoaded', openAiTestUrls);
   }
 
   function loadBrowserUrls() {

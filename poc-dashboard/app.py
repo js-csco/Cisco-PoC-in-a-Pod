@@ -22,6 +22,9 @@ from scripts.csa_scripts.create_int_policy import (
     create_allow_all_policy,
     create_url_filtering_policies
 )
+from scripts.csa_scripts.create_ai_int_policy import (
+    create_ai_proposed_policies
+)
 from scripts.csa_scripts.create_dlp_rules import (
     create_ai_guardrail_rule,
     create_scoped_ai_guardrail_rule,
@@ -222,6 +225,15 @@ def secure_access():
                 allow_all = create_allow_all_policy(token)
 
                 flash("✅ Internet Access policies created.")
+
+            # Action: CREATE AI-PROPOSED INTERNET ACCESS
+            elif action == "create_ai_internet":
+                if not session.get("authenticated"):
+                    flash("⚠️ Please authenticate first.")
+                    return redirect(url_for("secure_access"))
+
+                create_ai_proposed_policies(token)
+                flash("✅ AI-Proposed Internet Access policies created.")
 
 
         except Exception as e:
