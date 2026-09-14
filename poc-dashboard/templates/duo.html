@@ -661,21 +661,33 @@
     <ol class="duo-steps">
       <li>
         Go to <strong>Monitoring &rarr; Cisco Identity Intelligence</strong> and click
-        <strong>"Connect to Cisco Identity Intelligence"</strong>.
+        <strong>"Connect to Cisco Identity Intelligence"</strong>. <span style="color:#999;">(manual — no API)</span>
       </li>
       <li>
-        Click on <strong>"Set Up SSO Access"</strong>.
+        Click on <strong>"Set Up SSO Access"</strong> — this auto-creates the <strong>cii-sso-&hellip;</strong>
+        SSO application. <span style="color:#999;">(manual — no API)</span>
       </li>
       <li>
-        On the Application Page, click on the app called <strong>cii-sso-&hellip;</strong> and add the
-        <strong>PoC Users</strong> group to <em>"Enable only for permitted groups"</em> under the
-        <strong>User Access</strong> section.
+        Restrict that <strong>cii-sso-&hellip;</strong> app to the <strong>PoC Users</strong> group.
+        <span style="color:#2e7d32; font-weight:600;">Automated &mdash; use the button below.</span>
       </li>
       <li>
         Go back to <strong>Monitoring &rarr; Cisco Identity Intelligence</strong> and click
-        <strong>"Launch Identity Intelligence"</strong>.
+        <strong>"Launch Identity Intelligence"</strong>. <span style="color:#999;">(manual — no API)</span>
       </li>
     </ol>
+
+    <div class="duo-info duo-info-blue" style="margin:14px 0;">
+      <strong>Assign PoC Users</strong> finds the auto-created <code>cii-sso-…</code> application via the Duo
+      Admin API and restricts it to the <strong>PoC Users</strong> group (<em>User Access &rarr; permitted
+      groups</em>). Run it after step 2.
+    </div>
+
+    <button type="submit" name="action" value="assign_cii_group"
+            class="duo-btn {% if session.get('duo_authenticated') %}duo-btn-primary{% else %}duo-btn-disabled{% endif %}"
+            {% if not session.get('duo_authenticated') %}disabled{% endif %}>
+      Assign PoC Users to Identity Intelligence App
+    </button>
   </div>
 
   {{ super() }}

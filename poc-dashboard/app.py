@@ -366,6 +366,19 @@ def duo():
                 else:
                     flash(f"⚠️ {result['error']}")
 
+            # Action: ASSIGN POC USERS TO IDENTITY INTELLIGENCE SSO APP
+            if action == 'assign_cii_group':
+                from scripts.duo.duo_automation import assign_group_to_identity_intelligence
+                result = assign_group_to_identity_intelligence(
+                    api_hostname=api_hostname,
+                    integration_key=integration_key,
+                    secret_key=secret_key,
+                )
+                if result['success']:
+                    flash(f"✅ Restricted '{result['integration_name']}' to the PoC Users group.")
+                else:
+                    flash(f"⚠️ {result['error']}")
+
             # Action: CREATE SAML APP
             if action == 'create_saml_app':
                 from scripts.duo.duo_automation import (

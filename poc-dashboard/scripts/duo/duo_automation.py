@@ -459,6 +459,75 @@ def create_integration(api_hostname, integration_key, secret_key, name, integrat
         return result
 
 
+def assign_group_to_identity_intelligence(api_hostname, integration_key, secret_key, group_name="PoC Users"):
+    """
+    Automate the one Identity Intelligence onboarding step that has an API:
+    restrict the auto-created Cisco Identity Intelligence SSO app (cii-sso-…)
+    to the given group.
+
+    The "Connect to Identity Intelligence", "Set Up SSO Access" and "Launch"
+    steps have no Duo Admin API (only oort_* audit events), so they stay manual.
+    But once "Set Up SSO Access" has created the cii-sso app, adding the PoC
+    Users group to its User Access is just an integration update, which we can do
+    via POST /admin/v3/integrations/{key} (user_access + groups_allowed).
+
+    Returns dict with 'success', 'integration_name', and 'error' keys.
+    """
+    admin_api = duo_client.Admin(
+        ikey=integration_key,
+        skey=secret_key,
+        host=api_hostname,
+    )
+
+    result = {'success': False, 'integration_name': None, 'error': None}
+
+    try:
+        # 1. Resolve the group ID
+        groups = admin_api.json_api_call('GET', '/admin/v1/groups', {})
+        group_id = None
+        for group in (groups if isinstance(groups, list) else []):
+            if group.get('name') == group_name:
+                group_id = group.get('group_id')
+                break
+        if not group_id:
+            result['error'] = f"Group '{group_name}' not found. Create users/groups first."
+            return result
+
+        # 2. Find the Cisco Identity Intelligence SSO integration (cii-sso-…)
+        integrations = admin_api.json_api_call('GET', '/admin/v3/integrations', {})
+        cii = None
+        for integration in (integrations if isinstance(integrations, list) else []):
+            name = (integration.get('name') or '').lower()
+            itype = (integration.get('type') or '').lower()
+            if itype.startswith('cii') or 'cii-sso' in name or 'identity intelligence' in name:
+                cii = integration
+                break
+        if not cii:
+            result['error'] = (
+                "No Cisco Identity Intelligence SSO app (cii-sso-…) found. "
+                "Click 'Set Up SSO Access' in Duo Identity Intelligence first, then retry."
+            )
+            return result
+
+        app_ikey = cii.get('integration_key')
+        result['integration_name'] = cii.get('name')
+
+        # 3. Restrict the app to the PoC Users group
+        admin_api.json_api_call(
+            'POST',
+            f'/admin/v3/integrations/{app_ikey}',
+            {'user_access': 'PERMITTED_GROUPS', 'groups_allowed': [group_id]},
+        )
+        result['success'] = True
+        print(f"✅ Restricted '{cii.get('name')}' to group '{group_name}'")
+        return result
+
+    except Exception as e:
+        result['error'] = f"Failed to assign group to Identity Intelligence app: {str(e)}"
+        print(f"❌ {result['error']}")
+        return result
+
+
 def get_integration_metadata_url(api_hostname, integration_key, secret_key, app_integration_key):
     """
     Retrieve the IdP SAML metadata URL for an SSO integration.
