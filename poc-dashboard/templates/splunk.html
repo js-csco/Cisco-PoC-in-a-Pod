@@ -536,7 +536,7 @@
   </div>
 
   <!-- DefenseClaw dashboard (consolidated here) -->
-  <form method="POST">
+  <form method="POST" style="margin-bottom:16px;">
     <button type="submit" name="action" value="create_defenseclaw_dashboard"
             style="background:#0066ff; color:#fff; border:none; padding:10px 22px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.9em;">
       Create DefenseClaw dashboard
@@ -546,6 +546,21 @@
       events to the internal HEC).
     </span>
   </form>
+
+  <!-- 'PoC in a Pod' app + splunker user + dashboards -->
+  <div style="border-top:1px solid #eef0f3; padding-top:16px;">
+    <form method="POST">
+      <button type="submit" name="action" value="build_poc_app"
+              style="background:#0b7a3b; color:#fff; border:none; padding:11px 26px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.92em;">
+        Build “PoC in a Pod” app
+      </button>
+      <span style="font-size:0.82em; color:#999; margin-left:10px;">
+        Creates the <strong>splunker</strong> user and the <strong>PoC in a Pod</strong> app with dashboards:
+        Overview, VM Metrics &amp; More, Zero Trust — All Connections, Identity Intelligence, Duo Authentication,
+        Secure Access, and Runtime &amp; Network Security.
+      </span>
+    </form>
+  </div>
 </section>
 
 <!-- ══════════════════════════════════════════════ KUBERNETES INFRASTRUCTURE -->

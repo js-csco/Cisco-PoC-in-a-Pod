@@ -1010,6 +1010,19 @@ def splunk():
                 flash(f"⚠️ DefenseClaw dashboard creation failed: {e}")
             return redirect(url_for('splunk'))
 
+        # ── Build the 'PoC in a Pod' Splunk app (splunker user + dashboards) ──
+        if action == 'build_poc_app':
+            from scripts.splunk_app import build_app, APP_LABEL, SPLUNKER_USER
+            try:
+                res = build_app()
+                flash(f"✅ '{APP_LABEL}' app built — user '{SPLUNKER_USER}' {res.get('user') or 'ready'}, "
+                      f"{len(res.get('views', []))} dashboards.")
+                for err in res.get('errors', []):
+                    flash(f"⚠️ {err}")
+            except Exception as e:
+                flash(f"⚠️ Failed to build the app: {e}")
+            return redirect(url_for('splunk'))
+
     splunk_available = is_available()
     app_status = get_splunkbase_app_status() if splunk_available else {}
 
