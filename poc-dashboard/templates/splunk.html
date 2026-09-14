@@ -91,6 +91,32 @@
       </span>
     </div>
   </form>
+
+  <!-- Splunk.com credentials (for Splunkbase Cisco apps) — saved for this session -->
+  <div style="border-top:1px solid #ffe0a3; margin-top:18px; padding-top:16px;">
+    <label style="display:block; font-size:0.85em; font-weight:600; color:#555; margin-bottom:6px;">
+      Splunk.com credentials <span style="font-weight:400; color:#999;">(optional — only to auto-install the Cisco Splunkbase apps)</span>
+    </label>
+    <p style="font-size:0.8em; color:#777; margin:0 0 10px; line-height:1.5;">
+      Bring a free <a href="https://www.splunk.com" target="_blank" rel="noopener">splunk.com</a> account. Saved
+      for this session so <strong>Run Splunk automation</strong> can install the Cisco apps for you.
+    </p>
+    <form method="POST" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+      <input type="text" name="splunkbase_username" placeholder="Splunk.com username"
+             value="{{ session.get('splunkbase_username','') }}"
+             style="flex:1; min-width:200px; padding:9px 12px; border:1px solid #e0c88a; border-radius:6px; font-size:0.88em;">
+      <input type="password" name="splunkbase_password" placeholder="Splunk.com password"
+             {% if session.get('splunkbase_password') %}value="••••••••••••"{% endif %}
+             style="flex:1; min-width:200px; padding:9px 12px; border:1px solid #e0c88a; border-radius:6px; font-size:0.88em;">
+      <button type="submit" name="action" value="save_splunk_creds"
+              style="background:#333; color:#fff; border:none; padding:9px 20px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.88em; white-space:nowrap;">
+        Save credentials
+      </button>
+    </form>
+    {% if session.get('splunkbase_username') %}
+    <div style="font-size:0.8em; color:#2e7d32; margin-top:8px;">✓ Splunk.com credentials saved for this session.</div>
+    {% endif %}
+  </div>
 </section>
 
 <script>
@@ -310,11 +336,13 @@
   <form method="POST">
     <input type="hidden" name="action" value="install_app">
 
-    <!-- Splunkbase credentials (only needed for app install) -->
+    <!-- Splunkbase credentials (only needed for app install; pre-filled from session) -->
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center;">
       <input type="text" name="splunkbase_username" placeholder="Splunk.com username"
+             value="{{ session.get('splunkbase_username','') }}"
              style="flex:1; min-width:160px; padding:8px 12px; border:1px solid #e0e0e0; border-radius:6px; font-size:0.85em; color:#333;">
       <input type="password" name="splunkbase_password" placeholder="Password"
+             {% if session.get('splunkbase_password') %}value="••••••••••••"{% endif %}
              style="flex:1; min-width:140px; padding:8px 12px; border:1px solid #e0e0e0; border-radius:6px; font-size:0.85em; color:#333;">
     </div>
 
@@ -492,7 +520,8 @@
       <span style="font-size:0.85em; color:#2e7d32; line-height:1.5;">
         One click, run after Splunk is up: provisions per-component indexes + the UF receiver (9997), builds the
         <strong>“PoC in a Pod”</strong> app (+ <code>splunker</code> user &amp; dashboards), deploys every cloud
-        collector whose credentials you've already entered, and creates the DefenseClaw dashboard.
+        collector whose credentials you've already entered, creates the DefenseClaw dashboard, and — if your
+        Splunk.com credentials are saved — installs the Cisco Splunkbase apps and restarts Splunk.
       </span>
     </form>
   </div>

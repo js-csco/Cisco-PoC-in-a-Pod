@@ -939,8 +939,16 @@ def splunk():
         if action == 'install_app':
             from scripts.splunk import install_splunkbase_app
             app_id  = request.form.get('app_id', '').strip()
-            sb_user = request.form.get('splunkbase_username', '').strip()
+            sb_user = request.form.get('splunkbase_username', '').strip() or session.get('splunkbase_username', '')
             sb_pass = request.form.get('splunkbase_password', '').strip()
+            # Ignore the masked placeholder; fall back to the session-stored password
+            if not sb_pass or sb_pass.startswith('•'):
+                sb_pass = session.get('splunkbase_password', '')
+            # Persist whatever was explicitly entered for reuse by the orchestration
+            if sb_user:
+                session['splunkbase_username'] = sb_user
+            if sb_pass:
+                session['splunkbase_password'] = sb_pass
             if not app_id or not sb_user or not sb_pass:
                 flash("App ID, Splunk.com username, and password are all required.")
             else:
@@ -952,6 +960,18 @@ def splunk():
                         flash(f"{app_name} installed — restart Splunk to activate.")
                     except Exception as e:
                         flash(f"{app_name} install failed: {e}")
+            return redirect(url_for('splunk'))
+
+        # ── Save Splunk.com credentials in session (for Cisco app install) ──
+        if action == 'save_splunk_creds':
+            sb_user = request.form.get('splunkbase_username', '').strip()
+            sb_pass = request.form.get('splunkbase_password', '').strip()
+            if sb_user:
+                session['splunkbase_username'] = sb_user
+            # Ignore the masked placeholder so we don't overwrite a stored password
+            if sb_pass and not sb_pass.startswith('•'):
+                session['splunkbase_password'] = sb_pass
+            flash("✅ Splunk.com credentials saved for this session.")
             return redirect(url_for('splunk'))
 
         # ── Send to Splunk: per-component indexes + receiver ────────────────
@@ -1041,6 +1061,30 @@ def splunk():
                 steps.append("DefenseClaw dashboard created")
             except Exception as e:
                 steps.append(f"DefenseClaw dashboard skipped ({e})")
+
+            # 5) Cisco Splunkbase apps (coexist) — only if Splunk.com creds are saved
+            sb_user = session.get('splunkbase_username')
+            sb_pass = session.get('splunkbase_password')
+            if sb_user and sb_pass:
+                from scripts.splunk import install_splunkbase_app, restart_splunk
+                # Add-on before app; Security Cloud last.
+                cisco_app_ids = [7569, 5558, 7404]
+                installed = []
+                for aid in cisco_app_ids:
+                    try:
+                        install_splunkbase_app(aid, sb_user, sb_pass)
+                        installed.append(str(aid))
+                    except Exception as e:
+                        steps.append(f"⚠️ Splunkbase app {aid}: {e}")
+                if installed:
+                    steps.append("Installed Cisco apps: " + ", ".join(installed))
+                    try:
+                        restart_splunk()
+                        steps.append("Splunk restarting to activate the apps (~2 min)")
+                    except Exception as e:
+                        steps.append(f"⚠️ restart after app install: {e}")
+            else:
+                steps.append("Cisco Splunkbase apps skipped (save Splunk.com credentials to include)")
 
             flash("✅ Splunk automation complete.")
             for s in steps:
