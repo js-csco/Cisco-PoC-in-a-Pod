@@ -24,15 +24,15 @@ _ISOLATION_POLICY_NAME = "ai-agent-isolation"
 NAMESPACE = "defenseclaw"
 DEPLOYMENT_NAME = "ai-agent"
 
-# DefenseClaw v0.2.0 release artifacts
-DEFENSECLAW_VERSION = "0.2.0"
-DEFENSECLAW_TARBALL = (
-    f"https://github.com/cisco-ai-defense/defenseclaw/releases/download/"
-    f"{DEFENSECLAW_VERSION}/defenseclaw_{DEFENSECLAW_VERSION}_linux_amd64.tar.gz"
-)
-DEFENSECLAW_WHEEL = (
-    f"https://github.com/cisco-ai-defense/defenseclaw/releases/download/"
-    f"{DEFENSECLAW_VERSION}/defenseclaw-{DEFENSECLAW_VERSION}-py3-none-any.whl"
+# DefenseClaw is installed via its official install script, which lays down the
+# Go gateway (defenseclaw-gateway), the Python CLI, and — with
+# `--connector openclaw` — the OpenClaw runtime and the DefenseClaw plugin.
+# Leave DEFENSECLAW_VERSION empty to install the latest release (the container
+# resolves the latest tag from the GitHub API at deploy time).
+DEFENSECLAW_VERSION = os.environ.get("DEFENSECLAW_VERSION", "")  # "" => latest
+DEFENSECLAW_INSTALL_URL = os.environ.get(
+    "DEFENSECLAW_INSTALL_URL",
+    "https://raw.githubusercontent.com/cisco-ai-defense/defenseclaw/main/scripts/install.sh",
 )
 
 # Splunk HEC for audit event forwarding
@@ -82,25 +82,26 @@ def get_status():
         ready = dep.status.ready_replicas or 0
         overall = "running" if ready >= desired else "starting"
 
-        # Both containers live in the same pod — report per-container status
-        # from the pod's container statuses if available.
+        # OpenClaw and DefenseClaw now run co-located in a single "ai-agent"
+        # container (matching DefenseClaw's supported single-host install flow).
+        # Report both logical components from that one container's status.
+        state, ready_n = overall, ready
         pod_list = core.list_namespaced_pod(
             NAMESPACE, label_selector=f"app={DEPLOYMENT_NAME}", limit=1
         )
         if pod_list.items:
-            pod = pod_list.items[0]
-            for cs in (pod.status.container_statuses or []):
-                key = "openclaw" if cs.name == "openclaw" else "gateway"
+            css = pod_list.items[0].status.container_statuses or []
+            cs = next((c for c in css if c.name == DEPLOYMENT_NAME),
+                      (css[0] if css else None))
+            if cs is not None:
                 if cs.ready:
-                    status[key] = {"ready": 1, "desired": 1, "state": "running"}
+                    state, ready_n = "running", 1
                 elif cs.state and cs.state.waiting:
-                    reason = cs.state.waiting.reason or "waiting"
-                    status[key] = {"ready": 0, "desired": 1, "state": reason}
+                    state, ready_n = (cs.state.waiting.reason or "waiting"), 0
                 else:
-                    status[key] = {"ready": 0, "desired": 1, "state": overall}
-        else:
-            for key in ("gateway", "openclaw"):
-                status[key] = {"ready": ready, "desired": desired, "state": overall}
+                    state, ready_n = overall, 0
+        status["openclaw"] = {"ready": ready_n, "desired": 1, "state": state}
+        status["gateway"] = {"ready": ready_n, "desired": 1, "state": state}
     except ApiException:
         pass
 
@@ -224,21 +225,20 @@ def deploy_environment():
         else:
             raise
 
-    # ── 3. Deployment: two containers in one Pod ─────────────────────────
-    # Shared volume for configs (read-only from ConfigMap)
+    # ── 3. Deployment: single co-located "ai-agent" container ────────────
+    # DefenseClaw's supported flow is single-host: its installer lays down the
+    # Go gateway, the Python CLI and the OpenClaw plugin, and
+    # `defenseclaw init --enable-guardrail` patches openclaw.json so OpenClaw's
+    # LLM traffic is routed through the guardrail proxy. We run OpenClaw and
+    # DefenseClaw together in one container so that config patching and the
+    # localhost wiring (guardrail proxy + gateway REST) work exactly as
+    # documented — the two logical components still live in one Pod.
     config_volume = client.V1Volume(
         name="config",
         config_map=client.V1ConfigMapVolumeSource(name="ai-agent-config"),
     )
-    # Shared emptyDir for OpenClaw's home dir — both containers can
-    # read/write, so DefenseClaw can read the token from the live config
-    openclaw_home = client.V1Volume(
-        name="openclaw-home",
-        empty_dir=client.V1EmptyDirVolumeSource(),
-    )
     data_volume = client.V1Volume(name="data", empty_dir=client.V1EmptyDirVolumeSource())
 
-    # Secret reference for the API key
     api_key_env = client.V1EnvVar(
         name="ANTHROPIC_API_KEY",
         value_from=client.V1EnvVarSource(
@@ -248,117 +248,92 @@ def deploy_environment():
         ),
     )
 
-    # Shared token env var for both containers
-    token_env = client.V1EnvVar(name="OPENCLAW_AUTH_TOKEN", value=shared_token)
+    env = [
+        api_key_env,
+        client.V1EnvVar(name="OPENCLAW_AUTH_TOKEN", value=shared_token),
+        client.V1EnvVar(name="DEFENSECLAW_VERSION", value=DEFENSECLAW_VERSION),
+        client.V1EnvVar(name="DEFENSECLAW_INSTALL_URL", value=DEFENSECLAW_INSTALL_URL),
+        client.V1EnvVar(name="DEFENSECLAW_HEC_URL",
+                        value=f"{SPLUNK_HEC_URL}/services/collector/event"),
+        client.V1EnvVar(name="DEFENSECLAW_HEC_TOKEN", value=HEC_TOKEN),
+        client.V1EnvVar(name="DEFENSECLAW_INDEX", value="defenseclaw"),
+        client.V1EnvVar(name="DEFENSECLAW_SOURCETYPE", value="defenseclaw:json"),
+        client.V1EnvVar(name="DEFENSECLAW_INTEGRATION_ENABLED", value="true"),
+    ]
 
-    # ── Container 1: OpenClaw ────────────────────────────────────────────
-    openclaw_container = client.V1Container(
-        name="openclaw",
-        image="node:24-slim",
+    # Pure-shell startup (values come from env vars, so no Python interpolation).
+    startup_script = textwrap.dedent("""\
+        set -e
+        export DEBIAN_FRONTEND=noninteractive
+        echo "[ai-agent] Installing OS dependencies..."
+        apt-get update -qq
+        apt-get install -y -qq python3 python3-venv python3-pip curl ca-certificates tar git >/dev/null 2>&1
+
+        export HOME=/root
+        export OPENCLAW_HOME=/data/openclaw-home
+        mkdir -p "$OPENCLAW_HOME" "$HOME/.defenseclaw"
+        export PATH="$HOME/.local/bin:$PATH"
+
+        # Resolve the DefenseClaw version to install (default: latest release).
+        VERSION="$DEFENSECLAW_VERSION"
+        if [ -z "$VERSION" ]; then
+            VERSION="$(curl -fsSL https://api.github.com/repos/cisco-ai-defense/defenseclaw/releases/latest \\
+                | grep -o '"tag_name": *"[^"]*"' | head -1 | cut -d'"' -f4)"
+        fi
+        echo "[ai-agent] Installing DefenseClaw ${VERSION:-latest} + OpenClaw runtime + plugin..."
+
+        # Official installer: Go gateway (~/.local/bin/defenseclaw-gateway) + Python CLI +
+        # (with --connector openclaw) the OpenClaw runtime and the DefenseClaw plugin.
+        curl -LsSf "$DEFENSECLAW_INSTALL_URL" | VERSION="$VERSION" bash -s -- --connector openclaw </dev/null
+
+        # Activate the DefenseClaw CLI venv if the installer created one.
+        [ -f "$HOME/.defenseclaw/.venv/bin/activate" ] && . "$HOME/.defenseclaw/.venv/bin/activate" || true
+
+        # Configure the OpenClaw gateway (shared auth token, LAN bind, control UI, model).
+        echo "[ai-agent] Configuring OpenClaw gateway..."
+        openclaw config set gateway.mode local
+        openclaw config set gateway.bind lan
+        openclaw config set gateway.port 18789
+        openclaw config set gateway.auth.token "$OPENCLAW_AUTH_TOKEN"
+        openclaw config set gateway.controlUi.allowedOrigins '["*"]'
+        openclaw config set gateway.controlUi.allowInsecureAuth true
+        openclaw config set gateway.controlUi.dangerouslyDisableDeviceAuth true
+        openclaw config set agents.defaults.model.primary anthropic/claude-sonnet-5 || true
+
+        # Initialize DefenseClaw + enable the guardrail: installs the OpenClaw plugin
+        # and patches openclaw.json to route LLM calls through the guardrail proxy.
+        echo "[ai-agent] Initializing DefenseClaw guardrail + plugin..."
+        defenseclaw init --enable-guardrail --yes 2>&1 || true
+
+        # Apply our gateway config (Splunk SIEM + shared token) after init.
+        cp /config/config.yaml "$HOME/.defenseclaw/config.yaml" 2>/dev/null || true
+
+        # Start the DefenseClaw gateway sidecar (REST 18790 + guardrail proxy) in the
+        # background, then run the OpenClaw gateway in the foreground.
+        echo "[ai-agent] Starting DefenseClaw gateway sidecar..."
+        ( defenseclaw-gateway 2>&1 | sed 's/^/[gateway] /' ) &
+
+        echo "[ai-agent] Starting OpenClaw gateway..."
+        exec openclaw gateway
+    """)
+
+    ai_agent_container = client.V1Container(
+        name=DEPLOYMENT_NAME,
+        image="node:22-bookworm-slim",
         command=["/bin/sh", "-c"],
-        args=[textwrap.dedent("""\
-            set -e
-            echo "[openclaw] Installing OpenClaw..."
-            npm install -g openclaw@2026.8.2 2>&1 | tail -5
-
-            # Seed config into shared home dir
-            mkdir -p /openclaw-home
-            cp /config/openclaw.json /openclaw-home/openclaw.json
-            export OPENCLAW_HOME=/openclaw-home
-
-            # Use CLI to set gateway config (authoritative, survives rewrites)
-            echo "[openclaw] Configuring gateway..."
-            openclaw config set gateway.mode local
-            openclaw config set gateway.bind lan
-            openclaw config set gateway.port 18789
-            openclaw config set gateway.auth.token "$OPENCLAW_AUTH_TOKEN"
-            openclaw config set gateway.controlUi.allowedOrigins '["*"]'
-            openclaw config set gateway.controlUi.allowInsecureAuth true
-            openclaw config set gateway.controlUi.dangerouslyDisableDeviceAuth true
-
-            echo "[openclaw] Starting gateway..."
-            exec openclaw gateway
-        """)],
+        args=[startup_script],
         ports=[
             client.V1ContainerPort(container_port=18789, name="webchat"),
-        ],
-        env=[api_key_env, token_env],
-        volume_mounts=[
-            client.V1VolumeMount(name="config", mount_path="/config", read_only=True),
-            client.V1VolumeMount(name="openclaw-home", mount_path="/openclaw-home"),
-            client.V1VolumeMount(name="data", mount_path="/data"),
-        ],
-        resources=client.V1ResourceRequirements(
-            requests={"memory": "512Mi", "cpu": "200m"},
-            limits={"memory": "1Gi", "cpu": "1"},
-        ),
-    )
-
-    # ── Container 2: DefenseClaw ─────────────────────────────────────────
-    defenseclaw_container = client.V1Container(
-        name="defenseclaw",
-        image="python:3.12-slim",
-        command=["/bin/sh", "-c"],
-        args=[textwrap.dedent("""\
-            set -e
-            apt-get update -qq && apt-get install -y -qq curl >/dev/null 2>&1
-
-            echo "[defenseclaw] Downloading binary v{version}..."
-            mkdir -p /tmp/defenseclaw-release
-            curl -fsSL "{tarball}" | tar xz -C /tmp/defenseclaw-release
-            cp /tmp/defenseclaw-release/defenseclaw /usr/local/bin/defenseclaw-gw
-            chmod +x /usr/local/bin/defenseclaw-gw
-
-            echo "[defenseclaw] Installing CLI..."
-            pip install --quiet "{wheel}"
-
-            # Write config (includes shared auth token)
-            mkdir -p /root/.defenseclaw
-            cp /config/config.yaml /root/.defenseclaw/config.yaml
-
-            echo "[defenseclaw] Initializing..."
-            defenseclaw init 2>&1 || true
-
-            # Wait for OpenClaw to be ready (shares localhost in the pod)
-            echo "[defenseclaw] Waiting for OpenClaw gateway on localhost:18789..."
-            for i in $(seq 1 30); do
-                if curl -sf http://localhost:18789/ >/dev/null 2>&1; then
-                    echo "[defenseclaw] OpenClaw is ready."
-                    break
-                fi
-                sleep 2
-            done
-
-            echo "[defenseclaw] Starting gateway..."
-            exec defenseclaw-gw
-        """.format(
-            version=DEFENSECLAW_VERSION,
-            tarball=DEFENSECLAW_TARBALL,
-            wheel=DEFENSECLAW_WHEEL,
-        ))],
-        ports=[
             client.V1ContainerPort(container_port=18790, name="api"),
-            client.V1ContainerPort(container_port=4000, name="guardrail"),
         ],
-        env=[
-            api_key_env,
-            token_env,
-            client.V1EnvVar(name="DEFENSECLAW_HEC_URL",
-                            value=f"{SPLUNK_HEC_URL}/services/collector/event"),
-            client.V1EnvVar(name="DEFENSECLAW_HEC_TOKEN", value=HEC_TOKEN),
-            client.V1EnvVar(name="DEFENSECLAW_INDEX", value="defenseclaw"),
-            client.V1EnvVar(name="DEFENSECLAW_SOURCETYPE", value="defenseclaw:json"),
-            client.V1EnvVar(name="DEFENSECLAW_INTEGRATION_ENABLED", value="true"),
-        ],
+        env=env,
         volume_mounts=[
             client.V1VolumeMount(name="config", mount_path="/config", read_only=True),
-            client.V1VolumeMount(name="openclaw-home", mount_path="/openclaw-home",
-                                 read_only=True),
             client.V1VolumeMount(name="data", mount_path="/data"),
         ],
         resources=client.V1ResourceRequirements(
-            requests={"memory": "256Mi", "cpu": "100m"},
-            limits={"memory": "768Mi", "cpu": "500m"},
+            requests={"memory": "768Mi", "cpu": "300m"},
+            limits={"memory": "2Gi", "cpu": "1500m"},
         ),
     )
 
@@ -370,8 +345,8 @@ def deploy_environment():
             template=client.V1PodTemplateSpec(
                 metadata=client.V1ObjectMeta(labels={"app": DEPLOYMENT_NAME}),
                 spec=client.V1PodSpec(
-                    containers=[openclaw_container, defenseclaw_container],
-                    volumes=[config_volume, openclaw_home, data_volume],
+                    containers=[ai_agent_container],
+                    volumes=[config_volume, data_volume],
                 ),
             ),
         ),
@@ -380,7 +355,17 @@ def deploy_environment():
         apps.create_namespaced_deployment(NAMESPACE, dep)
     except ApiException as e:
         if e.status == 409:
-            apps.patch_namespaced_deployment(DEPLOYMENT_NAME, NAMESPACE, dep)
+            # The container shape changed (was two containers): delete and recreate
+            # rather than strategic-merge patch, which would leave stale containers.
+            import time as _time
+            apps.delete_namespaced_deployment(DEPLOYMENT_NAME, NAMESPACE)
+            for _ in range(30):
+                try:
+                    apps.read_namespaced_deployment(DEPLOYMENT_NAME, NAMESPACE)
+                    _time.sleep(1)
+                except ApiException:
+                    break
+            apps.create_namespaced_deployment(NAMESPACE, dep)
         else:
             raise
 
@@ -448,11 +433,14 @@ def _build_isolation_policy():
                                    {"port": "53", "protocol": "TCP"}]}
                     ],
                 },
-                # Allow Splunk HEC (audit event forwarding)
+                # Allow Splunk HEC (audit event forwarding).
+                # NOTE: the Splunk pods are labelled `app: splunk` (see
+                # k8s/splunk-deployment.yaml) — matching the wrong label here
+                # would silently block HEC egress whenever the agent is isolated.
                 {
                     "toEndpoints": [
                         {"matchLabels": {"k8s:io.kubernetes.pod.namespace": "piap",
-                                         "io.kompose.service": "splunk"}}
+                                         "app": "splunk"}}
                     ],
                     "toPorts": [
                         {"ports": [{"port": "8088", "protocol": "TCP"}]}
