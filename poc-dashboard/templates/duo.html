@@ -688,8 +688,113 @@
             {% if not session.get('duo_authenticated') %}disabled{% endif %}>
       Assign PoC Users to Identity Intelligence App
     </button>
+
+    <!-- Identity Intelligence public API — Risky Users -->
+    <div class="duo-sub" style="margin-top:26px;">
+      <div class="duo-sub-head">
+        <div class="duo-sub-bar"></div>
+        <h4>Identity Intelligence API &mdash; Risky Users</h4>
+      </div>
+      <p style="color:#555; font-size:0.9em; margin:0 0 12px; line-height:1.6;">
+        Connect the Identity Intelligence <strong>public API</strong> to view end-user risk here and (on the
+        Splunk tab) stream it into Splunk. Create credentials once in Identity Intelligence:
+        <em>Integrations &rarr; Add Integration &rarr; Add API Client &rarr; Copy all</em>. The API client itself
+        can't be created via API, so this one-time step is manual &mdash; everything after is automated.
+      </p>
+
+      {% if not session.get('cii_authenticated') %}
+      <div class="duo-grid-2" style="gap:10px;">
+        <div class="duo-field">
+          <label class="duo-label">Token URL</label>
+          <input type="text" name="cii_token_url" placeholder="https://…/oauth/token"
+                 value="{{ session.get('cii_token_url','') }}" class="duo-input">
+        </div>
+        <div class="duo-field">
+          <label class="duo-label">API URL (GraphQL)</label>
+          <input type="text" name="cii_api_url" placeholder="https://api.&lt;region&gt;.oort.io/graphql"
+                 value="{{ session.get('cii_api_url','') }}" class="duo-input">
+        </div>
+        <div class="duo-field">
+          <label class="duo-label">Client ID</label>
+          <input type="text" name="cii_client_id" placeholder="Client ID"
+                 value="{{ session.get('cii_client_id','') }}" class="duo-input">
+        </div>
+        <div class="duo-field">
+          <label class="duo-label">Client Secret</label>
+          <input type="password" name="cii_client_secret" placeholder="Client Secret" class="duo-input">
+        </div>
+        <div class="duo-field">
+          <label class="duo-label">Audience <span style="color:#999;">(optional; clients created before Sept 2025)</span></label>
+          <input type="text" name="cii_audience" placeholder="https://api.oort.io"
+                 value="{{ session.get('cii_audience','') }}" class="duo-input">
+        </div>
+      </div>
+      <button type="submit" name="action" value="save_cii_creds" class="duo-btn duo-btn-primary" style="margin-top:6px;">
+        Save &amp; Test
+      </button>
+      {% else %}
+      <div class="duo-auth-badge" style="margin-bottom:12px;">
+        <span style="font-size:1.1rem;">&#10003;</span> Identity Intelligence API connected
+      </div>
+      <div>
+        <button type="button" class="duo-btn duo-btn-primary" onclick="loadRiskyUsers()">Load Risky Users</button>
+        <span id="cii-status" style="font-size:0.85em; color:#888; margin-left:10px;"></span>
+      </div>
+      <div style="overflow-x:auto; margin-top:12px;">
+        <table class="duo-table" id="cii-risky-table" style="display:none; width:100%;">
+          <thead>
+            <tr><th>User</th><th>Email</th><th>Status</th><th>Trust score</th></tr>
+          </thead>
+          <tbody id="cii-risky-tbody"></tbody>
+        </table>
+      </div>
+      {% endif %}
+    </div>
   </div>
 
   {{ super() }}
 </form>
+
+<script>
+  function loadRiskyUsers() {
+    var status = document.getElementById('cii-status');
+    var table = document.getElementById('cii-risky-table');
+    var tbody = document.getElementById('cii-risky-tbody');
+    status.style.color = '#888';
+    status.textContent = 'Loading…';
+    table.style.display = 'none';
+    tbody.innerHTML = '';
+
+    fetch('/api/identity-intelligence/risky-users')
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, body: d }; }); })
+      .then(function (res) {
+        var data = res.body || {};
+        if (!res.ok || !data.ok) {
+          status.style.color = '#c0392b';
+          status.textContent = '⚠️ ' + (data.error || 'Could not load users.');
+          return;
+        }
+        var users = data.users || [];
+        if (users.length === 0) {
+          status.textContent = 'No end users returned.';
+          return;
+        }
+        users.forEach(function (u) {
+          var tr = document.createElement('tr');
+          function td(t) { var d = document.createElement('td'); d.textContent = (t === null || t === undefined || t === '') ? '—' : t; return d; }
+          tr.appendChild(td(u.display_name));
+          tr.appendChild(td(u.email));
+          tr.appendChild(td(u.status));
+          tr.appendChild(td(u.trust_score));
+          tbody.appendChild(tr);
+        });
+        status.textContent = users.length + ' user(s).';
+        table.style.display = 'table';
+      })
+      .catch(function (err) {
+        status.style.color = '#c0392b';
+        status.textContent = '⚠️ ' + err;
+      });
+  }
+</script>
 {% endblock %}

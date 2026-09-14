@@ -298,6 +298,34 @@ def duo():
         secret_key = request.form.get('secret_key')
         action = request.form.get('action')
 
+        # Cisco Identity Intelligence uses its OWN API credentials (separate from
+        # the Duo Admin API), so handle saving/testing them before the Duo-cred
+        # gate below.
+        if action == 'save_cii_creds':
+            cii_token_url = request.form.get('cii_token_url', '').strip()
+            cii_client_id = request.form.get('cii_client_id', '').strip()
+            cii_client_secret = request.form.get('cii_client_secret', '').strip()
+            cii_api_url = request.form.get('cii_api_url', '').strip()
+            cii_audience = request.form.get('cii_audience', '').strip()
+            if not all([cii_token_url, cii_client_id, cii_client_secret, cii_api_url]):
+                flash("⚠️ Provide Token URL, Client ID, Client Secret, and API URL for Identity Intelligence.")
+                return redirect(url_for('duo'))
+            try:
+                from scripts.identity_intelligence import check_credentials
+                check_credentials(cii_token_url, cii_client_id, cii_client_secret,
+                                  cii_api_url, cii_audience or None)
+                session['cii_token_url'] = cii_token_url
+                session['cii_client_id'] = cii_client_id
+                session['cii_client_secret'] = cii_client_secret
+                session['cii_api_url'] = cii_api_url
+                session['cii_audience'] = cii_audience
+                session['cii_authenticated'] = True
+                flash("✅ Identity Intelligence API connected (token + ping OK).")
+            except Exception as e:
+                session['cii_authenticated'] = False
+                flash(f"⚠️ Identity Intelligence connection failed: {e}")
+            return redirect(url_for('duo'))
+
         # Store credentials in session whenever explicitly submitted
         if api_hostname and integration_key and secret_key:
             session['duo_api_hostname'] = api_hostname
@@ -430,6 +458,27 @@ def duo():
         return redirect(url_for('duo'))
     
     return render_template('duo.html')
+
+
+@app.route('/api/identity-intelligence/risky-users')
+def identity_intelligence_risky_users():
+    """Read-only feed for the Risky Users panel — top end users by trust score."""
+    from flask import jsonify
+    if not session.get('cii_authenticated'):
+        return jsonify({"ok": False, "error": "Connect Identity Intelligence first.", "users": []}), 401
+    try:
+        from scripts.identity_intelligence import list_risky_users
+        users = list_risky_users(
+            token_url=session.get('cii_token_url'),
+            client_id=session.get('cii_client_id'),
+            client_secret=session.get('cii_client_secret'),
+            api_url=session.get('cii_api_url'),
+            audience=session.get('cii_audience') or None,
+            limit=50,
+        )
+        return jsonify({"ok": True, "users": users})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e), "users": []}), 500
 
 
 @app.route('/cilium', methods=['GET', 'POST'])
