@@ -1,2 +1,6 @@
 __pycache__/
 *.pyc
+
+# Cloud Agent / local dev virtualenvs
+.venv/
+**/.venv/
