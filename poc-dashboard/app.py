@@ -929,10 +929,111 @@ def splunk():
                         flash(f"{app_name} install failed: {e}")
             return redirect(url_for('splunk'))
 
+        # ── Send to Splunk: per-component indexes + receiver ────────────────
+        if action == 'provision_indexes':
+            from scripts.splunk import ensure_indexes, enable_splunktcp_receiver
+            try:
+                idx = ensure_indexes()
+                rcv = enable_splunktcp_receiver(9997)
+                created = sum(1 for v in idx.values() if v in ('created', 'exists'))
+                flash(f"✅ Provisioned {created}/{len(idx)} indexes; UF receiver on 9997: {rcv}.")
+            except Exception as e:
+                flash(f"⚠️ Index provisioning failed: {e}")
+            return redirect(url_for('splunk'))
+
+        # ── Send to Splunk: deploy a cloud->Splunk collector ────────────────
+        if action == 'deploy_collector':
+            from scripts.splunk_collectors import deploy_collector, SOURCES
+            from scripts.splunk import ensure_indexes
+            source = request.form.get('source', '').strip()
+            if source not in SOURCES:
+                flash(f"⚠️ Unknown collector source: {source}")
+                return redirect(url_for('splunk'))
+
+            # Pull the source's credentials from the session (entered on its tab)
+            if source == 'cii':
+                if not session.get('cii_authenticated'):
+                    flash("⚠️ Connect Identity Intelligence on the Duo tab first.")
+                    return redirect(url_for('splunk'))
+                creds = {
+                    "CII_TOKEN_URL": session.get('cii_token_url'),
+                    "CII_CLIENT_ID": session.get('cii_client_id'),
+                    "CII_CLIENT_SECRET": session.get('cii_client_secret'),
+                    "CII_API_URL": session.get('cii_api_url'),
+                    "CII_AUDIENCE": session.get('cii_audience', ''),
+                }
+            elif source == 'duo':
+                if not all([session.get('duo_api_hostname'), session.get('duo_integration_key'), session.get('duo_secret_key')]):
+                    flash("⚠️ Authenticate to Duo on the Duo tab first.")
+                    return redirect(url_for('splunk'))
+                creds = {
+                    "DUO_HOST": session.get('duo_api_hostname'),
+                    "DUO_IKEY": session.get('duo_integration_key'),
+                    "DUO_SKEY": session.get('duo_secret_key'),
+                }
+            elif source == 'secure_access':
+                if not all([session.get('csa_api_key'), session.get('csa_api_secret')]):
+                    flash("⚠️ Authenticate to Secure Access on the Secure Access tab first.")
+                    return redirect(url_for('splunk'))
+                creds = {
+                    "CSA_KEY": session.get('csa_api_key'),
+                    "CSA_SECRET": session.get('csa_api_secret'),
+                }
+            else:
+                creds = {}
+
+            try:
+                ensure_indexes([SOURCES[source]['index']])
+                label = deploy_collector(source, creds)
+                flash(f"✅ {label} collector deployed — polling into index '{SOURCES[source]['index']}'.")
+            except Exception as e:
+                flash(f"⚠️ Collector deploy failed: {e}")
+            return redirect(url_for('splunk'))
+
+        if action == 'remove_collector':
+            from scripts.splunk_collectors import remove_collector, SOURCES
+            source = request.form.get('source', '').strip()
+            try:
+                remove_collector(source)
+                flash(f"✅ Removed {SOURCES.get(source, {}).get('label', source)} collector.")
+            except Exception as e:
+                flash(f"⚠️ Collector removal failed: {e}")
+            return redirect(url_for('splunk'))
+
+        # ── Send to Splunk: DefenseClaw AI-agent dashboard (consolidated here) ─
+        if action == 'create_defenseclaw_dashboard':
+            from scripts.defenseclaw import create_splunk_dashboard
+            try:
+                path = create_splunk_dashboard()
+                flash(f"✅ DefenseClaw dashboard created — open it at {path}")
+            except Exception as e:
+                flash(f"⚠️ DefenseClaw dashboard creation failed: {e}")
+            return redirect(url_for('splunk'))
+
     splunk_available = is_available()
     app_status = get_splunkbase_app_status() if splunk_available else {}
 
     from scripts.splunk import k8s_dashboard_exists, otel_collector_running
+    # Cloud->Splunk collector statuses + whether each source's creds are ready
+    from scripts.splunk_collectors import collector_status
+    collectors = {
+        "cii": {
+            "status": collector_status("cii"),
+            "creds_ready": bool(session.get('cii_authenticated')),
+            "label": "Identity Intelligence", "index": "cii", "creds_where": "Duo tab",
+        },
+        "duo": {
+            "status": collector_status("duo"),
+            "creds_ready": bool(session.get('duo_api_hostname') and session.get('duo_integration_key') and session.get('duo_secret_key')),
+            "label": "Duo Admin API logs", "index": "duo", "creds_where": "Duo tab",
+        },
+        "secure_access": {
+            "status": collector_status("secure_access"),
+            "creds_ready": bool(session.get('csa_api_key') and session.get('csa_api_secret')),
+            "label": "Secure Access reporting", "index": "secure_access", "creds_where": "Secure Access tab",
+        },
+    }
+
     return render_template(
         'splunk.html',
         splunk_available=splunk_available,
@@ -942,6 +1043,7 @@ def splunk():
         app_status=app_status,
         k8s_dashboard_exists=k8s_dashboard_exists() if splunk_available else False,
         otel_running=otel_collector_running() if splunk_available else False,
+        collectors=collectors,
     )
 
 @app.route('/splunk/status')

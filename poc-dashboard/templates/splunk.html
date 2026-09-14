@@ -469,6 +469,85 @@
   </div>
 </section>
 
+<!-- ══════════════════════════════════════════════ SEND TO SPLUNK -->
+<section style="margin-bottom:2.5rem;{% if not splunk_available %} opacity:0.45; pointer-events:none;{% endif %}">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SEND TO SPLUNK</h3>
+  </div>
+  <p style="color:#666; font-size:0.88em; margin:0 0 16px 0;">
+    Wire the cloud sources into Splunk. Each collector runs in-cluster and <strong>pulls</strong> from its
+    cloud API over outbound HTTPS, then forwards to the internal HEC — no inbound exposure needed. Every source
+    writes to its <strong>own index</strong> so it's clear what fed the data.
+    {% if not splunk_available %}<br><em>Deploy Splunk first.</em>{% endif %}
+  </p>
+
+  <!-- Provision indexes + UF receiver -->
+  <form method="POST" style="margin-bottom:16px;">
+    <button type="submit" name="action" value="provision_indexes"
+            style="background:#0066ff; color:#fff; border:none; padding:10px 22px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.9em;">
+      Provision indexes &amp; UF receiver
+    </button>
+    <span style="font-size:0.82em; color:#999; margin-left:10px;">
+      Creates per-component indexes (cii, duo, secure_access, defenseclaw, piap_host, …) and enables the
+      Universal Forwarder receiver on <code>9997</code>.
+    </span>
+  </form>
+
+  <!-- Cloud collectors -->
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:12px; margin-bottom:16px;">
+    {% for key, c in collectors.items() %}
+    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:16px 18px; background:#fff;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <div style="font-weight:600; color:#111; font-size:0.95em;">{{ c.label }}</div>
+        {% if c.status == 'running' %}
+          <span style="font-size:0.72em; background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:4px; padding:2px 7px;">running</span>
+        {% elif c.status == 'starting' %}
+          <span style="font-size:0.72em; background:#fff8e1; color:#f57f17; border:1px solid #ffe082; border-radius:4px; padding:2px 7px;">starting</span>
+        {% else %}
+          <span style="font-size:0.72em; background:#f5f5f5; color:#999; border:1px solid #e0e0e0; border-radius:4px; padding:2px 7px;">not deployed</span>
+        {% endif %}
+      </div>
+      <div style="font-size:0.8em; color:#666; line-height:1.6;">
+        Polls into <code>index={{ c.index }}</code>.
+        {% if not c.creds_ready %}<br><span style="color:#b9770e;">Enter credentials on the {{ c.creds_where }} first.</span>{% endif %}
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <form method="POST">
+          <input type="hidden" name="source" value="{{ key }}">
+          <button type="submit" name="action" value="deploy_collector"
+                  style="background:{% if c.creds_ready %}#0066ff{% else %}#ccc{% endif %}; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:600; font-size:0.82em; cursor:{% if c.creds_ready %}pointer{% else %}default{% endif %};"
+                  {% if not c.creds_ready %}disabled{% endif %}>
+            {% if c.status == 'not deployed' %}Deploy collector{% else %}Re-deploy{% endif %}
+          </button>
+        </form>
+        {% if c.status != 'not deployed' %}
+        <form method="POST">
+          <input type="hidden" name="source" value="{{ key }}">
+          <button type="submit" name="action" value="remove_collector"
+                  style="background:#fff; color:#c0392b; border:1px solid #ef9a9a; padding:8px 16px; border-radius:6px; font-weight:600; font-size:0.82em; cursor:pointer;">
+            Remove
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- DefenseClaw dashboard (consolidated here) -->
+  <form method="POST">
+    <button type="submit" name="action" value="create_defenseclaw_dashboard"
+            style="background:#0066ff; color:#fff; border:none; padding:10px 22px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.9em;">
+      Create DefenseClaw dashboard
+    </button>
+    <span style="font-size:0.82em; color:#999; margin-left:10px;">
+      Builds the AI-agent security dashboard for <code>index=defenseclaw</code> (DefenseClaw pushes its audit
+      events to the internal HEC).
+    </span>
+  </form>
+</section>
+
 <!-- ══════════════════════════════════════════════ KUBERNETES INFRASTRUCTURE -->
 <section style="margin-bottom:2.5rem;{% if not splunk_available %} opacity:0.45; pointer-events:none;{% endif %}">
   <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
