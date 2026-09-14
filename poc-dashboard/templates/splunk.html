@@ -91,6 +91,32 @@
       </span>
     </div>
   </form>
+
+  <!-- Splunk.com credentials (for Splunkbase Cisco apps) — saved for this session -->
+  <div style="border-top:1px solid #ffe0a3; margin-top:18px; padding-top:16px;">
+    <label style="display:block; font-size:0.85em; font-weight:600; color:#555; margin-bottom:6px;">
+      Splunk.com credentials <span style="font-weight:400; color:#999;">(optional — only to auto-install the Cisco Splunkbase apps)</span>
+    </label>
+    <p style="font-size:0.8em; color:#777; margin:0 0 10px; line-height:1.5;">
+      Bring a free <a href="https://www.splunk.com" target="_blank" rel="noopener">splunk.com</a> account. Saved
+      for this session so <strong>Run Splunk automation</strong> can install the Cisco apps for you.
+    </p>
+    <form method="POST" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+      <input type="text" name="splunkbase_username" placeholder="Splunk.com username"
+             value="{{ session.get('splunkbase_username','') }}"
+             style="flex:1; min-width:200px; padding:9px 12px; border:1px solid #e0c88a; border-radius:6px; font-size:0.88em;">
+      <input type="password" name="splunkbase_password" placeholder="Splunk.com password"
+             {% if session.get('splunkbase_password') %}value="••••••••••••"{% endif %}
+             style="flex:1; min-width:200px; padding:9px 12px; border:1px solid #e0c88a; border-radius:6px; font-size:0.88em;">
+      <button type="submit" name="action" value="save_splunk_creds"
+              style="background:#333; color:#fff; border:none; padding:9px 20px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.88em; white-space:nowrap;">
+        Save credentials
+      </button>
+    </form>
+    {% if session.get('splunkbase_username') %}
+    <div style="font-size:0.8em; color:#2e7d32; margin-top:8px;">✓ Splunk.com credentials saved for this session.</div>
+    {% endif %}
+  </div>
 </section>
 
 <script>
@@ -310,11 +336,13 @@
   <form method="POST">
     <input type="hidden" name="action" value="install_app">
 
-    <!-- Splunkbase credentials (only needed for app install) -->
+    <!-- Splunkbase credentials (only needed for app install; pre-filled from session) -->
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center;">
       <input type="text" name="splunkbase_username" placeholder="Splunk.com username"
+             value="{{ session.get('splunkbase_username','') }}"
              style="flex:1; min-width:160px; padding:8px 12px; border:1px solid #e0e0e0; border-radius:6px; font-size:0.85em; color:#333;">
       <input type="password" name="splunkbase_password" placeholder="Password"
+             {% if session.get('splunkbase_password') %}value="••••••••••••"{% endif %}
              style="flex:1; min-width:140px; padding:8px 12px; border:1px solid #e0e0e0; border-radius:6px; font-size:0.85em; color:#333;">
     </div>
 
@@ -466,6 +494,116 @@
       </div>
     </div>
 
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ SEND TO SPLUNK -->
+<section style="margin-bottom:2.5rem;{% if not splunk_available %} opacity:0.45; pointer-events:none;{% endif %}">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SEND TO SPLUNK</h3>
+  </div>
+  <p style="color:#666; font-size:0.88em; margin:0 0 16px 0;">
+    Wire the cloud sources into Splunk. Each collector runs in-cluster and <strong>pulls</strong> from its
+    cloud API over outbound HTTPS, then forwards to the internal HEC — no inbound exposure needed. Every source
+    writes to its <strong>own index</strong> so it's clear what fed the data.
+    {% if not splunk_available %}<br><em>Deploy Splunk first.</em>{% endif %}
+  </p>
+
+  <!-- One-click orchestration -->
+  <div style="background:#eafaf1; border:1px solid #b7e4c7; border-radius:10px; padding:16px 18px; margin-bottom:18px;">
+    <form method="POST" style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+      <button type="submit" name="action" value="run_automation"
+              style="background:#0b7a3b; color:#fff; border:none; padding:12px 28px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.98em;">
+        Run Splunk automation
+      </button>
+      <span style="font-size:0.85em; color:#2e7d32; line-height:1.5;">
+        One click, run after Splunk is up: provisions per-component indexes + the UF receiver (9997), builds the
+        <strong>“PoC in a Pod”</strong> app (+ <code>splunker</code> user &amp; dashboards), deploys every cloud
+        collector whose credentials you've already entered, creates the DefenseClaw dashboard, and — if your
+        Splunk.com credentials are saved — installs the Cisco Splunkbase apps and restarts Splunk.
+      </span>
+    </form>
+  </div>
+
+  <!-- Provision indexes + UF receiver -->
+  <form method="POST" style="margin-bottom:16px;">
+    <button type="submit" name="action" value="provision_indexes"
+            style="background:#0066ff; color:#fff; border:none; padding:10px 22px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.9em;">
+      Provision indexes &amp; UF receiver
+    </button>
+    <span style="font-size:0.82em; color:#999; margin-left:10px;">
+      Creates per-component indexes (cii, duo, secure_access, defenseclaw, piap_host, …) and enables the
+      Universal Forwarder receiver on <code>9997</code>.
+    </span>
+  </form>
+
+  <!-- Cloud collectors -->
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:12px; margin-bottom:16px;">
+    {% for key, c in collectors.items() %}
+    <div style="border:1px solid #e0e0e0; border-radius:8px; padding:16px 18px; background:#fff;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <div style="font-weight:600; color:#111; font-size:0.95em;">{{ c.label }}</div>
+        {% if c.status == 'running' %}
+          <span style="font-size:0.72em; background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; border-radius:4px; padding:2px 7px;">running</span>
+        {% elif c.status == 'starting' %}
+          <span style="font-size:0.72em; background:#fff8e1; color:#f57f17; border:1px solid #ffe082; border-radius:4px; padding:2px 7px;">starting</span>
+        {% else %}
+          <span style="font-size:0.72em; background:#f5f5f5; color:#999; border:1px solid #e0e0e0; border-radius:4px; padding:2px 7px;">not deployed</span>
+        {% endif %}
+      </div>
+      <div style="font-size:0.8em; color:#666; line-height:1.6;">
+        Polls into <code>index={{ c.index }}</code>.
+        {% if not c.creds_ready %}<br><span style="color:#b9770e;">Enter credentials on the {{ c.creds_where }} first.</span>{% endif %}
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <form method="POST">
+          <input type="hidden" name="source" value="{{ key }}">
+          <button type="submit" name="action" value="deploy_collector"
+                  style="background:{% if c.creds_ready %}#0066ff{% else %}#ccc{% endif %}; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:600; font-size:0.82em; cursor:{% if c.creds_ready %}pointer{% else %}default{% endif %};"
+                  {% if not c.creds_ready %}disabled{% endif %}>
+            {% if c.status == 'not deployed' %}Deploy collector{% else %}Re-deploy{% endif %}
+          </button>
+        </form>
+        {% if c.status != 'not deployed' %}
+        <form method="POST">
+          <input type="hidden" name="source" value="{{ key }}">
+          <button type="submit" name="action" value="remove_collector"
+                  style="background:#fff; color:#c0392b; border:1px solid #ef9a9a; padding:8px 16px; border-radius:6px; font-weight:600; font-size:0.82em; cursor:pointer;">
+            Remove
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- DefenseClaw dashboard (consolidated here) -->
+  <form method="POST" style="margin-bottom:16px;">
+    <button type="submit" name="action" value="create_defenseclaw_dashboard"
+            style="background:#0066ff; color:#fff; border:none; padding:10px 22px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.9em;">
+      Create DefenseClaw dashboard
+    </button>
+    <span style="font-size:0.82em; color:#999; margin-left:10px;">
+      Builds the AI-agent security dashboard for <code>index=defenseclaw</code> (DefenseClaw pushes its audit
+      events to the internal HEC).
+    </span>
+  </form>
+
+  <!-- 'PoC in a Pod' app + splunker user + dashboards -->
+  <div style="border-top:1px solid #eef0f3; padding-top:16px;">
+    <form method="POST">
+      <button type="submit" name="action" value="build_poc_app"
+              style="background:#0b7a3b; color:#fff; border:none; padding:11px 26px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.92em;">
+        Build “PoC in a Pod” app
+      </button>
+      <span style="font-size:0.82em; color:#999; margin-left:10px;">
+        Creates the <strong>splunker</strong> user and the <strong>PoC in a Pod</strong> app with dashboards:
+        Overview, VM Metrics &amp; More, Zero Trust — All Connections, Identity Intelligence, Duo Authentication,
+        Secure Access, and Runtime &amp; Network Security.
+      </span>
+    </form>
   </div>
 </section>
 

@@ -210,6 +210,78 @@ def hec_is_healthy():
         return False
 
 
+# ── Per-component indexes ──────────────────────────────────────────────────
+# Each data source writes into its own Splunk index so it's obvious in the demo
+# which component fed which data (index=<name>).
+POC_INDEXES = {
+    "cii":            "Cisco Identity Intelligence — end-user risk / trust score",
+    "duo":            "Cisco Duo — Admin API logs (authentication, admin, telephony)",
+    "secure_access":  "Cisco Secure Access — reporting / activity events",
+    "defenseclaw":    "DefenseClaw — AI-agent security audit",
+    "piap_host":      "Ubuntu VM host OS logs + metrics (Universal Forwarder)",
+    "piap_connector": "Secure Access Resource Connector (Docker) logs (Universal Forwarder)",
+    "piap_metrics":   "Kubernetes node/pod/cluster metrics (OpenTelemetry)",
+    "piap_security":  "Cilium / Tetragon / Hubble logs (Fluent Bit)",
+}
+
+
+def _mgmt_url():
+    """Splunk management REST API base (HTTPS)."""
+    return SPLUNK_API_URL.replace("http://", "https://")
+
+
+def ensure_indexes(names=None):
+    """
+    Create the per-component Splunk indexes (idempotent). Splunk must be up.
+    Returns a dict of index name -> status ("created" | "exists" | "error ...").
+    """
+    names = names or list(POC_INDEXES.keys())
+    endpoint = f"{_mgmt_url()}/servicesNS/admin/search/data/indexes"
+    results = {}
+    for name in names:
+        try:
+            r = requests.post(
+                endpoint,
+                auth=("admin", SPLUNK_PASSWORD),
+                data={"name": name, "datatype": "event"},
+                verify=False,
+                timeout=15,
+            )
+            if r.status_code in (200, 201):
+                results[name] = "created"
+            elif r.status_code == 409:
+                results[name] = "exists"
+            else:
+                results[name] = f"error {r.status_code}"
+        except Exception as e:
+            results[name] = f"error {e}"
+    print(f"ensure_indexes: {results}")
+    return results
+
+
+def enable_splunktcp_receiver(port=9997):
+    """
+    Enable a Splunk-to-Splunk receiving input on the given port so Universal
+    Forwarders can forward to this indexer. Idempotent (409 = already enabled).
+    """
+    endpoint = f"{_mgmt_url()}/servicesNS/admin/search/data/inputs/tcp/cooked"
+    try:
+        r = requests.post(
+            endpoint,
+            auth=("admin", SPLUNK_PASSWORD),
+            data={"name": str(port)},
+            verify=False,
+            timeout=15,
+        )
+        if r.status_code in (200, 201):
+            return "enabled"
+        if r.status_code == 409:
+            return "already enabled"
+        return f"error {r.status_code}: {r.text[:200]}"
+    except Exception as e:
+        return f"error {e}"
+
+
 def deploy_splunk(license_content: str = "") -> bool:
     """
     Create (or idempotently re-apply) the Splunk Secret, Deployment, and Service.

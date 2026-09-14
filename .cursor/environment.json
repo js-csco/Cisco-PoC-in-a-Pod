@@ -1,0 +1,29 @@
+{
+  "name": "Cisco PoC in a Pod",
+  "user": "ubuntu",
+  "install": "bash .cursor/install.sh",
+  "terminals": [
+    {
+      "name": "poc-dashboard",
+      "command": "cd poc-dashboard && ./.venv/bin/python app.py"
+    },
+    {
+      "name": "saml-app",
+      "command": "cd saml-app && ./.venv/bin/python app.py"
+    },
+    {
+      "name": "playbook",
+      "command": "cd playbook && python3 -m http.server 30250"
+    },
+    {
+      "name": "sse-check",
+      "command": "cd sse-check && python3 -m http.server 30550"
+    }
+  ],
+  "ports": [
+    { "name": "poc-dashboard", "port": 8080 },
+    { "name": "saml-app", "port": 9400 },
+    { "name": "playbook", "port": 30250 },
+    { "name": "sse-check", "port": 30550 }
+  ]
+}

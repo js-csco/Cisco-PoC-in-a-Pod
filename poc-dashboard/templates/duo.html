@@ -407,39 +407,31 @@
       <h3>DUO POLICIES</h3>
     </div>
     <p class="desc">Configure Duo enrollment and authentication policies for the PoC environment.
-      These settings must be applied manually in the <strong>Duo Admin Panel</strong>.</p>
+      The <strong>Global Policy</strong> below is applied automatically via the Duo Admin API &mdash; it also
+      covers the enrollment policy (enrollment behavior and allowed authenticators). Duo Passport is set
+      manually in the Admin Panel.</p>
 
-    <!-- Enrollment Policy -->
+    <!-- Enrollment Policy (automated via the Global Policy call) -->
     <div class="duo-sub">
       <div class="duo-sub-head">
         <div class="duo-sub-bar"></div>
         <h4>1. Enrollment Policy</h4>
       </div>
 
-      <p style="color:#555; font-size:0.92em; margin:0 0 14px;">
-        In the <strong>Duo Admin Panel</strong>, navigate to <em>Policies &rarr; User Enrollment Policies</em> and apply the following settings:
-      </p>
-
-      <ol class="duo-steps">
-        <li>
-          <strong>Policy Enablement:</strong> Check the box next to
-          <em>"Enable the enrollment and account management policies on this page"</em>.
-        </li>
-        <li>
-          Under <strong>Global Enrollment Policy</strong>, configure:
-          <ul>
-            <li><strong>Require Password:</strong> enable the checkbox.</li>
-            <li>
-              <strong>Authenticators:</strong> allow only the following:
-              <ul style="margin:4px 0; padding-left:18px; line-height:1.7;">
-                <li>Passkey (Current Device)</li>
-                <li>Passkey (Mobile Device) <em>or</em> Security Key</li>
-                <li>Duo Mobile</li>
-              </ul>
-            </li>
-          </ul>
-        </li>
-      </ol>
+      <div class="duo-info duo-info-green">
+        <strong>Applied automatically by "Update Global Policy" below.</strong>
+        The Duo Admin API sets these on the Global Policy:
+        <ul>
+          <li><strong>New User Policy:</strong> require enrollment.</li>
+          <li><strong>Allowed authenticators:</strong> Passkey (platform), Passkey (roaming) / Security Key,
+            and Duo Mobile (Push) &mdash; plus their passwordless variants. Passcode, phone call, hardware
+            token, and SMS are blocked.</li>
+        </ul>
+        <p style="margin:8px 0 0; font-size:0.92em;">
+          Note: the enrollment-time <em>Require Password</em> toggle is not exposed by the Duo Admin API &mdash;
+          set it manually under <em>Policies &rarr; User Enrollment Policies</em> if required.
+        </p>
+      </div>
     </div>
 
     <!-- Global Policy -->
@@ -450,9 +442,11 @@
       </div>
 
       <p style="color:#555; font-size:0.92em; margin:0 0 14px;">
-        Sets New User Policy to require enrollment, authentication methods to recommended only
-        (Platform Passkey, Roaming Passkey, Duo Push) for both 2FA and Passwordless SSO,
-        and disables risk-based factor selection. User Location is left as default.
+        Applies the enrollment policy and authentication methods in one API call: New User Policy set to
+        require enrollment, and authentication methods limited to the recommended set (Platform Passkey,
+        Roaming Passkey, Duo Push) for both 2FA and Passwordless SSO. Risk-based factor selection is disabled
+        where available (Advantage/Premier editions); on other editions that step is skipped automatically.
+        User Location is left as default.
       </p>
 
       <button type="submit" name="action" value="configure_policy"
@@ -667,23 +661,140 @@
     <ol class="duo-steps">
       <li>
         Go to <strong>Monitoring &rarr; Cisco Identity Intelligence</strong> and click
-        <strong>"Connect to Cisco Identity Intelligence"</strong>.
+        <strong>"Connect to Cisco Identity Intelligence"</strong>. <span style="color:#999;">(manual — no API)</span>
       </li>
       <li>
-        Click on <strong>"Set Up SSO Access"</strong>.
+        Click on <strong>"Set Up SSO Access"</strong> — this auto-creates the <strong>cii-sso-&hellip;</strong>
+        SSO application. <span style="color:#999;">(manual — no API)</span>
       </li>
       <li>
-        On the Application Page, click on the app called <strong>cii-sso-&hellip;</strong> and add the
-        <strong>PoC Users</strong> group to <em>"Enable only for permitted groups"</em> under the
-        <strong>User Access</strong> section.
+        Restrict that <strong>cii-sso-&hellip;</strong> app to the <strong>PoC Users</strong> group.
+        <span style="color:#2e7d32; font-weight:600;">Automated &mdash; use the button below.</span>
       </li>
       <li>
         Go back to <strong>Monitoring &rarr; Cisco Identity Intelligence</strong> and click
-        <strong>"Launch Identity Intelligence"</strong>.
+        <strong>"Launch Identity Intelligence"</strong>. <span style="color:#999;">(manual — no API)</span>
       </li>
     </ol>
+
+    <div class="duo-info duo-info-blue" style="margin:14px 0;">
+      <strong>Assign PoC Users</strong> finds the auto-created <code>cii-sso-…</code> application via the Duo
+      Admin API and restricts it to the <strong>PoC Users</strong> group (<em>User Access &rarr; permitted
+      groups</em>). Run it after step 2.
+    </div>
+
+    <button type="submit" name="action" value="assign_cii_group"
+            class="duo-btn {% if session.get('duo_authenticated') %}duo-btn-primary{% else %}duo-btn-disabled{% endif %}"
+            {% if not session.get('duo_authenticated') %}disabled{% endif %}>
+      Assign PoC Users to Identity Intelligence App
+    </button>
+
+    <!-- Identity Intelligence public API — Risky Users -->
+    <div class="duo-sub" style="margin-top:26px;">
+      <div class="duo-sub-head">
+        <div class="duo-sub-bar"></div>
+        <h4>Identity Intelligence API &mdash; Risky Users</h4>
+      </div>
+      <p style="color:#555; font-size:0.9em; margin:0 0 12px; line-height:1.6;">
+        Connect the Identity Intelligence <strong>public API</strong> to view end-user risk here and (on the
+        Splunk tab) stream it into Splunk. Create credentials once in Identity Intelligence:
+        <em>Integrations &rarr; Add Integration &rarr; Add API Client &rarr; Copy all</em>. The API client itself
+        can't be created via API, so this one-time step is manual &mdash; everything after is automated.
+      </p>
+
+      {% if not session.get('cii_authenticated') %}
+      <div class="duo-grid-2" style="gap:10px;">
+        <div class="duo-field">
+          <label class="duo-label">Token URL</label>
+          <input type="text" name="cii_token_url" placeholder="https://…/oauth/token"
+                 value="{{ session.get('cii_token_url','') }}" class="duo-input">
+        </div>
+        <div class="duo-field">
+          <label class="duo-label">API URL (GraphQL)</label>
+          <input type="text" name="cii_api_url" placeholder="https://api.&lt;region&gt;.oort.io/graphql"
+                 value="{{ session.get('cii_api_url','') }}" class="duo-input">
+        </div>
+        <div class="duo-field">
+          <label class="duo-label">Client ID</label>
+          <input type="text" name="cii_client_id" placeholder="Client ID"
+                 value="{{ session.get('cii_client_id','') }}" class="duo-input">
+        </div>
+        <div class="duo-field">
+          <label class="duo-label">Client Secret</label>
+          <input type="password" name="cii_client_secret" placeholder="Client Secret" class="duo-input">
+        </div>
+        <div class="duo-field">
+          <label class="duo-label">Audience <span style="color:#999;">(optional; clients created before Sept 2025)</span></label>
+          <input type="text" name="cii_audience" placeholder="https://api.oort.io"
+                 value="{{ session.get('cii_audience','') }}" class="duo-input">
+        </div>
+      </div>
+      <button type="submit" name="action" value="save_cii_creds" class="duo-btn duo-btn-primary" style="margin-top:6px;">
+        Save &amp; Test
+      </button>
+      {% else %}
+      <div class="duo-auth-badge" style="margin-bottom:12px;">
+        <span style="font-size:1.1rem;">&#10003;</span> Identity Intelligence API connected
+      </div>
+      <div>
+        <button type="button" class="duo-btn duo-btn-primary" onclick="loadRiskyUsers()">Load Risky Users</button>
+        <span id="cii-status" style="font-size:0.85em; color:#888; margin-left:10px;"></span>
+      </div>
+      <div style="overflow-x:auto; margin-top:12px;">
+        <table class="duo-table" id="cii-risky-table" style="display:none; width:100%;">
+          <thead>
+            <tr><th>User</th><th>Email</th><th>Status</th><th>Trust score</th></tr>
+          </thead>
+          <tbody id="cii-risky-tbody"></tbody>
+        </table>
+      </div>
+      {% endif %}
+    </div>
   </div>
 
   {{ super() }}
 </form>
+
+<script>
+  function loadRiskyUsers() {
+    var status = document.getElementById('cii-status');
+    var table = document.getElementById('cii-risky-table');
+    var tbody = document.getElementById('cii-risky-tbody');
+    status.style.color = '#888';
+    status.textContent = 'Loading…';
+    table.style.display = 'none';
+    tbody.innerHTML = '';
+
+    fetch('/api/identity-intelligence/risky-users')
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, body: d }; }); })
+      .then(function (res) {
+        var data = res.body || {};
+        if (!res.ok || !data.ok) {
+          status.style.color = '#c0392b';
+          status.textContent = '⚠️ ' + (data.error || 'Could not load users.');
+          return;
+        }
+        var users = data.users || [];
+        if (users.length === 0) {
+          status.textContent = 'No end users returned.';
+          return;
+        }
+        users.forEach(function (u) {
+          var tr = document.createElement('tr');
+          function td(t) { var d = document.createElement('td'); d.textContent = (t === null || t === undefined || t === '') ? '—' : t; return d; }
+          tr.appendChild(td(u.display_name));
+          tr.appendChild(td(u.email));
+          tr.appendChild(td(u.status));
+          tr.appendChild(td(u.trust_score));
+          tbody.appendChild(tr);
+        });
+        status.textContent = users.length + ' user(s).';
+        table.style.display = 'table';
+      })
+      .catch(function (err) {
+        status.style.color = '#c0392b';
+        status.textContent = '⚠️ ' + err;
+      });
+  }
+</script>
 {% endblock %}

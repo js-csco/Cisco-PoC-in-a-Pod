@@ -23,6 +23,13 @@ spec:
     targetPort: 8089
     nodePort: 30502
     protocol: TCP
+  # Splunk-to-Splunk receiving (Universal Forwarder on the host forwards here).
+  # Enable the receiver from the dashboard: Splunk tab -> Provision indexes & UF receiver.
+  - name: s2s
+    port: 9997
+    targetPort: 9997
+    nodePort: 30997
+    protocol: TCP
   - name: kvstore
     port: 8191
     targetPort: 8191

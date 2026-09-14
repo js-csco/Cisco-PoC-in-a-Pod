@@ -229,7 +229,9 @@ def configure_global_policy(api_hostname, integration_key, secret_key):
         'success': False,
         'before': None,
         'after': None,
-        'error': None
+        'error': None,
+        'risk_based_applied': False,
+        'warnings': [],
     }
 
     try:
@@ -242,10 +244,13 @@ def configure_global_policy(api_hostname, integration_key, secret_key):
         pretty_before = json.dumps(current_policy, indent=2, sort_keys=True, default=str)
         print(f"Current global policy:\n{pretty_before}")
 
-        # Step 2: Update global policy sections
-        print("\nStep 2: Updating global policy (new user policy, auth methods, risk-based factor selection)...")
+        # Step 2: Update the core sections that are available on every Duo
+        # edition — New User Policy (enrollment) and Authentication Methods.
+        # These also cover the enrollment policy (enrollment behavior + which
+        # authenticators users may enroll/use).
+        print("\nStep 2: Updating core global policy (new user policy + auth methods)...")
 
-        json_request = {
+        core_request = {
             "sections": {
                 "new_user": {
                     "new_user_behavior": "enroll",
@@ -267,19 +272,38 @@ def configure_global_policy(api_hostname, integration_key, secret_key):
                         "sms",
                     ],
                 },
-                "risk_based_factor_selection": {
-                    "limit_to_risk_based_auth_methods": False,
-                },
             },
         }
 
-        print(f"Update request:\n{json.dumps(json_request, indent=2)}")
+        print(f"Core update request:\n{json.dumps(core_request, indent=2)}")
 
-        updated_policy = admin_api.update_policy_v2("global", json_request)
+        updated_policy = admin_api.update_policy_v2("global", core_request)
         result['after'] = updated_policy
         result['success'] = True
+        print("✅ Core global policy updated (new user policy + auth methods)")
 
-        pretty_after = json.dumps(updated_policy, indent=2, sort_keys=True, default=str)
+        # Step 3: Risk-Based Factor Selection is only available on the Advantage
+        # and Premier editions. Apply it in a separate call so that a lower
+        # edition (where the section doesn't exist) doesn't fail the whole
+        # policy update — the core settings above still take effect.
+        print("\nStep 3: Attempting Risk-Based Factor Selection (Advantage/Premier only)...")
+        try:
+            updated_policy = admin_api.update_policy_v2(
+                "global",
+                {"sections": {"risk_based_factor_selection": {"limit_to_risk_based_auth_methods": False}}},
+            )
+            result['after'] = updated_policy
+            result['risk_based_applied'] = True
+            print("✅ Risk-Based Factor Selection disabled")
+        except Exception as rb_err:
+            warning = (
+                "Risk-Based Factor Selection was not applied "
+                "(requires Duo Advantage/Premier edition): " + str(rb_err)
+            )
+            result['warnings'].append(warning)
+            print(f"⚠️  {warning}")
+
+        pretty_after = json.dumps(result['after'], indent=2, sort_keys=True, default=str)
         print(f"\n✅ Global policy updated successfully")
         print(f"Updated policy:\n{pretty_after}")
 
@@ -435,6 +459,75 @@ def create_integration(api_hostname, integration_key, secret_key, name, integrat
         return result
 
 
+def assign_group_to_identity_intelligence(api_hostname, integration_key, secret_key, group_name="PoC Users"):
+    """
+    Automate the one Identity Intelligence onboarding step that has an API:
+    restrict the auto-created Cisco Identity Intelligence SSO app (cii-sso-…)
+    to the given group.
+
+    The "Connect to Identity Intelligence", "Set Up SSO Access" and "Launch"
+    steps have no Duo Admin API (only oort_* audit events), so they stay manual.
+    But once "Set Up SSO Access" has created the cii-sso app, adding the PoC
+    Users group to its User Access is just an integration update, which we can do
+    via POST /admin/v3/integrations/{key} (user_access + groups_allowed).
+
+    Returns dict with 'success', 'integration_name', and 'error' keys.
+    """
+    admin_api = duo_client.Admin(
+        ikey=integration_key,
+        skey=secret_key,
+        host=api_hostname,
+    )
+
+    result = {'success': False, 'integration_name': None, 'error': None}
+
+    try:
+        # 1. Resolve the group ID
+        groups = admin_api.json_api_call('GET', '/admin/v1/groups', {})
+        group_id = None
+        for group in (groups if isinstance(groups, list) else []):
+            if group.get('name') == group_name:
+                group_id = group.get('group_id')
+                break
+        if not group_id:
+            result['error'] = f"Group '{group_name}' not found. Create users/groups first."
+            return result
+
+        # 2. Find the Cisco Identity Intelligence SSO integration (cii-sso-…)
+        integrations = admin_api.json_api_call('GET', '/admin/v3/integrations', {})
+        cii = None
+        for integration in (integrations if isinstance(integrations, list) else []):
+            name = (integration.get('name') or '').lower()
+            itype = (integration.get('type') or '').lower()
+            if itype.startswith('cii') or 'cii-sso' in name or 'identity intelligence' in name:
+                cii = integration
+                break
+        if not cii:
+            result['error'] = (
+                "No Cisco Identity Intelligence SSO app (cii-sso-…) found. "
+                "Click 'Set Up SSO Access' in Duo Identity Intelligence first, then retry."
+            )
+            return result
+
+        app_ikey = cii.get('integration_key')
+        result['integration_name'] = cii.get('name')
+
+        # 3. Restrict the app to the PoC Users group
+        admin_api.json_api_call(
+            'POST',
+            f'/admin/v3/integrations/{app_ikey}',
+            {'user_access': 'PERMITTED_GROUPS', 'groups_allowed': [group_id]},
+        )
+        result['success'] = True
+        print(f"✅ Restricted '{cii.get('name')}' to group '{group_name}'")
+        return result
+
+    except Exception as e:
+        result['error'] = f"Failed to assign group to Identity Intelligence app: {str(e)}"
+        print(f"❌ {result['error']}")
+        return result
+
+
 def get_integration_metadata_url(api_hostname, integration_key, secret_key, app_integration_key):
     """
     Retrieve the IdP SAML metadata URL for an SSO integration.
@@ -471,24 +564,26 @@ def get_integration_metadata_url(api_hostname, integration_key, secret_key, app_
         pretty = json.dumps(details, indent=2, default=str)
         print(f"Full response:\n{pretty}")
 
-        # Look for metadata_url in the sso section
+        # Per the Duo Admin API, the SSO metadata URL lives at
+        # sso.idp_metadata.metadata_url. Check that first, then fall back to a
+        # couple of legacy/alternate locations for resilience.
         sso = details.get('sso', {}) if isinstance(details, dict) else {}
-        metadata_url = sso.get('metadata_url', '')
+        idp_metadata = sso.get('idp_metadata', {}) if isinstance(sso, dict) else {}
+
+        metadata_url = (
+            (idp_metadata.get('metadata_url') if isinstance(idp_metadata, dict) else '')
+            or (sso.get('metadata_url') if isinstance(sso, dict) else '')
+            or (details.get('metadata_url') if isinstance(details, dict) else '')
+            or ''
+        )
 
         if metadata_url:
             result['success'] = True
             result['metadata_url'] = metadata_url
             print(f"✅ Found metadata URL: {metadata_url}")
         else:
-            # Try to find it in other places in the response
-            metadata_url = details.get('metadata_url', '')
-            if metadata_url:
-                result['success'] = True
-                result['metadata_url'] = metadata_url
-                print(f"✅ Found metadata URL (top-level): {metadata_url}")
-            else:
-                result['error'] = "No metadata_url found in integration details"
-                print(f"⚠️ {result['error']}")
+            result['error'] = "No metadata_url found in integration details (looked in sso.idp_metadata)"
+            print(f"⚠️ {result['error']}")
 
     except Exception as e:
         result['error'] = f"Failed to get integration details: {str(e)}"

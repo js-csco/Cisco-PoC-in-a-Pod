@@ -613,6 +613,16 @@ echo "  Manage connector:"
 echo "    /opt/connector/install/connector.sh stop"
 echo "    /opt/connector/install/connector.sh start"
 echo ""
+# ── Splunk Universal Forwarder (host telemetry) ──────────────────────────────
+# Installs a UF on this VM to ship host OS logs + connector Docker logs to
+# Splunk (9997 NodePort). Best-effort: never fail the whole setup on UF issues
+# (e.g. the pinned .deb URL). Provision indexes + the receiver from the dashboard.
+echo ""
+echo "==> Installing Splunk Universal Forwarder (host telemetry)"
+if [ -f "$REPO_ROOT/setup/install_uf.sh" ]; then
+    bash "$REPO_ROOT/setup/install_uf.sh" || echo "  ⚠️  UF install skipped/failed (see above) — continuing."
+fi
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Your Services"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

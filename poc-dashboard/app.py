@@ -13,12 +13,20 @@ from scripts.csa_scripts.create_recom import (
     follow_recom
 )
 from scripts.csa_scripts.create_int_policy import (
+    create_int_block_malicious_policy,
     create_int_warn_policy,
+    create_int_warn_shopping_policy,
     create_inet_isolate_policy,
     create_int_block_content_policy,
     create_int_block_apps_policy,
     create_allow_all_policy,
     create_url_filtering_policies
+)
+from scripts.csa_scripts.create_ai_int_policy import (
+    create_ai_proposed_policies
+)
+from scripts.csa_scripts.create_steve_policies import (
+    create_steve_policies
 )
 from scripts.csa_scripts.create_dlp_rules import (
     create_ai_guardrail_rule,
@@ -192,25 +200,56 @@ def secure_access():
                 if not session.get("authenticated"):
                     flash("⚠️ Please authenticate first.")
                     return redirect(url_for("secure_access"))
-                # warn
+
+                # Rules are created low-to-high priority number (evaluated top-down).
+
+                # block malicious sites (prio 1)
+                block_malicious = create_int_block_malicious_policy(token)
+
+                # warn — Gen AI (prio 2)
                 warn = create_int_warn_policy(token)
 
-                # isolate
+                # warn — Shopping (prio 3)
+                warn_shopping = create_int_warn_shopping_policy(token)
+
+                # isolate — News (prio 4)
                 isolate = create_inet_isolate_policy(token)
 
-                # block content
+                # block content — Alcohol & Gambling (prio 5)
                 block_content = create_int_block_content_policy(token)
 
-                # block apps
+                # block apps — DeepSeek (prio 6)
                 block_app = create_int_block_apps_policy(token)
 
-                # URL filtering (SWG) — Allow r/Cisco (prio 5) + Block Reddit (prio 6)
+                # URL filtering (SWG) — Allow cisco.reddit.com (prio 7) + Block Reddit (prio 8)
                 url_filtering = create_url_filtering_policies(token)
 
-                # allow all (prio 7 — must stay below the URL rules above)
+                # allow all (prio 9 — must stay below the URL rules above)
                 allow_all = create_allow_all_policy(token)
 
                 flash("✅ Internet Access policies created.")
+
+            # Action: CREATE AI-PROPOSED INTERNET ACCESS
+            elif action == "create_ai_internet":
+                if not session.get("authenticated"):
+                    flash("⚠️ Please authenticate first.")
+                    return redirect(url_for("secure_access"))
+
+                create_ai_proposed_policies(token)
+                flash("✅ AI-Proposed Internet Access policies created.")
+
+            # Action: CREATE ALL POLICIES FROM THE TEST-CASE LIST ("Steve")
+            elif action == "create_steve":
+                if not session.get("authenticated"):
+                    flash("⚠️ Please authenticate first.")
+                    return redirect(url_for("secure_access"))
+
+                results = create_steve_policies(token)
+                created = [r for r in results if r["status"] == "created"]
+                failed = [r for r in results if r["status"] != "created"]
+                flash(f"✅ Steve created {len(created)} of {len(results)} policies.")
+                for r in failed:
+                    flash(f"⚠️ {r['policy']}: {r.get('error', 'failed')}")
 
 
         except Exception as e:
@@ -258,6 +297,34 @@ def duo():
         integration_key = request.form.get('integration_key')
         secret_key = request.form.get('secret_key')
         action = request.form.get('action')
+
+        # Cisco Identity Intelligence uses its OWN API credentials (separate from
+        # the Duo Admin API), so handle saving/testing them before the Duo-cred
+        # gate below.
+        if action == 'save_cii_creds':
+            cii_token_url = request.form.get('cii_token_url', '').strip()
+            cii_client_id = request.form.get('cii_client_id', '').strip()
+            cii_client_secret = request.form.get('cii_client_secret', '').strip()
+            cii_api_url = request.form.get('cii_api_url', '').strip()
+            cii_audience = request.form.get('cii_audience', '').strip()
+            if not all([cii_token_url, cii_client_id, cii_client_secret, cii_api_url]):
+                flash("⚠️ Provide Token URL, Client ID, Client Secret, and API URL for Identity Intelligence.")
+                return redirect(url_for('duo'))
+            try:
+                from scripts.identity_intelligence import check_credentials
+                check_credentials(cii_token_url, cii_client_id, cii_client_secret,
+                                  cii_api_url, cii_audience or None)
+                session['cii_token_url'] = cii_token_url
+                session['cii_client_id'] = cii_client_id
+                session['cii_client_secret'] = cii_client_secret
+                session['cii_api_url'] = cii_api_url
+                session['cii_audience'] = cii_audience
+                session['cii_authenticated'] = True
+                flash("✅ Identity Intelligence API connected (token + ping OK).")
+            except Exception as e:
+                session['cii_authenticated'] = False
+                flash(f"⚠️ Identity Intelligence connection failed: {e}")
+            return redirect(url_for('duo'))
 
         # Store credentials in session whenever explicitly submitted
         if api_hostname and integration_key and secret_key:
@@ -322,6 +389,21 @@ def duo():
                 )
                 if result['success']:
                     flash("✅ Global policy configured.")
+                    for warning in result.get('warnings', []):
+                        flash(f"⚠️ {warning}")
+                else:
+                    flash(f"⚠️ {result['error']}")
+
+            # Action: ASSIGN POC USERS TO IDENTITY INTELLIGENCE SSO APP
+            if action == 'assign_cii_group':
+                from scripts.duo.duo_automation import assign_group_to_identity_intelligence
+                result = assign_group_to_identity_intelligence(
+                    api_hostname=api_hostname,
+                    integration_key=integration_key,
+                    secret_key=secret_key,
+                )
+                if result['success']:
+                    flash(f"✅ Restricted '{result['integration_name']}' to the PoC Users group.")
                 else:
                     flash(f"⚠️ {result['error']}")
 
@@ -376,6 +458,27 @@ def duo():
         return redirect(url_for('duo'))
     
     return render_template('duo.html')
+
+
+@app.route('/api/identity-intelligence/risky-users')
+def identity_intelligence_risky_users():
+    """Read-only feed for the Risky Users panel — top end users by trust score."""
+    from flask import jsonify
+    if not session.get('cii_authenticated'):
+        return jsonify({"ok": False, "error": "Connect Identity Intelligence first.", "users": []}), 401
+    try:
+        from scripts.identity_intelligence import list_risky_users
+        users = list_risky_users(
+            token_url=session.get('cii_token_url'),
+            client_id=session.get('cii_client_id'),
+            client_secret=session.get('cii_client_secret'),
+            api_url=session.get('cii_api_url'),
+            audience=session.get('cii_audience') or None,
+            limit=50,
+        )
+        return jsonify({"ok": True, "users": users})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e), "users": []}), 500
 
 
 @app.route('/cilium', methods=['GET', 'POST'])
@@ -767,6 +870,31 @@ def tetragon_run():
         return jsonify({'ok': False, 'message': str(e)})
 
 
+def _collector_session_creds(source):
+    """Return the collector credential env for a source from the session, or None
+    if the credentials for that source haven't been entered yet."""
+    if source == 'cii' and session.get('cii_authenticated'):
+        return {
+            "CII_TOKEN_URL": session.get('cii_token_url'),
+            "CII_CLIENT_ID": session.get('cii_client_id'),
+            "CII_CLIENT_SECRET": session.get('cii_client_secret'),
+            "CII_API_URL": session.get('cii_api_url'),
+            "CII_AUDIENCE": session.get('cii_audience', ''),
+        }
+    if source == 'duo' and all([session.get('duo_api_hostname'), session.get('duo_integration_key'), session.get('duo_secret_key')]):
+        return {
+            "DUO_HOST": session.get('duo_api_hostname'),
+            "DUO_IKEY": session.get('duo_integration_key'),
+            "DUO_SKEY": session.get('duo_secret_key'),
+        }
+    if source == 'secure_access' and all([session.get('csa_api_key'), session.get('csa_api_secret')]):
+        return {
+            "CSA_KEY": session.get('csa_api_key'),
+            "CSA_SECRET": session.get('csa_api_secret'),
+        }
+    return None
+
+
 @app.route('/splunk', methods=['GET', 'POST'])
 def splunk():
     from scripts.splunk import (
@@ -811,8 +939,16 @@ def splunk():
         if action == 'install_app':
             from scripts.splunk import install_splunkbase_app
             app_id  = request.form.get('app_id', '').strip()
-            sb_user = request.form.get('splunkbase_username', '').strip()
+            sb_user = request.form.get('splunkbase_username', '').strip() or session.get('splunkbase_username', '')
             sb_pass = request.form.get('splunkbase_password', '').strip()
+            # Ignore the masked placeholder; fall back to the session-stored password
+            if not sb_pass or sb_pass.startswith('•'):
+                sb_pass = session.get('splunkbase_password', '')
+            # Persist whatever was explicitly entered for reuse by the orchestration
+            if sb_user:
+                session['splunkbase_username'] = sb_user
+            if sb_pass:
+                session['splunkbase_password'] = sb_pass
             if not app_id or not sb_user or not sb_pass:
                 flash("App ID, Splunk.com username, and password are all required.")
             else:
@@ -826,10 +962,192 @@ def splunk():
                         flash(f"{app_name} install failed: {e}")
             return redirect(url_for('splunk'))
 
+        # ── Save Splunk.com credentials in session (for Cisco app install) ──
+        if action == 'save_splunk_creds':
+            sb_user = request.form.get('splunkbase_username', '').strip()
+            sb_pass = request.form.get('splunkbase_password', '').strip()
+            if sb_user:
+                session['splunkbase_username'] = sb_user
+            # Ignore the masked placeholder so we don't overwrite a stored password
+            if sb_pass and not sb_pass.startswith('•'):
+                session['splunkbase_password'] = sb_pass
+            flash("✅ Splunk.com credentials saved for this session.")
+            return redirect(url_for('splunk'))
+
+        # ── Send to Splunk: per-component indexes + receiver ────────────────
+        if action == 'provision_indexes':
+            from scripts.splunk import ensure_indexes, enable_splunktcp_receiver
+            try:
+                idx = ensure_indexes()
+                rcv = enable_splunktcp_receiver(9997)
+                created = sum(1 for v in idx.values() if v in ('created', 'exists'))
+                flash(f"✅ Provisioned {created}/{len(idx)} indexes; UF receiver on 9997: {rcv}.")
+            except Exception as e:
+                flash(f"⚠️ Index provisioning failed: {e}")
+            return redirect(url_for('splunk'))
+
+        # ── Send to Splunk: deploy a cloud->Splunk collector ────────────────
+        if action == 'deploy_collector':
+            from scripts.splunk_collectors import deploy_collector, SOURCES
+            from scripts.splunk import ensure_indexes
+            source = request.form.get('source', '').strip()
+            if source not in SOURCES:
+                flash(f"⚠️ Unknown collector source: {source}")
+                return redirect(url_for('splunk'))
+
+            creds = _collector_session_creds(source)
+            if not creds:
+                where = {'cii': 'Identity Intelligence on the Duo tab',
+                         'duo': 'Duo on the Duo tab',
+                         'secure_access': 'Secure Access on the Secure Access tab'}.get(source, 'its tab')
+                flash(f"⚠️ Enter/authenticate {where} first.")
+                return redirect(url_for('splunk'))
+
+            try:
+                ensure_indexes([SOURCES[source]['index']])
+                label = deploy_collector(source, creds)
+                flash(f"✅ {label} collector deployed — polling into index '{SOURCES[source]['index']}'.")
+            except Exception as e:
+                flash(f"⚠️ Collector deploy failed: {e}")
+            return redirect(url_for('splunk'))
+
+        # ── One-click orchestration: finish Splunk setup end-to-end ─────────
+        if action == 'run_automation':
+            from scripts.splunk import ensure_indexes, enable_splunktcp_receiver
+            from scripts.splunk_app import build_app, APP_LABEL, SPLUNKER_USER
+            from scripts.splunk_collectors import deploy_collector, SOURCES
+
+            if not is_available():
+                flash("⚠️ Splunk isn't ready yet — wait for it to finish starting, then run automation.")
+                return redirect(url_for('splunk'))
+
+            steps = []
+            # 1) Per-component indexes + UF receiver
+            try:
+                ensure_indexes()
+                rcv = enable_splunktcp_receiver(9997)
+                steps.append(f"Indexes provisioned; UF receiver on 9997: {rcv}")
+            except Exception as e:
+                steps.append(f"⚠️ indexes/receiver: {e}")
+            # 2) 'PoC in a Pod' app + splunker user + dashboards
+            try:
+                res = build_app()
+                steps.append(f"'{APP_LABEL}' app + '{SPLUNKER_USER}' user + {len(res.get('views', []))} dashboards")
+                for err in res.get('errors', []):
+                    steps.append(f"⚠️ app: {err}")
+            except Exception as e:
+                steps.append(f"⚠️ app: {e}")
+            # 3) Deploy collectors for every source whose creds are already in session
+            deployed, skipped = [], []
+            for source in ('cii', 'duo', 'secure_access'):
+                creds = _collector_session_creds(source)
+                if not creds:
+                    skipped.append(source)
+                    continue
+                try:
+                    ensure_indexes([SOURCES[source]['index']])
+                    deploy_collector(source, creds)
+                    deployed.append(source)
+                except Exception as e:
+                    steps.append(f"⚠️ collector {source}: {e}")
+            if deployed:
+                steps.append("Collectors deployed: " + ", ".join(deployed))
+            if skipped:
+                steps.append("Collectors skipped (add credentials, then re-run): " + ", ".join(skipped))
+            # 4) DefenseClaw dashboard (best-effort)
+            try:
+                from scripts.defenseclaw import create_splunk_dashboard
+                create_splunk_dashboard()
+                steps.append("DefenseClaw dashboard created")
+            except Exception as e:
+                steps.append(f"DefenseClaw dashboard skipped ({e})")
+
+            # 5) Cisco Splunkbase apps (coexist) — only if Splunk.com creds are saved
+            sb_user = session.get('splunkbase_username')
+            sb_pass = session.get('splunkbase_password')
+            if sb_user and sb_pass:
+                from scripts.splunk import install_splunkbase_app, restart_splunk
+                # Add-on before app; Security Cloud last.
+                cisco_app_ids = [7569, 5558, 7404]
+                installed = []
+                for aid in cisco_app_ids:
+                    try:
+                        install_splunkbase_app(aid, sb_user, sb_pass)
+                        installed.append(str(aid))
+                    except Exception as e:
+                        steps.append(f"⚠️ Splunkbase app {aid}: {e}")
+                if installed:
+                    steps.append("Installed Cisco apps: " + ", ".join(installed))
+                    try:
+                        restart_splunk()
+                        steps.append("Splunk restarting to activate the apps (~2 min)")
+                    except Exception as e:
+                        steps.append(f"⚠️ restart after app install: {e}")
+            else:
+                steps.append("Cisco Splunkbase apps skipped (save Splunk.com credentials to include)")
+
+            flash("✅ Splunk automation complete.")
+            for s in steps:
+                flash(("⚠️ " not in s and "• " or "") + s)
+            return redirect(url_for('splunk'))
+
+        if action == 'remove_collector':
+            from scripts.splunk_collectors import remove_collector, SOURCES
+            source = request.form.get('source', '').strip()
+            try:
+                remove_collector(source)
+                flash(f"✅ Removed {SOURCES.get(source, {}).get('label', source)} collector.")
+            except Exception as e:
+                flash(f"⚠️ Collector removal failed: {e}")
+            return redirect(url_for('splunk'))
+
+        # ── Send to Splunk: DefenseClaw AI-agent dashboard (consolidated here) ─
+        if action == 'create_defenseclaw_dashboard':
+            from scripts.defenseclaw import create_splunk_dashboard
+            try:
+                path = create_splunk_dashboard()
+                flash(f"✅ DefenseClaw dashboard created — open it at {path}")
+            except Exception as e:
+                flash(f"⚠️ DefenseClaw dashboard creation failed: {e}")
+            return redirect(url_for('splunk'))
+
+        # ── Build the 'PoC in a Pod' Splunk app (splunker user + dashboards) ──
+        if action == 'build_poc_app':
+            from scripts.splunk_app import build_app, APP_LABEL, SPLUNKER_USER
+            try:
+                res = build_app()
+                flash(f"✅ '{APP_LABEL}' app built — user '{SPLUNKER_USER}' {res.get('user') or 'ready'}, "
+                      f"{len(res.get('views', []))} dashboards.")
+                for err in res.get('errors', []):
+                    flash(f"⚠️ {err}")
+            except Exception as e:
+                flash(f"⚠️ Failed to build the app: {e}")
+            return redirect(url_for('splunk'))
+
     splunk_available = is_available()
     app_status = get_splunkbase_app_status() if splunk_available else {}
 
     from scripts.splunk import k8s_dashboard_exists, otel_collector_running
+    # Cloud->Splunk collector statuses + whether each source's creds are ready
+    from scripts.splunk_collectors import collector_status
+    collectors = {
+        "cii": {
+            "status": collector_status("cii"),
+            "creds_ready": bool(session.get('cii_authenticated')),
+            "label": "Identity Intelligence", "index": "cii", "creds_where": "Duo tab",
+        },
+        "duo": {
+            "status": collector_status("duo"),
+            "creds_ready": bool(session.get('duo_api_hostname') and session.get('duo_integration_key') and session.get('duo_secret_key')),
+            "label": "Duo Admin API logs", "index": "duo", "creds_where": "Duo tab",
+        },
+        "secure_access": {
+            "status": collector_status("secure_access"),
+            "creds_ready": bool(session.get('csa_api_key') and session.get('csa_api_secret')),
+            "label": "Secure Access reporting", "index": "secure_access", "creds_where": "Secure Access tab",
+        },
+    }
+
     return render_template(
         'splunk.html',
         splunk_available=splunk_available,
@@ -839,6 +1157,7 @@ def splunk():
         app_status=app_status,
         k8s_dashboard_exists=k8s_dashboard_exists() if splunk_available else False,
         otel_running=otel_collector_running() if splunk_available else False,
+        collectors=collectors,
     )
 
 @app.route('/splunk/status')

@@ -96,7 +96,8 @@
   </div>
   <p style="color:#666; font-size:0.88em; margin:0 0 14px 0;">
     Deploy the DefenseClaw Gateway and OpenClaw agent into your k3s cluster.
-    Both run inside a single Pod sharing <code>localhost</code> so DefenseClaw can intercept all agent traffic.
+    Both are installed co-located in a single Pod (via DefenseClaw&rsquo;s official installer), so the
+    guardrail proxy and OpenClaw plugin intercept all agent traffic over <code>localhost</code>.
   </p>
 
   <!-- API Key input -->
@@ -139,7 +140,7 @@
           <span style="font-size:0.78em; color:#999;">not deployed</span>
         {% endif %}
       </div>
-      <p style="font-size:0.8em; color:#666; margin:8px 0 0;">AI agent with WebChat UI. Node.js 24 runtime, installed from npm.</p>
+      <p style="font-size:0.8em; color:#666; margin:8px 0 0;">AI agent with WebChat UI. Node.js runtime, installed via the DefenseClaw OpenClaw connector.</p>
       {% if status.openclaw.state == 'running' %}
         <a href="http://{{ host_ip }}:31789/?token={{ status.auth_token }}" target="_blank"
            style="display:inline-block; margin-top:8px; font-size:0.8em; color:#0066ff; text-decoration:none;">
