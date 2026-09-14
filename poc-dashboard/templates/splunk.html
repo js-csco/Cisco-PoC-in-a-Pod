@@ -482,6 +482,21 @@
     {% if not splunk_available %}<br><em>Deploy Splunk first.</em>{% endif %}
   </p>
 
+  <!-- One-click orchestration -->
+  <div style="background:#eafaf1; border:1px solid #b7e4c7; border-radius:10px; padding:16px 18px; margin-bottom:18px;">
+    <form method="POST" style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+      <button type="submit" name="action" value="run_automation"
+              style="background:#0b7a3b; color:#fff; border:none; padding:12px 28px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.98em;">
+        Run Splunk automation
+      </button>
+      <span style="font-size:0.85em; color:#2e7d32; line-height:1.5;">
+        One click, run after Splunk is up: provisions per-component indexes + the UF receiver (9997), builds the
+        <strong>“PoC in a Pod”</strong> app (+ <code>splunker</code> user &amp; dashboards), deploys every cloud
+        collector whose credentials you've already entered, and creates the DefenseClaw dashboard.
+      </span>
+    </form>
+  </div>
+
   <!-- Provision indexes + UF receiver -->
   <form method="POST" style="margin-bottom:16px;">
     <button type="submit" name="action" value="provision_indexes"

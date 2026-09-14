@@ -870,6 +870,31 @@ def tetragon_run():
         return jsonify({'ok': False, 'message': str(e)})
 
 
+def _collector_session_creds(source):
+    """Return the collector credential env for a source from the session, or None
+    if the credentials for that source haven't been entered yet."""
+    if source == 'cii' and session.get('cii_authenticated'):
+        return {
+            "CII_TOKEN_URL": session.get('cii_token_url'),
+            "CII_CLIENT_ID": session.get('cii_client_id'),
+            "CII_CLIENT_SECRET": session.get('cii_client_secret'),
+            "CII_API_URL": session.get('cii_api_url'),
+            "CII_AUDIENCE": session.get('cii_audience', ''),
+        }
+    if source == 'duo' and all([session.get('duo_api_hostname'), session.get('duo_integration_key'), session.get('duo_secret_key')]):
+        return {
+            "DUO_HOST": session.get('duo_api_hostname'),
+            "DUO_IKEY": session.get('duo_integration_key'),
+            "DUO_SKEY": session.get('duo_secret_key'),
+        }
+    if source == 'secure_access' and all([session.get('csa_api_key'), session.get('csa_api_secret')]):
+        return {
+            "CSA_KEY": session.get('csa_api_key'),
+            "CSA_SECRET": session.get('csa_api_secret'),
+        }
+    return None
+
+
 @app.route('/splunk', methods=['GET', 'POST'])
 def splunk():
     from scripts.splunk import (
@@ -950,37 +975,13 @@ def splunk():
                 flash(f"⚠️ Unknown collector source: {source}")
                 return redirect(url_for('splunk'))
 
-            # Pull the source's credentials from the session (entered on its tab)
-            if source == 'cii':
-                if not session.get('cii_authenticated'):
-                    flash("⚠️ Connect Identity Intelligence on the Duo tab first.")
-                    return redirect(url_for('splunk'))
-                creds = {
-                    "CII_TOKEN_URL": session.get('cii_token_url'),
-                    "CII_CLIENT_ID": session.get('cii_client_id'),
-                    "CII_CLIENT_SECRET": session.get('cii_client_secret'),
-                    "CII_API_URL": session.get('cii_api_url'),
-                    "CII_AUDIENCE": session.get('cii_audience', ''),
-                }
-            elif source == 'duo':
-                if not all([session.get('duo_api_hostname'), session.get('duo_integration_key'), session.get('duo_secret_key')]):
-                    flash("⚠️ Authenticate to Duo on the Duo tab first.")
-                    return redirect(url_for('splunk'))
-                creds = {
-                    "DUO_HOST": session.get('duo_api_hostname'),
-                    "DUO_IKEY": session.get('duo_integration_key'),
-                    "DUO_SKEY": session.get('duo_secret_key'),
-                }
-            elif source == 'secure_access':
-                if not all([session.get('csa_api_key'), session.get('csa_api_secret')]):
-                    flash("⚠️ Authenticate to Secure Access on the Secure Access tab first.")
-                    return redirect(url_for('splunk'))
-                creds = {
-                    "CSA_KEY": session.get('csa_api_key'),
-                    "CSA_SECRET": session.get('csa_api_secret'),
-                }
-            else:
-                creds = {}
+            creds = _collector_session_creds(source)
+            if not creds:
+                where = {'cii': 'Identity Intelligence on the Duo tab',
+                         'duo': 'Duo on the Duo tab',
+                         'secure_access': 'Secure Access on the Secure Access tab'}.get(source, 'its tab')
+                flash(f"⚠️ Enter/authenticate {where} first.")
+                return redirect(url_for('splunk'))
 
             try:
                 ensure_indexes([SOURCES[source]['index']])
@@ -988,6 +989,62 @@ def splunk():
                 flash(f"✅ {label} collector deployed — polling into index '{SOURCES[source]['index']}'.")
             except Exception as e:
                 flash(f"⚠️ Collector deploy failed: {e}")
+            return redirect(url_for('splunk'))
+
+        # ── One-click orchestration: finish Splunk setup end-to-end ─────────
+        if action == 'run_automation':
+            from scripts.splunk import ensure_indexes, enable_splunktcp_receiver
+            from scripts.splunk_app import build_app, APP_LABEL, SPLUNKER_USER
+            from scripts.splunk_collectors import deploy_collector, SOURCES
+
+            if not is_available():
+                flash("⚠️ Splunk isn't ready yet — wait for it to finish starting, then run automation.")
+                return redirect(url_for('splunk'))
+
+            steps = []
+            # 1) Per-component indexes + UF receiver
+            try:
+                ensure_indexes()
+                rcv = enable_splunktcp_receiver(9997)
+                steps.append(f"Indexes provisioned; UF receiver on 9997: {rcv}")
+            except Exception as e:
+                steps.append(f"⚠️ indexes/receiver: {e}")
+            # 2) 'PoC in a Pod' app + splunker user + dashboards
+            try:
+                res = build_app()
+                steps.append(f"'{APP_LABEL}' app + '{SPLUNKER_USER}' user + {len(res.get('views', []))} dashboards")
+                for err in res.get('errors', []):
+                    steps.append(f"⚠️ app: {err}")
+            except Exception as e:
+                steps.append(f"⚠️ app: {e}")
+            # 3) Deploy collectors for every source whose creds are already in session
+            deployed, skipped = [], []
+            for source in ('cii', 'duo', 'secure_access'):
+                creds = _collector_session_creds(source)
+                if not creds:
+                    skipped.append(source)
+                    continue
+                try:
+                    ensure_indexes([SOURCES[source]['index']])
+                    deploy_collector(source, creds)
+                    deployed.append(source)
+                except Exception as e:
+                    steps.append(f"⚠️ collector {source}: {e}")
+            if deployed:
+                steps.append("Collectors deployed: " + ", ".join(deployed))
+            if skipped:
+                steps.append("Collectors skipped (add credentials, then re-run): " + ", ".join(skipped))
+            # 4) DefenseClaw dashboard (best-effort)
+            try:
+                from scripts.defenseclaw import create_splunk_dashboard
+                create_splunk_dashboard()
+                steps.append("DefenseClaw dashboard created")
+            except Exception as e:
+                steps.append(f"DefenseClaw dashboard skipped ({e})")
+
+            flash("✅ Splunk automation complete.")
+            for s in steps:
+                flash(("⚠️ " not in s and "• " or "") + s)
             return redirect(url_for('splunk'))
 
         if action == 'remove_collector':
