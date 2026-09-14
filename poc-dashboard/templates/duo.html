@@ -407,39 +407,31 @@
       <h3>DUO POLICIES</h3>
     </div>
     <p class="desc">Configure Duo enrollment and authentication policies for the PoC environment.
-      These settings must be applied manually in the <strong>Duo Admin Panel</strong>.</p>
+      The <strong>Global Policy</strong> below is applied automatically via the Duo Admin API &mdash; it also
+      covers the enrollment policy (enrollment behavior and allowed authenticators). Duo Passport is set
+      manually in the Admin Panel.</p>
 
-    <!-- Enrollment Policy -->
+    <!-- Enrollment Policy (automated via the Global Policy call) -->
     <div class="duo-sub">
       <div class="duo-sub-head">
         <div class="duo-sub-bar"></div>
         <h4>1. Enrollment Policy</h4>
       </div>
 
-      <p style="color:#555; font-size:0.92em; margin:0 0 14px;">
-        In the <strong>Duo Admin Panel</strong>, navigate to <em>Policies &rarr; User Enrollment Policies</em> and apply the following settings:
-      </p>
-
-      <ol class="duo-steps">
-        <li>
-          <strong>Policy Enablement:</strong> Check the box next to
-          <em>"Enable the enrollment and account management policies on this page"</em>.
-        </li>
-        <li>
-          Under <strong>Global Enrollment Policy</strong>, configure:
-          <ul>
-            <li><strong>Require Password:</strong> enable the checkbox.</li>
-            <li>
-              <strong>Authenticators:</strong> allow only the following:
-              <ul style="margin:4px 0; padding-left:18px; line-height:1.7;">
-                <li>Passkey (Current Device)</li>
-                <li>Passkey (Mobile Device) <em>or</em> Security Key</li>
-                <li>Duo Mobile</li>
-              </ul>
-            </li>
-          </ul>
-        </li>
-      </ol>
+      <div class="duo-info duo-info-green">
+        <strong>Applied automatically by "Update Global Policy" below.</strong>
+        The Duo Admin API sets these on the Global Policy:
+        <ul>
+          <li><strong>New User Policy:</strong> require enrollment.</li>
+          <li><strong>Allowed authenticators:</strong> Passkey (platform), Passkey (roaming) / Security Key,
+            and Duo Mobile (Push) &mdash; plus their passwordless variants. Passcode, phone call, hardware
+            token, and SMS are blocked.</li>
+        </ul>
+        <p style="margin:8px 0 0; font-size:0.92em;">
+          Note: the enrollment-time <em>Require Password</em> toggle is not exposed by the Duo Admin API &mdash;
+          set it manually under <em>Policies &rarr; User Enrollment Policies</em> if required.
+        </p>
+      </div>
     </div>
 
     <!-- Global Policy -->
@@ -450,9 +442,11 @@
       </div>
 
       <p style="color:#555; font-size:0.92em; margin:0 0 14px;">
-        Sets New User Policy to require enrollment, authentication methods to recommended only
-        (Platform Passkey, Roaming Passkey, Duo Push) for both 2FA and Passwordless SSO,
-        and disables risk-based factor selection. User Location is left as default.
+        Applies the enrollment policy and authentication methods in one API call: New User Policy set to
+        require enrollment, and authentication methods limited to the recommended set (Platform Passkey,
+        Roaming Passkey, Duo Push) for both 2FA and Passwordless SSO. Risk-based factor selection is disabled
+        where available (Advantage/Premier editions); on other editions that step is skipped automatically.
+        User Location is left as default.
       </p>
 
       <button type="submit" name="action" value="configure_policy"

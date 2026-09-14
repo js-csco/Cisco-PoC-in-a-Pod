@@ -361,6 +361,8 @@ def duo():
                 )
                 if result['success']:
                     flash("✅ Global policy configured.")
+                    for warning in result.get('warnings', []):
+                        flash(f"⚠️ {warning}")
                 else:
                     flash(f"⚠️ {result['error']}")
 
