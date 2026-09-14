@@ -25,8 +25,15 @@
       <p style="margin:0 0 10px 0; color:#444; font-size:0.92em; line-height:1.75;">
         Every pod in this cluster runs with Cilium active. Out of the box, Cilium's default behavior is <strong>allow all</strong>: pods can be reached by any device on the network and can freely communicate with each other.
       </p>
-      <p style="margin:0; color:#444; font-size:0.92em; line-height:1.75;">
+      <p style="margin:0 0 10px 0; color:#444; font-size:0.92em; line-height:1.75;">
         The goal of this demo is <strong>workload microsegmentation</strong> — applying policies that isolate individual workloads so that even if one pod is compromised, an attacker cannot move laterally to other services in the cluster, and users can only reach applications through the controlled Secure Access path.
+      </p>
+      <p style="margin:0; color:#444; font-size:0.92em; line-height:1.75;">
+        Cilium is the <strong>network</strong> layer of a broader Zero Trust story in this PoC that also spans
+        <strong>identity</strong> (Duo &amp; Identity Intelligence), <strong>access</strong> (Cisco Secure Access),
+        <strong>runtime security</strong> (Tetragon), and <strong>observability</strong> (Splunk). Legitimate users
+        arrive through the <strong>Cisco Secure Client → Secure Access → Resource Connector</strong> path; direct LAN
+        clients have no client and are the risk this page focuses on.
       </p>
     </div>
   </div>
@@ -235,10 +242,11 @@
            background:{% if zero_trust_active %}#f0faf0{% else %}#fafafa{% endif %};">
         <div>
           <div style="font-size:0.72rem; font-weight:700; letter-spacing:.05em; color:#4caf50; text-transform:uppercase; margin-bottom:4px;">Zero Trust</div>
-          <div style="font-size:0.82em; color:#555; line-height:1.5;">Pods are only reachable through Cisco Secure Access and the Resource Connector.</div>
+          <div style="font-size:0.82em; color:#555; line-height:1.5;">Pods are only reachable through Cisco Secure Access and the Resource Connector — reached via the Cisco Secure Client.</div>
           <ul style="margin:6px 0 0 0; padding-left:1.1rem; font-size:0.78em; color:#666; line-height:1.7;">
             <li>PoC Dashboard, PoC Playbook and Hubble UI remain accessible from LAN</li>
             <li>All other pods are only reachable if the Source IP is 240.0.0.0/29 (Resource Connector)</li>
+            <li>Direct LAN clients (no Cisco Secure Client) are dropped before reaching the pod</li>
           </ul>
         </div>
         <div style="margin-top:auto;">
@@ -945,11 +953,42 @@
         }));
       });
 
+      // entry-point trust annotations: the Cisco Secure Client path (via the
+      // Resource Connector) vs. direct LAN access with no client.
+      if (nodeById('resource-connector')) {
+        const rc = ENTRY_LAYOUT['resource-connector'];
+        drawEntryBadge(svg, rc.bx, rc.by + 32, 'Cisco Secure Client', true);
+      }
+      if (nodeById('lan')) {
+        const ln = ENTRY_LAYOUT['lan'];
+        drawEntryBadge(svg, ln.bx, ln.by + 24, 'no Cisco Secure Client', false);
+      }
+
       // centre mode label
       const lbl = el('text', { x: CX, y: CY, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
         fill: '#d1d5db', 'font-size': '11', 'font-family': 'Inter,sans-serif', 'font-weight': '500' });
       lbl.textContent = ZERO_TRUST_ACTIVE ? 'Zero Trust' : 'Allow All';
       svg.appendChild(lbl);
+    }
+
+    // Small pill under an entry-point node. trusted=true → green (Secure Client
+    // present); false → amber (direct LAN, no client).
+    function drawEntryBadge(svg, cx, cy, text, trusted) {
+      const w = 134, h = 16;
+      const bg = trusted ? '#eafaf1' : '#fff7ed';
+      const br = trusted ? '#86efac' : '#fcd34d';
+      const tc = trusted ? '#15803d' : '#92400e';
+      svg.appendChild(el('rect', {
+        x: cx - w / 2, y: cy - h / 2, width: w, height: h, rx: 8, ry: 8,
+        fill: bg, stroke: br, 'stroke-width': 1,
+      }));
+      const t = el('text', {
+        x: cx, y: cy + 0.5, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+        fill: tc, 'font-size': '8', 'font-weight': '700',
+        'font-family': 'Inter,-apple-system,sans-serif', 'pointer-events': 'none',
+      });
+      t.textContent = text;
+      svg.appendChild(t);
     }
 
     function drawLine(svg, src, dst, color, width, dashed, hoverable, policyData) {
