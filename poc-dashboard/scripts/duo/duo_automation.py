@@ -4,8 +4,50 @@ Creates users, groups, manages group membership, and creates integrations for Po
 """
 
 import json
+import re
 import requests
 import duo_client
+
+
+def derive_name_fields(email, username=None):
+    """Derive human-name fields from an email address (or username).
+
+    Duo pushes users to Cisco Secure Access via SCIM, where the attribute
+    mapping is:
+
+        Duo attribute  ->  SCIM / application attribute
+        realname       ->  displayName
+        firstname      ->  name.givenName
+        lastname       ->  name.familyName
+        username       ->  userName
+        email          ->  emails
+
+    The dashboard only collects an email address, so without deriving these
+    name fields the user arrives in Secure Access with an empty display name and
+    no given/family name. We split the email's local part on common separators
+    (``.  _  -  +``) to produce sensible values, e.g. ``john.doe@corp.com`` ->
+    firstname "John", lastname "Doe", realname "John Doe".
+
+    Returns a dict with ``firstname``, ``lastname`` and ``realname`` keys.
+    """
+    local = (email or username or "").split("@")[0]
+    parts = [p for p in re.split(r"[._\-+]+", local) if p]
+
+    if len(parts) >= 2:
+        firstname = parts[0].capitalize()
+        lastname = " ".join(p.capitalize() for p in parts[1:])
+    elif len(parts) == 1:
+        firstname = parts[0].capitalize()
+        lastname = ""
+    else:
+        firstname = ""
+        lastname = ""
+
+    realname = " ".join(p for p in (firstname, lastname) if p).strip()
+    if not realname:
+        realname = local or (email or username or "")
+
+    return {"firstname": firstname, "lastname": lastname, "realname": realname}
 
 
 def check_credentials(api_hostname, integration_key, secret_key):
@@ -72,7 +114,11 @@ def setup_duo_complete(api_hostname, integration_key, secret_key, users_list):
         email = user_data['email']
         
         print(f"Processing user: {email}")
-        
+
+        # Derive the name fields Secure Access expects via SCIM (displayName,
+        # name.givenName, name.familyName) from the email address.
+        names = derive_name_fields(email, username)
+
         try:
             # Check if user already exists
             print(f"Checking if user exists: {username}")
@@ -84,6 +130,21 @@ def setup_duo_complete(api_hostname, integration_key, secret_key, users_list):
             
             if existing_users and len(existing_users) > 0:
                 user_id = existing_users[0].get('user_id')
+                # Backfill the name fields so existing users (possibly created
+                # before this fix, or by hand) also sync correctly to Secure
+                # Access. update_user is idempotent.
+                try:
+                    admin_api.update_user(
+                        user_id=user_id,
+                        email=email,
+                        realname=names['realname'],
+                        firstname=names['firstname'],
+                        lastname=names['lastname'],
+                    )
+                    print(f"✅ Updated name attributes for existing user: {username}")
+                except Exception as e:
+                    print(f"⚠️  Could not update name attributes for {username}: {e}")
+                    result['errors'].append(f"Name update failed for {username}: {str(e)}")
                 result['users_existing'].append({
                     'username': username,
                     'email': email,
@@ -91,11 +152,16 @@ def setup_duo_complete(api_hostname, integration_key, secret_key, users_list):
                 })
                 print(f"ℹ️  User already exists: {username} (ID: {user_id})")
             else:
-                # Create new user
+                # Create new user with the full set of attributes Secure Access
+                # needs (realname -> displayName, firstname -> name.givenName,
+                # lastname -> name.familyName, username -> userName).
                 print(f"Creating new user: {username}")
                 user_response = admin_api.add_user(
                     username=username,
                     email=email,
+                    realname=names['realname'],
+                    firstname=names['firstname'],
+                    lastname=names['lastname'],
                     status='active'
                 )
                 user_id = user_response.get('user_id')
