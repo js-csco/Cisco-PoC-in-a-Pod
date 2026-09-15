@@ -324,6 +324,20 @@
   .sa-modal-close:hover { color: #333; }
   #sa-browser-table td { vertical-align: top; word-break: break-word; }
   .sa-browser-none { color: #999; font-style: italic; }
+  .sa-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .sa-tag-block   { background: #fdecea; color: #c0392b; }
+  .sa-tag-warn    { background: #fef5e7; color: #b9770e; }
+  .sa-tag-isolate { background: #eaf2fb; color: #2471a3; }
+  .sa-tag-allow   { background: #eafaf1; color: #1e8449; }
 </style>
 
 <form method="POST" class="sa-page">
@@ -648,16 +662,416 @@
       </div>
 
       <p style="color:#666; font-size:0.9em; margin:0 0 15px; line-height:1.5;">
-        Generate Internet Access policies for basic use cases: browsing, warning, isolation, blocking and more.
-        Also creates SWG URL filtering with destination lists &mdash; <strong>Block</strong> Reddit while
-        <strong>Allowing</strong> the <em>r/Cisco</em> subreddit (allow rule ordered above the block).
+        Generate Internet Access policies covering the core web-filtering use cases (evaluated top-down by priority):
+      </p>
+      <ol style="color:#555; font-size:0.86em; margin:0 0 15px 18px; padding:0; line-height:1.6;">
+        <li><strong>Block</strong> malicious sites &mdash; malware, phishing, command-and-control, exploits, cryptomining (also stops malicious file downloads)</li>
+        <li><strong>Warn</strong> on Gen AI apps</li>
+        <li><strong>Warn</strong> on Shopping websites</li>
+        <li><strong>Isolate</strong> News websites (Browser Isolation)</li>
+        <li><strong>Block</strong> Alcohol &amp; Gambling websites</li>
+        <li><strong>Block</strong> the DeepSeek AI app</li>
+        <li>SWG URL filtering &mdash; <strong>Allow</strong> <em>cisco.reddit.com</em> while <strong>Blocking</strong> the rest of <em>reddit.com</em></li>
+        <li><strong>Allow</strong> all remaining internet traffic</li>
+      </ol>
+      <p style="color:#888; font-size:0.82em; margin:0 0 15px; line-height:1.5;">
+        All rules require HTTPS Decryption on the Internet Access security profile (see the step above).
       </p>
 
-      <button type="submit" name="action" value="create_internet"
-              class="sa-btn {% if session.get('authenticated') %}sa-btn-primary{% else %}sa-btn-disabled{% endif %}"
-              {% if not session.get('authenticated') %}disabled{% endif %}>
-        Create Internet Access Policies
-      </button>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button type="submit" name="action" value="create_internet"
+                class="sa-btn {% if session.get('authenticated') %}sa-btn-primary{% else %}sa-btn-disabled{% endif %}"
+                {% if not session.get('authenticated') %}disabled{% endif %}>
+          Create Internet Access Policies
+        </button>
+
+        <button type="button" id="sa-testurls-btn" class="sa-btn sa-btn-secondary"
+                onclick="openTestUrls()">
+          Show Test URLs
+        </button>
+      </div>
+    </div>
+
+    <!-- Internet Access test-cases popup -->
+    <div id="sa-testurls-modal" class="sa-modal-overlay" onclick="if(event.target===this)closeTestUrls()">
+      <div class="sa-modal">
+        <div class="sa-modal-head">
+          <h4 style="margin:0;">Internet Access &mdash; Test URLs</h4>
+          <button type="button" class="sa-modal-close" onclick="closeTestUrls()" aria-label="Close">&times;</button>
+        </div>
+        <p style="color:#666; font-size:0.85em; margin:0 0 14px; line-height:1.5;">
+          Open these destinations from a device behind Secure Access (roaming/AD user) to verify each rule.
+          Links open in a new tab. The expected outcome assumes HTTPS Decryption is enabled on the Internet
+          Access security profile.
+        </p>
+        <div style="overflow-x:auto;">
+          <table class="sa-table" style="width:100%;">
+            <thead>
+              <tr>
+                <th>Use case</th>
+                <th>Expected</th>
+                <th>Test destinations</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Malicious sites</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td>
+                  <a href="https://www.internetbadguys.com" target="_blank" rel="noopener noreferrer">internetbadguys.com</a><br>
+                  <a href="https://examplemalwaredomain.com" target="_blank" rel="noopener noreferrer">examplemalwaredomain.com</a>
+                </td>
+              </tr>
+              <tr>
+                <td>Malicious file download</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td>
+                  <a href="https://secure.eicar.org/eicar.com.txt" target="_blank" rel="noopener noreferrer">EICAR test file (eicar.com.txt)</a><br>
+                  <a href="https://secure.eicar.org/eicarcom2.zip" target="_blank" rel="noopener noreferrer">EICAR test file (eicarcom2.zip)</a>
+                </td>
+              </tr>
+              <tr>
+                <td>Gen AI apps</td>
+                <td><span class="sa-tag sa-tag-warn">Warn</span></td>
+                <td>
+                  <a href="https://chat.openai.com" target="_blank" rel="noopener noreferrer">chat.openai.com</a><br>
+                  <a href="https://gemini.google.com" target="_blank" rel="noopener noreferrer">gemini.google.com</a>
+                </td>
+              </tr>
+              <tr>
+                <td>Shopping</td>
+                <td><span class="sa-tag sa-tag-warn">Warn</span></td>
+                <td>
+                  <a href="https://www.amazon.com" target="_blank" rel="noopener noreferrer">amazon.com</a><br>
+                  <a href="https://www.ebay.com" target="_blank" rel="noopener noreferrer">ebay.com</a>
+                </td>
+              </tr>
+              <tr>
+                <td>News</td>
+                <td><span class="sa-tag sa-tag-isolate">Isolate</span></td>
+                <td>
+                  <a href="https://www.cnn.com" target="_blank" rel="noopener noreferrer">cnn.com</a><br>
+                  <a href="https://www.bbc.com/news" target="_blank" rel="noopener noreferrer">bbc.com/news</a>
+                </td>
+              </tr>
+              <tr>
+                <td>Alcohol</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td>
+                  <a href="https://www.budweiser.com" target="_blank" rel="noopener noreferrer">budweiser.com</a><br>
+                  <a href="https://www.jackdaniels.com" target="_blank" rel="noopener noreferrer">jackdaniels.com</a>
+                </td>
+              </tr>
+              <tr>
+                <td>Gambling</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td>
+                  <a href="https://www.bet365.com" target="_blank" rel="noopener noreferrer">bet365.com</a><br>
+                  <a href="https://www.pokerstars.com" target="_blank" rel="noopener noreferrer">pokerstars.com</a>
+                </td>
+              </tr>
+              <tr>
+                <td>DeepSeek AI (app)</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td><a href="https://www.deepseek.com" target="_blank" rel="noopener noreferrer">deepseek.com</a></td>
+              </tr>
+              <tr>
+                <td>Reddit &mdash; allowed host</td>
+                <td><span class="sa-tag sa-tag-allow">Allow</span></td>
+                <td><a href="https://cisco.reddit.com" target="_blank" rel="noopener noreferrer">cisco.reddit.com</a></td>
+              </tr>
+              <tr>
+                <td>Reddit &mdash; rest of site</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td><a href="https://www.reddit.com" target="_blank" rel="noopener noreferrer">reddit.com</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI-Proposed Internet Access Policies -->
+    <div class="sa-sub" style="margin-top:28px;">
+      <div class="sa-sub-head">
+        <div class="sa-sub-bar"></div>
+        <h4>AI-Proposed Internet Access Policies</h4>
+      </div>
+
+      <p style="color:#666; font-size:0.9em; margin:0 0 15px; line-height:1.5;">
+        An AI-curated set of high-value web-filtering use cases &mdash; all configurable via the Secure Access
+        Policies API and scoped to the test client (Roaming Devices + AD Users), just like the rules above:
+      </p>
+      <ol style="color:#555; font-size:0.86em; margin:0 0 15px 18px; padding:0; line-height:1.6;">
+        <li><strong>Block</strong> anonymizers, proxies, personal VPNs &amp; tunneling (evasion prevention)</li>
+        <li><strong>Isolate</strong> newly seen / dynamic-DNS / potentially-harmful domains (zero-day phishing)</li>
+        <li><strong>Block</strong> file sharing &amp; piracy sites (data-exfil / IP loss)</li>
+        <li><strong>Block</strong> unacceptable-use content (adult, weapons, drugs, hate)</li>
+        <li><strong>Allow</strong> sanctioned AI (OpenAI/ChatGPT) while <strong>Blocking</strong> all other Gen AI</li>
+      </ol>
+      <p style="color:#888; font-size:0.82em; margin:0 0 15px; line-height:1.5;">
+        Rules are inserted at the top of the Access policy (priorities 1&ndash;6) and require HTTPS Decryption on
+        the Internet Access security profile.
+      </p>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button type="submit" name="action" value="create_ai_internet"
+                class="sa-btn {% if session.get('authenticated') %}sa-btn-primary{% else %}sa-btn-disabled{% endif %}"
+                {% if not session.get('authenticated') %}disabled{% endif %}>
+          AI-Proposed Internet Access Policies
+        </button>
+
+        <button type="button" id="sa-ai-testurls-btn" class="sa-btn sa-btn-secondary"
+                onclick="openAiTestUrls()">
+          Show Test URLs
+        </button>
+      </div>
+    </div>
+
+    <!-- AI-Proposed test-cases popup -->
+    <div id="sa-ai-testurls-modal" class="sa-modal-overlay" onclick="if(event.target===this)closeAiTestUrls()">
+      <div class="sa-modal">
+        <div class="sa-modal-head">
+          <h4 style="margin:0;">AI-Proposed Internet Access &mdash; Test URLs</h4>
+          <button type="button" class="sa-modal-close" onclick="closeAiTestUrls()" aria-label="Close">&times;</button>
+        </div>
+        <p style="color:#666; font-size:0.85em; margin:0 0 14px; line-height:1.5;">
+          Open these from a device behind Secure Access (roaming/AD user) to verify each AI-proposed rule.
+          Links open in a new tab. Expected outcomes assume HTTPS Decryption is enabled.
+        </p>
+        <div style="overflow-x:auto;">
+          <table class="sa-table" style="width:100%;">
+            <thead>
+              <tr>
+                <th>Use case</th>
+                <th>Expected</th>
+                <th>Test destinations</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Anonymizers &amp; evasion</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td>
+                  <a href="https://www.proxysite.com" target="_blank" rel="noopener noreferrer">proxysite.com</a><br>
+                  <a href="https://hide.me/en/proxy" target="_blank" rel="noopener noreferrer">hide.me proxy</a><br>
+                  <a href="https://www.torproject.org" target="_blank" rel="noopener noreferrer">torproject.org</a>
+                </td>
+              </tr>
+              <tr>
+                <td>Unknown / risky domains</td>
+                <td><span class="sa-tag sa-tag-isolate">Isolate</span></td>
+                <td>
+                  <a href="https://www.noip.com" target="_blank" rel="noopener noreferrer">noip.com (Dynamic DNS)</a><br>
+                  <a href="https://www.duckdns.org" target="_blank" rel="noopener noreferrer">duckdns.org (Dynamic DNS)</a>
+                  <div style="color:#999; font-size:0.92em;">Newly-seen domains have no fixed test URL &mdash; any freshly registered domain triggers this rule.</div>
+                </td>
+              </tr>
+              <tr>
+                <td>File sharing &amp; piracy</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td>
+                  <a href="https://thepiratebay.org" target="_blank" rel="noopener noreferrer">thepiratebay.org</a><br>
+                  <a href="https://www.mediafire.com" target="_blank" rel="noopener noreferrer">mediafire.com</a><br>
+                  <a href="https://wetransfer.com" target="_blank" rel="noopener noreferrer">wetransfer.com</a>
+                </td>
+              </tr>
+              <tr>
+                <td>Unacceptable use (AUP)</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td>
+                  <span class="sa-browser-none">Adult / weapons / drugs / hate content &mdash; not linked here for
+                  appropriateness. Browse any site in these categories to verify the block page.</span>
+                </td>
+              </tr>
+              <tr>
+                <td>Sanctioned AI</td>
+                <td><span class="sa-tag sa-tag-allow">Allow</span></td>
+                <td><a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer">chatgpt.com</a></td>
+              </tr>
+              <tr>
+                <td>Other Gen AI</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td>
+                  <a href="https://gemini.google.com" target="_blank" rel="noopener noreferrer">gemini.google.com</a><br>
+                  <a href="https://claude.ai" target="_blank" rel="noopener noreferrer">claude.ai</a><br>
+                  <a href="https://www.deepseek.com" target="_blank" rel="noopener noreferrer">deepseek.com</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Steve — whole test-case list -->
+    <div class="sa-sub" style="margin-top:28px;">
+      <div class="sa-sub-head">
+        <div class="sa-sub-bar"></div>
+        <h4>Steve</h4>
+      </div>
+
+      <p style="color:#666; font-size:0.9em; margin:0 0 15px; line-height:1.5;">
+        One button that creates <strong>every policy from the test-case list that is configurable via the
+        Secure Access API</strong> &mdash; DNS Security, Secure Web Gateway, Remote Browser Isolation, AI Access,
+        Do-Not-Decrypt and DLP &mdash; all scoped to the single test client (Roaming Devices + AD Users).
+        Items that can only be matched at the domain level are created and labelled <em>(partial policy)</em>;
+        capabilities with no Policies API (FWaaS, file-type block, App Risk, Time-of-Day, Host DLP, Enterprise
+        Browser, tenant control) are skipped. Each policy is created independently &mdash; you'll get a summary of
+        how many succeeded.
+      </p>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button type="submit" name="action" value="create_steve"
+                class="sa-btn {% if session.get('authenticated') %}sa-btn-primary{% else %}sa-btn-disabled{% endif %}"
+                {% if not session.get('authenticated') %}disabled{% endif %}>
+          Steve
+        </button>
+
+        <button type="button" id="sa-steve-testurls-btn" class="sa-btn sa-btn-secondary"
+                onclick="openSteveTestUrls()">
+          Show Test URLs
+        </button>
+      </div>
+    </div>
+
+    <!-- Steve test-cases popup -->
+    <div id="sa-steve-testurls-modal" class="sa-modal-overlay" onclick="if(event.target===this)closeSteveTestUrls()">
+      <div class="sa-modal">
+        <div class="sa-modal-head">
+          <h4 style="margin:0;">Steve &mdash; Test URLs (whole list)</h4>
+          <button type="button" class="sa-modal-close" onclick="closeSteveTestUrls()" aria-label="Close">&times;</button>
+        </div>
+        <p style="color:#666; font-size:0.85em; margin:0 0 14px; line-height:1.5;">
+          Every policy Steve creates via the API, with a test destination. Open from a device behind Secure
+          Access (roaming/AD user). Expected outcomes assume HTTPS Decryption is enabled.
+        </p>
+        <div style="overflow-x:auto;">
+          <table class="sa-table" style="width:100%;">
+            <thead>
+              <tr>
+                <th>Area</th>
+                <th>Policy</th>
+                <th>Expected</th>
+                <th>Test destination</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>DNS Security</td><td>Domain Allow (Umbrella)</td>
+                <td><span class="sa-tag sa-tag-allow">Allow</span></td>
+                <td><a href="https://umbrella.cisco.com/why-umbrella/global-network-and-traffic" target="_blank" rel="noopener noreferrer">umbrella.cisco.com</a></td>
+              </tr>
+              <tr>
+                <td>DNS Security</td><td>Domain Block — Malware</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td><a href="https://www.internetbadguys.com" target="_blank" rel="noopener noreferrer">internetbadguys.com</a></td>
+              </tr>
+              <tr>
+                <td>DNS Security</td><td>Domain Block — DNS over HTTPS</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td><a href="https://dns.google/dns-query" target="_blank" rel="noopener noreferrer">dns.google/dns-query</a></td>
+              </tr>
+              <tr>
+                <td>DNS Security</td><td>Domain Block content — Gambling</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td><a href="https://www.draftkings.com" target="_blank" rel="noopener noreferrer">draftkings.com</a></td>
+              </tr>
+              <tr>
+                <td>DNS Security</td><td>Domain Block content — VPN</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td><a href="https://nordvpn.com" target="_blank" rel="noopener noreferrer">nordvpn.com</a></td>
+              </tr>
+              <tr>
+                <td>SWG</td><td>URL Block — Reddit</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td><a href="https://www.reddit.com" target="_blank" rel="noopener noreferrer">reddit.com</a></td>
+              </tr>
+              <tr>
+                <td>SWG</td><td>URL Allow — Reddit r/Cisco</td>
+                <td><span class="sa-tag sa-tag-allow">Allow</span></td>
+                <td><a href="https://www.reddit.com/r/Cisco/" target="_blank" rel="noopener noreferrer">reddit.com/r/Cisco/</a></td>
+              </tr>
+              <tr>
+                <td>SWG</td><td>URL Warn — Shopping</td>
+                <td><span class="sa-tag sa-tag-warn">Warn</span></td>
+                <td><a href="https://www.macys.com" target="_blank" rel="noopener noreferrer">macys.com</a></td>
+              </tr>
+              <tr>
+                <td>SWG</td><td>Decrypt Exclude — Health &amp; Finance <em>(partial policy)</em></td>
+                <td><span class="sa-tag sa-tag-allow">No&nbsp;decrypt</span></td>
+                <td><a href="https://www.mayoclinic.org/diseases-conditions" target="_blank" rel="noopener noreferrer">mayoclinic.org</a></td>
+              </tr>
+              <tr>
+                <td>AI Access</td><td>Allow model — sanctioned AI</td>
+                <td><span class="sa-tag sa-tag-allow">Allow</span></td>
+                <td><a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer">chatgpt.com</a></td>
+              </tr>
+              <tr>
+                <td>AI Access</td><td>Block model — unsanctioned Gen AI</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td><a href="https://www.deepseek.com" target="_blank" rel="noopener noreferrer">deepseek.com</a></td>
+              </tr>
+              <tr>
+                <td>AI Access</td><td>AI Supply Chain — permit <em>(partial policy)</em></td>
+                <td><span class="sa-tag sa-tag-allow">Allow</span></td>
+                <td><a href="https://huggingface.co" target="_blank" rel="noopener noreferrer">huggingface.co</a></td>
+              </tr>
+              <tr>
+                <td>AI Access / DLP</td><td>AI Guardrails (Security/Safety/Privacy; Block Code)</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td><a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer">chatgpt.com</a> (send a guardrail-triggering prompt)</td>
+              </tr>
+              <tr>
+                <td>AI Access / DLP</td><td>AI Guardrails scoped to ChatGPT (Block Finance)</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td><a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer">chatgpt.com</a></td>
+              </tr>
+              <tr>
+                <td>DLP</td><td>Real-Time DLP (Financial / PCI + PII)</td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td><a href="https://dlptest.com/https-post/" target="_blank" rel="noopener noreferrer">dlptest.com/https-post/</a></td>
+              </tr>
+              <tr>
+                <td>CASB</td><td>Block uploads <em>(partial policy)</em></td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td><a href="https://filesend.io" target="_blank" rel="noopener noreferrer">filesend.io</a></td>
+              </tr>
+              <tr>
+                <td>CASB</td><td>Block posts <em>(partial policy)</em></td>
+                <td><span class="sa-tag sa-tag-block">Block</span></td>
+                <td><a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer">facebook.com</a></td>
+              </tr>
+              <tr>
+                <td>RBI</td><td>Isolate — grey site</td>
+                <td><span class="sa-tag sa-tag-isolate">Isolate</span></td>
+                <td><a href="https://bazaar.abuse.ch/browse" target="_blank" rel="noopener noreferrer">bazaar.abuse.ch</a></td>
+              </tr>
+              <tr>
+                <td>RBI</td><td>Isolate — RBI demo</td>
+                <td><span class="sa-tag sa-tag-isolate">Isolate</span></td>
+                <td><a href="https://rbi.demo.checkumbrella.com" target="_blank" rel="noopener noreferrer">rbi.demo.checkumbrella.com</a></td>
+              </tr>
+              <tr>
+                <td>RBI</td><td>Isolate — webmail</td>
+                <td><span class="sa-tag sa-tag-isolate">Isolate</span></td>
+                <td><a href="https://mail.yahoo.com" target="_blank" rel="noopener noreferrer">mail.yahoo.com</a></td>
+              </tr>
+              <tr>
+                <td>RBI + DLP</td><td>Isolate — pastebin</td>
+                <td><span class="sa-tag sa-tag-isolate">Isolate</span></td>
+                <td><a href="https://pastebin.com" target="_blank" rel="noopener noreferrer">pastebin.com</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="color:#888; font-size:0.82em; margin:14px 0 4px; line-height:1.5;">
+          <strong>Not created by Steve</strong> (no Policies API): SWG file-type block (Ubuntu ISO), App Risk Profile,
+          Time-of-Day; FWaaS geo-blocking / TLD blocking / L7 firewall; CASB tenant control; Host DLP (printing,
+          cut &amp; paste); Enterprise Browser copy-paste &amp; watermarking; and DLP OCR / ML / RegEx / Data-Label
+          variants that depend on tenant-configured classifications.
+        </p>
+      </div>
     </div>
   </div>
 
@@ -752,9 +1166,45 @@
     document.getElementById('sa-browser-modal').classList.remove('open');
   }
 
+  function openTestUrls() {
+    document.getElementById('sa-testurls-modal').classList.add('open');
+  }
+
+  function closeTestUrls() {
+    document.getElementById('sa-testurls-modal').classList.remove('open');
+  }
+
+  function openAiTestUrls() {
+    document.getElementById('sa-ai-testurls-modal').classList.add('open');
+  }
+
+  function closeAiTestUrls() {
+    document.getElementById('sa-ai-testurls-modal').classList.remove('open');
+  }
+
+  function openSteveTestUrls() {
+    document.getElementById('sa-steve-testurls-modal').classList.add('open');
+  }
+
+  function closeSteveTestUrls() {
+    document.getElementById('sa-steve-testurls-modal').classList.remove('open');
+  }
+
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') closeBrowserUrls();
+    if (e.key === 'Escape') { closeBrowserUrls(); closeTestUrls(); closeAiTestUrls(); closeSteveTestUrls(); }
   });
+
+  // Deep links: open the matching popup directly.
+  if (window.location.hash === '#test-urls') {
+    document.addEventListener('DOMContentLoaded', openTestUrls);
+  }
+  if (window.location.hash === '#ai-test-urls') {
+    document.addEventListener('DOMContentLoaded', openAiTestUrls);
+  }
+  if (window.location.hash === '#steve-test-urls') {
+    document.addEventListener('DOMContentLoaded', openSteveTestUrls);
+  }
+
 
   function loadBrowserUrls() {
     var status = document.getElementById('sa-browser-status');
