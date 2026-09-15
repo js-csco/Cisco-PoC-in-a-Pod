@@ -308,6 +308,14 @@ def duo():
                 )
 
                 flash("✅ Duo setup complete.")
+                sa_app = result.get('secure_access_app') or {}
+                if sa_app.get('success'):
+                    flash(f"✅ 'PoC Users' group permitted on the Cisco Secure Access "
+                          f"app '{sa_app.get('name')}'.")
+                elif not sa_app.get('found'):
+                    flash("ℹ️ Cisco Secure Access application not found in Duo yet — "
+                          "create it under Applications, then run this again to permit "
+                          "the 'PoC Users' group.")
                 if result['errors']:
                     for error in result['errors']:
                         flash(f"⚠️ {error}")
