@@ -60,6 +60,88 @@ def check_credentials(api_hostname, integration_key, secret_key):
     admin.get_info_summary()
 
 
+def assign_group_to_secure_access_app(api_hostname, integration_key, secret_key,
+                                      group_id=None, group_name="PoC Users"):
+    """Permit a Duo group on the Cisco Secure Access SSO application.
+
+    Since March 2025 new Duo applications deny all users by default
+    (``user_access = NO_USERS``), so the Cisco Secure Access app blocks the PoC
+    users until a permitted group is added. This finds that SSO application and
+    sets ``user_access = PERMITTED_GROUPS`` with ``group_id`` merged into the
+    app's existing ``groups_allowed`` (merge, not overwrite, so any groups an
+    admin already added are preserved).
+
+    The Cisco Secure Access app is created by the admin (it can't be created via
+    the v1/v2 API), so this is best-effort: if it doesn't exist yet the result
+    reports ``found=False`` without raising.
+
+    Returns a dict with keys: success, found, integration_key, name,
+    groups_allowed, error.
+    """
+    admin_api = duo_client.Admin(
+        ikey=integration_key,
+        skey=secret_key,
+        host=api_hostname,
+    )
+    result = {'success': False, 'found': False, 'integration_key': None,
+              'name': None, 'groups_allowed': None, 'error': None}
+
+    # Resolve the group ID from its name if not supplied.
+    if not group_id:
+        for g in admin_api.get_groups():
+            if g.get('name') == group_name:
+                group_id = g.get('group_id')
+                break
+        if not group_id:
+            result['error'] = f"Group '{group_name}' not found."
+            return result
+
+    # Locate the Cisco Secure Access SSO application among the integrations.
+    integrations = admin_api.json_api_call('GET', '/admin/v3/integrations', {})
+    integrations = integrations if isinstance(integrations, list) else []
+
+    def _is_secure_access(intg):
+        name = (intg.get('name') or '').lower()
+        itype = (intg.get('type') or '').lower()
+        return 'secure-access' in itype or 'secure access' in name
+
+    target = next((i for i in integrations if _is_secure_access(i)), None)
+    if not target:
+        result['error'] = ("Cisco Secure Access application not found in Duo. "
+                           "Create it under Applications first, then re-run.")
+        return result
+
+    ikey = target.get('integration_key')
+    result['integration_key'] = ikey
+    result['name'] = target.get('name')
+
+    # Read the app's current permitted groups so we merge instead of overwrite.
+    try:
+        detail = admin_api.json_api_call('GET', f'/admin/v3/integrations/{ikey}', {})
+    except Exception:
+        detail = target
+    existing = detail.get('groups_allowed') or []
+    group_ids = []
+    for g in existing:
+        gid = g.get('group_id') if isinstance(g, dict) else g
+        if gid is not None and str(gid) not in group_ids:
+            group_ids.append(str(gid))
+    if str(group_id) not in group_ids:
+        group_ids.append(str(group_id))
+
+    admin_api.json_api_call('PUT', f'/admin/v3/integrations/{ikey}', {
+        'user_access': 'PERMITTED_GROUPS',
+        'groups_allowed': group_ids,
+    })
+
+    result['success'] = True
+    result['found'] = True
+    result['groups_allowed'] = group_ids
+    print(f"✅ Permitted group '{group_name}' on Cisco Secure Access app "
+          f"'{result['name']}' (groups_allowed={group_ids})")
+    return result
+
+
 def setup_duo_complete(api_hostname, integration_key, secret_key, users_list):
     """
     Complete Duo setup workflow:
@@ -267,7 +349,33 @@ def setup_duo_complete(api_hostname, integration_key, secret_key, users_list):
             error_msg = f"Failed to add user {user_id} to group: {str(e)}"
             print(f"⚠️  {error_msg}")
             result['errors'].append(error_msg)
-    
+
+    # Step 4: Permit the 'PoC Users' group on the Cisco Secure Access SSO app.
+    # New Duo apps deny all users by default, so add the group if the app
+    # already exists. Best-effort: if the app hasn't been created yet, just
+    # report it (non-fatal) so the admin can re-run after creating it.
+    print(f"\n=== STEP 4: Adding 'PoC Users' group to Cisco Secure Access application ===")
+    try:
+        sa_result = assign_group_to_secure_access_app(
+            api_hostname, integration_key, secret_key,
+            group_id=result['group_id'], group_name='PoC Users'
+        )
+        result['secure_access_app'] = sa_result
+        if sa_result['success']:
+            print(f"✅ 'PoC Users' permitted on Cisco Secure Access app "
+                  f"'{sa_result['name']}'")
+        elif not sa_result['found']:
+            # Not created yet — informational, not an error.
+            print(f"ℹ️  {sa_result['error']}")
+        else:
+            print(f"⚠️  {sa_result['error']}")
+            result['errors'].append(sa_result['error'])
+    except Exception as e:
+        msg = f"Failed to assign group to Cisco Secure Access app: {str(e)}"
+        print(f"⚠️  {msg}")
+        result['errors'].append(msg)
+        result['secure_access_app'] = {'success': False, 'found': False, 'error': msg}
+
     return result
 
 
