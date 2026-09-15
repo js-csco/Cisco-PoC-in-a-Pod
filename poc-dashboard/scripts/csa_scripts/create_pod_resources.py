@@ -138,12 +138,16 @@ def create_private_resources(token, vm_ip, resource_group_id):
         # Browser-based (clientless ZTNA) access for every resource. The proxy
         # protocol maps from the resource protocol.
         proto = res["protocol"].upper()
-        if "SSH" in proto:
-            browser_protocol = "SSH"
-        elif "RDP" in proto:
-            browser_protocol = "RDP"
-        elif "HTTP" in proto:
+        if "HTTP" in proto:
+            # The browser proxy speaks HTTP(S) to HTTP/HTTPS resources.
             browser_protocol = "HTTP"
+        elif "SSH" in proto or "RDP" in proto:
+            # For browser-based SSH/RDP, Secure Access requires the browser
+            # access protocol to match the resourceAddress protocol exactly
+            # (e.g. "RDP-TCP", not "RDP"). Otherwise the API rejects it with:
+            # "protocol attribute in browser access type must be rdp-tcp when
+            #  resourceAddress protocol is rdp-tcp".
+            browser_protocol = res["protocol"]
         else:
             browser_protocol = None
 
