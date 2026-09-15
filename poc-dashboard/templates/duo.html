@@ -555,21 +555,9 @@
         <strong>Cisco Secure Access</strong>, and follow the setup guide. This integration covers two parts:
       </p>
 
-      <!-- 1a. SAML Integration -->
+      <!-- 1a. User Provisioning -->
       <div class="duo-indent" style="margin-bottom:24px;">
-        <p style="color:#333; font-size:0.92em; font-weight:600; margin:0 0 8px;">a) SAML Integration</p>
-        <p style="color:#555; font-size:0.9em; margin:0 0 14px; line-height:1.6;">
-          Configure Single Sign-On between Duo and Cisco Secure Access. Follow the SSO setup guide to connect Duo as the identity provider.
-        </p>
-
-        <a href="https://duo.com/docs/sso-cisco-secure-access" target="_blank" class="duo-btn duo-btn-primary">
-          Duo SSO &ndash; Cisco Secure Access Docs
-        </a>
-      </div>
-
-      <!-- 1b. User Provisioning -->
-      <div class="duo-indent">
-        <p style="color:#333; font-size:0.92em; font-weight:600; margin:0 0 8px;">b) User Provisioning</p>
+        <p style="color:#333; font-size:0.92em; font-weight:600; margin:0 0 8px;">a) User Provisioning</p>
         <p style="color:#555; font-size:0.9em; margin:0 0 14px; line-height:1.6;">
           Enable SCIM provisioning in the same integration to sync Duo users and groups to Cisco Secure Access.
         </p>
@@ -596,6 +584,18 @@
             <tr><td>userName</td><td>userName</td></tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- 1b. SAML Integration -->
+      <div class="duo-indent">
+        <p style="color:#333; font-size:0.92em; font-weight:600; margin:0 0 8px;">b) SAML Integration</p>
+        <p style="color:#555; font-size:0.9em; margin:0 0 14px; line-height:1.6;">
+          Configure Single Sign-On between Duo and Cisco Secure Access. Follow the SSO setup guide to connect Duo as the identity provider.
+        </p>
+
+        <a href="https://duo.com/docs/sso-cisco-secure-access" target="_blank" class="duo-btn duo-btn-primary">
+          Duo SSO &ndash; Cisco Secure Access Docs
+        </a>
       </div>
     </div>
 
