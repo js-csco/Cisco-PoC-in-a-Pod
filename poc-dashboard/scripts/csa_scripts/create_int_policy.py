@@ -4,9 +4,98 @@ import json
 
 BASE_URL = "https://api.sse.cisco.com"  
 
+# Secure Access content-category IDs used across the internet-access rules.
+# (Full list: Reporting API "/categories" endpoint.)
+CATEGORY_GEN_AI = 212
+CATEGORY_NEWS = 179
+CATEGORY_ALCOHOL = 1
+CATEGORY_GAMBLING = 10
+CATEGORY_SHOPPING = 191
+
+# "Malicious sites" bundle — the security categories Secure Access uses to flag
+# threats. Blocking these answers the "are malicious sites blocked?" use case and
+# is also the origin of most malicious file downloads (EICAR/AMP test files).
+MALICIOUS_CATEGORY_IDS = [
+    60,   # Drive-by Downloads/Exploits
+    61,   # Dynamic DNS
+    63,   # High Risk Sites and Locations
+    64,   # Command and Control
+    65,   # Command and Control
+    66,   # Malware
+    67,   # Malware
+    68,   # Phishing
+    150,  # Cryptomining
+]
+
+# Identity match reused by every rule: AD Users (34) + Roaming Devices (9).
+ROAMING_IDENTITY_IDS = [34, 9]
+
+
 # --------------------------
 #  Helper Functions
 # --------------------------
+
+# Policy 0 — Block malicious sites (highest priority)
+def create_int_block_malicious_policy(token):
+    """
+    Creates an Internet Access Policy that blocks Secure Access security
+    categories (malware, phishing, command-and-control, exploits, cryptomining,
+    etc.). This is the "are malicious sites blocked?" demo rule and also the
+    first line of defence against malicious file downloads.
+    """
+    url = f"{BASE_URL}/policies/v2/rules"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "ruleName": "Roaming Devices - Block - Malicious Sites - Decryption required",
+        "ruleDescription": "Block Access for Roaming Devices to malicious destinations (malware, phishing, command-and-control, exploits, cryptomining). Decryption in Security Profile is required for the Block Page and to inspect malicious file downloads.",
+        "ruleIsEnabled": True,
+        "ruleIsDefault": False,
+        "ruleIName": None,
+        "ruleExternalId": None,
+        "rulePriority": 1,
+        "ruleAction": "block",
+        "ruleAccess": "public_internet",
+        "ruleSettings": [
+            {
+                "settingId": 5,
+                "settingName": "umbrella.logLevel",
+                "settingValue": "LOG_ALL"
+            },
+            {
+                "settingId": 9,
+                "settingName": "umbrella.default.traffic",
+                "settingValue": "PUBLIC_INTERNET"
+            }
+        ],
+        "ruleConditions": [
+            {
+                "attributeId": 3,
+                "attributeName": "umbrella.destination.category_ids",
+                "attributeOperator": "INTERSECT",
+                "attributeValue": MALICIOUS_CATEGORY_IDS
+            },
+            {
+                "attributeId": 5,
+                "attributeName": "umbrella.source.identity_type_ids",
+                "attributeOperator": "INTERSECT",
+                "attributeValue": ROAMING_IDENTITY_IDS
+            }
+        ]
+    }
+
+    r = requests.post(url, headers=headers, json=payload, timeout=15)
+    print("Response:", r.status_code, r.text)
+
+    if r.status_code not in (200, 201):
+        raise Exception(f"Failed to create internet access policy: {r.status_code} - {r.text}")
+
+    print(f"✅ Created Block Malicious Sites policy.")
+    return r.json()
+
 
 # Policy 1
 def create_int_warn_policy(token):
@@ -35,7 +124,7 @@ def create_int_warn_policy(token):
             "settingName": "umbrella.default.traffic"
             }
         ],
-        "rulePriority": 1,
+        "rulePriority": 2,
         "ruleConditions": [
             {
             "attributeName": "umbrella.destination.category_ids",
@@ -71,6 +160,66 @@ def create_int_warn_policy(token):
     print(f"✅ Created private access policy.")
     return r.json()
 
+# Policy 1b — Warn on Shopping
+def create_int_warn_shopping_policy(token):
+    """
+    Creates an Internet Access Policy that shows a Warn page for Roaming Devices
+    browsing Shopping websites. Decryption in the Security Profile is required
+    for the Warn Page.
+    """
+    url = f"{BASE_URL}/policies/v2/rules"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "ruleName": "Roaming Devices - Warn - Shopping Websites - Decryption required",
+        "ruleDescription": "Warn Page for Roaming Devices browsing Shopping websites. Decryption in Security Profile is required for the Warn Page.",
+        "ruleIsEnabled": True,
+        "ruleIsDefault": False,
+        "ruleIName": None,
+        "ruleExternalId": None,
+        "rulePriority": 3,
+        "ruleAction": "warn",
+        "ruleAccess": "public_internet",
+        "ruleSettings": [
+            {
+                "settingId": 5,
+                "settingName": "umbrella.logLevel",
+                "settingValue": "LOG_ALL"
+            },
+            {
+                "settingId": 9,
+                "settingName": "umbrella.default.traffic",
+                "settingValue": "PUBLIC_INTERNET"
+            }
+        ],
+        "ruleConditions": [
+            {
+                "attributeId": 3,
+                "attributeName": "umbrella.destination.category_ids",
+                "attributeOperator": "INTERSECT",
+                "attributeValue": [CATEGORY_SHOPPING]
+            },
+            {
+                "attributeId": 5,
+                "attributeName": "umbrella.source.identity_type_ids",
+                "attributeOperator": "INTERSECT",
+                "attributeValue": ROAMING_IDENTITY_IDS
+            }
+        ]
+    }
+
+    r = requests.post(url, headers=headers, json=payload, timeout=15)
+    print("Response:", r.status_code, r.text)
+
+    if r.status_code not in (200, 201):
+        raise Exception(f"Failed to create internet access policy: {r.status_code} - {r.text}")
+
+    print(f"✅ Created Warn Shopping policy.")
+    return r.json()
+
 # Policy 2
 def create_inet_isolate_policy(token):
     """
@@ -102,7 +251,7 @@ def create_inet_isolate_policy(token):
             }
         ],
         "ruleIsDefault": False,
-        "rulePriority": 2,
+        "rulePriority": 4,
         "ruleConditions": [
             {
                 "attributeValue": [
@@ -152,7 +301,8 @@ def create_int_block_content_policy(token):
                 "attributeName": "umbrella.destination.category_ids",
                 "attributeOperator": "INTERSECT",
                 "attributeValue": [
-                    1
+                    1,
+                    10
                 ]
             },
             {
@@ -165,9 +315,9 @@ def create_int_block_content_policy(token):
                 ]
             }
         ],
-        "ruleDescription": "Block Access for Roaming Devices to Alcohol Websites. Decryption in Security Profile is required for the Block Page.",
+        "ruleDescription": "Block Access for Roaming Devices to Alcohol and Gambling Websites. Decryption in Security Profile is required for the Block Page.",
         "ruleIsEnabled": True,
-        "rulePriority": 3,
+        "rulePriority": 5,
         "ruleIName": None,
         "ruleSettings": [
             {
@@ -181,7 +331,7 @@ def create_int_block_content_policy(token):
                 "settingName": "umbrella.default.traffic"
             }
         ],
-        "ruleName": "Roaming Devices - Block - Alcohol Websites - Decryption required",
+        "ruleName": "Roaming Devices - Block - Alcohol & Gambling Websites - Decryption required",
         "ruleIsDefault": False,
         "ruleExternalId": None,
         "ruleAction": "block",
@@ -210,7 +360,7 @@ def create_int_block_apps_policy(token):
     payload = {
         "ruleIsDefault": False,
         "ruleDescription": "Block Access for Roaming Devices to DeppSeek AI. Decryption in Security Profile is required for the Block Page.",
-        "rulePriority": 4,
+        "rulePriority": 6,
         "ruleAction": "block",
         "ruleConditions": [
             {
@@ -302,7 +452,7 @@ def create_allow_all_policy(token):
                 "settingValue": "PUBLIC_INTERNET"
             }
         ],
-        "rulePriority": 7,
+        "rulePriority": 9,
         "ruleIName": None,
         "ruleAction": "allow",
         "ruleIsEnabled": True,
@@ -383,9 +533,9 @@ def _create_url_destination_list(token, name, access, destinations):
 # Policy 6 — URL Allow (more specific, must sit ABOVE the block rule)
 def create_url_allow_policy(token, allow_list_id):
     """
-    Creates a Secure Web Gateway URL Allow rule for the r/Cisco subreddit.
-    Priority 5 so it is evaluated before the Reddit block (priority 6) and the
-    Allow-all (priority 7) — otherwise the broader rules would swallow it.
+    Creates a Secure Web Gateway URL Allow rule for cisco.reddit.com.
+    Priority 7 so it is evaluated before the Reddit block (priority 8) and the
+    Allow-all (priority 9) — otherwise the broader rules would swallow it.
     """
     url = f"{BASE_URL}/policies/v2/rules"
     headers = {
@@ -394,13 +544,13 @@ def create_url_allow_policy(token, allow_list_id):
     }
 
     payload = {
-        "ruleName": "Roaming Devices - Allow - Reddit r/Cisco - Decryption required",
-        "ruleDescription": "Allow Access for Roaming Devices to the r/Cisco subreddit while the rest of Reddit is blocked. Decryption in Security Profile is required.",
+        "ruleName": "Roaming Devices - Allow - cisco.reddit.com - Decryption required",
+        "ruleDescription": "Allow Access for Roaming Devices to cisco.reddit.com while the rest of Reddit is blocked. Decryption in Security Profile is required.",
         "ruleIsEnabled": True,
         "ruleIsDefault": False,
         "ruleIName": None,
         "ruleExternalId": None,
-        "rulePriority": 5,
+        "rulePriority": 7,
         "ruleAction": "allow",
         "ruleAccess": "public_internet",
         "ruleSettings": [
@@ -441,7 +591,7 @@ def create_url_allow_policy(token, allow_list_id):
     if r.status_code not in (200, 201):
         raise Exception(f"Failed to create internet access policy: {r.status_code} - {r.text}")
 
-    print(f"✅ Created URL Allow policy (r/Cisco).")
+    print(f"✅ Created URL Allow policy (cisco.reddit.com).")
     return r.json()
 
 
@@ -449,8 +599,8 @@ def create_url_allow_policy(token, allow_list_id):
 def create_url_block_policy(token, block_list_id):
     """
     Creates a Secure Web Gateway URL Block rule for Reddit.
-    Priority 6 so the r/Cisco allow (priority 5) wins for that sub-path while the
-    rest of reddit.com is blocked.
+    Priority 8 so the cisco.reddit.com allow (priority 7) wins for that host while
+    the rest of reddit.com is blocked.
     """
     url = f"{BASE_URL}/policies/v2/rules"
     headers = {
@@ -465,7 +615,7 @@ def create_url_block_policy(token, block_list_id):
         "ruleIsDefault": False,
         "ruleIName": None,
         "ruleExternalId": None,
-        "rulePriority": 6,
+        "rulePriority": 8,
         "ruleAction": "block",
         "ruleAccess": "public_internet",
         "ruleSettings": [
@@ -511,16 +661,17 @@ def create_url_block_policy(token, block_list_id):
 def create_url_filtering_policies(token):
     """
     Creates the Reddit URL filtering demo:
-      • Allow destination list  -> reddit.com/r/Cisco/  -> Allow rule (priority 5)
-      • Block destination list  -> reddit.com           -> Block rule (priority 6)
+      • Allow destination list  -> cisco.reddit.com  -> Allow rule (priority 7)
+      • Block destination list  -> reddit.com         -> Block rule (priority 8)
 
-    Net effect for AD users + roaming devices: only r/Cisco is reachable on Reddit.
+    Net effect for AD users + roaming devices: only cisco.reddit.com is reachable
+    on Reddit.
     """
     allow_list_id = _create_url_destination_list(
         token,
-        name="PoC - Allow - Reddit r/Cisco",
+        name="PoC - Allow - cisco.reddit.com",
         access="allow",
-        destinations=["reddit.com/r/Cisco/"]
+        destinations=["cisco.reddit.com"]
     )
     block_list_id = _create_url_destination_list(
         token,
