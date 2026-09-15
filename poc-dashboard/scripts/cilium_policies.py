@@ -377,7 +377,6 @@ _DIAGRAM_SERVICES = [
     {"id": "httpbin",            "label": "httpbin",              "protected": False},
     {"id": "playbook",           "label": "PoC Playbook",         "protected": True},
     {"id": "sse-check",          "label": "SSE Check",            "protected": False},
-    {"id": "uptime-kuma",        "label": "Uptime Kuma",          "protected": False},
     {"id": "hubble-ui",          "label": "Hubble UI",            "protected": True},
 ]
 

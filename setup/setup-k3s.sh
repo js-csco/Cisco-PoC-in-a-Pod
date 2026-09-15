@@ -483,7 +483,7 @@ echo ""
 # Pulling via Docker (which has its own credential chain) and importing
 # into k3s containerd is more reliable than letting k3s pull directly.
 echo "Step 16.2: Pre-pulling container images via Docker..."
-for img in "louislam/uptime-kuma:1" "outcoldsolutions/collectorforkubernetes:5.24.444" "node:24-slim" "python:3.11-slim" "otel/opentelemetry-collector-contrib:0.140.0"; do
+for img in "outcoldsolutions/collectorforkubernetes:5.24.444" "node:24-slim" "python:3.11-slim" "otel/opentelemetry-collector-contrib:0.140.0"; do
     echo "  Pulling $img ..."
     docker pull "$img" && docker save "$img" | k3s ctr images import - \
         && echo "  ✓ $img imported into k3s" \
@@ -503,9 +503,6 @@ for manifest in "$REPO_ROOT/k8s/"*.yaml; do
             ;;
         *caldera*)
             echo "  Skipping $(basename $manifest) — deploy from the PoC Dashboard"
-            ;;
-        *uptime-kuma-seed*)
-            echo "  Skipping $(basename $manifest) — will run after pods are ready"
             ;;
         *)
             kubectl apply -f "$manifest" -n piap
@@ -527,27 +524,6 @@ echo ""
 echo "Step 18: Waiting for pods to be ready..."
 kubectl wait --for=condition=Ready pods --all -n piap --timeout=120s || true
 kubectl get pods -n piap
-echo ""
-
-# Step 18a: Wait for Uptime-Kuma specifically before seeding
-echo "Step 18a: Waiting for Uptime-Kuma to be fully ready..."
-kubectl wait --for=condition=Ready pod -l app=uptime-kuma -n piap --timeout=120s || true
-# Uptime-Kuma needs extra time after the pod is "Ready" for Socket.IO to initialize
-sleep 30
-
-# Step 18b: Seed Uptime-Kuma monitors
-echo "Step 18b: Seeding Uptime-Kuma monitors (dark mode, disable auth, add monitors)..."
-kubectl delete job uptime-kuma-seed -n piap --ignore-not-found=true
-kubectl apply -f "$REPO_ROOT/k8s/uptime-kuma-seed-job.yaml" -n piap
-echo "  Waiting for seed job to complete (up to 3 min)..."
-if kubectl wait --for=condition=Complete job/uptime-kuma-seed -n piap --timeout=180s; then
-    echo "  ✓ Uptime-Kuma monitors seeded successfully"
-else
-    echo "  ✗ Uptime-Kuma seed job failed. Logs:"
-    kubectl logs -n piap -l app=uptime-kuma-seed --tail=30 2>/dev/null || true
-    echo ""
-    echo "  You can retry manually: kubectl delete job uptime-kuma-seed -n piap && kubectl apply -f k8s/uptime-kuma-seed-job.yaml -n piap"
-fi
 echo ""
 
 # Step 18.1: Install the connector internet masquerade rule.
