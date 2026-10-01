@@ -365,6 +365,16 @@ if kubectl -n kube-system get daemonset cilium >/dev/null 2>&1 \
     echo "  Cilium is already installed — skipping install (re-run safe)."
     echo "  To force a clean reinstall: 'cilium uninstall' then re-run this script."
 else
+    # Fresh install: clear any stale Cilium eBPF/datapath state left behind by a
+    # previous Cilium (e.g. after 'cilium uninstall'). Otherwise the new agent
+    # restores invalid load-balancer entries from the old BPF maps and the
+    # 'sync-lb-maps-with-k8s-services' controller fails with "Invalid svc ID 0 /
+    # key does not exist" (cilium/cilium#30342). Safe here because this branch
+    # only runs when no Cilium is present, so no healthy datapath is disturbed.
+    echo "  Clearing any stale Cilium eBPF state before fresh install..."
+    rm -rf /sys/fs/bpf/tc/globals/cilium_* /sys/fs/bpf/cilium \
+           /run/cilium/state /var/run/cilium/state 2>/dev/null || true
+
     cilium install --version 1.16.5 \
       --set routingMode=native \
       --set autoDirectNodeRoutes=true \
