@@ -654,6 +654,61 @@
       </div>
       {% endif %}
     </div>
+
+    <!-- 3. AI Agent Identity (Agentic Identity) -->
+    <div class="duo-sub" style="margin-top:28px;">
+      <div class="duo-sub-head">
+        <div class="duo-sub-bar"></div>
+        <h4>3. AI Agent Identity (Agentic Identity)</h4>
+      </div>
+
+      <p style="color:#555; font-size:0.92em; margin:0 0 14px;">
+        Provisions an <strong>OIDC application</strong> in Duo called
+        <em>"PoC in a Pod: AI Agent"</em>, assigned to the <strong>PoC Users</strong> group — the basis for a
+        <strong>Duo Agentic Identity</strong>. The OpenClaw agent then registers against it as a
+        <strong>confidential client</strong>.
+      </p>
+
+      <div class="duo-info duo-info-green" style="margin-bottom:16px;">
+        <strong>This will:</strong>
+        <ul>
+          <li>Create a <code>sso-oidc-generic</code> application via the Duo Admin API</li>
+          <li>Restrict access to the <strong>PoC Users</strong> group</li>
+          <li>Surface the integration key + issuer / discovery URL for the agent</li>
+        </ul>
+      </div>
+
+      <div class="duo-info" style="margin-bottom:16px; background:#fef9c3; border-color:#fde047;">
+        <strong>Prototype:</strong> creating the confidential client's <em>Client ID / Secret</em> is still a
+        manual step on the application's <strong>Clients</strong> tab in the Duo Admin Panel (not reliably
+        exposed via the Admin API yet). Paste those — with the issuer/discovery URL — into
+        <strong>AI Agent &amp; DefenseClaw → Connect Integrations → Duo Agentic Identity</strong>.
+      </div>
+
+      <button type="submit" name="action" value="provision_agent_identity"
+              class="duo-btn {% if session.get('duo_authenticated') %}duo-btn-primary{% else %}duo-btn-disabled{% endif %}"
+              {% if not session.get('duo_authenticated') %}disabled{% endif %}>
+        Provision AI Agent Identity
+      </button>
+
+      {% if session.get('agent_app_ikey') %}
+      <div style="margin-top:16px; padding:14px 18px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px;">
+        <strong style="color:#166534;">AI Agent Application Ready</strong>
+        <span style="color:#555; font-size:0.9em; display:block; margin:4px 0 4px;">
+          Integration Key: <code>{{ session.get('agent_app_ikey') }}</code>
+        </span>
+        {% if session.get('agent_app_metadata_url') %}
+        <span style="color:#555; font-size:0.9em; display:block; margin:0 0 4px;">
+          Issuer / Discovery: <code>{{ session.get('agent_app_metadata_url') }}</code>
+        </span>
+        {% endif %}
+        <p style="color:#166534; font-size:0.9em; margin:8px 0 0;">
+          Next: add a confidential client on this app's <strong>Clients</strong> tab in the Duo Admin Panel,
+          then paste the Client ID/Secret into the AI Agents → Connect Integrations panel.
+        </p>
+      </div>
+      {% endif %}
+    </div>
   </div>
 
   <!-- ══════════════════════════════════════════ -->
