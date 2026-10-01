@@ -25,7 +25,19 @@ echo "Running as user: $ACTUAL_USER"
 echo ""
 
 # Resolve server IP early — used in Cilium install, config updates, and status output.
-SERVER_IP=$(hostname -I | awk '{print $1}')
+# Use the source IP of the default route (the real host/primary IP). Do NOT use
+# `hostname -I | awk '{print $1}'`: on a re-run the Docker bridge docker0 exists
+# at 240.0.0.1 (the connector's 240.0.0.0/28 pool) and can be picked up first,
+# which would make Cilium target the wrong API server (k8sServiceHost=240.0.0.1)
+# and the operator fail TLS verification against 240.0.0.1:6443.
+SERVER_IP=$(ip -4 route get 1.1.1.1 2>/dev/null \
+    | awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')
+# Fallback: first non-Docker/loopback address if the route lookup fails.
+if [ -z "$SERVER_IP" ]; then
+    SERVER_IP=$(hostname -I | tr ' ' '\n' \
+        | grep -vE '^(127\.|240\.|172\.1[7-9]\.|172\.2[0-9]\.|172\.3[0-1]\.)' \
+        | head -1)
+fi
 echo "Server IP: $SERVER_IP"
 
 # Detect the primary network interface (the one with the default route).
