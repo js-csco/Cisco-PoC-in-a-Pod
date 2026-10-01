@@ -34,49 +34,38 @@
     <h3 style="color:#111; margin:0; font-size:1rem; letter-spacing:0.3px;">WHAT IS DEFENSECLAW?</h3>
   </div>
   <p style="margin:0 0 10px 0; color:#444; font-size:0.92em; line-height:1.75;">
-    AI agents are powerful — that&rsquo;s exactly what makes them dangerous. An LLM-powered agent can call tools,
-    execute code, browse the web, and talk to APIs. Without guardrails, a compromised skill, a prompt-injection
-    attack, or a hallucinated shell command can turn your helpful assistant into a security incident.
-  </p>
-  <p style="margin:0 0 10px 0; color:#444; font-size:0.92em; line-height:1.75;">
-    <strong>DefenseClaw</strong> is Cisco&rsquo;s open-source answer to this problem. It sits between the AI agent
-    and the outside world &mdash; scanning every skill before it loads, inspecting every tool call before it
-    executes, and blocking anything that smells like secrets leakage, injection, or command-and-control.
+    <strong>OpenClaw</strong> is the LLM agent (the brain that reasons and calls tools);
+    <strong>DefenseClaw</strong> is Cisco&rsquo;s open-source security gateway (the immune system) that scans every
+    skill, inspects every tool call, and blocks secrets leakage, prompt injection, and command-and-control.
   </p>
   <p style="margin:0; color:#444; font-size:0.92em; line-height:1.75;">
-    <strong>OpenClaw</strong> is the LLM agent framework that DefenseClaw protects. Think of OpenClaw as the
-    brain (the agent that reasons and acts) and DefenseClaw as the immune system (the gateway that enforces
-    policy, audits behaviour, and stops threats). Together they give you an AI agent that can do useful work
-    in a production environment &mdash; without keeping your security team up at night.
+    Use the guided setup below to pick an LLM provider, deploy the agent into your k3s cluster, stream its traces
+    to <strong>Splunk Agent Observability</strong>, and give it a <strong>Duo Agentic Identity</strong>.
   </p>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════ ARCHITECTURE -->
+<!-- ═══════════════════════════════════════════════════════ COMPONENTS -->
 <section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
   <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
     <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">ARCHITECTURE</h3>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">COMPONENTS</h3>
   </div>
-  <p style="color:#666; font-size:0.88em; margin:0 0 14px 0;">
-    How DefenseClaw, OpenClaw, and your existing k3s services fit together.
-  </p>
-  <div style="background:#fff; border:1px solid #e0e0e0; border-radius:8px; padding:16px; text-align:center;">
-    <img src="{{ url_for('static', filename='defenseclaw-arch.svg') }}"
-         alt="DefenseClaw Architecture Diagram"
-         style="max-width:100%; height:auto;">
-  </div>
-  <div style="margin-top:14px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+  <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:12px;">
     <div style="background:#e3f2fd; border-radius:6px; padding:12px;">
       <strong style="font-size:0.85em; color:#1565c0;">OpenClaw Agent</strong>
       <p style="font-size:0.8em; color:#555; margin:6px 0 0;">LLM-powered agent that reasons, plans, and calls tools. Hosts the DefenseClaw plugin which intercepts every tool call via a <code>before_tool_call</code> hook.</p>
     </div>
     <div style="background:#e8f5e9; border-radius:6px; padding:12px;">
       <strong style="font-size:0.85em; color:#2e7d32;">DefenseClaw Gateway</strong>
-      <p style="font-size:0.8em; color:#555; margin:6px 0 0;">Go-based policy engine. Runs CodeGuard static analysis, skill/MCP scanning, tool inspection, and a guardrail LLM proxy. Logs every decision to SQLite and forwards audit events to Splunk via HEC.</p>
+      <p style="font-size:0.8em; color:#555; margin:6px 0 0;">Go-based policy engine. Runs CodeGuard static analysis, skill/MCP scanning, tool inspection, and a guardrail LLM proxy. Logs every decision and forwards audit events to Splunk via HEC.</p>
     </div>
     <div style="background:#f3e5f5; border-radius:6px; padding:12px;">
       <strong style="font-size:0.85em; color:#6a1b9a;">CLI Dashboard</strong>
       <p style="font-size:0.8em; color:#555; margin:6px 0 0;">Python TUI for operators. Trigger scans, review audit logs, manage policies, and watch agent activity in real time &mdash; all from the terminal.</p>
+    </div>
+    <div style="background:#fff3e0; border-radius:6px; padding:12px;">
+      <strong style="font-size:0.85em; color:#e65100;">Agent Observability</strong>
+      <p style="font-size:0.8em; color:#555; margin:6px 0 0;">The agent streams its GenAI traces, token usage and cost to <strong>Splunk Observability Cloud</strong> (Agent Observability) &mdash; configured in the setup below. No OTel Collector required.</p>
     </div>
   </div>
 </section>
@@ -85,7 +74,7 @@
 <section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
   <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
     <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">ENVIRONMENT</h3>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SETUP</h3>
     {% if status.gateway.state == 'running' and status.openclaw.state == 'running' %}
       <span style="font-size:0.78em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">running</span>
     {% elif status.namespace_exists and (status.gateway.state != 'not deployed' or status.openclaw.state != 'not deployed') %}
@@ -94,36 +83,62 @@
       <span style="font-size:0.78em; color:#999; background:#f5f5f5; border:1px solid #e0e0e0; border-radius:4px; padding:2px 8px;">not deployed</span>
     {% endif %}
   </div>
-  <p style="color:#666; font-size:0.88em; margin:0 0 14px 0;">
-    Deploy the DefenseClaw Gateway and OpenClaw agent into your k3s cluster.
-    Both run inside a single Pod sharing <code>localhost</code> so DefenseClaw can intercept all agent traffic.
+  <p style="color:#666; font-size:0.88em; margin:0 0 18px 0;">
+    Follow the steps below. The agent (OpenClaw + DefenseClaw) runs in a single k3s Pod sharing
+    <code>localhost</code> so DefenseClaw can intercept all agent traffic.
   </p>
 
-  <!-- API Key input -->
+  <!-- Step 1 — LLM provider -->
   <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; margin-bottom:18px;">
     <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-      <span class="fa-solid fa-key" style="color:#0066ff;"></span>
-      <strong style="font-size:0.9em; color:#111;">Anthropic API Key</strong>
-      {% if status.api_key_set %}
-        <span style="font-size:0.75em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">configured</span>
+      <span style="background:#0066ff; color:#fff; font-size:0.75em; font-weight:700; border-radius:50%; width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center;">1</span>
+      <strong style="font-size:0.95em; color:#111;">LLM Provider &amp; API Key</strong>
+      {% if status.llm_configured %}
+        <span style="font-size:0.75em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">{{ status.llm_provider }}{% if status.llm_model %} · {{ status.llm_model }}{% endif %}</span>
       {% else %}
         <span style="font-size:0.75em; color:#d32f2f; background:#ffebee; border:1px solid #ef9a9a; border-radius:4px; padding:2px 8px;">required</span>
       {% endif %}
     </div>
-    <p style="font-size:0.82em; color:#666; margin:0 0 10px;">
-      OpenClaw uses Claude as its reasoning engine. Paste your API key from
-      <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#0066ff;">console.anthropic.com</a>.
-      The key is stored as a Kubernetes Secret &mdash; never written to disk.
+    <p style="font-size:0.82em; color:#666; margin:0 0 12px;">
+      OpenClaw is provider-agnostic — pick any provider and paste its key. Choose <em>Other</em> for any other
+      OpenClaw provider. The key is stored as a Kubernetes Secret and injected as <code>&lt;PROVIDER&gt;_API_KEY</code>.
+      Get keys at
+      <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#0066ff;">Anthropic</a>,
+      <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#0066ff;">OpenAI</a>, or
+      <a href="https://console.mistral.ai/api-keys" target="_blank" style="color:#0066ff;">Mistral</a>.
     </p>
-    <form method="POST" style="display:flex; align-items:center; gap:10px;">
-      <input type="password" name="api_key" placeholder="sk-ant-api03-..."
-             style="flex:1; padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; font-family:monospace;"
-             {% if status.api_key_set %}value="••••••••••••••••"{% endif %}>
-      <button type="submit" name="action" value="save_api_key"
-              style="background-color:#333; color:#fff; border:none; padding:9px 20px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.88em; white-space:nowrap;">
-        Save Key
-      </button>
+    <form method="POST">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+        <select name="llm_provider" onchange="document.getElementById('llm-other').style.display = this.value === 'other' ? 'block' : 'none';"
+                style="padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; box-sizing:border-box; background:#fff;">
+          <option value="anthropic" {% if status.llm_provider == 'anthropic' or not status.llm_configured %}selected{% endif %}>Anthropic (Claude)</option>
+          <option value="openai" {% if status.llm_provider == 'openai' %}selected{% endif %}>OpenAI</option>
+          <option value="mistral" {% if status.llm_provider == 'mistral' %}selected{% endif %}>Mistral</option>
+          <option value="other" {% if status.llm_provider and status.llm_provider not in ['anthropic','openai','mistral'] %}selected{% endif %}>Other…</option>
+        </select>
+        <input type="text" name="llm_model" placeholder="model (optional, e.g. anthropic/claude-sonnet-5)"
+               value="{{ status.llm_model }}"
+               style="padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; box-sizing:border-box;">
+      </div>
+      <input type="text" name="llm_provider_other" id="llm-other" placeholder="provider id (e.g. google, groq, openrouter)"
+             value="{% if status.llm_provider and status.llm_provider not in ['anthropic','openai','mistral'] %}{{ status.llm_provider }}{% endif %}"
+             style="display:{% if status.llm_provider and status.llm_provider not in ['anthropic','openai','mistral'] %}block{% else %}none{% endif %}; width:100%; padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; box-sizing:border-box; margin-bottom:10px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <input type="password" name="llm_api_key" placeholder="provider API key"
+               style="flex:1; padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; font-family:monospace; box-sizing:border-box;"
+               {% if status.llm_configured %}value="••••••••••••••••"{% endif %}>
+        <button type="submit" name="action" value="save_llm"
+                style="background-color:#333; color:#fff; border:none; padding:9px 20px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.88em; white-space:nowrap;">
+          Save Provider
+        </button>
+      </div>
     </form>
+  </div>
+
+  <!-- Step 2 — Deploy -->
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+    <span style="background:#0066ff; color:#fff; font-size:0.75em; font-weight:700; border-radius:50%; width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center;">2</span>
+    <strong style="font-size:0.95em; color:#111;">Deploy the Agent</strong>
   </div>
 
   <!-- Status cards -->
@@ -173,24 +188,24 @@
   {% endif %}
 
   {% set is_running = (status.openclaw.state == 'running' and status.gateway.state == 'running') %}
-  {% set can_deploy = status.api_key_set and not is_running %}
+  {% set can_deploy = status.llm_configured and not is_running %}
   <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
     <form method="POST" style="display:flex; align-items:center; gap:14px;">
       <button type="submit" name="action" value="deploy"
               style="background-color:{% if can_deploy %}#0066ff{% else %}#aaa{% endif %}; color:#fff; border:none; padding:11px 28px; border-radius:8px; font-weight:700;
                      cursor:{% if can_deploy %}pointer{% else %}default{% endif %}; font-size:0.95em;"
-              {% if not can_deploy %}disabled title="{% if is_running %}Already running{% elif not status.api_key_set %}Save your Anthropic API key first{% endif %}"{% endif %}>
+              {% if not can_deploy %}disabled title="{% if is_running %}Already running{% elif not status.llm_configured %}Save an LLM provider first{% endif %}"{% endif %}>
         {% if is_running %}
           Deployed
         {% else %}
-          Configure AI Agent Environment
+          Deploy AI Agent
         {% endif %}
       </button>
       <span style="font-size:0.82em; color:#999;">
         {% if is_running %}
           Both containers are running. To redeploy, delete the deployment first.
-        {% elif not status.api_key_set %}
-          Save your API key first, then deploy.
+        {% elif not status.llm_configured %}
+          Complete Step 1 (LLM provider) first, then deploy.
         {% else %}
           Creates namespace, deploys OpenClaw + DefenseClaw into your cluster.
         {% endif %}
@@ -210,109 +225,85 @@
   {% endif %}
 </section>
 
-<!-- ═══════════════════════════════════════════════════════ CONNECT INTEGRATIONS -->
+<!-- ═══════════════════════════════════════════════════════ SETUP (cont.): OBSERVABILITY + IDENTITY -->
 <section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
-  <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
-    <span class="fa-solid fa-plug" style="color:#0066ff;"></span>
-    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CONNECT INTEGRATIONS</h3>
-  </div>
   <p style="font-size:0.85em; color:#666; margin:0 0 18px; line-height:1.5;">
-    Optional settings for the AI Agent. Add an extra LLM provider, stream GenAI traces to
-    <strong>Splunk Observability Cloud</strong> (Agent Observability), and give the agent a
-    <strong>Duo Agentic Identity</strong>. Everything is stored as Kubernetes Secrets.
-    <strong>Redeploy the agent after saving</strong> to apply.
+    Optional but recommended. Stored as Kubernetes Secrets &mdash; <strong>redeploy the agent after saving</strong> to apply.
   </p>
 
-  <form method="POST">
-    <!-- LLM providers -->
-    <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; margin-bottom:14px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-        <span class="fa-solid fa-robot" style="color:#0066ff;"></span>
-        <strong style="font-size:0.9em; color:#111;">Mistral API Key <span style="font-weight:400; color:#999;">(optional second LLM)</span></strong>
-        {% if status.mistral_key_set %}
-          <span style="font-size:0.75em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">configured</span>
-        {% endif %}
-      </div>
-      <p style="font-size:0.82em; color:#666; margin:0 0 10px;">
-        Lets the agent use Mistral alongside Claude (selectable as <code>mistral/mistral-large-latest</code> in the WebChat model picker).
-        Create a key at <a href="https://console.mistral.ai/api-keys" target="_blank" style="color:#0066ff;">console.mistral.ai</a>.
-      </p>
-      <input type="password" name="mistral_key" placeholder="your Mistral API key"
-             style="width:100%; padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; font-family:monospace; box-sizing:border-box;"
-             {% if status.mistral_key_set %}value="••••••••••••••••"{% endif %}>
+  <!-- Step 3 — Agent Observability -->
+  <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; margin-bottom:14px;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+      <span style="background:#0066ff; color:#fff; font-size:0.75em; font-weight:700; border-radius:50%; width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center;">3</span>
+      <strong style="font-size:0.95em; color:#111;">Enable Agent Observability <span style="font-weight:400; color:#999;">(Splunk Observability Cloud)</span></strong>
+      {% if status.splunk_o11y_set %}
+        <span style="font-size:0.75em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">configured</span>
+      {% endif %}
     </div>
-
-    <!-- Splunk Observability Cloud -->
-    <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; margin-bottom:14px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-        <span class="fa-solid fa-chart-line" style="color:#e08020;"></span>
-        <strong style="font-size:0.9em; color:#111;">Splunk Observability Cloud &mdash; Agent Observability</strong>
-        {% if status.splunk_o11y_set %}
-          <span style="font-size:0.75em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">configured</span>
-        {% endif %}
-      </div>
-      <p style="font-size:0.82em; color:#666; margin:0 0 10px;">
-        Sends the agent's GenAI traces, token usage and cost to Splunk Agent Observability (SaaS).
-        No OTel Collector needed &mdash; the agent exports directly using your realm and access token.
-      </p>
-      <p style="font-size:0.78em; color:#888; margin:0 0 10px;">
-        <strong>Where to get these:</strong> your <strong>realm</strong> (e.g. <code>us1</code>, <code>eu0</code>) is under
-        Splunk Observability Cloud &rarr; <em>Settings &rarr; (your name) &rarr; Organizations</em>. Create an
-        <strong>access token</strong> under <em>Settings &rarr; Access Tokens &rarr; New Token</em> (API scope). For Agent
-        Observability keys use the <em>profile menu &rarr; API keys</em>.
-        <a href="https://help.splunk.com/en/splunk-observability-cloud/administer/authentication-and-security/authentication-tokens/org-access-tokens" target="_blank" style="color:#0066ff;">Docs</a>.
-      </p>
-      <div style="display:grid; grid-template-columns:1fr 2fr; gap:10px;">
+    <p style="font-size:0.82em; color:#666; margin:0 0 10px;">
+      Streams the agent's GenAI traces, token usage and cost to Splunk Agent Observability (SaaS).
+      No OTel Collector needed &mdash; the agent exports directly using your realm and access token.
+    </p>
+    <p style="font-size:0.78em; color:#888; margin:0 0 10px;">
+      <strong>Where to get these:</strong> your <strong>realm</strong> (e.g. <code>us1</code>, <code>eu0</code>) is under
+      Splunk Observability Cloud &rarr; <em>Settings &rarr; (your name) &rarr; Organizations</em>. Create an
+      <strong>access token</strong> under <em>Settings &rarr; Access Tokens &rarr; New Token</em> (API scope). For Agent
+      Observability keys use the <em>profile menu &rarr; API keys</em>.
+      <a href="https://help.splunk.com/en/splunk-observability-cloud/administer/authentication-and-security/authentication-tokens/org-access-tokens" target="_blank" style="color:#0066ff;">Docs</a>.
+    </p>
+    <form method="POST">
+      <div style="display:grid; grid-template-columns:1fr 2fr auto; gap:10px; align-items:center;">
         <input type="text" name="splunk_realm" placeholder="realm (e.g. us1, eu0)"
                style="padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; box-sizing:border-box;">
         <input type="password" name="splunk_token" placeholder="Splunk access token"
                style="padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; font-family:monospace; box-sizing:border-box;"
                {% if status.splunk_o11y_set %}value="••••••••••••••••"{% endif %}>
+        <button type="submit" name="action" value="save_integrations"
+                style="background-color:#333; color:#fff; border:none; padding:9px 20px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.88em; white-space:nowrap;">
+          Save
+        </button>
       </div>
-    </div>
+    </form>
+  </div>
 
-    <!-- Duo Agentic Identity -->
-    <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; margin-bottom:16px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-        <span class="fa-solid fa-id-badge" style="color:#0066ff;"></span>
-        <strong style="font-size:0.9em; color:#111;">Duo Agentic Identity <span style="font-weight:400; color:#999;">(confidential client)</span></strong>
-        {% if status.duo_agent_set %}
-          <span style="font-size:0.75em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">configured</span>
-        {% endif %}
-      </div>
-      <p style="font-size:0.82em; color:#666; margin:0 0 10px;">
-        In Duo, register this agent as a <strong>confidential client</strong> under the agent's client
-        registration rules, then paste the issuer, client ID/secret and scopes here. The agent
-        authenticates to Duo with these credentials to act under its Duo identity.
-      </p>
-      <p style="font-size:0.78em; color:#888; margin:0 0 10px;">
-        <strong>Where to get these:</strong> Duo Admin Panel &rarr; <em>Applications</em> &rarr; your MCP / OAuth agent
-        application &rarr; <em>Clients</em> tab &rarr; <em>Confidential Client Registration</em>. Add a client to get its
-        <strong>Client ID</strong> and <strong>Client Secret</strong>; the <strong>issuer / discovery URL</strong> and
-        <strong>scopes</strong> are on the application's Metadata / Scopes tabs. The
-        <a href="{{ url_for('duo') }}" style="color:#0066ff;">Duo page</a> can create the PoC Users group and permit it on this app.
-      </p>
+  <!-- Step 4 — Duo Agentic Identity -->
+  <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; margin-bottom:4px;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+      <span style="background:#0066ff; color:#fff; font-size:0.75em; font-weight:700; border-radius:50%; width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center;">4</span>
+      <strong style="font-size:0.95em; color:#111;">Give the Agent a Duo Agentic Identity <span style="font-weight:400; color:#999;">(confidential client)</span></strong>
+      {% if status.duo_agent_set %}
+        <span style="font-size:0.75em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">configured</span>
+      {% endif %}
+    </div>
+    <p style="font-size:0.82em; color:#666; margin:0 0 10px;">
+      In Duo, register this agent as a <strong>confidential client</strong>, then paste the issuer, client
+      ID/secret and scopes here so the agent authenticates to Duo under its own identity.
+    </p>
+    <p style="font-size:0.78em; color:#888; margin:0 0 10px;">
+      <strong>Where to get these:</strong> Duo Admin Panel &rarr; <em>Applications</em> &rarr; your MCP / OAuth agent
+      application &rarr; <em>Clients</em> tab &rarr; <em>Confidential Client Registration</em>. The
+      <a href="{{ url_for('duo') }}" style="color:#0066ff;">Duo page</a> can create the PoC Users group, permit it on this app, and provision the agent application.
+    </p>
+    <form method="POST">
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
         <input type="text" name="duo_issuer" placeholder="issuer / discovery URL (https://sso-....sso.duosecurity.com/oidc/...)"
                style="padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; box-sizing:border-box;">
         <input type="text" name="duo_scopes" placeholder="scopes (e.g. openid profile email)"
                style="padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; box-sizing:border-box;">
       </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:center;">
         <input type="text" name="duo_client_id" placeholder="client ID"
                style="padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; font-family:monospace; box-sizing:border-box;">
         <input type="password" name="duo_client_secret" placeholder="client secret"
                style="padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; font-family:monospace; box-sizing:border-box;"
                {% if status.duo_agent_set %}value="••••••••••••••••"{% endif %}>
+        <button type="submit" name="action" value="save_integrations"
+                style="background-color:#333; color:#fff; border:none; padding:9px 20px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.88em; white-space:nowrap;">
+          Save
+        </button>
       </div>
-    </div>
-
-    <button type="submit" name="action" value="save_integrations"
-            style="background-color:#333; color:#fff; border:none; padding:10px 24px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.9em;">
-      Save Integration Settings
-    </button>
-    <span style="font-size:0.82em; color:#999; margin-left:12px;">Only non-empty fields are saved. Redeploy to apply.</span>
-  </form>
+    </form>
+  </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ NETWORK ISOLATION -->

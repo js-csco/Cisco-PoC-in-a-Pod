@@ -7,7 +7,7 @@ Deploys a single Pod with two containers:
 
 Both share localhost inside the Pod so DefenseClaw can intercept OpenClaw traffic.
 """
-import os, json, textwrap, secrets
+import os, json, textwrap, secrets, base64
 import requests as http_requests
 import urllib3
 from kubernetes import client, config
@@ -27,9 +27,25 @@ DEPLOYMENT_NAME = "ai-agent"
 # Optional agent integrations configured from the dashboard "Connect
 # Integrations" section. Each is stored as its own Kubernetes Secret and is
 # injected into the agent/gateway containers only when present.
-MISTRAL_SECRET = "mistral-api-key"          # MISTRAL_API_KEY
+MISTRAL_SECRET = "mistral-api-key"          # MISTRAL_API_KEY (legacy; superseded by llm-config)
 SPLUNK_O11Y_SECRET = "splunk-o11y"          # SPLUNK_AO_REALM, SPLUNK_AO_O11Y_TOKEN
 DUO_AGENT_SECRET = "duo-agent-identity"     # DUO_ISSUER, DUO_CLIENT_ID, DUO_CLIENT_SECRET, DUO_SCOPES
+
+# LLM provider config — OpenClaw is provider-agnostic, so the dashboard lets you
+# pick any provider and paste its key. Stored as one Secret with the provider id,
+# the model ref, the provider's key env-var name (OpenClaw convention
+# <PROVIDER>_API_KEY) and the key itself.
+LLM_CONFIG_SECRET = "llm-config"
+_PROVIDER_DEFAULT_MODEL = {
+    "anthropic": "anthropic/claude-sonnet-5",
+    "openai": "openai/gpt-5.6-sol",
+    "mistral": "mistral/mistral-large-latest",
+}
+
+
+def _llm_key_env(provider):
+    """OpenClaw's auth env var for a provider, e.g. anthropic -> ANTHROPIC_API_KEY."""
+    return (provider or "").strip().upper().replace("-", "_") + "_API_KEY"
 
 # DefenseClaw v0.2.0 release artifacts
 DEFENSECLAW_VERSION = "0.2.0"
@@ -64,6 +80,9 @@ def get_status():
     status = {
         "namespace_exists": False,
         "api_key_set": False,
+        "llm_configured": False,
+        "llm_provider": "",
+        "llm_model": "",
         "mistral_key_set": False,
         "splunk_o11y_set": False,
         "duo_agent_set": False,
@@ -77,12 +96,27 @@ def get_status():
     except ApiException:
         return status
 
-    # Check if the API key secret exists
+    # Check if the legacy Anthropic API key secret exists
     try:
         core.read_namespaced_secret("anthropic-api-key", NAMESPACE)
         status["api_key_set"] = True
     except ApiException:
         pass
+
+    # LLM provider config (new, generic). Falls back to the legacy anthropic key.
+    try:
+        sec = core.read_namespaced_secret(LLM_CONFIG_SECRET, NAMESPACE)
+        data = sec.data or {}
+        prov = data.get("LLM_PROVIDER")
+        mdl = data.get("LLM_MODEL")
+        status["llm_provider"] = base64.b64decode(prov).decode() if prov else ""
+        status["llm_model"] = base64.b64decode(mdl).decode() if mdl else ""
+        status["llm_configured"] = True
+    except ApiException:
+        if status["api_key_set"]:
+            status["llm_provider"] = "anthropic"
+            status["llm_model"] = _PROVIDER_DEFAULT_MODEL["anthropic"]
+            status["llm_configured"] = True
 
     # Check optional integration secrets (Mistral, Splunk O11y, Duo identity)
     for status_key, secret_name in (
@@ -163,6 +197,67 @@ def save_api_key(api_key: str):
             core.patch_namespaced_secret("anthropic-api-key", NAMESPACE, secret)
         else:
             raise
+
+
+def save_llm_provider(provider, api_key, model=None):
+    """Store the chosen LLM provider + model + API key for the agent.
+
+    `provider` is any OpenClaw provider id (anthropic, openai, mistral, …). The
+    key is stored under the provider's env-var name (<PROVIDER>_API_KEY) and
+    injected at deploy; OpenClaw's primary model is set to `model`.
+    """
+    provider = (provider or "anthropic").strip().lower()
+    model = (model or "").strip() or _PROVIDER_DEFAULT_MODEL.get(provider, "")
+    key_env = _llm_key_env(provider)
+
+    config.load_incluster_config()
+    core = client.CoreV1Api()
+    try:
+        core.create_namespace(
+            client.V1Namespace(metadata=client.V1ObjectMeta(name=NAMESPACE))
+        )
+    except ApiException as e:
+        if e.status != 409:
+            raise
+
+    _upsert_secret(core, LLM_CONFIG_SECRET, {
+        "LLM_PROVIDER": provider,
+        "LLM_MODEL": model,
+        "LLM_API_KEY_NAME": key_env,
+        "LLM_API_KEY": api_key,
+    })
+    return {"provider": provider, "model": model, "key_env": key_env}
+
+
+def _read_llm_config(core):
+    """Resolve the active LLM config, falling back to the legacy anthropic-api-key
+    secret, then to Anthropic defaults. Returns provider/model and the Secret +
+    key to source the API key env var from at deploy time."""
+    try:
+        sec = core.read_namespaced_secret(LLM_CONFIG_SECRET, NAMESPACE)
+        data = sec.data or {}
+
+        def _d(k):
+            v = data.get(k)
+            return base64.b64decode(v).decode() if v else ""
+
+        provider = _d("LLM_PROVIDER") or "anthropic"
+        return {
+            "provider": provider,
+            "model": _d("LLM_MODEL") or _PROVIDER_DEFAULT_MODEL.get(provider, ""),
+            "key_env": _d("LLM_API_KEY_NAME") or _llm_key_env(provider),
+            "secret": LLM_CONFIG_SECRET,
+            "secret_key": "LLM_API_KEY",
+        }
+    except ApiException:
+        # Legacy: key stored directly under the anthropic-api-key secret.
+        return {
+            "provider": "anthropic",
+            "model": _PROVIDER_DEFAULT_MODEL["anthropic"],
+            "key_env": "ANTHROPIC_API_KEY",
+            "secret": "anthropic-api-key",
+            "secret_key": "ANTHROPIC_API_KEY",
+        }
 
 
 def _upsert_secret(core, name, string_data):
@@ -265,6 +360,17 @@ def deploy_environment():
     # inject it into the config so both containers share it.
     shared_token = secrets.token_hex(32)
 
+    # Resolve the configured LLM provider/model (generic — any OpenClaw provider).
+    llm = _read_llm_config(core)
+    primary_model = llm["model"] or "anthropic/claude-sonnet-5"
+    model_catalog = {
+        "anthropic/claude-sonnet-5": {"alias": "Sonnet"},
+        "anthropic/claude-opus-5": {"alias": "Opus"},
+        "mistral/mistral-large-latest": {"alias": "Mistral Large"},
+    }
+    if primary_model and primary_model not in model_catalog:
+        model_catalog[primary_model] = {"alias": primary_model.split("/")[-1]}
+
     openclaw_config = json.dumps({
         "gateway": {
             "mode": "local",
@@ -279,15 +385,8 @@ def deploy_environment():
         },
         "agents": {
             "defaults": {
-                "model": {"primary": "anthropic/claude-sonnet-5"},
-                "models": {
-                    "anthropic/claude-sonnet-5": {"alias": "Sonnet"},
-                    "anthropic/claude-opus-5": {"alias": "Opus"},
-                    # Mistral is usable when a MISTRAL_API_KEY is configured on the
-                    # Connect Integrations panel (the mistral provider plugin is
-                    # installed at container start when the key is present).
-                    "mistral/mistral-large-latest": {"alias": "Mistral Large"},
-                },
+                "model": {"primary": primary_model},
+                "models": model_catalog,
             }
         }
     }, indent=2)
@@ -343,15 +442,18 @@ def deploy_environment():
     )
     data_volume = client.V1Volume(name="data", empty_dir=client.V1EmptyDirVolumeSource())
 
-    # Secret reference for the API key
+    # LLM API key env — named for the chosen provider (ANTHROPIC_API_KEY,
+    # OPENAI_API_KEY, MISTRAL_API_KEY, …), sourced from whichever Secret holds it.
     api_key_env = client.V1EnvVar(
-        name="ANTHROPIC_API_KEY",
+        name=llm["key_env"],
         value_from=client.V1EnvVarSource(
             secret_key_ref=client.V1SecretKeySelector(
-                name="anthropic-api-key", key="ANTHROPIC_API_KEY", optional=True,
+                name=llm["secret"], key=llm["secret_key"], optional=True,
             )
         ),
     )
+    # Provider id so the agent container can install the right provider plugin.
+    llm_provider_env = client.V1EnvVar(name="LLM_PROVIDER", value=llm["provider"])
 
     # Shared token env var for both containers
     token_env = client.V1EnvVar(name="OPENCLAW_AUTH_TOKEN", value=shared_token)
@@ -391,13 +493,13 @@ def deploy_environment():
             echo "[openclaw] Installing OpenClaw..."
             npm install -g openclaw@2026.8.2 2>&1 | tail -5
 
-            # Optional: install the Mistral provider plugin when a key is set, so
-            # the mistral/* model becomes selectable. Best-effort — a failure
-            # here must not block agent startup.
-            if [ -n "$MISTRAL_API_KEY" ]; then
-                echo "[openclaw] MISTRAL_API_KEY detected — installing Mistral provider plugin..."
-                npm install -g @openclaw/mistral-provider 2>&1 | tail -3 || \
-                    echo "[openclaw] Mistral provider plugin install failed (optional) — continuing."
+            # Install the provider plugin for the chosen LLM when it isn't built
+            # in (anthropic/openai are built in; mistral and others ship as
+            # @openclaw/<provider>-provider). Best-effort — never block startup.
+            if [ -n "$LLM_PROVIDER" ] && [ "$LLM_PROVIDER" != "anthropic" ] && [ "$LLM_PROVIDER" != "openai" ]; then
+                echo "[openclaw] Installing provider plugin for '$LLM_PROVIDER'..."
+                npm install -g "@openclaw/${LLM_PROVIDER}-provider" 2>&1 | tail -3 || \
+                    echo "[openclaw] Provider plugin install failed (optional) — continuing."
             fi
 
             # Seed config into shared home dir
@@ -421,7 +523,7 @@ def deploy_environment():
         ports=[
             client.V1ContainerPort(container_port=18789, name="webchat"),
         ],
-        env=[api_key_env, token_env] + integration_env,
+        env=[api_key_env, llm_provider_env, token_env] + integration_env,
         volume_mounts=[
             client.V1VolumeMount(name="config", mount_path="/config", read_only=True),
             client.V1VolumeMount(name="openclaw-home", mount_path="/openclaw-home"),
@@ -481,6 +583,7 @@ def deploy_environment():
         ],
         env=[
             api_key_env,
+            llm_provider_env,
             token_env,
             client.V1EnvVar(name="DEFENSECLAW_HEC_URL",
                             value=f"{SPLUNK_HEC_URL}/services/collector/event"),

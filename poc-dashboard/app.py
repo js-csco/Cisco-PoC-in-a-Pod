@@ -915,7 +915,7 @@ def splunk_status():
 @app.route('/ai-agents', methods=['GET', 'POST'])
 def ai_agents():
     from scripts.defenseclaw import (get_status, deploy_environment, save_api_key,
-                                      save_integration_settings,
+                                      save_llm_provider, save_integration_settings,
                                       isolate_agent, unisolate_agent, get_isolation_status,
                                       create_splunk_dashboard)
     from scripts.splunk import hec_is_healthy
@@ -933,6 +933,28 @@ def ai_agents():
                     flash(f"Failed to save API key: {e}")
             else:
                 flash("Please enter a valid API key.")
+            return redirect(url_for('ai_agents'))
+
+        if action == 'save_llm':
+            provider = request.form.get('llm_provider', '').strip().lower()
+            provider_other = request.form.get('llm_provider_other', '').strip().lower()
+            if provider == 'other':
+                provider = provider_other
+            model = request.form.get('llm_model', '').strip()
+            api_key = request.form.get('llm_api_key', '').strip()
+            if api_key.startswith('•'):
+                api_key = ''  # masked placeholder — ignore
+            if not provider:
+                flash("⚠️ Please choose an LLM provider.")
+            elif not api_key:
+                flash("⚠️ Please paste the provider's API key.")
+            else:
+                try:
+                    res = save_llm_provider(provider, api_key, model)
+                    flash(f"✅ LLM provider saved: {res['provider']} "
+                          f"(model: {res['model'] or 'provider default'}). Deploy/redeploy to apply.")
+                except Exception as e:
+                    flash(f"Failed to save LLM provider: {e}")
             return redirect(url_for('ai_agents'))
 
         if action == 'save_integrations':
