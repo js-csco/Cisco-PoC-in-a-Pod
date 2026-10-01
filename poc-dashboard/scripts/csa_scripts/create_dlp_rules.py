@@ -6,12 +6,12 @@ BASE_URL = "https://api.sse.cisco.com"
 def _get_all_pages(url, headers):
     """
     Paginates through a Cisco SSE Admin/Policy API collection using limit + page.
-    Default returns up to 200 records; page is 1-indexed.
-    Keeps fetching until a short page is returned (last page).
+    The API caps a page at 100 records, so request 100 and treat any shorter
+    page as the last one; page is 1-indexed.
     Returns a flat list of all items.
     """
     all_items = []
-    limit = 200
+    limit = 100  # must match the server's max page size for last-page detection
     page = 1
 
     while True:
