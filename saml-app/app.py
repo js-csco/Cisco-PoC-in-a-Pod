@@ -235,6 +235,17 @@ def logout():
     return redirect(url_for("index"))
 
 
+@app.route("/sls")
+def sls():
+    """Single Logout Service — the SP metadata advertises this endpoint.
+
+    Duo (IdP-initiated SLO) redirects here; clear the local session and return
+    to the landing page so the logout round-trip doesn't 404.
+    """
+    session.clear()
+    return redirect(url_for("index"))
+
+
 @app.route("/metadata")
 def metadata():
     """SP metadata — download XML for Duo Admin."""
