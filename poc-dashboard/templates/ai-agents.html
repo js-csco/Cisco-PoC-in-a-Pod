@@ -210,6 +210,93 @@
   {% endif %}
 </section>
 
+<!-- ═══════════════════════════════════════════════════════ CONNECT INTEGRATIONS -->
+<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+    <span class="fa-solid fa-plug" style="color:#0066ff;"></span>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">CONNECT INTEGRATIONS</h3>
+  </div>
+  <p style="font-size:0.85em; color:#666; margin:0 0 18px; line-height:1.5;">
+    Optional settings for the AI Agent. Add an extra LLM provider, stream GenAI traces to
+    <strong>Splunk Observability Cloud</strong> (Agent Observability), and give the agent a
+    <strong>Duo Agentic Identity</strong>. Everything is stored as Kubernetes Secrets.
+    <strong>Redeploy the agent after saving</strong> to apply.
+  </p>
+
+  <form method="POST">
+    <!-- LLM providers -->
+    <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; margin-bottom:14px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+        <span class="fa-solid fa-robot" style="color:#0066ff;"></span>
+        <strong style="font-size:0.9em; color:#111;">Mistral API Key <span style="font-weight:400; color:#999;">(optional second LLM)</span></strong>
+        {% if status.mistral_key_set %}
+          <span style="font-size:0.75em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">configured</span>
+        {% endif %}
+      </div>
+      <input type="password" name="mistral_key" placeholder="your Mistral API key"
+             style="width:100%; padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; font-family:monospace; box-sizing:border-box;"
+             {% if status.mistral_key_set %}value="••••••••••••••••"{% endif %}>
+    </div>
+
+    <!-- Splunk Observability Cloud -->
+    <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; margin-bottom:14px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+        <span class="fa-solid fa-chart-line" style="color:#e08020;"></span>
+        <strong style="font-size:0.9em; color:#111;">Splunk Observability Cloud &mdash; Agent Observability</strong>
+        {% if status.splunk_o11y_set %}
+          <span style="font-size:0.75em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">configured</span>
+        {% endif %}
+      </div>
+      <p style="font-size:0.82em; color:#666; margin:0 0 10px;">
+        Sends the agent's GenAI traces, token usage and cost to Splunk Agent Observability (SaaS).
+        No OTel Collector needed &mdash; the agent exports directly using your realm and access token.
+      </p>
+      <div style="display:grid; grid-template-columns:1fr 2fr; gap:10px;">
+        <input type="text" name="splunk_realm" placeholder="realm (e.g. us1, eu0)"
+               style="padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; box-sizing:border-box;">
+        <input type="password" name="splunk_token" placeholder="Splunk access token"
+               style="padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; font-family:monospace; box-sizing:border-box;"
+               {% if status.splunk_o11y_set %}value="••••••••••••••••"{% endif %}>
+      </div>
+    </div>
+
+    <!-- Duo Agentic Identity -->
+    <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+        <span class="fa-solid fa-id-badge" style="color:#0066ff;"></span>
+        <strong style="font-size:0.9em; color:#111;">Duo Agentic Identity <span style="font-weight:400; color:#999;">(confidential client)</span></strong>
+        {% if status.duo_agent_set %}
+          <span style="font-size:0.75em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">configured</span>
+        {% endif %}
+      </div>
+      <p style="font-size:0.82em; color:#666; margin:0 0 10px;">
+        In Duo, register this agent as a <strong>confidential client</strong> under the agent's client
+        registration rules, then paste the issuer, client ID/secret and scopes here. The agent
+        authenticates to Duo with these credentials to act under its Duo identity.
+      </p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+        <input type="text" name="duo_issuer" placeholder="issuer / discovery URL (https://sso-....sso.duosecurity.com/oidc/...)"
+               style="padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; box-sizing:border-box;">
+        <input type="text" name="duo_scopes" placeholder="scopes (e.g. openid profile email)"
+               style="padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; box-sizing:border-box;">
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <input type="text" name="duo_client_id" placeholder="client ID"
+               style="padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; font-family:monospace; box-sizing:border-box;">
+        <input type="password" name="duo_client_secret" placeholder="client secret"
+               style="padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; font-family:monospace; box-sizing:border-box;"
+               {% if status.duo_agent_set %}value="••••••••••••••••"{% endif %}>
+      </div>
+    </div>
+
+    <button type="submit" name="action" value="save_integrations"
+            style="background-color:#333; color:#fff; border:none; padding:10px 24px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.9em;">
+      Save Integration Settings
+    </button>
+    <span style="font-size:0.82em; color:#999; margin-left:12px;">Only non-empty fields are saved. Redeploy to apply.</span>
+  </form>
+</section>
+
 <!-- ═══════════════════════════════════════════════════════ NETWORK ISOLATION -->
 <section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
   <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">

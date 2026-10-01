@@ -24,6 +24,13 @@ _ISOLATION_POLICY_NAME = "ai-agent-isolation"
 NAMESPACE = "defenseclaw"
 DEPLOYMENT_NAME = "ai-agent"
 
+# Optional agent integrations configured from the dashboard "Connect
+# Integrations" section. Each is stored as its own Kubernetes Secret and is
+# injected into the agent/gateway containers only when present.
+MISTRAL_SECRET = "mistral-api-key"          # MISTRAL_API_KEY
+SPLUNK_O11Y_SECRET = "splunk-o11y"          # SPLUNK_AO_REALM, SPLUNK_AO_O11Y_TOKEN
+DUO_AGENT_SECRET = "duo-agent-identity"     # DUO_ISSUER, DUO_CLIENT_ID, DUO_CLIENT_SECRET, DUO_SCOPES
+
 # DefenseClaw v0.2.0 release artifacts
 DEFENSECLAW_VERSION = "0.2.0"
 DEFENSECLAW_TARBALL = (
@@ -57,6 +64,9 @@ def get_status():
     status = {
         "namespace_exists": False,
         "api_key_set": False,
+        "mistral_key_set": False,
+        "splunk_o11y_set": False,
+        "duo_agent_set": False,
         "gateway": {"ready": 0, "desired": 0, "state": "not deployed"},
         "openclaw": {"ready": 0, "desired": 0, "state": "not deployed"},
     }
@@ -73,6 +83,18 @@ def get_status():
         status["api_key_set"] = True
     except ApiException:
         pass
+
+    # Check optional integration secrets (Mistral, Splunk O11y, Duo identity)
+    for status_key, secret_name in (
+        ("mistral_key_set", MISTRAL_SECRET),
+        ("splunk_o11y_set", SPLUNK_O11Y_SECRET),
+        ("duo_agent_set", DUO_AGENT_SECRET),
+    ):
+        try:
+            core.read_namespaced_secret(secret_name, NAMESPACE)
+            status[status_key] = True
+        except ApiException:
+            pass
 
     # Check the single Deployment with two containers
     try:
@@ -141,6 +163,85 @@ def save_api_key(api_key: str):
             core.patch_namespaced_secret("anthropic-api-key", NAMESPACE, secret)
         else:
             raise
+
+
+def _upsert_secret(core, name, string_data):
+    """Create or patch a namespaced Secret with the given string_data.
+
+    Patching merges keys, so saving one field of a multi-field secret leaves the
+    others intact.
+    """
+    secret = client.V1Secret(
+        metadata=client.V1ObjectMeta(name=name, namespace=NAMESPACE),
+        string_data=string_data,
+    )
+    try:
+        core.create_namespaced_secret(NAMESPACE, secret)
+    except ApiException as e:
+        if e.status == 409:
+            core.patch_namespaced_secret(name, NAMESPACE, secret)
+        else:
+            raise
+
+
+def save_integration_settings(mistral_key=None, splunk_realm=None,
+                              splunk_token=None, duo_issuer=None,
+                              duo_client_id=None, duo_client_secret=None,
+                              duo_scopes=None):
+    """Store optional agent integration settings as Kubernetes Secrets.
+
+    Groups (only groups with at least one non-empty value are written, so the
+    form can update one integration at a time):
+
+      - Mistral LLM key -> Secret 'mistral-api-key' (MISTRAL_API_KEY)
+      - Splunk Observability Cloud / Agent Observability (SaaS) -> Secret
+        'splunk-o11y' (SPLUNK_AO_REALM, SPLUNK_AO_O11Y_TOKEN)
+      - Duo Agentic Identity confidential client -> Secret 'duo-agent-identity'
+        (DUO_ISSUER, DUO_CLIENT_ID, DUO_CLIENT_SECRET, DUO_SCOPES)
+
+    Returns a dict indicating which groups were written.
+    """
+    config.load_incluster_config()
+    core = client.CoreV1Api()
+
+    # Ensure namespace exists
+    try:
+        core.create_namespace(
+            client.V1Namespace(metadata=client.V1ObjectMeta(name=NAMESPACE))
+        )
+    except ApiException as e:
+        if e.status != 409:
+            raise
+
+    saved = {"mistral": False, "splunk_o11y": False, "duo_agent": False}
+
+    if mistral_key:
+        _upsert_secret(core, MISTRAL_SECRET, {"MISTRAL_API_KEY": mistral_key})
+        saved["mistral"] = True
+
+    splunk_data = {}
+    if splunk_realm:
+        splunk_data["SPLUNK_AO_REALM"] = splunk_realm
+    if splunk_token:
+        splunk_data["SPLUNK_AO_O11Y_TOKEN"] = splunk_token
+    if splunk_data:
+        _upsert_secret(core, SPLUNK_O11Y_SECRET, splunk_data)
+        saved["splunk_o11y"] = True
+
+    duo_data = {}
+    if duo_issuer:
+        duo_data["DUO_ISSUER"] = duo_issuer
+    if duo_client_id:
+        duo_data["DUO_CLIENT_ID"] = duo_client_id
+    if duo_client_secret:
+        duo_data["DUO_CLIENT_SECRET"] = duo_client_secret
+    if duo_scopes:
+        duo_data["DUO_SCOPES"] = duo_scopes
+    if duo_data:
+        _upsert_secret(core, DUO_AGENT_SECRET, duo_data)
+        saved["duo_agent"] = True
+
+    return saved
 
 
 def deploy_environment():
@@ -251,6 +352,31 @@ def deploy_environment():
     # Shared token env var for both containers
     token_env = client.V1EnvVar(name="OPENCLAW_AUTH_TOKEN", value=shared_token)
 
+    # Optional integration env sourced from dashboard-managed Secrets. Each uses
+    # optional=True so the deployment succeeds whether or not it's configured.
+    # The agent/gateway images consume these to send GenAI traces to Splunk
+    # Observability Cloud (Agent Observability) and to authenticate as a Duo
+    # Agentic Identity confidential client.
+    def _secret_env(var, secret_name):
+        return client.V1EnvVar(
+            name=var,
+            value_from=client.V1EnvVarSource(
+                secret_key_ref=client.V1SecretKeySelector(
+                    name=secret_name, key=var, optional=True,
+                )
+            ),
+        )
+
+    integration_env = [
+        _secret_env("MISTRAL_API_KEY", MISTRAL_SECRET),
+        _secret_env("SPLUNK_AO_REALM", SPLUNK_O11Y_SECRET),
+        _secret_env("SPLUNK_AO_O11Y_TOKEN", SPLUNK_O11Y_SECRET),
+        _secret_env("DUO_ISSUER", DUO_AGENT_SECRET),
+        _secret_env("DUO_CLIENT_ID", DUO_AGENT_SECRET),
+        _secret_env("DUO_CLIENT_SECRET", DUO_AGENT_SECRET),
+        _secret_env("DUO_SCOPES", DUO_AGENT_SECRET),
+    ]
+
     # ── Container 1: OpenClaw ────────────────────────────────────────────
     openclaw_container = client.V1Container(
         name="openclaw",
@@ -282,7 +408,7 @@ def deploy_environment():
         ports=[
             client.V1ContainerPort(container_port=18789, name="webchat"),
         ],
-        env=[api_key_env, token_env],
+        env=[api_key_env, token_env] + integration_env,
         volume_mounts=[
             client.V1VolumeMount(name="config", mount_path="/config", read_only=True),
             client.V1VolumeMount(name="openclaw-home", mount_path="/openclaw-home"),
@@ -349,7 +475,7 @@ def deploy_environment():
             client.V1EnvVar(name="DEFENSECLAW_INDEX", value="defenseclaw"),
             client.V1EnvVar(name="DEFENSECLAW_SOURCETYPE", value="defenseclaw:json"),
             client.V1EnvVar(name="DEFENSECLAW_INTEGRATION_ENABLED", value="true"),
-        ],
+        ] + integration_env,
         volume_mounts=[
             client.V1VolumeMount(name="config", mount_path="/config", read_only=True),
             client.V1VolumeMount(name="openclaw-home", mount_path="/openclaw-home",
