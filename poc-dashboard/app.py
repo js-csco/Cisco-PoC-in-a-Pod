@@ -900,6 +900,7 @@ def splunk_status():
 @app.route('/ai-agents', methods=['GET', 'POST'])
 def ai_agents():
     from scripts.defenseclaw import (get_status, deploy_environment, save_api_key,
+                                      save_integration_settings,
                                       isolate_agent, unisolate_agent, get_isolation_status,
                                       create_splunk_dashboard)
     from scripts.splunk import hec_is_healthy
@@ -917,6 +918,36 @@ def ai_agents():
                     flash(f"Failed to save API key: {e}")
             else:
                 flash("Please enter a valid API key.")
+            return redirect(url_for('ai_agents'))
+
+        if action == 'save_integrations':
+            # Skip masked placeholder values for the sensitive fields.
+            def _field(name, sensitive=False):
+                val = request.form.get(name, '').strip()
+                if sensitive and val.startswith('•'):
+                    return None
+                return val or None
+            try:
+                saved = save_integration_settings(
+                    mistral_key=_field('mistral_key', sensitive=True),
+                    splunk_realm=_field('splunk_realm'),
+                    splunk_token=_field('splunk_token', sensitive=True),
+                    duo_issuer=_field('duo_issuer'),
+                    duo_client_id=_field('duo_client_id'),
+                    duo_client_secret=_field('duo_client_secret', sensitive=True),
+                    duo_scopes=_field('duo_scopes'),
+                )
+                labels = {"mistral": "Mistral key",
+                          "splunk_o11y": "Splunk Observability Cloud",
+                          "duo_agent": "Duo Agentic Identity"}
+                groups = [labels[k] for k, v in saved.items() if v]
+                if groups:
+                    flash("Saved: " + ", ".join(groups)
+                          + ". Redeploy the AI Agent to apply the new settings.")
+                else:
+                    flash("No integration values entered.")
+            except Exception as e:
+                flash(f"Failed to save integration settings: {e}")
             return redirect(url_for('ai_agents'))
 
         if action == 'deploy':
