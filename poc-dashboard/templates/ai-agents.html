@@ -233,6 +233,10 @@
           <span style="font-size:0.75em; color:#2e7d32; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; padding:2px 8px;">configured</span>
         {% endif %}
       </div>
+      <p style="font-size:0.82em; color:#666; margin:0 0 10px;">
+        Lets the agent use Mistral alongside Claude (selectable as <code>mistral/mistral-large-latest</code> in the WebChat model picker).
+        Create a key at <a href="https://console.mistral.ai/api-keys" target="_blank" style="color:#0066ff;">console.mistral.ai</a>.
+      </p>
       <input type="password" name="mistral_key" placeholder="your Mistral API key"
              style="width:100%; padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; font-family:monospace; box-sizing:border-box;"
              {% if status.mistral_key_set %}value="••••••••••••••••"{% endif %}>
@@ -250,6 +254,13 @@
       <p style="font-size:0.82em; color:#666; margin:0 0 10px;">
         Sends the agent's GenAI traces, token usage and cost to Splunk Agent Observability (SaaS).
         No OTel Collector needed &mdash; the agent exports directly using your realm and access token.
+      </p>
+      <p style="font-size:0.78em; color:#888; margin:0 0 10px;">
+        <strong>Where to get these:</strong> your <strong>realm</strong> (e.g. <code>us1</code>, <code>eu0</code>) is under
+        Splunk Observability Cloud &rarr; <em>Settings &rarr; (your name) &rarr; Organizations</em>. Create an
+        <strong>access token</strong> under <em>Settings &rarr; Access Tokens &rarr; New Token</em> (API scope). For Agent
+        Observability keys use the <em>profile menu &rarr; API keys</em>.
+        <a href="https://help.splunk.com/en/splunk-observability-cloud/administer/authentication-and-security/authentication-tokens/org-access-tokens" target="_blank" style="color:#0066ff;">Docs</a>.
       </p>
       <div style="display:grid; grid-template-columns:1fr 2fr; gap:10px;">
         <input type="text" name="splunk_realm" placeholder="realm (e.g. us1, eu0)"
@@ -273,6 +284,13 @@
         In Duo, register this agent as a <strong>confidential client</strong> under the agent's client
         registration rules, then paste the issuer, client ID/secret and scopes here. The agent
         authenticates to Duo with these credentials to act under its Duo identity.
+      </p>
+      <p style="font-size:0.78em; color:#888; margin:0 0 10px;">
+        <strong>Where to get these:</strong> Duo Admin Panel &rarr; <em>Applications</em> &rarr; your MCP / OAuth agent
+        application &rarr; <em>Clients</em> tab &rarr; <em>Confidential Client Registration</em>. Add a client to get its
+        <strong>Client ID</strong> and <strong>Client Secret</strong>; the <strong>issuer / discovery URL</strong> and
+        <strong>scopes</strong> are on the application's Metadata / Scopes tabs. The
+        <a href="{{ url_for('duo') }}" style="color:#0066ff;">Duo page</a> can create the PoC Users group and permit it on this app.
       </p>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
         <input type="text" name="duo_issuer" placeholder="issuer / discovery URL (https://sso-....sso.duosecurity.com/oidc/...)"
