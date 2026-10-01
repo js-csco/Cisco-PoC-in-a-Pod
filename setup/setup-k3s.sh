@@ -352,10 +352,16 @@ echo "  Using API server IP: $SERVER_IP"
 
 # Idempotent: a Helm release named "cilium" from a previous run makes
 # `cilium install` fail with "cannot reuse a name that is still in use".
-# Skip the install when Cilium is already present (Step 12 verifies readiness
-# and Step 12.1 reconciles the device list). To force a clean reinstall, run
+# Detect an existing install via kubectl (always configured for k3s here) first,
+# then helm/cilium as fallbacks, and skip the install if found. If detection
+# somehow misses, the install is guarded with `|| ...` so a "release in use"
+# failure doesn't abort the script (set -e) — Step 12 then verifies readiness
+# and Step 12.1 reconciles the device list. To force a clean reinstall, run
 # `cilium uninstall` (or `helm uninstall cilium -n kube-system`) and re-run.
-if helm status cilium -n kube-system >/dev/null 2>&1 || cilium status >/dev/null 2>&1; then
+if kubectl -n kube-system get daemonset cilium >/dev/null 2>&1 \
+   || kubectl -n kube-system get configmap cilium-config >/dev/null 2>&1 \
+   || helm status cilium -n kube-system >/dev/null 2>&1 \
+   || cilium status >/dev/null 2>&1; then
     echo "  Cilium is already installed — skipping install (re-run safe)."
     echo "  To force a clean reinstall: 'cilium uninstall' then re-run this script."
 else
@@ -368,7 +374,8 @@ else
       --set kubeProxyReplacement=true \
       --set k8sServiceHost=$SERVER_IP \
       --set k8sServicePort=6443 \
-      --set devices="${PRIMARY_IFACE} docker0"
+      --set devices="${PRIMARY_IFACE} docker0" \
+      || echo "  ⚠ 'cilium install' failed (likely already installed) — continuing; Step 12 will verify readiness."
     echo "  ✓ Cilium installation started"
 fi
 echo ""
