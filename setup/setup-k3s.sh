@@ -604,7 +604,39 @@ systemctl enable --now piap-connector-masquerade.service
 echo "  ✓ Connector internet masquerade rule installed (static, boot-persistent)"
 echo ""
 
-# Step 19: Show access information
+# Step 19: Optional — Splunk Observability Cloud OpenTelemetry Collector
+echo "Step 19: (Optional) Splunk Observability Cloud OpenTelemetry Collector"
+echo "  Sends k3s infrastructure metrics + AI-agent traces to Splunk Observability"
+echo "  Cloud. This is optional and separate from the in-cluster Splunk SIEM."
+echo "  You can also run it later: setup/install_splunk_o11y_collector.sh"
+_INSTALL_O11Y="n"
+if [ -t 0 ]; then
+    read -r -p "  Install the Splunk Observability Cloud collector now? [y/N]: " _INSTALL_O11Y || true
+else
+    echo "  Non-interactive shell — skipping (run the installer later if needed)."
+fi
+case "${_INSTALL_O11Y:-n}" in
+    y|Y|yes|YES)
+        read -r -p "    Splunk realm (e.g. us1, eu0): " SPLUNK_O11Y_REALM || true
+        read -r -s -p "    Splunk access token: " SPLUNK_O11Y_ACCESS_TOKEN || true
+        echo ""
+        if [ -n "${SPLUNK_O11Y_REALM:-}" ] && [ -n "${SPLUNK_O11Y_ACCESS_TOKEN:-}" ]; then
+            export SPLUNK_O11Y_REALM SPLUNK_O11Y_ACCESS_TOKEN
+            export CLUSTER_NAME="${CLUSTER_NAME:-piap-k3s}"
+            # Non-fatal: this is the last, optional step — never abort setup here.
+            bash "$REPO_ROOT/setup/install_splunk_o11y_collector.sh" \
+                || echo "  ⚠ Collector install failed (non-fatal). Fix realm/token and re-run setup/install_splunk_o11y_collector.sh."
+        else
+            echo "  ⚠ Realm or token empty — skipping. Run setup/install_splunk_o11y_collector.sh later."
+        fi
+        ;;
+    *)
+        echo "  Skipped. (Run setup/install_splunk_o11y_collector.sh anytime to add it.)"
+        ;;
+esac
+echo ""
+
+# Step 20: Show access information
 echo "================================================"
 echo "  Setup Complete!"
 echo "================================================"
