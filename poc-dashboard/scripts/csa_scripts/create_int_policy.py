@@ -359,7 +359,7 @@ def create_int_block_apps_policy(token):
 
     payload = {
         "ruleIsDefault": False,
-        "ruleDescription": "Block Access for Roaming Devices to DeppSeek AI. Decryption in Security Profile is required for the Block Page.",
+        "ruleDescription": "Block Access for Roaming Devices to DeepSeek AI. Decryption in Security Profile is required for the Block Page.",
         "rulePriority": 6,
         "ruleAction": "block",
         "ruleConditions": [
