@@ -417,6 +417,21 @@ def duo():
                 else:
                     flash(f"⚠️ {result['error']}")
 
+            # Action: PROVISION AI AGENT IDENTITY (Duo Agentic Identity)
+            if action == 'provision_agent_identity':
+                from scripts.duo.duo_automation import provision_agent_identity
+                result = provision_agent_identity(api_hostname, integration_key, secret_key)
+                if result['success']:
+                    session['agent_app_ikey'] = result['integration_key']
+                    if result.get('metadata_url'):
+                        session['agent_app_metadata_url'] = result['metadata_url']
+                    prefix = ("ℹ️ AI Agent application already exists in Duo"
+                              if result['already_exists']
+                              else "✅ AI Agent application provisioned in Duo")
+                    flash(f"{prefix} (Integration Key: {result['integration_key']}). {result['note']}")
+                else:
+                    flash(f"⚠️ {result['error']}")
+
         except Exception as e:
             flash(f"⚠️ Error: {str(e)}")
         

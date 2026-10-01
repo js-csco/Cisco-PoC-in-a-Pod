@@ -719,3 +719,57 @@ def fetch_and_push_idp_metadata(metadata_url, saml_app_base_url):
         print(f"❌ {result['error']}")
 
     return result
+
+
+def provision_agent_identity(api_hostname, integration_key, secret_key,
+                             name="PoC in a Pod: AI Agent", group_name="PoC Users"):
+    """Best-effort provisioning of a Duo OIDC/OAuth application for the AI agent.
+
+    Creates (or finds) an OIDC application assigned to the PoC Users group via
+    the Admin API v3 — the basis for a Duo Agentic Identity. The agent then
+    registers against it as a confidential client.
+
+    NOTE: creating the confidential client's ID/secret is done on the
+    application's Clients tab in the Duo Admin Panel; that specific step is not
+    reliably exposed through the Admin API yet. This automates the app creation
+    and surfaces the integration key + issuer/discovery URL to use there and in
+    the dashboard's Connect Integrations panel.
+
+    Returns a dict: {success, integration_key, metadata_url, already_exists,
+    error, note}.
+    """
+    note = ("Add a confidential client on this application's Clients tab in the "
+            "Duo Admin Panel to get its Client ID and Client Secret, then paste "
+            "them (with the issuer/discovery URL and scopes) into "
+            "AI Agents \u2192 Connect Integrations \u2192 Duo Agentic Identity.")
+    result = {"success": False, "integration_key": None, "metadata_url": None,
+              "already_exists": False, "error": None, "note": note}
+
+    try:
+        created = create_integration(
+            api_hostname, integration_key, secret_key,
+            name=name, integration_type="sso-oidc-generic", group_name=group_name,
+        )
+    except Exception as e:
+        result["error"] = f"Failed to create agent application: {e}"
+        return result
+
+    if not created.get("success"):
+        result["error"] = created.get("error") or "Failed to create agent application."
+        return result
+
+    result["success"] = True
+    result["integration_key"] = created.get("integration_key")
+    result["already_exists"] = bool(created.get("already_exists"))
+
+    # Surface the issuer / discovery URL when the API exposes it.
+    try:
+        meta = get_integration_metadata_url(
+            api_hostname, integration_key, secret_key, result["integration_key"]
+        )
+        if meta.get("success"):
+            result["metadata_url"] = meta.get("metadata_url")
+    except Exception:
+        pass
+
+    return result
