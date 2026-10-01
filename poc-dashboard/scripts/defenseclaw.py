@@ -283,6 +283,10 @@ def deploy_environment():
                 "models": {
                     "anthropic/claude-sonnet-5": {"alias": "Sonnet"},
                     "anthropic/claude-opus-5": {"alias": "Opus"},
+                    # Mistral is usable when a MISTRAL_API_KEY is configured on the
+                    # Connect Integrations panel (the mistral provider plugin is
+                    # installed at container start when the key is present).
+                    "mistral/mistral-large-latest": {"alias": "Mistral Large"},
                 },
             }
         }
@@ -386,6 +390,15 @@ def deploy_environment():
             set -e
             echo "[openclaw] Installing OpenClaw..."
             npm install -g openclaw@2026.8.2 2>&1 | tail -5
+
+            # Optional: install the Mistral provider plugin when a key is set, so
+            # the mistral/* model becomes selectable. Best-effort — a failure
+            # here must not block agent startup.
+            if [ -n "$MISTRAL_API_KEY" ]; then
+                echo "[openclaw] MISTRAL_API_KEY detected — installing Mistral provider plugin..."
+                npm install -g @openclaw/mistral-provider 2>&1 | tail -3 || \
+                    echo "[openclaw] Mistral provider plugin install failed (optional) — continuing."
+            fi
 
             # Seed config into shared home dir
             mkdir -p /openclaw-home
