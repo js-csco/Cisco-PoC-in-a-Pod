@@ -1355,6 +1355,78 @@ const TABS = [
     ],
   },
   {
+    id: 'agentic',
+    label: 'Agentic Identity & Observability',
+    icon: 'fa-id-badge',
+    subtitle: 'Give the AI agent a Duo identity and stream its GenAI traces, token usage and cost to Splunk Observability Cloud (Agent Observability).',
+    cases: [
+      {
+        id: 'agi-1',
+        title: 'Give the Agent a Duo Agentic Identity (confidential client)',
+        desc: 'Bind the OpenClaw agent to a Duo <strong>confidential client</strong> so it authenticates to Duo and acts under its own agent identity — not a human\'s login or a shared service account.',
+        steps: [
+          'In the <strong>Duo Admin Panel</strong>, open your agent / MCP OAuth application &rsaquo; <strong>Clients</strong> tab &rsaquo; <strong>Confidential Client Registration</strong> and add a client. Copy the <strong>Client ID</strong> and <strong>Client Secret</strong>.',
+          'Open <strong>PoC Dashboard &rsaquo; AI Agent &amp; DefenseClaw &rsaquo; Connect Integrations &rsaquo; Duo Agentic Identity</strong>.',
+          'Paste the <strong>issuer / discovery URL</strong>, <strong>client ID</strong>, <strong>client secret</strong> and <strong>scopes</strong> (e.g. <code>openid profile email</code>), then click <strong>Save Integration Settings</strong>.',
+          'Click <strong>Configure AI Agent Environment</strong> to (re)deploy so the agent picks up the Duo credentials.',
+          'In Duo, confirm an authentication / token-issuance event for the confidential client appears in the logs.',
+        ],
+      },
+      {
+        id: 'agi-2',
+        title: 'Agent Appears in the Duo Agentic Identity Inventory',
+        desc: 'Duo Agentic Identity keeps a live inventory of active AI agents, each registered as a distinct identity object mapped to a human owner and governed by group policy.',
+        steps: [
+          'In Duo / Cisco Identity Intelligence, open the <strong>Agentic Identity</strong> inventory.',
+          'Confirm the PoC agent is listed as a distinct identity object (not a service account), mapped to a human owner.',
+          'Confirm it is a member of the <strong>PoC Users</strong> group so group-based policy applies (group created from PoC Dashboard &rsaquo; Duo).',
+        ],
+      },
+      {
+        id: 'ago-1',
+        title: 'Agent Traces Appear in Splunk Agent Observability',
+        desc: 'With a realm + access token configured, the agent streams its GenAI spans (invoke_agent, LLM calls, tool calls) to Splunk Observability Cloud — no OTel Collector required.',
+        steps: [
+          'Open <strong>PoC Dashboard &rsaquo; AI Agent &amp; DefenseClaw &rsaquo; Connect Integrations &rsaquo; Splunk Observability Cloud</strong>.',
+          'Enter your <strong>realm</strong> (e.g. <code>us1</code>) and <strong>access token</strong>, click <strong>Save Integration Settings</strong>, then redeploy the agent.',
+          'Open the <strong>OpenClaw WebChat UI</strong> (port 31789) and send a few prompts to generate activity.',
+          'In <strong>Splunk Agent Observability</strong>, open your project / Agent Stream and confirm traces appear on the <strong>AI agents</strong> and <strong>AI trace data</strong> pages, including the LLM service on the Service Map.',
+        ],
+      },
+      {
+        id: 'ago-2',
+        title: 'Token Usage &amp; Estimated Cost Tracking',
+        desc: 'Agent Observability reports token usage and estimated cost per trace, so you can see what the agent is spending.',
+        steps: [
+          'Generate some agent activity from the WebChat UI (several multi-turn prompts).',
+          'In Agent Observability, open the agent\'s traces and confirm <strong>token usage</strong> and <strong>estimated cost</strong> are reported.',
+          'Note: cost is an estimate (published provider rate &times; tokens), not your actual bill.',
+        ],
+      },
+      {
+        id: 'ago-3',
+        title: 'Switch the Agent Between Claude and Mistral',
+        desc: 'The agent can use Mistral alongside Claude. Verify the model switch works and that traces are attributed to the right provider/model.',
+        steps: [
+          'In <strong>Connect Integrations &rsaquo; Mistral API Key</strong>, paste a Mistral key, click <strong>Save Integration Settings</strong>, and redeploy.',
+          'In the <strong>OpenClaw WebChat UI</strong> model picker, switch from <code>anthropic/claude-sonnet-5</code> to <code>mistral/mistral-large-latest</code> and send a prompt.',
+          'Confirm the agent responds using Mistral.',
+          'In Agent Observability, confirm the new LLM spans are attributed to the <strong>mistral</strong> provider.',
+        ],
+      },
+      {
+        id: 'ago-4',
+        title: 'k3s Infrastructure in Observability Cloud (OTel Collector)',
+        desc: 'Install the Splunk Distribution of the OpenTelemetry Collector to see the whole PoC k3s cluster (nodes, pods, events) in Observability Cloud, alongside the agent traces.',
+        steps: [
+          'On the k3s host run: <code>export SPLUNK_O11Y_REALM=... SPLUNK_O11Y_ACCESS_TOKEN=...; sudo -E ~/piap-k3s/setup/install_splunk_o11y_collector.sh</code>',
+          'Confirm the collector pods are running: <code>kubectl get pods -n splunk-otel</code>.',
+          'In <strong>Observability Cloud &rsaquo; Infrastructure &rsaquo; Kubernetes</strong>, confirm the <code>piap-k3s</code> cluster and its pods appear.',
+        ],
+      },
+    ],
+  },
+  {
     label: 'Custom Tests',
     icon: 'fa-flask',
     subtitle: 'Define your own tests specific to your environment and requirements.',
@@ -1768,7 +1840,7 @@ function renderJourneyTab(tab) {
   const passedCases = allCases.filter(tc => getState(tc.id, 'status') === 'pass').length;
   const overallPct = totalCases ? Math.round((passedCases / totalCases) * 100) : 0;
 
-  const coreColors = { duo: '#049fd9', secureaccess: '#0066ff', cilium: '#16a34a', tetragon: '#7c4dff', defenseclaw: '#7c4dff', custom: '#ea580c' };
+  const coreColors = { duo: '#049fd9', secureaccess: '#0066ff', cilium: '#16a34a', tetragon: '#7c4dff', defenseclaw: '#7c4dff', agentic: '#e08020', custom: '#ea580c' };
 
   const scoreRing = makeRingSvg(overallPct, 'var(--cyan)', 76, 9);
 
