@@ -96,6 +96,23 @@ docker ps | grep connector
 2. Accept Splunk Free License: Settings → Licensing
 3. Install **Cisco Security Cloud** app from Splunkbase
 
+### Splunk Observability Cloud (optional)
+
+To see the k3s cluster (nodes, pods, events) and the AI agent's traces in
+**Splunk Observability Cloud**, install the Splunk Distribution of the
+OpenTelemetry Collector. This is separate from the in-cluster Splunk Enterprise
+SIEM — it ships to your Observability Cloud realm.
+
+```bash
+export SPLUNK_O11Y_REALM="us1"                      # your realm, e.g. us1 / eu0
+export SPLUNK_O11Y_ACCESS_TOKEN="<org-access-token>"  # Settings → Access Tokens (API scope)
+cd ~/piap-k3s/setup
+sudo -E ./install_splunk_o11y_collector.sh
+```
+
+The collector also exposes an in-cluster OTLP endpoint
+(`splunk-otel-collector-agent.splunk-otel.svc.cluster.local:4317/4318`).
+
 ---
 
 ## Troubleshooting
