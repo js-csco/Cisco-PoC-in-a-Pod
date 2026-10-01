@@ -118,7 +118,10 @@ echo ""
 
 # ── Step 7: Cilium BPF filesystem ───────────────────────────────────────────
 echo "Step 7: Cleaning up Cilium BPF filesystem..."
-rm -rf /sys/fs/bpf/cilium 2>/dev/null || true
+# Remove both the cilium map dir and the pinned LB/global maps under tc/globals
+# (cilium_lb4_services_v2 etc.) so no stale datapath state survives a re-install
+# without a reboot (the 'Invalid svc ID 0' sync-lb-maps failure).
+rm -rf /sys/fs/bpf/cilium /sys/fs/bpf/tc/globals/cilium_* 2>/dev/null || true
 echo "  ✓ Cilium BPF filesystem cleaned"
 echo ""
 
