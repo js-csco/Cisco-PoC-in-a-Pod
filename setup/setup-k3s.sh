@@ -350,18 +350,27 @@ echo ""
 echo "Step 11: Installing Cilium CNI with native routing and masquerade..."
 echo "  Using API server IP: $SERVER_IP"
 
-cilium install --version 1.16.5 \
-  --set routingMode=native \
-  --set autoDirectNodeRoutes=true \
-  --set ipv4NativeRoutingCIDR=10.0.0.0/8 \
-  --set bpf.masquerade=true \
-  --set enableIPv4Masquerade=true \
-  --set kubeProxyReplacement=true \
-  --set k8sServiceHost=$SERVER_IP \
-  --set k8sServicePort=6443 \
-  --set devices="${PRIMARY_IFACE} docker0"
-
-echo "  ✓ Cilium installation started"
+# Idempotent: a Helm release named "cilium" from a previous run makes
+# `cilium install` fail with "cannot reuse a name that is still in use".
+# Skip the install when Cilium is already present (Step 12 verifies readiness
+# and Step 12.1 reconciles the device list). To force a clean reinstall, run
+# `cilium uninstall` (or `helm uninstall cilium -n kube-system`) and re-run.
+if helm status cilium -n kube-system >/dev/null 2>&1 || cilium status >/dev/null 2>&1; then
+    echo "  Cilium is already installed — skipping install (re-run safe)."
+    echo "  To force a clean reinstall: 'cilium uninstall' then re-run this script."
+else
+    cilium install --version 1.16.5 \
+      --set routingMode=native \
+      --set autoDirectNodeRoutes=true \
+      --set ipv4NativeRoutingCIDR=10.0.0.0/8 \
+      --set bpf.masquerade=true \
+      --set enableIPv4Masquerade=true \
+      --set kubeProxyReplacement=true \
+      --set k8sServiceHost=$SERVER_IP \
+      --set k8sServicePort=6443 \
+      --set devices="${PRIMARY_IFACE} docker0"
+    echo "  ✓ Cilium installation started"
+fi
 echo ""
 
 # Step 12: Wait for Cilium
