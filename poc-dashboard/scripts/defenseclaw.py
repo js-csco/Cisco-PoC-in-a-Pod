@@ -410,7 +410,9 @@ def deploy_environment():
             hec_token: {hec_token}
             index: defenseclaw
             sourcetype: "defenseclaw:json"
-            enabled: true
+            # Off by default so the agent deploys without an on-prem Splunk
+            # Enterprise / HEC. Re-enable when Splunk SIEM forwarding is wanted.
+            enabled: false
     """).format(token=shared_token, hec_url=SPLUNK_HEC_URL, hec_token=HEC_TOKEN)
 
     cm = client.V1ConfigMap(
@@ -590,7 +592,7 @@ def deploy_environment():
             client.V1EnvVar(name="DEFENSECLAW_HEC_TOKEN", value=HEC_TOKEN),
             client.V1EnvVar(name="DEFENSECLAW_INDEX", value="defenseclaw"),
             client.V1EnvVar(name="DEFENSECLAW_SOURCETYPE", value="defenseclaw:json"),
-            client.V1EnvVar(name="DEFENSECLAW_INTEGRATION_ENABLED", value="true"),
+            client.V1EnvVar(name="DEFENSECLAW_INTEGRATION_ENABLED", value="false"),
         ] + integration_env,
         volume_mounts=[
             client.V1VolumeMount(name="config", mount_path="/config", read_only=True),
