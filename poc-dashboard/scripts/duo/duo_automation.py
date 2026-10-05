@@ -544,6 +544,21 @@ def create_integration(api_hostname, integration_key, secret_key, name, integrat
                 result['success'] = True
                 result['integration_key'] = existing_ikey
                 result['already_exists'] = True
+                # If SSO/SAML settings were supplied, update the existing
+                # integration so re-running applies fixes (e.g. the corrected
+                # NameID attribute) instead of silently keeping stale config.
+                if sso_config:
+                    try:
+                        admin_api.json_api_call(
+                            'PUT', f'/admin/v3/integrations/{existing_ikey}',
+                            {'sso': {'saml_config': sso_config}}
+                        )
+                        result['updated'] = True
+                        print(f"✅ Updated SSO config on existing integration '{name}'")
+                    except Exception as e:
+                        result['updated'] = False
+                        print(f"⚠️  Could not update SSO config on existing "
+                              f"integration '{name}': {e}")
                 return result
 
         # Step 3: Create the integration (include sso.saml_config to pass validation)
