@@ -263,12 +263,31 @@
   <details style="font-size:0.8em; color:#777; margin:0 0 12px;">
     <summary style="cursor:pointer; color:#0066ff;">&#9432; Where do I get these?</summary>
     <div style="padding:8px 0 0; line-height:1.7;">
-      Duo Admin Panel &rarr; <em>Applications</em> &rarr; your MCP / OAuth agent application &rarr; <em>Clients</em> tab
-      &rarr; <em>Confidential Client Registration</em>. The
-      <a href="{{ url_for('duo') }}" style="color:#0066ff;">Duo page</a> can create the PoC Users group, permit it on
-      this app, and provision the agent application.
+      In the Duo Admin Panel, create an <strong>OIDC Relying Party</strong> application
+      (<em>Applications &rarr; Protect an Application</em>), restrict it to the <strong>PoC Users</strong> group,
+      then open its <em>Clients</em> tab and add a <strong>Confidential Client</strong> to get the client ID/secret.
+      The <a href="{{ url_for('duo') }}" style="color:#0066ff;">Duo page</a> can create the PoC Users group and
+      permit it on your apps.
     </div>
   </details>
+
+  <!-- Auto-provision the Duo agent application — not available yet -->
+  <div style="opacity:0.65; background:#f7f7f7; border:1px dashed #ccc; border-radius:8px; padding:14px 16px; margin:0 0 16px; max-width:620px;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+      <strong style="font-size:0.88em; color:#555;">Auto-provision the Duo agent application</strong>
+      <span style="font-size:0.72em; color:#8a6d00; background:#fff8e1; border:1px solid #ffe082; border-radius:4px; padding:2px 8px;">coming soon</span>
+    </div>
+    <p style="font-size:0.8em; color:#777; margin:0 0 10px; line-height:1.6;">
+      Creating the Duo <strong>OIDC agent application</strong> and its confidential client automatically via the
+      Duo Admin API isn't supported yet (the API rejects the request). For now, create the application manually in
+      Duo as described above, then paste the issuer and client ID/secret below.
+    </p>
+    <button type="button" disabled
+            style="background:#e0e0e0; color:#999; border:none; padding:9px 24px; border-radius:6px; font-weight:600; cursor:not-allowed; font-size:0.88em;">
+      Provision AI Agent Identity (coming soon)
+    </button>
+  </div>
+
   <form method="POST" style="max-width:620px;">
     <input type="text" name="duo_issuer" placeholder="issuer / discovery URL (https://sso-....sso.duosecurity.com/oidc/...)"
            style="width:100%; padding:9px 14px; border:1px solid #ccc; border-radius:6px; font-size:0.88em; box-sizing:border-box; margin-bottom:10px;">
