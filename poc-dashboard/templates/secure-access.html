@@ -587,7 +587,9 @@
       </div>
 
       <p style="color:#666; font-size:0.9em; margin:0 0 15px; line-height:1.5;">
-        This policy enables remote test users to access private resources within your PoC environment.
+        Creates an <strong>allow</strong> rule that lets all ZTA-enrolled devices reach the PoC in a Pod
+        private resources. The rule is scoped to the resources created above (by their resource IDs), so
+        <strong>create the Pod Resources first</strong>. Re-running replaces the existing rule.
       </p>
 
       <button type="submit" name="action" value="create_private"
