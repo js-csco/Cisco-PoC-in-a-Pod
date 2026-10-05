@@ -421,7 +421,13 @@ def duo():
                     sso_config={
                         'acs_urls': [{'url': f"{sp_base_url}/acs"}],
                         'entity_id': f"{sp_base_url}/metadata",
-                        'nameid_attribute': 'email',
+                        # Use Duo's pre-configured bridge attribute token, NOT a
+                        # literal "email". A literal value makes Duo look for a
+                        # source attribute named "email" (which doesn't exist) and
+                        # fail with "Cannot create NameID. Source attribute 'email'
+                        # does not exist." "<Email Address>" auto-maps to the right
+                        # source attribute (Duo Directory / AD mail / SAML Email).
+                        'nameid_attribute': '<Email Address>',
                         'nameid_format': 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
                         'sign_assertion': True,
                         'sign_response': True,
@@ -432,6 +438,13 @@ def duo():
                     app_ikey = result['integration_key']
                     session['saml_app_ikey'] = app_ikey
 
+                    # "updated" when we PUT fresh SSO config onto an app that
+                    # already existed (e.g. to fix the NameID attribute).
+                    if result.get('already_exists'):
+                        verb = "updated" if result.get('updated') else "already exists"
+                    else:
+                        verb = "created"
+
                     meta_result = get_integration_metadata_url(
                         api_hostname, integration_key, secret_key, app_ikey
                     )
@@ -440,13 +453,13 @@ def duo():
                             meta_result['metadata_url'], sp_base_url
                         )
                         if push_result['success']:
-                            flash("✅ SAML App created and auto-configured — ready to test.")
+                            flash(f"✅ SAML App {verb} and auto-configured — ready to test.")
                             session['saml_app_configured'] = True
                         else:
-                            flash("✅ SAML App created — download IdP metadata XML from Duo and upload manually.")
+                            flash(f"✅ SAML App {verb} — download IdP metadata XML from Duo and upload manually.")
                             session['saml_app_configured'] = False
                     else:
-                        flash("✅ SAML App created — download IdP metadata XML from Duo Admin Panel and upload manually.")
+                        flash(f"✅ SAML App {verb} — download IdP metadata XML from Duo Admin Panel and upload manually.")
                         session['saml_app_configured'] = False
                 else:
                     flash(f"⚠️ {result['error']}")
