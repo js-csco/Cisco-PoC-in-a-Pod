@@ -140,8 +140,15 @@ def index():
     user = session.get("saml_user")
     attrs = session.get("saml_attrs", {})
     configured = _is_configured()
+    # Expose this SP's Entity ID and ACS URL so an admin configuring the Duo
+    # Generic SAML app by hand can copy them in (Duo's generic SAML SP has no
+    # SP-metadata file import).
+    sp_host = f"http://{request.host}"
+    sp_entity_id = f"{sp_host}/metadata"
+    sp_acs_url = f"{sp_host}/acs"
     return render_template("index.html",
-                           user=user, attrs=attrs, configured=configured)
+                           user=user, attrs=attrs, configured=configured,
+                           sp_entity_id=sp_entity_id, sp_acs_url=sp_acs_url)
 
 
 @app.route("/upload-idp-metadata", methods=["POST"])
