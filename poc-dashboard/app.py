@@ -190,10 +190,27 @@ def secure_access():
                     flash("⚠️ Missing token — please re-authenticate.")
                     return redirect(url_for("secure_access"))
 
-                create_ai_guardrail_rule(token)
-                create_scoped_ai_guardrail_rule(token)
-                create_realtime_dlp_rule(token)
-                flash("✅ DLP rules created.")
+                # Create each rule independently so one failure doesn't abort
+                # the rest — report a clear per-rule summary.
+                dlp_rules = [
+                    ("AI Guardrails (all destinations)", create_ai_guardrail_rule),
+                    ("AI Guardrails (ChatGPT-scoped)", create_scoped_ai_guardrail_rule),
+                    ("Real-Time DLP (PCI + PII)", create_realtime_dlp_rule),
+                ]
+                created, failed = [], []
+                for label, fn in dlp_rules:
+                    try:
+                        fn(token)
+                        created.append(label)
+                    except Exception as e:
+                        failed.append((label, str(e)))
+                if created:
+                    flash(f"✅ Created {len(created)} of {len(dlp_rules)} DLP rules: "
+                          + ", ".join(created) + ".")
+                for label, err in failed:
+                    flash(f"⚠️ {label} failed: {err}")
+                if not created:
+                    flash("⚠️ No DLP rules were created.")
 
             # Action: CREATE INTERNET ACCESS
             elif action == "create_internet":
