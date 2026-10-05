@@ -162,9 +162,12 @@ def create_scoped_ai_guardrail_rule(token):
         "applications": [],
         "classifications": GUARDRAIL_CLASSIFICATION_IDS,
         # Scope the rule to ChatGPT only, rather than all AI destinations.
+        # allDestinationsScope=NONE means "only the destinations listed below".
+        # The destination type must be "domain" for a bare host like chatgpt.com
+        # (type "url" expects a full URL with scheme, which 400s on a bare host).
         "allDestinationsScope": "NONE",
         "destinations": {
-            "type": "url",
+            "type": "domain",
             "address": "chatgpt.com"
         },
         "scannableContexts": ["FILENAME", "CONTENT"],
