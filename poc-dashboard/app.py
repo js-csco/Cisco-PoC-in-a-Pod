@@ -368,7 +368,21 @@ def duo():
                 )
 
                 flash("✅ Duo setup complete.")
-                sa_app = result.get('secure_access_app') or {}
+                if result['errors']:
+                    for error in result['errors']:
+                        flash(f"⚠️ {error}")
+
+            # Action: PERMIT 'PoC Users' GROUP ON THE CISCO SECURE ACCESS APP
+            # Runs on demand from the Integrations section, after the Cisco
+            # Secure Access app has been created in Duo.
+            if action == 'permit_sa_group':
+                from scripts.duo.duo_automation import assign_group_to_secure_access_app
+                sa_app = assign_group_to_secure_access_app(
+                    api_hostname=api_hostname,
+                    integration_key=integration_key,
+                    secret_key=secret_key,
+                    group_name='PoC Users'
+                )
                 if sa_app.get('success'):
                     flash(f"✅ 'PoC Users' group permitted on the Cisco Secure Access "
                           f"app '{sa_app.get('name')}'.")
@@ -376,9 +390,8 @@ def duo():
                     flash("ℹ️ Cisco Secure Access application not found in Duo yet — "
                           "create it under Applications, then run this again to permit "
                           "the 'PoC Users' group.")
-                if result['errors']:
-                    for error in result['errors']:
-                        flash(f"⚠️ {error}")
+                else:
+                    flash(f"⚠️ {sa_app.get('error')}")
 
             # Action: CONFIGURE GLOBAL POLICY
             if action == 'configure_policy':

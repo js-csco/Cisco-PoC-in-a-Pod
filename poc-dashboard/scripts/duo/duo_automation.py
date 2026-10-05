@@ -350,32 +350,12 @@ def setup_duo_complete(api_hostname, integration_key, secret_key, users_list):
             print(f"⚠️  {error_msg}")
             result['errors'].append(error_msg)
 
-    # Step 4: Permit the 'PoC Users' group on the Cisco Secure Access SSO app.
-    # New Duo apps deny all users by default, so add the group if the app
-    # already exists. Best-effort: if the app hasn't been created yet, just
-    # report it (non-fatal) so the admin can re-run after creating it.
-    print(f"\n=== STEP 4: Adding 'PoC Users' group to Cisco Secure Access application ===")
-    try:
-        sa_result = assign_group_to_secure_access_app(
-            api_hostname, integration_key, secret_key,
-            group_id=result['group_id'], group_name='PoC Users'
-        )
-        result['secure_access_app'] = sa_result
-        if sa_result['success']:
-            print(f"✅ 'PoC Users' permitted on Cisco Secure Access app "
-                  f"'{sa_result['name']}'")
-        elif not sa_result['found']:
-            # Not created yet — informational, not an error.
-            print(f"ℹ️  {sa_result['error']}")
-        else:
-            print(f"⚠️  {sa_result['error']}")
-            result['errors'].append(sa_result['error'])
-    except Exception as e:
-        msg = f"Failed to assign group to Cisco Secure Access app: {str(e)}"
-        print(f"⚠️  {msg}")
-        result['errors'].append(msg)
-        result['secure_access_app'] = {'success': False, 'found': False, 'error': msg}
-
+    # NOTE: Permitting the 'PoC Users' group on the Cisco Secure Access SSO app
+    # is intentionally NOT done here. User/group creation is a Duo-only step, and
+    # the Secure Access app usually doesn't exist in Duo yet at this point (it is
+    # created later, during the Secure Access integration). Permitting the group
+    # is handled on demand by assign_group_to_secure_access_app() via a dedicated
+    # action in the Integrations section, so it runs after the app exists.
     return result
 
 

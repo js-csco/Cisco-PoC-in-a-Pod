@@ -519,7 +519,6 @@
         <li>Set the display name and first/last name (derived from the email) so users sync correctly to Secure Access</li>
         <li>Create "PoC Users" group (if it doesn't exist)</li>
         <li>Add all users to "PoC Users" group</li>
-        <li>Permit the "PoC Users" group on the Cisco Secure Access app (if it exists — new Duo apps deny all users by default)</li>
         <li>Send enrollment email to each new user</li>
       </ul>
     </div>
@@ -586,6 +585,20 @@
             <tr><td>userName</td><td>userName</td></tr>
           </tbody>
         </table>
+
+        <div class="duo-info duo-info-yellow" style="margin:16px 0;">
+          <strong>Permit PoC Users on the app:</strong>
+          Since March 2025, new Duo applications deny all users by default, so the Cisco Secure Access app
+          blocks your PoC users until the <strong>PoC Users</strong> group is permitted. Once you've created
+          the Cisco Secure Access application above, click the button below to set its user access to the
+          <strong>PoC Users</strong> group (merged with any groups you already permitted).
+        </div>
+
+        <button type="submit" name="action" value="permit_sa_group"
+                class="duo-btn {% if session.get('duo_authenticated') %}duo-btn-primary{% else %}duo-btn-disabled{% endif %}"
+                {% if not session.get('duo_authenticated') %}disabled{% endif %}>
+          Permit "PoC Users" on Secure Access App
+        </button>
       </div>
 
       <!-- 1b. SAML Integration -->
