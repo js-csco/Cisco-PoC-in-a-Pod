@@ -277,12 +277,39 @@
     <div class="step">
       <div class="step-num {% if configured %}done{% endif %}">1</div>
       <div class="step-content">
-        <div class="step-label">Download SP Metadata</div>
-        <div class="step-desc">Download this app's Service Provider metadata XML file.</div>
-        <div style="margin-top: 10px;">
-          <a href="/metadata" download="saml-sp-metadata.xml" class="btn btn-outline btn-sm">
-            <i class="fa-solid fa-download"></i> Download SP Metadata
-          </a>
+        <div class="step-label">Create the SAML app in Duo (via the PoC Dashboard)</div>
+        <div class="step-desc">
+          In the <strong>PoC Dashboard</strong> &rarr; <strong>Duo</strong> &rarr; <em>Integrations</em> &rarr;
+          <strong>Generic SAML Application</strong>, click <strong>Create SAML App</strong>.
+          This creates the <strong>Generic SAML Service Provider</strong> integration in Duo
+          <strong>via the Admin API</strong> with this app's Entity ID and ACS URL already set &mdash;
+          <strong>you do not upload an SP metadata file to Duo</strong> (Duo's generic SAML SP has no
+          metadata-file import, which is why uploading the SP XML there fails to parse).
+        </div>
+        <div class="banner banner-info" style="margin-top:10px;">
+          <div class="banner-icon">&#x2139;&#xFE0F;</div>
+          <div>
+            <div class="banner-tag">MANUAL ALTERNATIVE</div>
+            <p class="banner-body" style="margin:0;">
+              If you create the <strong>Generic SAML Service Provider</strong> by hand in Duo, type these
+              values into the Service Provider section (do not upload a file):
+            </p>
+            <div class="user-grid" style="margin-top:10px;">
+              <div class="field full">
+                <label>Entity ID</label>
+                <div class="val">{{ sp_entity_id }}</div>
+              </div>
+              <div class="field full">
+                <label>Assertion Consumer Service (ACS) URL</label>
+                <div class="val">{{ sp_acs_url }}</div>
+              </div>
+            </div>
+            <div style="margin-top:10px;">
+              <a href="/metadata" download="saml-sp-metadata.xml" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-download"></i> Download SP Metadata (reference)
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -290,21 +317,11 @@
     <div class="step">
       <div class="step-num {% if configured %}done{% endif %}">2</div>
       <div class="step-content">
-        <div class="step-label">Create Application in Duo</div>
+        <div class="step-label">Connect Duo's IdP metadata to this app</div>
         <div class="step-desc">
-          Go to <strong>Duo Admin</strong> &rarr; <strong>Applications</strong> &rarr;
-          <strong>Protect an Application</strong> &rarr; search <strong>"Generic SAML Service Provider"</strong>.
-          Upload the SP metadata XML you just downloaded.
-        </div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-num {% if configured %}done{% endif %}">3</div>
-      <div class="step-content">
-        <div class="step-label">Upload Duo IdP Metadata</div>
-        <div class="step-desc">
-          In the Duo application settings, download the <strong>IdP Metadata XML</strong> and upload it here.
+          The PoC Dashboard tries to do this automatically when it creates the app. If it reported that a
+          manual step is needed, download the <strong>IdP Metadata XML</strong> from Duo
+          (<strong>Applications</strong> &rarr; your SAML app &rarr; <em>Metadata / Downloads</em>) and upload it here.
         </div>
         <form id="uploadForm" enctype="multipart/form-data" style="margin-top: 10px;">
           <div class="upload-zone" id="dropZone">

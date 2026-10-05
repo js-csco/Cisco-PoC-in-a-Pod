@@ -630,6 +630,7 @@
         <strong>This will:</strong>
         <ul>
           <li>Create a <code>sso-generic</code> integration via the Duo Admin API</li>
+          <li>Set the SAML app's <strong>Entity ID</strong> and <strong>ACS URL</strong> on the integration via the API &mdash; so there's <strong>no need to upload an SP metadata file into Duo</strong> (Duo's generic SAML SP has no metadata-file import)</li>
           <li>Restrict access to the <strong>PoC Users</strong> group</li>
           <li>Auto-configure the SAML app with Duo IdP metadata (if available)</li>
         </ul>
