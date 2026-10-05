@@ -241,3 +241,109 @@ def create_realtime_dlp_rule(token):
 
     print("✅ Real-Time DLP rule created (Built-in PCI + PII Classification).")
     return r.json()
+
+
+def _find_classification_id(token, needles):
+    """Return the UUID of the first Real-Time DLP classification whose name
+    contains any of the given substrings (case-insensitive), else None.
+
+    Lets rules resolve a classification by name at runtime instead of hardcoding
+    a tenant-specific UUID.
+    """
+    try:
+        classifications = list_dlp_classifications(token)
+    except Exception as e:
+        print(f"  Could not list DLP classifications: {e}")
+        return None
+
+    low = [n.lower() for n in needles]
+    for c in classifications:
+        name = (c.get("name") or "").lower()
+        if any(n in name for n in low):
+            cid = c.get("id") or c.get("classificationId") or c.get("uuid")
+            if cid:
+                print(f"  Matched classification '{c.get('name')}' -> {cid}")
+                return cid
+    return None
+
+
+def _post_realtime_rule(token, name, description, classification_ids, severity="WARNING"):
+    """Create a Real-Time (INLINE) DLP BLOCK rule for AD users + roaming devices."""
+    url = f"{BASE_URL}/policies/v2/dlp/realTime/rules"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    payload = {
+        "name": name,
+        "description": description,
+        "enabled": True,
+        "action": "BLOCK",
+        "severity": severity,
+        "type": "INLINE",
+        "secureIcapEnabled": True,
+        "identities": [
+            {
+                "originId": 0,
+                "originTypeId": 9,
+                "details": "{\"id\":9,\"name\":\"roaming\",\"label\":\"Roaming Computers\",\"description\":\"Roaming devices\",\"children\":1}"
+            },
+            {
+                "originId": 0,
+                "originTypeId": 7,
+                "details": "{\"id\":7,\"name\":\"directory_user\",\"label\":\"AD Users\",\"description\":\"Active Directory user\",\"children\":6}"
+            }
+        ],
+        "applications": [],
+        "classifications": classification_ids,
+        "labelFileParameters": {"mipData": {}, "labelsData": []},
+        "scannableContexts": ["FILENAME", "CONTENT"],
+        "mipTags": [],
+        "notifyOwner": False,
+        "notifyActor": False,
+        "labels": []
+    }
+    r = requests.post(url, headers=headers, json=payload, timeout=15)
+    print(f"Real-Time DLP Rule Response ({name}):", r.status_code, r.text)
+    if r.status_code not in (200, 201):
+        raise Exception(f"Failed to create '{name}': {r.status_code} - {r.text}")
+    print(f"✅ Real-Time DLP rule created ({name}).")
+    return r.json()
+
+
+def create_source_code_dlp_rule(token):
+    """Real-Time DLP rule that blocks pasting/uploading source code to web and AI
+    apps (e.g. ChatGPT) — Cisco's canonical 'restrict ChatGPT for coding' use
+    case. Resolves the 'Source Code' classification by name; skips cleanly if the
+    tenant doesn't have one.
+    """
+    cid = _find_classification_id(token, ["source code", "source-code", "code"])
+    if not cid:
+        raise Exception("No 'Source Code' data classification found in this tenant — "
+                        "create one from the built-in Source Code data identifier, then retry.")
+    return _post_realtime_rule(
+        token,
+        name="DLP Rule - Source Code",
+        description="Blocks pasting or uploading source code to web and AI applications (e.g. ChatGPT).",
+        classification_ids=[cid],
+    )
+
+
+def create_secrets_dlp_rule(token):
+    """Real-Time DLP rule that blocks secrets/credentials (API keys, access keys,
+    private keys) from leaving the org. Resolves the classification by name;
+    skips cleanly if the tenant doesn't have one.
+    """
+    cid = _find_classification_id(
+        token, ["credential", "secret", "api key", "access key", "private key", "password"]
+    )
+    if not cid:
+        raise Exception("No credentials/secrets data classification found in this tenant — "
+                        "create one from the built-in credential data identifiers, then retry.")
+    return _post_realtime_rule(
+        token,
+        name="DLP Rule - Secrets & Credentials",
+        description="Blocks sharing of API keys, access keys and other credentials with web and AI apps.",
+        classification_ids=[cid],
+    )

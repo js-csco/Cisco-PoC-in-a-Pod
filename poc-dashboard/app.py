@@ -31,7 +31,9 @@ from scripts.csa_scripts.create_steve_policies import (
 from scripts.csa_scripts.create_dlp_rules import (
     create_ai_guardrail_rule,
     create_scoped_ai_guardrail_rule,
-    create_realtime_dlp_rule
+    create_realtime_dlp_rule,
+    create_source_code_dlp_rule,
+    create_secrets_dlp_rule
 )
 
 
@@ -196,6 +198,8 @@ def secure_access():
                     ("AI Guardrails (all destinations)", create_ai_guardrail_rule),
                     ("AI Guardrails (ChatGPT-scoped)", create_scoped_ai_guardrail_rule),
                     ("Real-Time DLP (PCI + PII)", create_realtime_dlp_rule),
+                    ("Real-Time DLP (Source Code)", create_source_code_dlp_rule),
+                    ("Real-Time DLP (Secrets)", create_secrets_dlp_rule),
                 ]
                 created, failed = [], []
                 for label, fn in dlp_rules:

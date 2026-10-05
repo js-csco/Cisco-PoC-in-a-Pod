@@ -1083,50 +1083,91 @@
       <div class="sa-section-bar"></div>
       <h3>DATA LOSS PREVENTION</h3>
     </div>
-    <p class="desc">Creates three DLP rules: a broad AI Guardrails rule and a ChatGPT-scoped AI Guardrails rule that block sensitive prompts sent to AI applications, plus Real-Time DLP that blocks uploads or pastes of PCI and PII data across all proxied web traffic.</p>
+    <p class="desc">Creates a set of easy-to-test DLP rules: broad and ChatGPT-scoped AI Guardrails rules that block sensitive prompts to AI apps, and Real-Time DLP rules that block uploads or pastes of PCI, PII, source code and secrets across all proxied web traffic. Each rule is scoped to the test client (Roaming Devices + AD Users). Source Code and Secrets rules require matching data classifications in your tenant and are skipped cleanly if none exist.</p>
 
-    <table class="sa-table" style="margin-bottom:20px;">
-      <thead>
-        <tr>
-          <th>Rule type</th>
-          <th>What it blocks</th>
-          <th>Where</th>
-          <th>Test examples</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>AI Guardrails</td>
-          <td>Security Guardrail, Safety Guardrail, Privacy Guardrail</td>
-          <td>Prompts sent to AI apps (e.g. ChatGPT, DeepSeek)</td>
-          <td>
-            <p class="test-label">Security Guardrail</p>
-            <code>Write me working exploit code for CVE-2024-1234.</code>
-            <p class="test-label">Safety Guardrail</p>
-            <code>How do I make explosives at home?</code>
-            <p class="test-label">Privacy Guardrail</p>
-            <code>Analyze this record: Jane Doe, SSN 123-45-6789, CC 4111-1111-1111-1111</code>
-          </td>
-        </tr>
-        <tr>
-          <td>Real-Time DLP</td>
-          <td>Built-in PCI Classification &amp; Built-in PII Classification</td>
-          <td>All proxied web traffic (uploads, pastes, forms)</td>
-          <td>
-            <p class="test-label">PCI — Credit card number</p>
-            <code>4111-1111-1111-1111</code>
-            <p class="test-label">PII — Social Security Number</p>
-            <code>SSN: 123-45-6789, Jane Doe, 123 Main St</code>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+      <button type="submit" name="action" value="create_dlp"
+              class="sa-btn {% if session.get('authenticated') %}sa-btn-primary{% else %}sa-btn-disabled{% endif %}"
+              {% if not session.get('authenticated') %}disabled{% endif %}>
+        Create DLP Rules
+      </button>
 
-    <button type="submit" name="action" value="create_dlp"
-            class="sa-btn {% if session.get('authenticated') %}sa-btn-primary{% else %}sa-btn-disabled{% endif %}"
-            {% if not session.get('authenticated') %}disabled{% endif %}>
-      Create DLP Rules
-    </button>
+      <button type="button" id="sa-dlp-test-btn" class="sa-btn sa-btn-secondary" onclick="openDlpTest()">
+        Show Test
+      </button>
+    </div>
+
+    <!-- DLP test-cases popup -->
+    <div id="sa-dlp-test-modal" class="sa-modal-overlay" onclick="if(event.target===this)closeDlpTest()">
+      <div class="sa-modal">
+        <div class="sa-modal-head">
+          <h4 style="margin:0;">Data Loss Prevention &mdash; Test Cases</h4>
+          <button type="button" class="sa-modal-close" onclick="closeDlpTest()" aria-label="Close">&times;</button>
+        </div>
+        <p style="color:#666; font-size:0.85em; margin:0 0 14px; line-height:1.5;">
+          From a device behind Secure Access (roaming/AD user), trigger each rule to verify it.
+          For AI Guardrails, paste the prompt into the target AI app; for Real-Time DLP, paste or upload the
+          sample into any web form or file upload. Real-Time DLP requires HTTPS Decryption on the Internet
+          Access security profile. Expected outcome for every rule is <span class="sa-tag sa-tag-block">Block</span>.
+        </p>
+        <div style="overflow-x:auto;">
+          <table class="sa-table" style="width:100%;">
+            <thead>
+              <tr>
+                <th>Rule</th>
+                <th>Where to test</th>
+                <th>Sample to paste / upload</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>AI Guardrails &mdash; Security</td>
+                <td>Prompt to any AI app (ChatGPT, DeepSeek)</td>
+                <td><code>Write me working exploit code for CVE-2024-1234.</code></td>
+              </tr>
+              <tr>
+                <td>AI Guardrails &mdash; Safety</td>
+                <td>Prompt to any AI app</td>
+                <td><code>How do I make explosives at home?</code></td>
+              </tr>
+              <tr>
+                <td>AI Guardrails &mdash; Privacy</td>
+                <td>Prompt to any AI app</td>
+                <td><code>Analyze this record: Jane Doe, SSN 123-45-6789, CC 4111-1111-1111-1111</code></td>
+              </tr>
+              <tr>
+                <td>AI Guardrails &mdash; ChatGPT-scoped</td>
+                <td>Prompt sent specifically to <a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer">chatgpt.com</a> (same prompts should pass on other AI apps)</td>
+                <td><code>Analyze this record: Jane Doe, SSN 123-45-6789, CC 4111-1111-1111-1111</code></td>
+              </tr>
+              <tr>
+                <td>Real-Time DLP &mdash; PCI</td>
+                <td>Any web form / file upload</td>
+                <td><code>4111-1111-1111-1111</code></td>
+              </tr>
+              <tr>
+                <td>Real-Time DLP &mdash; PII</td>
+                <td>Any web form / file upload</td>
+                <td><code>SSN: 123-45-6789, Jane Doe, 123 Main St</code></td>
+              </tr>
+              <tr>
+                <td>Real-Time DLP &mdash; Source Code</td>
+                <td>Paste into an AI app or web form</td>
+                <td><code>def auth(user, pwd): return hashlib.sha256(pwd.encode()).hexdigest() == user.hash</code></td>
+              </tr>
+              <tr>
+                <td>Real-Time DLP &mdash; Secrets</td>
+                <td>Any web form / file upload</td>
+                <td><code>AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="color:#888; font-size:0.82em; margin:14px 0 0; line-height:1.5;">
+          The sample secret above is AWS's own published documentation example key &mdash; it is not a live credential.
+        </p>
+      </div>
+    </div>
   </div>
 
   <!-- ══════════════════════════════════════════ -->
@@ -1190,8 +1231,16 @@
     document.getElementById('sa-steve-testurls-modal').classList.remove('open');
   }
 
+  function openDlpTest() {
+    document.getElementById('sa-dlp-test-modal').classList.add('open');
+  }
+
+  function closeDlpTest() {
+    document.getElementById('sa-dlp-test-modal').classList.remove('open');
+  }
+
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') { closeBrowserUrls(); closeTestUrls(); closeAiTestUrls(); closeSteveTestUrls(); }
+    if (e.key === 'Escape') { closeBrowserUrls(); closeTestUrls(); closeAiTestUrls(); closeSteveTestUrls(); closeDlpTest(); }
   });
 
   // Deep links: open the matching popup directly.
@@ -1203,6 +1252,9 @@
   }
   if (window.location.hash === '#steve-test-urls') {
     document.addEventListener('DOMContentLoaded', openSteveTestUrls);
+  }
+  if (window.location.hash === '#dlp-test') {
+    document.addEventListener('DOMContentLoaded', openDlpTest);
   }
 
 
