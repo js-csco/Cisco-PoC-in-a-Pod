@@ -158,9 +158,11 @@ def secure_access():
                     flash("⚠️ Missing token — please re-authenticate.")
                     return redirect(url_for("secure_access"))
 
-                # Create the policy
-                policy = create_private_access_policy(token)
-                flash(f"✅ Private Access Policy created successfully.")
+                # Create the policy (returns the rule + a human-readable summary
+                # of the scope actually applied, since source/destination fall
+                # back to Any if their IDs can't be resolved).
+                policy, scope_summary = create_private_access_policy(token)
+                flash(f"✅ Private Access Policy created ({scope_summary}).")
 
             # Action: FOLLOW CISCO RECOMMENDATIONS
             elif action == "follow_recom":
