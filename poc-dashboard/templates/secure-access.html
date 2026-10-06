@@ -588,10 +588,11 @@
 
       <p style="color:#666; font-size:0.9em; margin:0 0 15px; line-height:1.5;">
         Creates an <strong>allow</strong> rule scoped to the <strong>PoC Users</strong> directory group
-        (source) &rarr; the <strong>PoC in a Pod</strong> resource group (destination), resolved to their
-        numeric IDs. If an ID can't be resolved (e.g. the group hasn't synced, or the API key lacks the
-        reporting scope), that side falls back to <strong>Any</strong> so the rule still works — the applied
-        scope is shown in the confirmation message. Re-running replaces the existing rule.
+        (source) &rarr; the <strong>PoC in a Pod</strong> private resources (destination), resolved to their
+        numeric IDs. If an ID can't be resolved (e.g. the group hasn't synced, the API key lacks the
+        reporting scope, or no resources exist yet), that side falls back to <strong>Any</strong> so the rule
+        still works — the applied scope is shown in the confirmation message. Re-running replaces the
+        existing rule.
       </p>
 
       <button type="submit" name="action" value="create_private"
