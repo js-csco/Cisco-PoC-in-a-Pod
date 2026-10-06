@@ -48,22 +48,62 @@ def _find_directory_group_id(token, group_name=POC_USERS_GROUP_NAME):
     return None
 
 
-def _find_resource_group_id(token, group_name=POC_RESOURCE_GROUP_NAME):
-    """Resolve the private resource group's ID for use in a rule's
-    ``umbrella.destination.private_application_group_ids`` condition. Returns the
-    id or None (caller falls back to Any destination)."""
-    from scripts.csa_scripts.create_pod_resources import get_private_resource_groups
+def _find_poc_resource_ids(token, group_name=POC_RESOURCE_GROUP_NAME):
+    """Resolve the numeric IDs of the private *resources* in the PoC group for
+    use in a rule's ``umbrella.destination.private_resource_ids`` condition.
+
+    NOTE: the rule attribute for a resource *group* (``private_application_group_ids``)
+    does NOT accept a private-resource-group ID — those are different objects, and
+    the rules API rejects it ("… were not found"). The documented, accepted way to
+    scope a private destination is by the individual resource IDs via
+    ``private_resource_ids``. We therefore list the resources and keep the ones in
+    the "PoC in a Pod" group (falling back to all resources if membership can't be
+    determined). Returns a list of IDs (possibly empty)."""
+    from scripts.csa_scripts.create_pod_resources import (
+        get_private_resources, get_private_resource_groups
+    )
+
+    group_id = None
     try:
         for g in get_private_resource_groups(token):
             if g.get("name") == group_name:
-                gid = g.get("id") or g.get("resourceGroupId")
-                if gid is not None:
-                    print(f"  Matched resource group '{group_name}' -> {gid}")
-                    return gid
-        print(f"  Resource group '{group_name}' not found.")
+                group_id = g.get("id") or g.get("resourceGroupId")
+                break
     except Exception as e:
-        print(f"  Resource group lookup failed: {e}")
-    return None
+        print(f"  Could not list private resource groups: {e}")
+
+    try:
+        resources = get_private_resources(token)
+    except Exception as e:
+        print(f"  Could not list private resources: {e}")
+        return []
+
+    def _rid(res):
+        return res.get("id") or res.get("resourceId")
+
+    def _group_ids(res):
+        out = []
+        for gg in (res.get("resourceGroupIds") or res.get("resourceGroups") or []):
+            out.append(gg.get("id") if isinstance(gg, dict) else gg)
+        return out
+
+    matched = [
+        _rid(res) for res in resources
+        if _rid(res) is not None and group_id is not None and group_id in _group_ids(res)
+    ]
+    all_ids = [_rid(res) for res in resources if _rid(res) is not None]
+    chosen = matched if matched else all_ids
+
+    seen, ids = set(), []
+    for i in chosen:
+        if i not in seen:
+            seen.add(i)
+            ids.append(i)
+    if ids:
+        print(f"  Matched {len(ids)} PoC resource(s): {ids}")
+    else:
+        print("  No private resources found.")
+    return ids
 
 
 def _delete_existing_rule_by_name(token, name):
@@ -96,8 +136,8 @@ def create_private_access_policy(token):
     Creates the Private Access rule, scoped as narrowly as the IDs allow:
 
       * Source      → the "PoC Users" directory group (umbrella.source.identity_ids)
-      * Destination → the "PoC in a Pod" resource group
-                      (umbrella.destination.private_application_group_ids)
+      * Destination → the "PoC in a Pod" resources, by individual resource ID
+                      (umbrella.destination.private_resource_ids)
 
     Access rules reference identities and resources by numeric ID, not by name,
     so the IDs are resolved first. If either ID can't be resolved (e.g. the
@@ -129,22 +169,25 @@ def create_private_access_policy(token):
         }
         source_note = "source = Any (PoC Users group ID not resolvable)"
 
-    # --- Destination condition: PoC in a Pod resource group, else Any ---
-    resource_group_id = _find_resource_group_id(token, POC_RESOURCE_GROUP_NAME)
-    if resource_group_id is not None:
+    # --- Destination condition: the PoC in a Pod resources, else Any ---
+    # Scope by individual resource IDs (private_resource_ids) — the resource
+    # *group* attribute (private_application_group_ids) does not accept a
+    # private-resource-group ID and is rejected by the rules API.
+    resource_ids = _find_poc_resource_ids(token, POC_RESOURCE_GROUP_NAME)
+    if resource_ids:
         dest_cond = {
-            "attributeName": "umbrella.destination.private_application_group_ids",
+            "attributeName": "umbrella.destination.private_resource_ids",
             "attributeOperator": "INTERSECT",
-            "attributeValue": [resource_group_id],
+            "attributeValue": resource_ids,
         }
-        dest_note = f"destination = PoC in a Pod resource group ({resource_group_id})"
+        dest_note = f"destination = {len(resource_ids)} PoC in a Pod resource(s)"
     else:
         dest_cond = {
             "attributeName": "umbrella.destination.all",
             "attributeOperator": "=",
             "attributeValue": True,
         }
-        dest_note = "destination = Any (resource group not found)"
+        dest_note = "destination = Any (no PoC resources found)"
 
     scope_summary = f"{source_note}; {dest_note}"
 
