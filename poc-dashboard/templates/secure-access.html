@@ -587,10 +587,11 @@
       </div>
 
       <p style="color:#666; font-size:0.9em; margin:0 0 15px; line-height:1.5;">
-        Creates an <strong>allow</strong> rule with <strong>Any</strong> source &rarr; <strong>Any</strong>
-        destination. Scoping to ZTA-enrolled devices didn't match reliably, so this broad rule is used so the
-        ZTA client can reach the pod apps. <strong>Intentionally over-permissive — never use in production.</strong>
-        Re-running replaces the existing rule.
+        Creates an <strong>allow</strong> rule scoped to the <strong>PoC Users</strong> directory group
+        (source) &rarr; the <strong>PoC in a Pod</strong> resource group (destination), resolved to their
+        numeric IDs. If an ID can't be resolved (e.g. the group hasn't synced, or the API key lacks the
+        reporting scope), that side falls back to <strong>Any</strong> so the rule still works — the applied
+        scope is shown in the confirmation message. Re-running replaces the existing rule.
       </p>
 
       <button type="submit" name="action" value="create_private"
