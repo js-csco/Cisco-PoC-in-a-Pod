@@ -587,9 +587,10 @@
       </div>
 
       <p style="color:#666; font-size:0.9em; margin:0 0 15px; line-height:1.5;">
-        Creates an <strong>allow</strong> rule that lets all ZTA-enrolled devices reach the PoC in a Pod
-        private resources. The rule is scoped to the resources created above (by their resource IDs), so
-        <strong>create the Pod Resources first</strong>. Re-running replaces the existing rule.
+        Creates an <strong>allow</strong> rule with <strong>Any</strong> source &rarr; <strong>Any</strong>
+        destination. Scoping to ZTA-enrolled devices didn't match reliably, so this broad rule is used so the
+        ZTA client can reach the pod apps. <strong>Intentionally over-permissive — never use in production.</strong>
+        Re-running replaces the existing rule.
       </p>
 
       <button type="submit" name="action" value="create_private"

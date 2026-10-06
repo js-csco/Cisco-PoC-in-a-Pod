@@ -5,66 +5,10 @@ import json
 BASE_URL = "https://api.sse.cisco.com"  # use your regional endpoint
 
 RULE_NAME = "Roaming User - PoC in a Pod Apps"
-POC_RESOURCE_GROUP_NAME = "PoC in a Pod"
 
 # --------------------------
 #  Helper Functions
 # --------------------------
-
-
-def _get_poc_private_resource_ids(token, group_name=POC_RESOURCE_GROUP_NAME):
-    """Return the numeric IDs of the PoC private resources.
-
-    The access rule must target the resources by their real IDs via
-    ``umbrella.destination.private_resource_ids`` — the old rule used a
-    non-existent attribute (``umbrella.destination.private_resource_types`` =
-    ``["groups"]``) that matched nothing on the destination side, so ZTA traffic
-    fell through to the default private deny ("firewall is blocking").
-
-    Prefers resources that belong to the "PoC in a Pod" group; if group
-    membership can't be determined, falls back to every private resource.
-    """
-    # Imported lazily to avoid a circular import at module load.
-    from scripts.csa_scripts.create_pod_resources import (
-        get_private_resources, get_private_resource_groups
-    )
-
-    resources = get_private_resources(token)
-
-    group_id = None
-    try:
-        for g in get_private_resource_groups(token):
-            if g.get("name") == group_name:
-                group_id = g.get("id") or g.get("resourceGroupId")
-                break
-    except Exception as e:
-        print(f"  Could not list private resource groups: {e}")
-
-    def _rid(res):
-        return res.get("id") or res.get("resourceId")
-
-    def _group_ids(res):
-        groups = res.get("resourceGroupIds") or res.get("resourceGroups") or []
-        out = []
-        for gg in groups:
-            out.append(gg.get("id") if isinstance(gg, dict) else gg)
-        return out
-
-    matched = [
-        _rid(res) for res in resources
-        if _rid(res) is not None and group_id is not None and group_id in _group_ids(res)
-    ]
-    all_ids = [_rid(res) for res in resources if _rid(res) is not None]
-
-    chosen = matched if matched else all_ids
-
-    # De-duplicate while preserving order.
-    seen, ids = set(), []
-    for i in chosen:
-        if i not in seen:
-            seen.add(i)
-            ids.append(i)
-    return ids
 
 
 def _delete_existing_rule_by_name(token, name):
@@ -92,27 +36,23 @@ def _delete_existing_rule_by_name(token, name):
         print(f"  Could not remove existing rule '{name}': {e}")
 
 
-def create_private_access_policy(token, resource_ids=None):
+def create_private_access_policy(token):
     """
-    Creates a Private Access rule that allows all ZTA-enrolled devices to reach
-    the PoC in a Pod private resources.
+    Creates a Private Access rule with **Any source → Any destination**.
 
-    The destination is scoped to the actual private resource IDs
-    (``umbrella.destination.private_resource_ids``) — the documented, working
-    attribute — rather than the invalid ``private_resource_types`` the old rule
-    used (which matched nothing, so Secure Access blocked the traffic).
+    Scoping the rule to ZTA-enrolled devices (``identity_type_ids``) did not
+    match in this environment, so the ZTA client's traffic was blocked. An
+    Any/Any allow rule is intentionally over-permissive — you would never ship
+    this in production — but it's the only shape that reliably lets the PoC
+    traffic through, so it's used here for the demo.
+
+    Conditions use the documented "match everything" attributes from the
+    create-rule API reference:
+        {"attributeName":"umbrella.source.all","attributeValue":true,"attributeOperator":"="}
+        {"attributeName":"umbrella.destination.all","attributeValue":true,"attributeOperator":"="}
     """
-    if resource_ids is None:
-        resource_ids = _get_poc_private_resource_ids(token)
-
-    if not resource_ids:
-        raise Exception(
-            "No private resources found in Secure Access. Click "
-            "'Create Pod Resources' first, then create the Private Access Policy."
-        )
-
-    # Remove any pre-existing rule with the same name (e.g. the old broken one)
-    # so re-running fixes the policy instead of failing on the unique name.
+    # Remove any pre-existing rule with the same name (e.g. an earlier scoped
+    # one) so re-running replaces it instead of failing on the unique name.
     _delete_existing_rule_by_name(token, RULE_NAME)
 
     url = f"{BASE_URL}/policies/v2/rules"
@@ -123,7 +63,7 @@ def create_private_access_policy(token, resource_ids=None):
 
     payload = {
         "ruleName": RULE_NAME,
-        "ruleDescription": "Allows traffic from all ZTA-enrolled devices to the PoC in a Pod private resources, so you can reach the PoC apps remotely.",
+        "ruleDescription": "Private Access demo rule: Any source to Any destination. Intentionally over-permissive (never use in production) — used only so the PoC ZTA client can reach the pod apps remotely.",
         "rulePriority": 1,
         "ruleAction": "allow",
         "ruleAccess": "private_network",
@@ -142,18 +82,16 @@ def create_private_access_policy(token, resource_ids=None):
         ],
         "ruleConditions": [
             {
-                # All ZTA-enrolled devices (identity type).
-                "attributeOperator": "INTERSECT",
-                "attributeValue": [57],
-                "attributeName": "umbrella.source.identity_type_ids"
+                # Any source.
+                "attributeOperator": "=",
+                "attributeValue": True,
+                "attributeName": "umbrella.source.all"
             },
             {
-                # Scope to the PoC private resources by their real IDs. This is
-                # the documented attribute for private-access destinations
-                # (see create-rule docs example: private_resource_ids=[1640]).
-                "attributeOperator": "INTERSECT",
-                "attributeValue": resource_ids,
-                "attributeName": "umbrella.destination.private_resource_ids"
+                # Any destination.
+                "attributeOperator": "=",
+                "attributeValue": True,
+                "attributeName": "umbrella.destination.all"
             }
         ]
     }
@@ -164,6 +102,6 @@ def create_private_access_policy(token, resource_ids=None):
     if r.status_code not in (200, 201):
         raise Exception(f"Failed to create private access policy: {r.status_code} - {r.text}")
 
-    print(f"✅ Created private access policy targeting {len(resource_ids)} resource(s): {resource_ids}")
+    print("✅ Created private access policy (Any source → Any destination).")
     return r.json()
 
