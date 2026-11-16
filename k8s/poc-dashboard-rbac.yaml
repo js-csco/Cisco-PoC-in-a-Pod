@@ -20,15 +20,15 @@ rules:
 - apiGroups: ["batch"]
   resources: ["jobs"]
   verbs: ["get", "list", "create", "delete"]
-# Fluent Bit config management: patch ConfigMap to toggle log sources
+# ConfigMap management (sse-check config, AI agent config)
 - apiGroups: [""]
   resources: ["configmaps"]
   verbs: ["get", "create", "update", "patch"]
-# Fluent Bit rollout: patch DaemonSet to restart pods after config change
+# DaemonSet rollout restarts
 - apiGroups: ["apps"]
   resources: ["daemonsets"]
   verbs: ["get", "patch"]
-# Splunk on-demand deployment from the dashboard
+# On-demand deployments from the dashboard
 - apiGroups: [""]
   resources: ["secrets"]
   verbs: ["get", "create", "update", "patch"]
@@ -73,8 +73,7 @@ rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "list", "watch"]
-# Resources required for Collectord ClusterRole escalation (poc-dashboard-sa must hold
-# all permissions it grants to collectorforkubernetes)
+# Read access to cluster resources
 - apiGroups: [""]
   resources: ["events", "endpoints", "persistentvolumes", "persistentvolumeclaims", "componentstatuses"]
   verbs: ["get", "list", "watch"]
@@ -91,7 +90,7 @@ rules:
 - apiGroups: [""]
   resources: ["namespaces"]
   verbs: ["get", "list", "watch", "create", "patch"]
-# Cross-namespace resource management (covers caldera, collectorforkubernetes, defenseclaw namespaces)
+# Cross-namespace resource management (covers caldera, defenseclaw namespaces)
 - apiGroups: [""]
   resources: ["configmaps", "services", "secrets", "serviceaccounts"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
@@ -101,7 +100,7 @@ rules:
 - apiGroups: ["batch"]
   resources: ["jobs", "cronjobs"]
   verbs: ["get", "list", "watch"]
-# RBAC management — ClusterRole/Binding for Collectord and OTel Collector.
+# RBAC management — ClusterRoles/Bindings provisioned from the dashboard.
 # "escalate" allows creating ClusterRoles that grant permissions this SA
 # doesn't itself hold. "bind" allows creating ClusterRoleBindings to those
 # roles. Both are required for on-demand RBAC provisioning from the dashboard.

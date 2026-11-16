@@ -12,7 +12,7 @@ POLICY_NAMES = ["piap-zero-trust"]
 # poc-dashboard, playbook, and httpbin (test tool) are excluded — always reachable from LAN.
 # Hubble UI is in kube-system and unaffected by this namespace policy.
 _PIAP_RESTRICTED_SERVICES = [
-    "splunk", "rdp-server", "ssh-server", "sse-check", "saml-app",
+    "rdp-server", "ssh-server", "sse-check", "saml-app",
 ]
 
 # Docker bridge subnet assigned via daemon.json bip=240.0.0.1/29.

@@ -461,9 +461,6 @@
         </a>
 
         <div class="nav-section">Advanced</div>
-        <a href="{{ url_for('splunk') }}" class="menu-item {% if active_page == 'splunk' %}active{% endif %}">
-          <span class="fa-solid fa-compass"></span> Splunk
-        </a>
         <a href="{{ url_for('ai_agents') }}" class="menu-item {% if active_page == 'ai_agents' %}active{% endif %}">
           <span class="fa-solid fa-robot"></span> AI Agent & DefenseClaw
         </a>
@@ -551,14 +548,6 @@
             </div>
             <div class="lm-card-meta">k3s DaemonSet</div>
             <p class="lm-card-desc">eBPF runtime security — process, file, network, and syscall event monitoring.</p>
-          </a>
-          <a href="http://{{ host_ip }}:30500" target="_blank" class="lm-card">
-            <div class="lm-card-top">
-              <span class="lm-card-name"><span class="fa-solid fa-chart-bar" style="color:#0066ff; margin-right:6px;"></span>Splunk</span>
-              <span class="fa-solid fa-arrow-up-right-from-square lm-card-ext"></span>
-            </div>
-            <div class="lm-card-meta">Port 30500</div>
-            <p class="lm-card-desc">SIEM for log aggregation and event correlation across the entire environment.</p>
           </a>
           <a href="https://github.com/cisco-ai-defense/defenseclaw" target="_blank" rel="noopener" class="lm-card">
             <div class="lm-card-top">

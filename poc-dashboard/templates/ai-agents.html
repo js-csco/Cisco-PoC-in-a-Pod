@@ -57,7 +57,7 @@
     </div>
     <div style="background:#e8f5e9; border-radius:6px; padding:12px;">
       <strong style="font-size:0.85em; color:#2e7d32;">DefenseClaw Gateway</strong>
-      <p style="font-size:0.8em; color:#555; margin:6px 0 0;">Go-based policy engine. Runs CodeGuard static analysis, skill/MCP scanning, tool inspection, and a guardrail LLM proxy. Logs every allow/block/warn decision (Splunk SIEM forwarding optional).</p>
+      <p style="font-size:0.8em; color:#555; margin:6px 0 0;">Go-based policy engine. Runs CodeGuard static analysis, skill/MCP scanning, tool inspection, and a guardrail LLM proxy. Logs every allow/block/warn decision to its local audit log.</p>
     </div>
     <div style="background:#f3e5f5; border-radius:6px; padding:12px;">
       <strong style="font-size:0.85em; color:#6a1b9a;">CLI Dashboard</strong>
@@ -150,7 +150,7 @@
       </div>
       <p style="font-size:0.8em; color:#666; margin:8px 0 0;">AI agent with WebChat UI. Node.js 24 runtime, installed from npm.</p>
       {% if status.openclaw.state == 'running' %}
-        <a href="http://{{ host_ip }}:31789/?token={{ status.auth_token }}" target="_blank"
+        <a href="http://{{ host_ip }}:31789/#token={{ status.auth_token }}" target="_blank"
            style="display:inline-block; margin-top:8px; font-size:0.8em; color:#0066ff; text-decoration:none;">
           Open WebChat UI &rarr;
         </a>
@@ -167,7 +167,7 @@
           <span style="font-size:0.78em; color:#999;">not deployed</span>
         {% endif %}
       </div>
-      <p style="font-size:0.8em; color:#666; margin:8px 0 0;">Policy engine, CodeGuard, tool inspector, and guardrail proxy — inspects every tool call before it runs.</p>
+      <p style="font-size:0.8em; color:#666; margin:8px 0 0;">Policy engine, CodeGuard, skill scanner, tool inspector, and guardrail proxy — runs next to OpenClaw and inspects every prompt, skill, and tool call.</p>
     </div>
   </div>
 
@@ -187,11 +187,11 @@
       </button>
       <span style="font-size:0.82em; color:#999;">
         {% if is_running %}
-          Both containers are running. To redeploy, delete the deployment first.
+          The agent is running. To redeploy, delete the deployment first.
         {% elif not status.llm_configured %}
           Complete Step 1 (LLM provider) first, then deploy.
         {% else %}
-          Creates namespace, deploys OpenClaw + DefenseClaw into your cluster.
+          Creates the namespace and deploys OpenClaw + DefenseClaw. The first start takes about 3-5 minutes.
         {% endif %}
       </span>
     </form>
@@ -201,9 +201,19 @@
   <div style="margin-top:14px; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:8px; padding:12px 16px;">
     <p style="font-size:0.85em; color:#2e7d32; margin:0;">
       <strong>Running!</strong> Open the
-      <a href="http://{{ host_ip }}:31789/?token={{ status.auth_token }}" target="_blank" style="color:#1b5e20;">OpenClaw WebChat UI</a>
-      to interact with the agent. DefenseClaw is protecting every tool call in the background.
+      <a href="http://{{ host_ip }}:31789/#token={{ status.auth_token }}" target="_blank" style="color:#1b5e20;">OpenClaw WebChat UI</a>
+      to interact with the agent. DefenseClaw is protecting every prompt and tool call in the background.
     </p>
+    <p style="font-size:0.82em; color:#2e7d32; margin:8px 0 0; line-height:1.6;">
+      <strong>First visit from a new browser:</strong> the WebChat UI shows <em>&ldquo;Approve this browser&rdquo;</em>.
+      Click the button below (one-time per browser) &mdash; the page connects on its own.
+    </p>
+    <form method="POST" style="margin:10px 0 0;">
+      <button type="submit" name="action" value="approve_devices"
+              style="background-color:#2e7d32; color:#fff; border:none; padding:8px 20px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85em;">
+        Approve Browser Pairing
+      </button>
+    </form>
   </div>
   {% endif %}
 </section>
@@ -362,12 +372,12 @@
           {% endif %}
         </div>
         <p style="margin:0; color:#555; font-size:0.88em; line-height:1.6;">
-          CiliumNetworkPolicy applied. The agent can only reach DNS, Anthropic API (HTTPS),
-          and Splunk HEC. All other cluster traffic is <strong>blocked</strong>.
+          CiliumNetworkPolicy applied. The agent can only reach DNS and the LLM API (HTTPS).
+          All other cluster traffic is <strong>blocked</strong>.
         </p>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
           <div style="background:#e8f5e9; border:1px solid #a5d6a7; border-radius:8px; padding:8px 12px; font-size:0.78em; color:#2e7d32;">
-            <strong>Allowed:</strong><br>DNS, HTTPS (443), Splunk HEC, Ingress
+            <strong>Allowed:</strong><br>DNS, HTTPS (443), Ingress
           </div>
           <div style="background:#ffebee; border:1px solid #ef9a9a; border-radius:8px; padding:8px 12px; font-size:0.78em; color:#c62828;">
             <strong>Blocked:</strong><br>Other pods, non-HTTPS egress, lateral movement
@@ -389,6 +399,46 @@
   <p style="font-size:0.82em; color:#999; margin:0;">Deploy the AI agent first, then you can isolate it.</p>
   {% endif %}
 </section>
+{% if status.openclaw.state == 'running' %}
+<!-- ═══════════════════════════════════════════════════════ SECURITY EVENTS -->
+<section style="padding-bottom:2rem; border-bottom:1px solid #e0e0e0; margin-bottom:2.5rem;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+    <div style="width:6px; height:20px; background-color:#0066ff; border-radius:2px;"></div>
+    <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">SECURITY EVENTS</h3>
+    <a href="{{ url_for('ai_agents') }}" style="margin-left:auto; font-size:0.8em; color:#0066ff; text-decoration:none;">Refresh &#8635;</a>
+  </div>
+  <p style="color:#666; font-size:0.88em; margin:0 0 14px 0; line-height:1.6;">
+    Latest DefenseClaw decisions from its audit log (blocked prompts, quarantined skills, CodeGuard findings).
+    Full log: <code>kubectl exec -n defenseclaw deploy/ai-agent -- defenseclaw alerts</code>
+  </p>
+  {% if events %}
+  <table style="width:100%; border-collapse:collapse; font-size:0.8em;">
+    <tr style="text-align:left; color:#666; border-bottom:1px solid #e0e0e0;">
+      <th style="padding:6px 8px;">Time (UTC)</th><th style="padding:6px 8px;">Severity</th>
+      <th style="padding:6px 8px;">Action</th><th style="padding:6px 8px;">Target</th><th style="padding:6px 8px;">Detail</th>
+    </tr>
+    {% for e in events %}
+    {% set sev = e.severity or '' %}
+    <tr style="border-bottom:1px solid #f0f0f0; vertical-align:top;">
+      <td style="padding:6px 8px; white-space:nowrap; color:#666;">{{ (e.timestamp or '')[:19] | replace('T', ' ') }}</td>
+      <td style="padding:6px 8px;">
+        <span style="font-weight:600; border-radius:4px; padding:1px 6px;
+          {% if sev in ['CRITICAL', 'HIGH'] %}color:#c62828; background:#ffebee;
+          {% elif sev == 'MEDIUM' %}color:#e65100; background:#fff3e0;
+          {% else %}color:#555; background:#f5f5f5;{% endif %}">{{ sev or '—' }}</span>
+      </td>
+      <td style="padding:6px 8px;">{{ e.action }}</td>
+      <td style="padding:6px 8px; font-family:monospace; word-break:break-all;">{{ e.target }}</td>
+      <td style="padding:6px 8px; color:#555;">{{ e.rule or e.details }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p style="font-size:0.82em; color:#999; margin:0;">No security events yet. Run one of the demo use cases below.</p>
+  {% endif %}
+</section>
+{% endif %}
+
 <!-- ═══════════════════════════════════════════════════════ USE CASES -->
 <section style="padding-bottom:1rem;">
   <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
@@ -396,7 +446,7 @@
     <h3 style="color:#111; margin:0; font-size:1.1rem; letter-spacing:0.3px;">DEMO USE CASES</h3>
   </div>
   <p style="color:#666; font-size:0.88em; margin:0 0 12px 0;">
-    Ready to test DefenseClaw? The full playbook with 5 structured scenarios lives on the
+    Ready to test DefenseClaw? The full playbook with 6 structured scenarios lives on the
     <a href="http://{{ host_ip }}:30250" target="_blank" style="color:#0066ff; font-weight:600;">PoC Playbook</a>
     under the <strong>DefenseClaw</strong> tab.
   </p>

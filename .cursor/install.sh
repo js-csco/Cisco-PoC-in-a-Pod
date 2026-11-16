@@ -2,7 +2,7 @@
 #
 # Idempotent Cloud Agent bootstrap for the "PoC in a Pod" repository.
 #
-# The full lab (K3s + Cilium + Tetragon + Splunk + Secure Access connector)
+# The full lab (K3s + Cilium + Tetragon + Secure Access connector)
 # requires a dedicated, privileged Ubuntu VM plus live Cisco Secure Access / Duo
 # tenants, so it is out of scope for a Cloud Agent. This script instead sets up
 # the runnable web components so they can be developed and previewed locally:
