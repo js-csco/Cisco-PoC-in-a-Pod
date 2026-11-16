@@ -10,11 +10,11 @@ A single-script lab that deploys a full Zero Trust demo stack on one Ubuntu VM.
 
 Runs on [Ubuntu Server 24.04 LTS](https://ubuntu.com/download/server). Use **Bridged** networking (not NAT) so services are reachable from your browser.
 
-|  | Without Splunk | With Splunk | With Splunk + AI Agent |
-|--|----------------|-------------|------------------------|
-| CPU | 4 cores (6 rec.) | 6 cores (8 rec.) | 8 cores (8 rec.) |
-| RAM | 8 GB (12 rec.) | 16 GB (20 rec.) | 20 GB (24 rec.) |
-| Disk | 40 GB (60 rec.) | 80 GB (100 rec.) | 80 GB (100 rec.) |
+|  | Core | With AI Agent |
+|--|------|---------------|
+| CPU | 4 cores (6 rec.) | 6 cores (8 rec.) |
+| RAM | 8 GB (12 rec.) | 10 GB (16 rec.) |
+| Disk | 40 GB (60 rec.) | 40 GB (60 rec.) |
 
 - Internet access required (~8-12 GB downloads)
 - Disable ufw or open NodePorts: `sudo ufw disable`
@@ -66,8 +66,6 @@ sudo ./setup-k3s.sh
 | 30400 | SAML Demo | Duo SSO SAML demo app | Core |
 | 30550 | SSE Check | SSE access path verification | Core |
 | 30800 | Hubble UI | Network flow observability (Cilium) | Core |
-| 30500 | Splunk Web | SIEM (deploy on setup) | Optional |
-| 30501 | Splunk HEC | HTTP Event Collector | Optional |
 | 31789 | AI Agent | DefenseClaw AI agent (deploy from PoC Dashboard) | Optional |
 
 Access any service at `http://<server-ip>:<port>`
@@ -90,18 +88,24 @@ cilium status
 docker ps | grep connector
 ```
 
-### Splunk post-setup (optional)
+### AI Agent (OpenClaw + DefenseClaw, optional)
 
-1. Open `http://<server-ip>:30500` → login with `admin` / `C1scoPoC!`
-2. Accept Splunk Free License: Settings → Licensing
-3. Install **Cisco Security Cloud** app from Splunkbase
+Deploy it from **PoC Dashboard › AI Agents** after saving an LLM provider key.
+The pod runs OpenClaw 2026.10.9 with DefenseClaw 1.0.9 in action mode
+(blocks at HIGH and above) and needs about 3-5 minutes to install on first start.
+
+- Each new browser that opens the WebChat UI (port 31789) must be paired once:
+  click **Approve Browser Pairing** on the AI Agents page, or run
+  `kubectl exec -n defenseclaw deploy/ai-agent -- openclaw devices list` and then
+  `kubectl exec -n defenseclaw deploy/ai-agent -- openclaw devices approve <requestId>`.
+- DefenseClaw decisions appear under **Security Events** on the AI Agents page, or via
+  `kubectl exec -n defenseclaw deploy/ai-agent -- defenseclaw alerts`.
 
 ### Splunk Observability Cloud (optional)
 
 To see the k3s cluster (nodes, pods, events) and the AI agent's traces in
 **Splunk Observability Cloud**, install the Splunk Distribution of the
-OpenTelemetry Collector. This is separate from the in-cluster Splunk Enterprise
-SIEM — it ships to your Observability Cloud realm.
+OpenTelemetry Collector. It ships to your Observability Cloud realm (SaaS).
 
 ```bash
 export SPLUNK_O11Y_REALM="us1"                      # your realm, e.g. us1 / eu0
@@ -120,7 +124,6 @@ The collector also exposes an in-cluster OTLP endpoint
 | Problem | Fix |
 |---------|-----|
 | Pods stuck in `Pending` | Cilium still starting — run `cilium status --wait` |
-| Splunk `OOMKilled` | VM needs more RAM (16 GB min for Splunk) |
 | Connector not connecting | Check `docker logs $(docker ps --format '{{.Names}}' \| grep connector)` |
 | NodePorts unreachable | Check `sudo ufw status` or switch to bridged networking |
 | Cilium not Ready | Some hypervisors need bridged mode for native routing |

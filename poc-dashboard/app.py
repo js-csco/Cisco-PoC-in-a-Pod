@@ -878,96 +878,12 @@ def tetragon_run():
         return jsonify({'ok': False, 'message': str(e)})
 
 
-@app.route('/splunk', methods=['GET', 'POST'])
-def splunk():
-    from scripts.splunk import (
-        is_available, hec_is_healthy,
-        SPLUNKBASE_APPS, get_splunkbase_app_status,
-    )
-
-    if request.method == 'POST':
-        action = request.form.get('action')
-
-        if action == 'provision_k8s_dashboard':
-            from scripts.splunk import provision_k8s_dashboard
-            try:
-                provision_k8s_dashboard()
-                flash("✅ Kubernetes Infrastructure dashboard provisioned — click 'Open Dashboard' to view it.")
-            except Exception as e:
-                flash(f"⚠️ Dashboard provisioning failed: {e}")
-            return redirect(url_for('splunk'))
-
-        if action == 'deploy_splunk':
-            from scripts.splunk import deploy_splunk
-            license_content = request.form.get('license_content', '').strip()
-            if not license_content:
-                flash("A Splunk Enterprise license is required. Paste your .lic file contents to deploy.")
-                return redirect(url_for('splunk'))
-            try:
-                deploy_splunk(license_content)
-                flash("Splunk deployed with Enterprise license — allow ~5 min for startup.")
-            except Exception as e:
-                flash(f"Deployment failed: {e}")
-            return redirect(url_for('splunk'))
-
-        if action == 'restart_splunk':
-            from scripts.splunk import restart_splunk
-            try:
-                restart_splunk()
-                flash("Splunk is restarting — allow ~2 minutes for it to come back online.")
-            except Exception as e:
-                flash(f"Restart failed: {e}")
-            return redirect(url_for('splunk'))
-
-        if action == 'install_app':
-            from scripts.splunk import install_splunkbase_app
-            app_id  = request.form.get('app_id', '').strip()
-            sb_user = request.form.get('splunkbase_username', '').strip()
-            sb_pass = request.form.get('splunkbase_password', '').strip()
-            if not app_id or not sb_user or not sb_pass:
-                flash("App ID, Splunk.com username, and password are all required.")
-            else:
-                app_ids = [aid.strip() for aid in app_id.split(',') if aid.strip()]
-                for aid in app_ids:
-                    app_name = next((a['display'] for a in SPLUNKBASE_APPS if str(a['id']) == aid), aid)
-                    try:
-                        install_splunkbase_app(int(aid), sb_user, sb_pass)
-                        flash(f"{app_name} installed — restart Splunk to activate.")
-                    except Exception as e:
-                        flash(f"{app_name} install failed: {e}")
-            return redirect(url_for('splunk'))
-
-    splunk_available = is_available()
-    app_status = get_splunkbase_app_status() if splunk_available else {}
-
-    from scripts.splunk import k8s_dashboard_exists, otel_collector_running
-    return render_template(
-        'splunk.html',
-        splunk_available=splunk_available,
-        hec_healthy=hec_is_healthy() if splunk_available else False,
-        server_ip=request.host.split(':')[0],
-        splunkbase_apps=SPLUNKBASE_APPS,
-        app_status=app_status,
-        k8s_dashboard_exists=k8s_dashboard_exists() if splunk_available else False,
-        otel_running=otel_collector_running() if splunk_available else False,
-    )
-
-@app.route('/splunk/status')
-def splunk_status():
-    from scripts.splunk import get_pod_status, is_available, hec_is_healthy
-    status = get_pod_status()
-    status["splunk_available"] = is_available()
-    status["hec_healthy"] = hec_is_healthy() if status["splunk_available"] else False
-    from flask import jsonify
-    return jsonify(status)
-
 @app.route('/ai-agents', methods=['GET', 'POST'])
 def ai_agents():
     from scripts.defenseclaw import (get_status, deploy_environment, save_api_key,
                                       save_llm_provider, save_integration_settings,
                                       isolate_agent, unisolate_agent, get_isolation_status,
-                                      create_splunk_dashboard)
-    from scripts.splunk import hec_is_healthy
+                                      approve_pending_devices, get_audit_events)
 
     if request.method == 'POST':
         action = request.form.get('action')
@@ -1039,15 +955,27 @@ def ai_agents():
         if action == 'deploy':
             try:
                 deploy_environment()
-                flash("AI Agent environment deployed — containers are installing and starting up. This takes 1-2 minutes.")
+                flash("AI Agent environment deployed — OpenClaw and DefenseClaw are installing. "
+                      "The first start takes about 3-5 minutes.")
             except Exception as e:
                 flash(f"Deployment failed: {e}")
+            return redirect(url_for('ai_agents'))
+
+        if action == 'approve_devices':
+            try:
+                count = approve_pending_devices()
+                if count:
+                    flash(f"✅ Approved {count} browser pairing request(s). The WebChat UI connects on its own.")
+                else:
+                    flash("⚠️ No pending pairing requests. Open the WebChat UI first, then approve.")
+            except Exception as e:
+                flash(f"Failed to approve browser pairing: {e}")
             return redirect(url_for('ai_agents'))
 
         if action == 'isolate':
             try:
                 isolate_agent()
-                flash("AI Agent isolated — egress to cluster pods is blocked. Only DNS, Splunk HEC (audit logs), and external HTTPS (Anthropic API) are allowed.")
+                flash("AI Agent isolated — egress to cluster pods is blocked. Only DNS and external HTTPS (LLM API) are allowed.")
             except Exception as e:
                 flash(f"Isolation failed: {e}")
             return redirect(url_for('ai_agents'))
@@ -1060,18 +988,10 @@ def ai_agents():
                 flash(f"Failed to remove isolation: {e}")
             return redirect(url_for('ai_agents'))
 
-        if action == 'create_dashboard':
-            try:
-                path = create_splunk_dashboard()
-                flash(f"Splunk dashboard created — open it at {path}")
-            except Exception as e:
-                flash(f"Dashboard creation failed: {e}")
-            return redirect(url_for('ai_agents'))
-
     status = get_status()
     status["isolated"] = get_isolation_status()
-    status["hec_healthy"] = hec_is_healthy()
-    return render_template('ai-agents.html', status=status)
+    events = get_audit_events() if status["openclaw"]["state"] == "running" else []
+    return render_template('ai-agents.html', status=status, events=events)
 
 @app.route('/help')
 def help_page():
