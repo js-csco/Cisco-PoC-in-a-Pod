@@ -521,7 +521,7 @@ echo ""
 # Pulling via Docker (which has its own credential chain) and importing
 # into k3s containerd is more reliable than letting k3s pull directly.
 echo "Step 16.2: Pre-pulling container images via Docker..."
-for img in "outcoldsolutions/collectorforkubernetes:5.24.444" "node:24-slim" "python:3.11-slim" "otel/opentelemetry-collector-contrib:0.140.0"; do
+for img in "node:24-slim" "python:3.11-slim"; do
     echo "  Pulling $img ..."
     docker pull "$img" && docker save "$img" | k3s ctr images import - \
         && echo "  ✓ $img imported into k3s" \
@@ -536,9 +536,6 @@ kubectl create namespace piap --dry-run=client -o yaml | kubectl apply -f -
 
 for manifest in "$REPO_ROOT/k8s/"*.yaml; do
     case "$manifest" in
-        *splunk*)
-            echo "  Skipping $(basename $manifest) — deploy from the PoC Dashboard with a license"
-            ;;
         *caldera*)
             echo "  Skipping $(basename $manifest) — deploy from the PoC Dashboard"
             ;;
@@ -607,7 +604,7 @@ echo ""
 # Step 19: Optional — Splunk Observability Cloud OpenTelemetry Collector
 echo "Step 19: (Optional) Splunk Observability Cloud OpenTelemetry Collector"
 echo "  Sends k3s infrastructure metrics + AI-agent traces to Splunk Observability"
-echo "  Cloud. This is optional and separate from the in-cluster Splunk SIEM."
+echo "  Cloud (SaaS). This is optional."
 echo "  You can also run it later: setup/install_splunk_o11y_collector.sh"
 _INSTALL_O11Y="n"
 if [ -t 0 ]; then
@@ -666,9 +663,6 @@ echo ""
 kubectl get svc -n piap -o wide
 echo ""
 echo "Hubble UI: http://$SERVER_IP:30800"
-echo ""
-echo "  Splunk: Deploy from the PoC Dashboard with your Enterprise license."
-echo "  OTel:   OpenTelemetry Collector is running — will ship k8s metrics to Splunk once it is deployed."
 echo ""
 echo "================================================"
 echo "  Useful Commands"

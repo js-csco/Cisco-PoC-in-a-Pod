@@ -57,16 +57,10 @@ spec:
           volumeMounts:
             - mountPath: /app
               name: code
-            - mountPath: /splunk-data
-              name: splunk-data
       serviceAccountName: poc-dashboard-sa
       restartPolicy: Always
       volumes:
         - name: code
           hostPath:
             path: /poc-dashboard
-        - name: splunk-data
-          hostPath:
-            path: /opt/splunk-data
-            type: DirectoryOrCreate
 status: {}

@@ -117,7 +117,6 @@ def create_private_resources(token, vm_ip, resource_group_id):
         {"name": "PoC Dashboard",      "port": 30200, "protocol": "HTTP/HTTPS"},
         {"name": "PoC Playbook",       "port": 30250, "protocol": "HTTP/HTTPS"},
         {"name": "OpenSSH Server",     "port": 30022, "protocol": "SSH"},
-        {"name": "Splunk Dashboard",   "port": 30500, "protocol": "HTTP/HTTPS"},
         {"name": "RDP Server",         "port": 30389, "protocol": "RDP-TCP"},
         {"name": "Hubble UI",          "port": 30800, "protocol": "HTTP/HTTPS"},
         {"name": "SSE Check",          "port": 30550, "protocol": "HTTP/HTTPS"},

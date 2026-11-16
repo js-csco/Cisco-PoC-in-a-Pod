@@ -61,11 +61,11 @@
   <text x="700" y="106" text-anchor="middle" font-size="10" fill="#555">Claude / GPT / Llama</text>
   <text x="700" y="122" text-anchor="middle" font-size="10" fill="#555">API calls proxied</text>
 
-  <!-- ── SIEM / Splunk ── -->
+  <!-- ── Observability (optional) ── -->
   <rect x="610" y="170" width="180" height="80" rx="10" fill="#fce4ec" stroke="#c62828" stroke-width="1.5"/>
-  <text x="700" y="198" text-anchor="middle" font-size="12" font-weight="700" fill="#b71c1c">Splunk / SIEM</text>
-  <text x="700" y="216" text-anchor="middle" font-size="10" fill="#555">HEC + OpenTelemetry</text>
-  <text x="700" y="232" text-anchor="middle" font-size="10" fill="#555">Audit trail &amp; alerts</text>
+  <text x="700" y="198" text-anchor="middle" font-size="12" font-weight="700" fill="#b71c1c">Observability Cloud</text>
+  <text x="700" y="216" text-anchor="middle" font-size="10" fill="#555">GenAI traces, tokens, cost</text>
+  <text x="700" y="232" text-anchor="middle" font-size="10" fill="#555">Optional (SaaS)</text>
 
   <!-- ── MCP Servers ── -->
   <rect x="30" y="200" width="180" height="70" rx="10" fill="#f1f8e9" stroke="#558b2f" stroke-width="1.5"/>
@@ -78,16 +78,16 @@
   <text x="410" y="405" text-anchor="middle" font-size="12" font-weight="700" fill="#1a237e">k3s Cluster — PoC in a Pod</text>
 
   <rect x="55" y="420" width="120" height="60" rx="6" fill="#c5cae9" stroke="#3949ab" stroke-width="0.8"/>
-  <text x="115" y="443" text-anchor="middle" font-size="10" font-weight="600" fill="#1a237e">OpenClaw</text>
-  <text x="115" y="458" text-anchor="middle" font-size="9" fill="#333">Agent Pod</text>
+  <text x="115" y="443" text-anchor="middle" font-size="10" font-weight="600" fill="#1a237e">AI Agent Pod</text>
+  <text x="115" y="458" text-anchor="middle" font-size="9" fill="#333">OpenClaw + DefenseClaw</text>
 
   <rect x="195" y="420" width="120" height="60" rx="6" fill="#c5cae9" stroke="#3949ab" stroke-width="0.8"/>
-  <text x="255" y="443" text-anchor="middle" font-size="10" font-weight="600" fill="#1a237e">DefenseClaw</text>
-  <text x="255" y="458" text-anchor="middle" font-size="9" fill="#333">Gateway Pod</text>
+  <text x="255" y="443" text-anchor="middle" font-size="10" font-weight="600" fill="#1a237e">Cilium</text>
+  <text x="255" y="458" text-anchor="middle" font-size="9" fill="#333">Network Isolation</text>
 
   <rect x="335" y="420" width="120" height="60" rx="6" fill="#c5cae9" stroke="#3949ab" stroke-width="0.8"/>
-  <text x="395" y="443" text-anchor="middle" font-size="10" font-weight="600" fill="#1a237e">Splunk</text>
-  <text x="395" y="458" text-anchor="middle" font-size="9" fill="#333">Logging Pod</text>
+  <text x="395" y="443" text-anchor="middle" font-size="10" font-weight="600" fill="#1a237e">Hubble</text>
+  <text x="395" y="458" text-anchor="middle" font-size="9" fill="#333">Flow Visibility</text>
 
   <rect x="475" y="420" width="120" height="60" rx="6" fill="#c5cae9" stroke="#3949ab" stroke-width="0.8"/>
   <text x="535" y="443" text-anchor="middle" font-size="10" font-weight="600" fill="#1a237e">Tetragon</text>
@@ -102,9 +102,9 @@
   <line x1="522" y1="100" x2="608" y2="100" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
   <text x="565" y="93" text-anchor="middle" font-size="8" fill="#666">Proxied</text>
 
-  <!-- Gateway → Splunk (HEC) -->
+  <!-- Gateway → Observability (OTLP) -->
   <line x1="522" y1="210" x2="608" y2="210" stroke="#d32f2f" stroke-width="1.5" marker-end="url(#arrow-red)"/>
-  <text x="565" y="203" text-anchor="middle" font-size="8" fill="#d32f2f">HEC / OTLP</text>
+  <text x="565" y="203" text-anchor="middle" font-size="8" fill="#d32f2f">OTLP</text>
 
   <!-- CLI → Gateway -->
   <line x1="410" y1="278" x2="410" y2="237" stroke="#7b1fa2" stroke-width="1.5" marker-end="url(#arrow)"/>
@@ -124,7 +124,7 @@
   <line x1="590" y1="320" x2="615" y2="320" stroke="#0066ff" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
   <text x="622" y="324" font-size="8" fill="#555">Intercepted tool calls</text>
   <line x1="590" y1="338" x2="615" y2="338" stroke="#d32f2f" stroke-width="1.5" marker-end="url(#arrow-red)"/>
-  <text x="622" y="342" font-size="8" fill="#555">Audit events to SIEM</text>
+  <text x="622" y="342" font-size="8" fill="#555">Telemetry (optional)</text>
   <line x1="590" y1="352" x2="615" y2="352" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
   <text x="622" y="356" font-size="8" fill="#555">Data flow</text>
 </svg>
